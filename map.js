@@ -4,7 +4,7 @@
 const S=window.SOTA,C=S.core,M=C.M,N=M.n,L=32; // L = layer pixels per cell
 const el=document.getElementById("map"),cv=document.getElementById("mapc"),ctx=cv.getContext("2d");
 const ZT=[null,[196,160,60],[110,150,80],[90,130,175],[195,100,115],[140,100,175]]; // zone tints, muted for parchment
-const kind=new Map();M.camps.forEach(c=>kind.set(c[1]*N+c[0],"camp"));M.taverns.forEach(c=>kind.set(c[1]*N+c[0],"tavern"));M.rooms.forEach(r=>kind.set(r.c[1]*N+r.c[0],r.k));
+const kind=new Map();M.camps.forEach(c=>kind.set(c[1]*N+c[0],"camp"));M.taverns.forEach(c=>kind.set(c[1]*N+c[0],"tavern"));const roomOf=new Map();M.rooms.forEach(r=>{kind.set(r.c[1]*N+r.c[0],r.k);roomOf.set(r.c[1]*N+r.c[0],r.id);});
 function rnd(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
 function hsh(a,b){return(((a*73856093)^(b*19349663))>>>0)%1000/1000;}
 // ---- maze layer: drawn once per newly visited cell ----
@@ -53,26 +53,33 @@ function fit(){const b=bbox(),a=area(),m=0.8,bw=b.x1-b.x0+2*m,bh=b.y1-b.y0+2*m;
 // keep at least ~1.5 cells of the explored box on screen
 function clamp(){const hw=innerWidth/2/view.z,hh=innerHeight/2/view.z,k=Math.min(1.5,(bb.x1-bb.x0)),q=Math.min(1.5,(bb.y1-bb.y0));
  view.cx=Math.max(bb.x0+k-hw,Math.min(bb.x1-k+hw,view.cx));view.cy=Math.max(bb.y0+q-hh,Math.min(bb.y1-q+hh,view.cy));}
-function icon(k,x,y,z){ctx.save();ctx.translate(x,y);const s=z/32;ctx.scale(s,s);ctx.lineJoin="round";ctx.lineCap="round";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2.2;
+function icon(k,x,y,z,sv){ctx.save();ctx.translate(x,y);const s=z/32;ctx.scale(s,s);ctx.lineJoin="round";ctx.lineCap="round";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2.2;
  if(k==="camp"){ctx.fillStyle="#b07a3c";ctx.beginPath();ctx.moveTo(-11,9);ctx.lineTo(0,-11);ctx.lineTo(11,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="#3a2210";ctx.beginPath();ctx.moveTo(-3,9);ctx.lineTo(0,1);ctx.lineTo(3,9);ctx.fill();ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-3,-15);ctx.moveTo(0,-11);ctx.lineTo(3,-15);ctx.stroke();}
  else if(k==="tavern"){ctx.fillStyle="#d9a441";ctx.beginPath();ctx.rect(-8,-8,13,17);ctx.fill();ctx.stroke();ctx.fillStyle="#fff6e0";ctx.beginPath();ctx.ellipse(-1.5,-9,8,3.5,0,0,6.3);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(7,1,5,-1.4,1.4);ctx.stroke();ctx.beginPath();ctx.moveTo(-4,-4);ctx.lineTo(-4,6);ctx.moveTo(1,-4);ctx.lineTo(1,6);ctx.lineWidth=1.3;ctx.stroke();}
- else{ctx.fillStyle="#8a5426";ctx.beginPath();ctx.moveTo(-7,11);ctx.lineTo(-7,-5);ctx.quadraticCurveTo(0,-13,7,-5);ctx.lineTo(7,11);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-2.5,-7);ctx.lineTo(-2.5,11);ctx.moveTo(2.5,-7);ctx.lineTo(2.5,11);ctx.stroke();ctx.fillStyle="#f0d070";ctx.beginPath();ctx.arc(4.5,3,1.6,0,6.3);ctx.fill();
+ else if(!sv){ctx.fillStyle="#8a5426";ctx.beginPath();ctx.moveTo(-7,11);ctx.lineTo(-7,-5);ctx.quadraticCurveTo(0,-13,7,-5);ctx.lineTo(7,11);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-2.5,-7);ctx.lineTo(-2.5,11);ctx.moveTo(2.5,-7);ctx.lineTo(2.5,11);ctx.stroke();
+  // padlock = still locked
+  ctx.fillStyle="#d8b040";ctx.lineWidth=1.6;ctx.beginPath();ctx.rect(-3.5,1,7,6);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(0,1,2.6,Math.PI,0);ctx.stroke();
   if(k==="monster"){ctx.strokeStyle="#c0141c";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-12,-12);ctx.lineTo(12,12);ctx.moveTo(12,-12);ctx.lineTo(-12,12);ctx.stroke();}
   if(k==="treasure"){ctx.fillStyle="#e8b830";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(-9,10,3.2,0,6.3);ctx.fill();ctx.stroke();}}
+ else{ // solved: open dark doorway with the door swung aside, green tick; monster X faded grey and struck through
+  ctx.fillStyle="#2b1a0e";ctx.beginPath();ctx.moveTo(-7,11);ctx.lineTo(-7,-5);ctx.quadraticCurveTo(0,-13,7,-5);ctx.lineTo(7,11);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#a56a34";ctx.beginPath();ctx.moveTo(7,11);ctx.lineTo(7,-5);ctx.lineTo(12,-8);ctx.lineTo(12,13);ctx.closePath();ctx.fill();ctx.stroke();
+  if(k==="monster"){ctx.strokeStyle="rgba(90,80,70,.75)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-12,-12);ctx.lineTo(12,12);ctx.moveTo(12,-12);ctx.lineTo(-12,12);ctx.stroke();ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();}
+  ctx.strokeStyle="#fff";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(-1,7);ctx.lineTo(8,-5);ctx.stroke();ctx.strokeStyle="#1f8a2e";ctx.lineWidth=3.5;ctx.stroke();}
  ctx.restore();}
 let open=false,last={},mk={};const ft=[];
 function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(bg,0,0);
  const z=view.z*dpr,ox=BW/2-view.cx*z,oy=BH/2-view.cy*z;ctx.imageSmoothingEnabled=true;
  ctx.save();ctx.beginPath();ctx.rect(14*dpr,14*dpr,BW-28*dpr,BH-28*dpr);ctx.clip();
  ctx.drawImage(lay,ox,oy,N*z,N*z);
- const v=C.visited,cnt={cells:drawnCount,camp:0,door:0,monster:0,tavern:0,dots:0};
+ const v=C.visited,cnt={cells:drawnCount,camp:0,door:0,monster:0,tavern:0,dots:0,solved:0,locked:0};
  // trail dots (in walking order; the last entry is where you stand, marked by the arrow)
  const tr=C.trail();ctx.fillStyle="rgba(150,30,20,.85)";const rr=Math.max(1.2,z*.07);
  for(let k=0;k<tr.length-1;k++){const i=tr[k],j=hsh(i,k);const x=ox+(i%N+.5+(j-.5)*.3)*z,y=oy+(((i/N)|0)+.5+(hsh(k,i)-.5)*.3)*z;ctx.beginPath();ctx.arc(x,y,rr,0,6.3);ctx.fill();cnt.dots++;}
- for(const [i,k] of kind){if(!v[i])continue;const x=ox+(i%N+.5)*z,y=oy+(((i/N)|0)+.5)*z;
+ for(const [i,k] of kind){if(!v[i])continue;const rid=roomOf.has(i)?roomOf.get(i):-1,sv=rid>=0&&!!C.solvedR[rid];if(rid>=0){if(sv)cnt.solved++;else cnt.locked++;}const x=ox+(i%N+.5)*z,y=oy+(((i/N)|0)+.5)*z;
   if(x<-z||y<-z||x>BW+z||y>BH+z){cnt[k==="camp"||k==="tavern"?k:"door"]++;if(k==="monster")cnt.monster++;continue;}
-  icon(k,x,y,z*0.95);if(k==="camp")cnt.camp++;else if(k==="tavern")cnt.tavern++;else{cnt.door++;if(k==="monster")cnt.monster++;}}
+  icon(k,x,y,z*0.95,sv);if(k==="camp")cnt.camp++;else if(k==="tavern")cnt.tavern++;else{cnt.door++;if(k==="monster")cnt.monster++;}}
  const s=S.state(),pcx=ox+(s.x+.5)*z,pcy=oy+(s.y+.5)*z,pul=0.5+0.5*Math.sin(performance.now()*0.006);
  const ir=z*0.95*0.45,R0=Math.max(8*dpr,z*0.62),aa=Math.max(9*dpr,z*0.34); // icon radius, ring radius, arrow half-length
  ctx.save();ctx.lineWidth=Math.max(3*dpr,z*.1);ctx.strokeStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.arc(pcx,pcy,R0+ctx.lineWidth*.5,0,6.3);ctx.stroke();
@@ -85,7 +92,7 @@ function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransfo
  // title + north mark
  ctx.fillStyle="#2b1a0e";ctx.font=`italic 700 ${26*dpr}px Georgia,serif`;ctx.textAlign="center";ctx.fillText("Map",BW/2,40*dpr);
  ctx.font=`700 ${14*dpr}px Georgia,serif`;ctx.fillText("N",30*dpr,BH-62*dpr);ctx.beginPath();ctx.moveTo(30*dpr,BH-56*dpr);ctx.lineTo(24*dpr,BH-28*dpr);ctx.lineTo(30*dpr,BH-34*dpr);ctx.lineTo(36*dpr,BH-28*dpr);ctx.closePath();ctx.fill();
- Object.assign(el.dataset,{cells:cnt.cells,tents:cnt.camp,doors:cnt.door,xs:cnt.monster,taverns:cnt.tavern,dots:cnt.dots,arrow:s.f,cx:view.cx.toFixed(2),cy:view.cy.toFixed(2),z:view.z});
+ Object.assign(el.dataset,{cells:cnt.cells,tents:cnt.camp,doors:cnt.door,xs:cnt.monster,taverns:cnt.tavern,dots:cnt.dots,solved:cnt.solved,locked:cnt.locked,arrow:s.f,cx:view.cx.toFixed(2),cy:view.cy.toFixed(2),z:view.z});
  ft.push(performance.now()-t0);if(ft.length>240)ft.shift();}
 let pend=false;function req(){if(!pend){pend=true;requestAnimationFrame(()=>{pend=false;draw();});}}
 function setOpen(o){open=o;el.classList.toggle("open",o);if(o){if(!bg||BW!==Math.round(innerWidth*dpr))makeBg();bbox();fit();draw();pulse();}}

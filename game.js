@@ -22,6 +22,14 @@ const ZA=[null,
  {fog:[36,62,100],fd:0.12,tint:[0.85,0.97,1.15],amb:0.12,glow:1.3},
  {fog:[72,22,30],fd:0.14,tint:[1.2,0.85,0.72],amb:0.09,glow:1.7},
  {fog:[46,20,78],fd:0.14,tint:[1.0,0.82,1.2],amb:0.10,glow:2.0}];
+// ---------- Stage 3: locked rooms ----------
+const roomAt=new Int16Array(N*N).fill(-1);M.rooms.forEach(r=>{roomAt[r.c[1]*N+r.c[0]]=r.id;});
+const NR=M.rooms.length,solvedR=new Uint8Array(NR),clearedR=new Uint8Array(NR),ROOM_KEY="sota.rooms";
+try{const o=JSON.parse(localStorage.getItem(ROOM_KEY)||"null");if(o&&Array.isArray(o.s)&&Array.isArray(o.c)&&o.s.every(i=>Number.isInteger(i)&&i>=0&&i<NR)&&o.c.every(i=>Number.isInteger(i)&&i>=0&&i<NR)){o.s.forEach(i=>solvedR[i]=1);o.c.forEach(i=>{if(solvedR[i])clearedR[i]=1;});}}catch(e){}
+function saveRooms(){const s=[],c=[];for(let i=0;i<NR;i++){if(solvedR[i])s.push(i);if(clearedR[i])c.push(i);}try{localStorage.setItem(ROOM_KEY,JSON.stringify({s,c}));}catch(e){}}
+// connector blocks next to a room cell become doors while the room is locked
+const doorRoom=new Int16Array(G*G).fill(-1);M.rooms.forEach(r=>{const bx=2*r.c[0]+1,by=2*r.c[1]+1,m=mask[r.c[1]*N+r.c[0]];if(m&1)doorRoom[(by-1)*G+bx]=r.id;if(m&2)doorRoom[by*G+bx+1]=r.id;if(m&4)doorRoom[(by+1)*G+bx]=r.id;if(m&8)doorRoom[by*G+bx-1]=r.id;});
+function locked(id){return id>=0&&!solvedR[id];}
 // ---------- state ----------
 const st={x:M.entrance[0],y:M.entrance[1],f:0};
 function canMove(x,y,d){return (mask[y*N+x]&BIT[d])!==0;}
@@ -54,9 +62,12 @@ let animOn=true;
 function startAnim(dur){anim.fx=vis.x;anim.fy=vis.y;anim.fa=vis.a;anim.tx=st.x;anim.ty=st.y;
  let d=st.f*Math.PI/2-vis.a;d=((d%(2*Math.PI))+3*Math.PI)%(2*Math.PI)-Math.PI;anim.ta=vis.a+d;anim.t0=performance.now();anim.dur=dur;anim.on=animOn;
  if(!animOn){vis.x=st.x;vis.y=st.y;vis.a=anim.ta;}}
-function act(cmd){if(window.SOTA&&SOTA.mapOpen&&SOTA.mapOpen())return; // logical state changes at once; the animation only follows it, so no press is ever lost
+function blocked(){return !!(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen())||panelOn));}
+function act(cmd){if(blocked())return; // logical state changes at once; the animation only follows it, so no press is ever lost
  if(cmd==="fwd"||cmd==="back"){const d=cmd==="fwd"?st.f:(st.f+2)%4;
-  if(canMove(st.x,st.y,d)){st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);}else bump=performance.now();}
+  if(canMove(st.x,st.y,d)){const ti=(st.y+DIRS[d][1])*N+st.x+DIRS[d][0],rid=roomAt[ti];
+   if(locked(rid)){bump=performance.now();if(window.SOTA&&SOTA.openPuzzle)SOTA.openPuzzle(rid,cmd);updHud();return;}
+   st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);if(rid>=0&&!clearedR[rid])showPanel(rid);}else bump=performance.now();}
  else if(cmd==="left"){st.f=(st.f+3)%4;save();startAnim(160);}
  else if(cmd==="right"){st.f=(st.f+1)%4;save();startAnim(160);}
  updHud();}
@@ -82,13 +93,13 @@ function render(t){
   const ddx=Math.abs(1/rx),ddy=Math.abs(1/ry);let sx,sy,sdx,sdy,side=0,pz=bzone[my*G+mx];
   if(rx<0){sx=-1;sdx=(px-mx)*ddx;}else{sx=1;sdx=(mx+1-px)*ddx;}
   if(ry<0){sy=-1;sdy=(py-my)*ddy;}else{sy=1;sdy=(my+1-py)*ddy;}
-  let guard=0;
+  let guard=0,door=-1;
   while(guard++<400){if(sdx<sdy){sdx+=ddx;mx+=sx;side=0;}else{sdy+=ddy;my+=sy;side=1;}
-   if(mx<0||my<0||mx>=G||my>=G)break;if(solid[my*G+mx])break;pz=bzone[my*G+mx];}
+   if(mx<0||my<0||mx>=G||my>=G)break;const bi=my*G+mx;if(solid[bi])break;const dr=doorRoom[bi];if(dr>=0&&!solvedR[dr]){door=dr;break;}pz=bzone[bi];}
   const perp=side===0?sdx-ddx:sdy-ddy;
   let u=side===0?py+perp*ry:px+perp*rx;u-=Math.floor(u);if((side===0&&rx>0)||(side===1&&ry<0))u=1-u;
   const hsh=((mx*73856093)^(my*19349663)^(side*83492791)^((side===0?sx:sy)>0?0x5bd1e995:0))>>>0;
-  const z=pz,tex=TX.walls[z][hsh%TX.V],flip=(hsh>>>8)&1,voff=(hsh>>>9)&31;
+  const z=door>=0?M.rooms[door].z:pz,tex=door>=0?DT[z]:TX.walls[z][hsh%TX.V],flip=(hsh>>>8)&1,voff=(hsh>>>9)&31;
   let tu=((flip?1-u:u)*TS)|0;if(tu>=TS)tu=TS-1;
   const lh=foc/perp,top=h2-lh/2,bot=h2+lh/2;const y0=Math.max(0,Math.ceil(top)),y1=Math.min(H,Math.ceil(bot));
   colTop[x]=y0;colBot[x]=y1;
@@ -117,13 +128,18 @@ function render(t){
    buf[y*W+x]=0xff000000|((b>255?255:b)<<16)|((g>255?255:g)<<8)|(r>255?255:r);}}
  ctx.putImageData(img,0,0);
 }
+// ---------- placeholder panel for a newly opened room ----------
+const DT=window.DOORTEX,panel=document.getElementById("panel");let panelOn=false,panelRoom=-1;
+const PTXT={treasure:"Treasure room (loot comes in a later stage)",monster:"Monster room (fight comes later)",story:"Story room (story comes later)"};
+function showPanel(id){panelRoom=id;panelOn=true;document.getElementById("ptxt").textContent=PTXT[M.rooms[id].k];panel.classList.add("open");}
+document.getElementById("pgo").addEventListener("pointerdown",e=>{e.preventDefault();if(panelRoom>=0){clearedR[panelRoom]=1;saveRooms();}panelOn=false;panelRoom=-1;panel.classList.remove("open");});
 // ---------- loop ----------
 const ft=[];let lastT=0;
 function frame(t){
  if(anim.on){let k=(t-anim.t0)/anim.dur;if(!(k<1)){k=1;anim.on=false;}const e=k*k*(3-2*k);
   vis.x=anim.fx+(anim.tx-anim.fx)*e;vis.y=anim.fy+(anim.ty-anim.fy)*e;vis.a=anim.fa+(anim.ta-anim.fa)*e;}
  else{vis.x=st.x;vis.y=st.y;vis.a=st.f*Math.PI/2+Math.round((vis.a-st.f*Math.PI/2)/(2*Math.PI))*2*Math.PI;}
- if(window.SOTA&&SOTA.mapOpen&&SOTA.mapOpen()){lastT=t;requestAnimationFrame(frame);return;}
+ if(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen()))){lastT=t;requestAnimationFrame(frame);return;}
  const t0=performance.now();render(t);const dt=performance.now()-t0;ft.push(dt);if(ft.length>240)ft.shift();
  lastT=t;requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
@@ -138,8 +154,10 @@ window.addEventListener("keydown",e=>{const k={ArrowUp:"fwd",w:"fwd",ArrowDown:"
 // test/debug hooks (read-only views + direct commands)
 window.SOTA={state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,
  frameTimes:()=>ft.slice(),setAnim:v=>{animOn=!!v;},animating:()=>anim.on,renderOnce:()=>{const t0=performance.now();render(performance.now());return performance.now()-t0;},
- items:()=>items.slice(),visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
- core:{mask,zoneOf,visited,trail:()=>trail,M,DIRS,BIT},
+ items:()=>items.slice(),rooms:()=>({solved:[...solvedR.keys()].filter(i=>solvedR[i]),cleared:[...clearedR.keys()].filter(i=>clearedR[i])}),
+ roomAt:(x,y)=>roomAt[y*N+x],isSolved:i=>!!solvedR[i],panelOpen:()=>panelOn,
+ markSolved:i=>{solvedR[i]=1;saveRooms();},visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
+ core:{solvedR,clearedR,mask,zoneOf,visited,trail:()=>trail,M,DIRS,BIT},
  teleport:(x,y,f)=>{st.x=x;st.y=y;st.f=f;visit(y*N+x);trail=[y*N+x];if(window.SOTA.onStep)SOTA.onStep();vis.x=x;vis.y=y;vis.a=f*Math.PI/2;anim.on=false;const z=ZA[zoneOf[y*N+x]].fog;fogNow[0]=z[0];fogNow[1]=z[1];fogNow[2]=z[2];save();updHud();},
  size:()=>({W,H}),vis:()=>({x:vis.x,y:vis.y,a:vis.a}),N,zones:()=>{const c=[0,0,0,0,0,0];for(let i=0;i<N*N;i++)c[zoneOf[i]]++;return c;}};
 })();
