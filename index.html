@@ -123,9 +123,6 @@ html.s4open,html.s4open body{touch-action:pan-y}
 .s4bag{display:grid;grid-template-columns:repeat(auto-fill,52px);gap:6px;justify-content:start}
 .s4info{padding:6px 8px;border-radius:10px;background:rgba(10,5,25,.6);display:flex;flex-direction:column;gap:4px;font:14px Georgia,serif}.s4info .s4pv{font-size:14px}.bad{color:#ff9a8a}
 .s4status{grid-template-columns:1fr 1fr 1fr;gap:1px 10px;padding:6px 8px}.s4st{font-size:13px}
-@media (orientation:landscape) and (max-height:520px){.sheet{max-width:900px}.s4cols{flex-direction:row;align-items:flex-start}.s4colA{flex:0 0 46%}.s4colB{flex:1}.s4fig{max-height:210px}.s4doll{grid-template-columns:56px 1fr 56px}}
-@media (orientation:landscape) and (max-height:520px){.s4fight{flex-direction:row}.s4stage{flex:1 1 58%}.s4fbot{flex:0 0 42%;border-top:none;border-left:2px solid #5a4590;grid-template-columns:1fr;grid-template-areas:"pa" "en" "mn";align-content:start;overflow-y:auto;touch-action:pan-y}.s4enemies{border-right:none}
- .s4page{max-width:900px}.s4status{grid-template-columns:1fr 1fr 1fr}}
 
 /* fight v2: slim menu panel, bigger scene */
 .s4fbot{grid-template-columns:1fr;grid-template-areas:"en" "pa" "mn"}
@@ -142,11 +139,34 @@ html.s4open,html.s4open body{touch-action:pan-y}
 .s4who{font:700 12px Georgia,serif}
 .s4bcol.row{flex-direction:row;flex-wrap:wrap}
 .s4br.boxed .s4bi{font-size:14px;padding:0 10px}
-@media (orientation:landscape) and (max-height:520px){.s4stage{flex:1 1 74%}.s4fbot{flex:0 0 26%;min-width:200px;grid-template-areas:"en" "pa" "mn"}.s4party{grid-template-columns:1fr}}
 .s4brbk{position:absolute;background:rgba(10,6,20,.94);border-top:2px solid #8a6a3a}
 .s4fbot{min-height:calc(108px + env(safe-area-inset-bottom))}
-@media (orientation:landscape) and (max-height:520px){.s4fbot{min-height:0}}
-@media (orientation:landscape) and (max-height:520px){.s4br.boxed .s4bi{font-size:13px;padding:0 7px}}
+
+/* fight v3: full-height scene, name tabs top right, slide-in tree, nothing at the bottom */
+.s4fight .s4fbot{position:absolute;inset:0;display:block;min-height:0;border:none;background:none;box-shadow:none;pointer-events:none;padding:0}
+.s4fight .s4enemies{display:none}
+.s4fight .s4party{position:absolute;top:calc(44px + env(safe-area-inset-top));right:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding:0;pointer-events:auto}
+.s4fight .s4pr{display:block;background:none}
+.s4fight .s4pr .s4nl{width:128px;min-height:44px;border:1px solid rgba(200,160,90,.5);border-right:none;border-left:3px solid #8a6a3a;border-radius:10px 0 0 10px;background:rgba(14,8,26,.78);padding:0 8px;transition:width .18s}
+.s4fight .s4pr.now .s4nl{width:150px;border-left-color:#ffe08a;background:rgba(40,26,70,.92);box-shadow:0 0 10px rgba(255,220,120,.55)}
+.s4fight .s4pr .s4nl:disabled{border-color:rgba(200,160,90,.3);border-left:3px solid rgba(138,106,58,.6);background:rgba(14,8,26,.7);opacity:1}
+.s4fight .s4pr.dead .s4nl{opacity:.5}
+.s4fight .s4menu{display:none}
+.s4fight.over .s4menu{display:flex;position:absolute;left:12px;right:12px;top:32%;padding:12px;border:1px solid #8a6a3a;border-radius:12px;background:rgba(10,6,20,.94);pointer-events:auto}
+.s4br.slide{background:none}
+.s4sl{position:absolute;left:6px;right:0;display:flex;flex-direction:row;justify-content:flex-end;align-items:flex-start;gap:8px;overflow:hidden;pointer-events:none}
+.s4br.slide .s4bcol{position:static;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+.s4br.slide .s4bcol:last-child .s4bi{border-right:none;border-radius:8px 0 0 8px}
+.s4br.slide .s4bi{font:700 14px Georgia,serif;padding:0 12px;background:rgba(14,8,30,.93)}
+.s4br.slide .s4bi.back{color:#cdb7ff;font-size:13px}
+.s4bcol.sliding{animation:s4in .22s ease-out}
+@keyframes s4in{from{transform:translateX(110%);opacity:.3}to{transform:none;opacity:1}}
+/* portrait only: phones held sideways get a notice instead of a landscape layout */
+#rotn{display:none}
+@media (orientation:landscape) and (max-height:520px){#rotn{display:flex;position:fixed;inset:0;z-index:100000;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#0b0714;color:#f3e2b5;font:700 20px Georgia,serif;text-align:center;padding:20px}}
+#rotn .ph{width:46px;height:76px;border:3px solid #f3e2b5;border-radius:9px;animation:s4rot 2.4s ease-in-out infinite}
+@keyframes s4rot{0%,30%{transform:rotate(90deg)}60%,100%{transform:rotate(0)}}
+html:has(#s4.fight) #s4toast{left:8px;transform:none;max-width:calc(100vw - 186px);box-sizing:border-box;font-size:14px}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="vig"></div><div id="hud"></div><button id="dbg" class="ink" aria-label="Show or hide info">i</button>
@@ -162,5 +182,6 @@ html.s4open,html.s4open body{touch-action:pan-y}
 <div id="panel" role="dialog"><div id="ptxt"></div><button id="pgo" class="ink">Continue</button></div>
 <button id="partyb" class="ink" aria-label="Party"><svg viewBox="0 0 40 40"><path d="M9 31 L27 13 M24 9 L31 9 L31 16 M12 24 L16 28 M7 33 L11 29" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div id="s4hint">Tap the sword to make your hero</div><div id="s4toast"></div><div id="s4" aria-label="Party and fights"></div>
 <button id="updb">New version ready - tap to restart</button>
-<script src="maze-data.js?v=6"></script><script src="tex.js?v=6"></script><script src="doors.js?v=6"></script><script src="game.js?v=6"></script><script src="map.js?v=6"></script><script src="puzzles.js?v=6"></script><script src="puzzle-ui.js?v=6"></script><script src="rules.js?v=6"></script><script src="party.js?v=6"></script><script src="boot.js?v=6"></script>
+<div id="rotn" aria-live="polite"><div class="ph"></div><div>Turn your phone upright</div><div style="font-size:14px;font-weight:400">This game plays in portrait.</div></div>
+<script src="maze-data.js?v=7"></script><script src="tex.js?v=7"></script><script src="doors.js?v=7"></script><script src="game.js?v=7"></script><script src="map.js?v=7"></script><script src="puzzles.js?v=7"></script><script src="puzzle-ui.js?v=7"></script><script src="rules.js?v=7"></script><script src="party.js?v=7"></script><script src="boot.js?v=7"></script>
 </body></html>

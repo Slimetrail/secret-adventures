@@ -9,7 +9,7 @@ MUT=[
  ("leaving loses puzzle state","puzzle-ui.js","s:kept.get(id)||P.clone(g.s)","s:P.clone(g.s)","leave_reset"),
  ("reset does nothing","puzzle-ui.js","cur.s=P.clone(cur.start);kept.delete(cur.id);","kept.delete(cur.id);","leave_reset"),
  ("map ignores solved state","map.js","sv=rid>=0&&!!C.solvedR[rid]","sv=false","map_solved"),
- ("puzzles.js not cached offline","sw.js",'"puzzles.js?v=6",','',"offline3"),
+ ("puzzles.js not cached offline","sw.js",'"puzzles.js?v=7",','',"offline3"),
  ("difficulty drops in zone 5","puzzles.js","k:[0,10,16,24,24,34]","k:[0,10,16,24,24,12]","difficulty"),
  ("code keys too small","index.html",".pkey{width:48px;height:48px",".pkey{width:38px;height:38px","ui_fit"),
  ("puzzle not seeded per room","puzzles.js","(room.id+1)*9973+17*room.z","(Math.random()*1e9|0)","all_rooms_data"),

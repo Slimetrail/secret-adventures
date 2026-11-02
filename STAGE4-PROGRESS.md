@@ -73,3 +73,21 @@ Not tested: real phone; real installed-app (standalone display mode could not be
 - Scene: horizon at 0.6H, deeper floor, back pillars, wide front pillars, smaller arch, torches on the wall; figures about half their old size; every figure inside the canvas (checked by test).
 - New tests: fight_view_v2, fight_tree3 (+6 mutations). Shots: stage4-fix-shots/v2-*.
 - PENDING: the sw cache version was not bumped (still v6); a phone with the old v6 cache keeps old files until the next version bump.
+
+## Fight v3 (name tabs top right, slide-in tree, portrait only)
+- Party names are slim tabs stacked top right over the scene, with thin HP/MP bars. The member whose turn it is sticks out further left with a gold edge and glow.
+- Tapping the active tab slides a decision tree in from the right edge: Defend, Attack > targets, Spells > list, Items > list, Run. Each nested level slides in the same way and has a Back button. Tapping outside closes the tree.
+- There is no bottom panel or buttons. The scene is full height, enemy names are small labels over the enemies, and the message line stays at the top.
+- Portrait only:
+  - manifest orientation is portrait
+  - screen.orientation.lock("portrait") is tried
+  - a "Turn your phone upright" notice shows when the phone is sideways
+  - the landscape fight/sheet CSS was removed
+- Service worker v7.
+- Changed landscape tests:
+  - stage4_fix SIZES dropped 915x412
+  - keyboard_viewport dropped 915x412
+  - touch_scroll 915x412 is now 360x640
+  - stage2 fit_open and marker dropped 915x412
+- The sw_autoreload pretend v8 now expects the v8 cache. sw_update also starts from c5b7de7 (v6).
+- Old boxed `branch` code is still in party.js but is no longer used in fights.

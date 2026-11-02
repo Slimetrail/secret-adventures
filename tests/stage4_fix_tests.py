@@ -4,13 +4,17 @@ import sys,os,time,re,shutil,subprocess,tempfile,socket
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 and sys.argv[1] else 'http://127.0.0.1:8765/').rstrip('/')+'/';ONLY=sys.argv[2:]
 ROOT=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..');PY=sys.executable
-SIZES=[(390,844),(360,800),(412,915),(915,412)]
+SIZES=[(390,844),(360,800),(412,915)]  # fight v3: portrait only (915x412 now shows the 'turn upright' notice, see t_portrait_lock)
 class Fail(Exception):pass
 def check(c,m):
   if not c:raise Fail(m)
 ERRS=[]
 def ctx(p,w=390,h=844,sw=False):
   b=p.chromium.launch();return b,b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block')
+def noslide(pg):
+  for _ in range(40):
+    if not pg.evaluate('!!document.querySelector("#s4br .sliding")'):return
+    pg.wait_for_timeout(25)
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
 def fresh(c,pre=None,url=None):
   pg=c.new_page();pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.goto((url or BASE)+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg')
@@ -28,8 +32,9 @@ def visible(pg,sel):
 def ttap(pg,sel,tries=25):
   """tap like a finger: if the thing is not on screen, swipe the page (touch) until it is - no scripted scrolling"""
   for i in range(tries):
+    noslide(pg)
     if visible(pg,sel):
-      b=pg.locator(sel).first.bounding_box();pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2);return
+      b=pg.locator(sel).first.bounding_box();pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2);noslide(pg);return
     check(pg.locator(sel).count()>0,'no element '+sel)
     r=ev(pg,'s=>document.querySelector(s).getBoundingClientRect().top',sel);vw=ev(pg,'innerWidth');vh=ev(pg,'visualViewport.height')
     swipe(pg,vw*0.5,vh*0.45,(vh*0.3) if r>vh*0.5 else -(vh*0.3))
@@ -63,11 +68,11 @@ def t_keyboard_letters(p):
   check(ev(pg,'document.getElementById("ccname").value')=='Wasd Mmm','typing lost letters: '+ev(pg,'document.getElementById("ccname").value'))
   check(not ev(pg,'SOTA.mapOpen&&SOTA.mapOpen()'),'typing m opened the map');s1=ev(pg,'SOTA.state()');check((s1['x'],s1['y'],s1['f'])==(s0['x'],s0['y'],s0['f']),'typing moved the hero');b.close()
 def t_keyboard_viewport(p):
-  for w,h in[(390,844),(360,800),(915,412)]:
+  for w,h in[(390,844),(360,800)]:
     b,c=ctx(p,w,h);pg=fresh(c);ttap(pg,'#ccname');pg.set_viewport_size({'width':w,'height':h//2 if h>500 else 200});pg.wait_for_timeout(150)
     check(visible(pg,'#ccgo'),f'{w}x{h}: Confirm hidden with the keyboard open');pg.keyboard.type('Kb');ttap(pg,'[data-skill]');check(visible(pg,'#ccgo'),'Confirm hidden after scrolling');b.close()
 def t_touch_scroll(p):
-  for w,h in[(360,800),(915,412)]:
+  for w,h in[(360,800),(360,640)]:
     b,c=ctx(p,w,h);pg=fresh(c)
     r=ev(pg,'(()=>{const r=document.querySelector("[data-race=human]").getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()')
     swipe(pg,r[0],min(r[1],h*0.6),h*0.3);check(ev(pg,'document.getElementById("s4").scrollTop')>20,f'{w}x{h}: touch drag starting on a button did not scroll')
@@ -124,7 +129,7 @@ def serve(d):
   pr=subprocess.Popen([PY,'-m','http.server',str(port),'--bind','127.0.0.1'],cwd=d,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(0.8);return pr,f'http://127.0.0.1:{port}/'
 def t_sw_update(p):
   """an old worker (v4 = c11ccd5, v5 = a248cec) is serving cached old files; the new files land; the player ends up in creation"""
-  for old,ver in[('c11ccd5','4'),('a248cec','5')]:
+  for old,ver in[('c11ccd5','4'),('a248cec','5'),('c5b7de7','6')]:
     d=tempfile.mkdtemp(prefix='sota-swup-')
     subprocess.run(f'git -C {ROOT} archive {old} | tar -x -C {d}',shell=True,check=True);pr,url=serve(d)
     try:
@@ -135,28 +140,28 @@ def t_sw_update(p):
       pg.reload();t0=time.time()
       while time.time()-t0<20:
         try:
-          if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'):break
+          if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")') and ev(pg,'caches.keys()')==["sota-s1-v7"]:break
           if ev(pg,'(()=>{const u=document.getElementById("updb");return !!u&&getComputedStyle(u).display!=="none"})()'):
             bb=pg.locator('#updb').bounding_box();pg.touchscreen.tap(bb['x']+bb['width']/2,bb['y']+bb['height']/2)
         except Exception:pass
         pg.wait_for_timeout(300)
-      check(ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'),f'v{ver} -> v6: creation never showed')
-      check(ev(pg,'caches.keys()')==['sota-s1-v6'],'new cache not active');full_create(pg,'Swy');b.close()
+      check(ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'),f'v{ver} -> v7: creation never showed')
+      k=ev(pg,'caches.keys()');check(k==['sota-s1-v7'],f'new cache not active {k}');full_create(pg,'Swy');b.close()
     finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 def t_sw_autoreload(p):
-  """from v6 on: a new version (here a pretend v7) reloads by itself when no hero exists yet - no banner tap needed"""
+  """from v6 on: a new version (here a pretend v8) reloads by itself when no hero exists yet - no banner tap needed"""
   d=tempfile.mkdtemp(prefix='sota-swup7-');copy_app(ROOT,d);pr,url=serve(d)
   try:
     b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-    check(ev(pg,'caches.keys()')==['sota-s1-v6'],'v6 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
-    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="6"','VER="7"'))
+    check(ev(pg,'caches.keys()')==['sota-s1-v7'],'v7 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
+    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="7"','VER="8"'))
     ev(pg,'navigator.serviceWorker.getRegistration().then(r=>r&&r.update())');t0=time.time()
     while time.time()-t0<20:
       try:
         if ev(pg,'!window.__mark&&!!(window.SOTA&&SOTA.rpg)'):break
       except Exception:pass
       pg.wait_for_timeout(300)
-    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v7'],'v7 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
+    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v8'],'v8 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
   finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 # ---------------- branch menus ----------------
 def hero(pg,name='Tess',cls='warrior',race='human'):
@@ -173,7 +178,7 @@ def t_fight_branch(p):
     sm=ev(pg,'[...document.querySelectorAll("#s4br .s4bi")].filter(e=>{const r=e.getBoundingClientRect();return r.height<44||r.width<44||r.right>innerWidth+1||r.left<-1||r.bottom>innerHeight+1||r.top<-1}).length')
     check(sm==0,f'{w}x{h}: branch labels small or off screen')
     cv=ev(pg,'(()=>{const r=document.getElementById("fcv").getBoundingClientRect();return [r.left,r.top,r.width,r.height]})()')
-    cov=ev(pg,'a=>[...document.querySelectorAll("#s4br .s4bi")].some(e=>{const r=e.getBoundingClientRect();return r.left<a[0]+a[2]*0.5&&r.right>a[0]&&r.top<a[1]+a[3]*0.85&&r.bottom>a[1]+a[3]*0.2})',cv)
+    cov=ev(pg,'a=>{const f=SOTA.rpg.figs();return [...document.querySelectorAll("#s4br .s4bi")].some(e=>{const r=e.getBoundingClientRect();return f.mons.some(m=>r.left<a[0]+m.r&&r.right>a[0]+m.l&&r.top<a[1]+m.b&&r.bottom>a[1]+m.t)})}',cv)
     check(not cov,f'{w}x{h}: branch covers the enemies')
     ttap(pg,'#s4br [data-cmd4=spells]');check(ev(pg,'[...document.querySelectorAll("#s4br .s4bcol[data-lv=\'1\'] [data-sk]")].map(e=>e.dataset.sk)')==ev(pg,'SOTA.rpg.live().party[0].skills'),'spell sub-branch wrong')
     ttap(pg,'#s4br [data-cmd4=item]');check(ev(pg,'[...document.querySelectorAll("#s4br .s4bcol[data-lv=\'1\'] [data-item]")].map(e=>e.dataset.item).sort()')==['ether','potion'],'item sub-branch wrong')
@@ -232,7 +237,7 @@ def t_fight_layout(p):
     check(r[0][3]-r[0][1]>=150,f'{w}x{h}: fight view too small');check(ev(pg,'document.querySelectorAll("#fparty .s4pr").length')==4,'party HP list')
     ev(pg,'SOTA.rpg.forceEnd("win")');check(visible(pg,'#fdone') or True,'');ttap(pg,'#fdone');check(ui(pg) is None,'Continue failed');b.close()
 def t_fight_tree3(p):
-  """a 3-level tree (Spells > Bolt > target) fits the slim panel at every size, even with one hero"""
+  """a 3-level tree (Spells > Bolt > target) slides in fully on screen without overlapping, at every size"""
   for w,h in SIZES:
     b,c=ctx(p,w,h);pg=fresh(c);full_create(pg,'Ana',race='elf',cls='mage')
     ev(pg,'SOTA.rpg.live().party[0].skills=["bolt"];SOTA.rpg.live().party[0].mp=30')
@@ -243,29 +248,62 @@ def t_fight_tree3(p):
     for i in range(len(bs)):
       for j in range(i+1,len(bs)):A,B=bs[i],bs[j];check(A[1]<=B[0]+0.5 or B[1]<=A[0]+0.5 or A[3]<=B[2]+0.5 or B[3]<=A[2]+0.5,f'{w}x{h}: tree buttons overlap {A} {B}')
     m0=ev(pg,'SOTA.rpg.fight().m[2].hp');ttap(pg,'#s4br [data-tgt="2"]');check(ev(pg,'SOTA.rpg.fight().m[2].hp')<m0,f'{w}x{h}: bolt on far target did nothing');b.close()
-def t_fight_view_v2(p):
-  """fight v2: slim menu panel, big far-camera scene, tree kept out of the scene, every figure inside the canvas"""
+def fight4(pg):
+  ev(pg,'SOTA.rpg.live().party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1),RPG.makeCompanion(RPG.COMPANIONS[2],1))')
+  ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>{const m=RPG.makeMonster(1,i,1,0,"normal");m.hp=m.max=300;return m}))');pg.wait_for_timeout(200)
+RECTS='s=>[...document.querySelectorAll(s)].filter(e=>e.offsetParent&&getComputedStyle(e).display!=="none").map(e=>{const r=e.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]})'
+def t_fight_v3_names(p):
+  """fight v3: full-height scene, no bottom panel or buttons, name tabs stacked top right, the active one sticks out further left"""
   for w,h in SIZES:
-    b,c=ctx(p,w,h);pg=fresh(c);hero(pg);ev(pg,'SOTA.rpg.live().party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1),RPG.makeCompanion(RPG.COMPANIONS[2],1))')
-    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>{const m=RPG.makeMonster(1,i,1,0,"normal");m.hp=m.max=300;return m}))');pg.wait_for_timeout(200)
-    R=lambda i:ev(pg,f'(()=>{{const r=document.getElementById("{i}").getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]}})()')
-    cv,bt=R('fcv'),R('fbot');land=w>h
-    if land:check(cv[2]-cv[0]>=0.7*w and bt[2]-bt[0]<=0.3*w,f'{w}x{h}: scene {cv} / strip {bt} not slim enough')
-    else:check(cv[3]-cv[1]>=0.75*h and bt[3]-bt[1]<=170,f'{w}x{h}: scene {cv} / panel {bt} not slim enough')
-    f=ev(pg,'SOTA.rpg.figs()');check(f['s']<=0.32*min(f['w'],f['h']*1.0),f'{w}x{h}: figures too big {f["s"]}')
+    b,c=ctx(p,w,h);pg=fresh(c);hero(pg);fight4(pg)
+    cv=ev(pg,'(()=>{const r=document.getElementById("fcv").getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]})()')
+    check(cv[3]-cv[1]>=h-2 and cv[2]-cv[0]>=w-2,f'{w}x{h}: scene not full screen {cv}')
+    bt=ev(pg,RECTS,'.s4fight button, .s4fight .s4menu *');check(all(r[3]<=h*0.5 for r in bt),f'{w}x{h}: something sits in the bottom half {bt}')
+    tabs=ev(pg,RECTS,'#fparty .s4nl');check(len(tabs)==4,'4 name tabs')
+    for r in tabs:check(abs(r[2]-w)<=1.5 and r[1]>=0 and r[3]<=h*0.45 and r[3]-r[1]>=44,f'{w}x{h}: tab not stacked top right / too small {r}')
+    check(all(tabs[i][1]<tabs[i+1][1] for i in range(3)),'tabs not stacked')
+    now=ev(pg,'+document.querySelector("#fparty .s4pr.now .s4nl").dataset.hero');others=[r[0] for i,r in enumerate(tabs) if i!=now]
+    check(all(tabs[now][0]<=x-12 for x in others),f'{w}x{h}: active tab does not stick out {tabs}')
+    sz=ev(pg,'parseFloat(getComputedStyle(document.querySelector("#fparty .s4nn")).fontSize)');check(11<=sz<=14,f'name text size {sz}')
+    check(ev(pg,'document.querySelectorAll("#fparty .s4bar.hp").length')==4,'no hp bars in the tabs')
+    f=ev(pg,'SOTA.rpg.figs()')
     for k in['mons','heroes']:
       for q in f[k]:check(q['l']>=0 and q['r']<=f['w'] and q['t']>=0 and q['b']<=f['h'],f'{w}x{h}: a figure is cut off {k} {q}')
-    sz=ev(pg,'parseFloat(getComputedStyle(document.querySelector("#fparty .s4nn")).fontSize)');check(11<=sz<=15,f'{w}x{h}: name text size {sz}')
-    def tree_ok(tag):
-      bs=ev(pg,'[...document.querySelectorAll("#s4br .s4bi")].filter(b=>b.offsetParent).map(b=>{const r=b.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]})')
-      check(len(bs)>0,f'{w}x{h} {tag}: no tree')
-      for l,t_,r_,b_ in bs:
-        check(b_-t_>=44 and r_-l>=44,f'{w}x{h} {tag}: small target');check(l>=0 and t_>=0 and r_<=w+0.5 and b_<=h+0.5,f'{w}x{h} {tag}: off screen')
-        check(r_<=cv[0] or l>=cv[2] or b_<=cv[1] or t_>=cv[3],f'{w}x{h} {tag}: tree covers the fight scene')
-    ttap(pg,'#fparty [data-hero="0"]');tree_ok('open');ttap(pg,'#s4br [data-cmd4=attack]');tree_ok('targets')
-    ttap(pg,'#s4br [data-cmd4=spells]');tree_ok('spells');mp=ev(pg,'SOTA.rpg.live().party[0].mp');ttap(pg,'#s4br [data-sk]')
-    if pg.locator('#s4br [data-tgt="2"]').count():tree_ok('spell targets');ttap(pg,'#s4br [data-tgt="2"]')
-    check(ev(pg,'SOTA.rpg.live().party[0].mp')<mp,f'{w}x{h}: spell did nothing');b.close()
+    for q in f['heroes']+f['mons']:
+      for r in tabs:check(r[3]<=q['t'] or r[0]>=q['r'],f'{w}x{h}: a name tab covers a figure')
+    ev(pg,'SOTA.rpg.forceEnd("win")');d=ev(pg,RECTS,'#fdone')[0];check(d[3]<=h*0.85 and d[1]>=0,f'{w}x{h}: Continue not reachable {d}');ttap(pg,'#fdone');check(ui(pg) is None,'Continue failed');b.close()
+def t_fight_v3_tree(p):
+  """tapping the active name slides the tree in from the right edge; nested levels slide in; Back and tap-outside close; attack works through it"""
+  for w,h in SIZES:
+    b,c=ctx(p,w,h);pg=fresh(c);hero(pg);fight4(pg)
+    check(not ev(pg,'!!document.getElementById("s4br")'),'tree open before tapping')
+    ev(pg,'document.querySelector("#fparty [data-hero=\'1\']").click()');check(not ev(pg,'!!document.getElementById("s4br")'),'a waiting member opened the tree')
+    anim=ev(pg,'(()=>{document.querySelector("#fparty [data-hero=\'0\']").click();const c=document.querySelector("#s4br .s4bcol");return getComputedStyle(c).animationName+"|"+c.classList.contains("sliding")})()')
+    check(anim=='s4in|true','tree does not slide in: '+anim);noslide(pg);ev(pg,'SOTA.rpg.closeBranch()');ttap(pg,'#fparty [data-hero="0"]')
+    c0=ev(pg,RECTS,'#s4br .s4bcol[data-lv="0"]')[0];check(abs(c0[2]-w)<=1.5,f'{w}x{h}: tree not at the right edge {c0}')
+    tabs=ev(pg,RECTS,'#fparty .s4nl');check(c0[1]>=max(r[3] for r in tabs),'tree covers the name tabs')
+    check(ev(pg,'[...document.querySelectorAll("#s4br .s4bcol[data-lv=\'0\'] .s4bi")].map(e=>e.textContent)')==['Defend','Attack','Spells','Items','Run'],'level 0 items')
+    ttap(pg,'#s4br [data-cmd4=spells]');c0b=ev(pg,RECTS,'#s4br .s4bcol[data-lv="0"]');c1=ev(pg,RECTS,'#s4br .s4bcol[data-lv="1"]')[0]
+    check(abs(c1[2]-w)<=1.5,'level 1 not at the right edge');check(not c0b or c0b[0][2]<=c1[0],'level 0 did not move left of level 1')
+    check(ev(pg,'!!document.querySelector("#s4br .s4bcol[data-lv=\'1\'] [data-back]")'),'no Back button')
+    ttap(pg,'#s4br [data-back="1"]');check(ev(pg,'document.querySelectorAll("#s4br .s4bcol[data-lv=\'1\']").length')==0 and ev(pg,'!!document.querySelector("#s4br [data-cmd4=attack]")'),'Back did not go back')
+    pg.touchscreen.tap(w*0.25,h*0.2);pg.wait_for_timeout(100);check(not ev(pg,'!!document.getElementById("s4br")'),'tap outside did not close (own turn)');ttap(pg,'#fparty [data-hero="0"]')
+    for r in ev(pg,RECTS,'#s4br .s4bi'):check(r[3]-r[1]>=44 and r[2]-r[0]>=44 and r[0]>=0 and r[2]<=w+1 and r[3]<=h,f'{w}x{h}: tree button small or off screen {r}')
+    ttap(pg,'#s4br [data-cmd4=attack]');check(ev(pg,'document.querySelectorAll("#s4br [data-tgt]").length')==3,'targets missing')
+    hp=ev(pg,'SOTA.rpg.fight().m[2].hp');ttap(pg,'#s4br [data-tgt="2"]');check(ev(pg,'SOTA.rpg.fight().m[2].hp')<hp,'attack did no damage')
+    check(not ev(pg,'!!document.getElementById("s4br")'),'tree stayed open');check(ev(pg,'SOTA.rpg.turn()')==1,'turn did not pass')
+    ttap(pg,'#fparty [data-hero="1"]');noslide(pg);check(ev(pg,'!!document.getElementById("s4br")'),'tree did not open for the next member')
+    pg.touchscreen.tap(w*0.25,h*0.2);pg.wait_for_timeout(100);check(not ev(pg,'!!document.getElementById("s4br")'),'tap outside did not close');b.close()
+def t_portrait_lock(p):
+  """portrait only: manifest says portrait, the app asks the phone to lock, and a sideways phone gets a notice, not a landscape layout"""
+  import json as _j
+  check(_j.load(open(os.path.join(ROOT,'manifest.json')))['orientation']=='portrait','manifest not portrait')
+  for w,h in[(915,412),(800,360)]:
+    b,c=ctx(p,w,h);pg=fresh(c)
+    check(ev(pg,'window.__sotaLock||"none"') in('tried','ok') or not ev(pg,'!!(screen.orientation&&screen.orientation.lock)'),'no lock attempt')
+    check(visible(pg,'#rotn'),f'{w}x{h}: no turn-upright notice');check(ev(pg,f'document.elementFromPoint({w//2},{h//2}).closest("#rotn")!==null'),'notice does not cover the game')
+    check('upright' in ev(pg,'document.getElementById("rotn").textContent'),'notice text');b.close()
+  b,c=ctx(p,390,844);pg=fresh(c);check(not visible(pg,'#rotn'),'notice shown in portrait');b.close()
 T=[(n[2:],f) for n,f in list(globals().items()) if n.startswith('t_')]
 if __name__=='__main__':
   fails=0

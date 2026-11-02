@@ -9,7 +9,7 @@ MUT=[
  ("slot count 3","index.html",'<button class="slot" data-slot="3"','<i data-x="3"',"slots_layout"),
  ("item box overlaps button","index.html","#slots{flex:1;","#slots{flex:1;position:relative;left:-40px;","slots_layout"),
  ("map close breaks movement","map.js",'tap("mclose",()=>setOpen(false));','tap("mclose",()=>{el.classList.remove("open");});',"map_open_close"),
- ("map.js missing from offline list","sw.js",'"map.js?v=6",','',"offline2"),
+ ("map.js missing from offline list","sw.js",'"map.js?v=7",','',"offline2"),
  ("trail not recorded","game.js","visit(i);trail.push(i);","visit(i);","map_markers"),
  ("recenter does nothing","map.js",'tap("mctr",()=>{bbox();fit();req();});','tap("mctr",()=>{req();});',"map_panzoom"),
  ("old save crashes map","game.js","catch(e){visited.fill(0);visCount=0;trail=[st.y*N+st.x];}","catch(e){visited.fill(0);visCount=0;trail=[0];}","old_and_corrupt_save"),

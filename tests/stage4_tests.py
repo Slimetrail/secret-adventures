@@ -22,7 +22,12 @@ def tap(pg,sel):
       if pg.locator('.s4pk.sel').count()==0:tap(pg,f'[data-card="{m.group(2)}"]')
       return
     elif sel.startswith('[data-cmd4'):tap(pg,'#fparty button.s4nl:not([disabled])')
+  noslide(pg)
   l=pg.locator(sel).first;check(l.count()>0,'no element '+sel);l.scroll_into_view_if_needed();b=l.bounding_box();check(b,'no element '+sel);pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2)
+def noslide(pg):
+  for _ in range(40):
+    if not pg.evaluate('!!document.querySelector("#s4br .sliding")'):return
+    pg.wait_for_timeout(25)
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
 def create(pg,race='human',cls='warrior',inc=('str','str','str'),skill=None,diff='normal',name='Jer'):
   if ev(pg,'SOTA.rpg.ui()')!='create':tap(pg,'#partyb')
@@ -173,8 +178,8 @@ def t_ui_fit(p):
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()
 def t_offline4(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v6");const r=[];for(const f of["rules.js?v=6","party.js?v=6","game.js?v=6","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v6'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v7");const r=[];for(const f of["rules.js?v=7","party.js?v=7","game.js?v=7","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v7'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 def t_unchanged(p):
   d=subprocess.run(['git','diff','--stat','c11ccd52511198071301d9c30bb032a4cfaed635','--','tex.js','puzzles.js','puzzle-ui.js','map.js','doors.js','maze-data.js'],cwd=ROOT,capture_output=True,text=True).stdout

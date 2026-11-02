@@ -103,7 +103,7 @@ def t_map_panzoom(p):
 
 def inside(r,w,h):return r['l']>=0 and r['t']>=0 and r['r']<=w and r['b']<=h
 def t_fit_open(p):
-  for (w,h) in [(360,800),(412,915),(915,412)]:
+  for (w,h) in [(360,800),(412,915)]:
     for n in [30,98]:
       b,c=ctx(p,w,h);pg=page(c);cells=[tuple(x) for x in MZ['main_route'][:n]]
       if n==98:cells=tour()
@@ -116,7 +116,7 @@ def t_marker(p):
   # Data method: the marker exports its geometry (cell centre, ring radius, arrow centre+size, icon radius) in css px.
   # The icon is drawn inside radius ir around the cell centre; the ring must lie outside it and the arrow must not reach into it.
   import math
-  for (w,h,cell) in [(412,915,(14,49)),(360,800,(15,50)),(915,412,(14,49))]:
+  for (w,h,cell) in [(412,915,(14,49)),(360,800,(15,50))]:
     b,c=ctx(p,w,h);pg=page(c);cs=W.path((0,64),cell) if cell==(14,49) else tour()[:tour().index(cell)+1];walk(pg,cs)
     check((S(pg)['x'],S(pg)['y'])==cell,'not on poi');
     for z in ['open','out','out','out','out','out','out']:
@@ -199,7 +199,7 @@ def t_offline2(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA')
   pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
   c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.map',timeout=8000)
-  ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=6"))&&(await caches.keys()).length})()')
+  ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=7"))&&(await caches.keys()).length})()')
   check(ok==1,f'map.js not cached / old caches kept {ok}');tap(pg,'#mapb');check(MD(pg)['cells']=='1' or int(MD(pg)['cells'])>=1,'map offline');b.close()
 
 def t_console_network2(p):
