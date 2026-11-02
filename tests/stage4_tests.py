@@ -127,11 +127,11 @@ def t_save_only_camps(p):
   b,c=ctx(p);pg=page(c);create(pg);s0=ev(pg,'localStorage.getItem("sota.party")')
   check(ev(pg,'SOTA.rpg.doSave()')==False,'saved away from camp');ev(pg,'SOTA.rpg.live().gold=999');tap(pg,'[data-cmd=fwd]');finish(pg)
   check(ev(pg,'localStorage.getItem("sota.party")')==s0,'storage changed on a plain step')
-  cp=ev(pg,'MAZE.camps[0]');step_into(pg,cp);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==999 and [sv['at']['x'],sv['at']['y']]==cp,'camp did not save')
+  cp=ev(pg,'MAZE.camps[0]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');step_into(pg,cp);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==999 and [sv['at']['x'],sv['at']['y']]==cp,'camp did not save')
   tv=ev(pg,'MAZE.taverns[0]');ev(pg,'SOTA.rpg.live().gold=5');step_into(pg,tv);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==5 and 'Tavern 1'==sv['at']['name'],'tavern did not save')
   ev(pg,'SOTA.rpg.live().gold=777');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'SOTA.rpg.live().gold')==5,'progress after save kept over reload');b.close()
 def t_death_restore(p):
-  b,c=ctx(p);pg=page(c);create(pg);r0=ev(pg,'MAZE.rooms.find(r=>r.k==="treasure").id');ev(pg,f'SOTA.markSolved({r0})');cp=ev(pg,'MAZE.camps[1]');step_into(pg,cp);g=ev(pg,'SOTA.rpg.live().gold')
+  b,c=ctx(p);pg=page(c);create(pg);r0=ev(pg,'MAZE.rooms.find(r=>r.k==="treasure").id');ev(pg,f'SOTA.markSolved({r0})');cp=ev(pg,'MAZE.camps[1]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');step_into(pg,cp);g=ev(pg,'SOTA.rpg.live().gold')
   r=ev(pg,'MAZE.rooms.find(r=>r.k==="story"&&!SOTA.isSolved(r.id)).id');ev(pg,f'SOTA.markSolved({r})');ev(pg,'SOTA.rpg.live().gold+=500;SOTA.rpg.live().party[0].xp+=5');ev(pg,'SOTA.teleport(5,63,0)')
   ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(5,1,40,1,"hard")])')
   for i in range(40):

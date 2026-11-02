@@ -9,7 +9,7 @@ MUT=[
  ("no level cap","rules.js","function xpNeed(level){return level>=CAP?Infinity:","function xpNeed(level){return level>=99?Infinity:","level_cap"),
  ("skill every 2 levels","rules.js","1+Math.floor(Math.min(level,CAP)/3)","1+Math.floor(Math.min(level,CAP)/2)","skill_every3"),
  ("weight ignores race","rules.js","*RACES[c.race].carry);","*1);","weight"),
- ("no weight limit","rules.js","function canCarry(c,id){return bagWeight(c)+ITEMS[id].w<=carryLimit(c);}","function canCarry(c,id){return true;}","weight"),
+ ("no weight limit","rules.js",'function canCarry(c,id){return bagWeight({bag:c.bag.concat([id])})<=carryLimit(c);}',"function canCarry(c,id){return true;}","weight"),
  ("hard same as normal","rules.js",'hard:{hp:1,matk:1.5','hard:{hp:1,matk:1',"difficulty"),
  ("story hp not doubled","party.js",'live.party[0].hp=R.maxHp(h,hpMul());doSave(true)','live.party[0].hp=R.maxHp(h,1);doSave(true)',"difficulty"),
  ("zones flat","rules.js","const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8]","const ZONE_MUL=[0,1,1,1,1,1]","monster_scaling"),

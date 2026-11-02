@@ -44,7 +44,9 @@ def t_stacking(p):
   check(len(st)==1 and st[0][0]=='3' and '×3' in st[0][1],f'teeth not stacked {st}');b.close()
 def t_shop_buy_sell(p):
   b,pg=setup(p);L(pg,'L.gold=100;L.party[0].bag.push("j_gem");');ev(pg,'SOTA.rpg.s5.tavernScreen(0)')
-  check(ev(pg,'SOTA.rpg.ui()')=='tavern','tavern did not open');tap(pg,'[data-tab=buy]');tree(pg,'Supplies');tree(pg,'Ration')
+  check(ev(pg,'SOTA.rpg.ui()')=='tavern','tavern did not open');tap(pg,'[data-tab=buy]');noslide(pg);pg.wait_for_timeout(80)
+  o=ev(pg,'(()=>{const c=document.querySelector("#s4br .s4bcol").getBoundingClientRect().right;return [...document.querySelectorAll(".s5tab")].filter(x=>x.getBoundingClientRect().left<c-1).length})()');check(o==0,f'shop tree covers {o} tabs')
+  tree(pg,'Supplies');tree(pg,'Ration')
   check(L(pg,'return [L.gold,X.haveN("ration")]')==[96,1],'buying a ration failed')
   v=L(pg,'return E.sellPrice("j_gem")');tap(pg,'[data-tab=sell]');tree(pg,L(pg,'return L.party[0].name'));tree(pg,'gem')
   check(L(pg,'return [L.gold,X.haveN("j_gem")]')==[96+v,0],'selling junk failed')
@@ -139,6 +141,10 @@ def t_fit_s5(p):
       ev(pg,js);o=ev(pg,'(()=>{const W=innerWidth;return [...document.querySelectorAll("#s4 button")].filter(x=>{const r=x.getBoundingClientRect();return r.width&&(r.right>W+1||r.left<-1||r.height<43)}).map(x=>x.textContent)})()')
       check(not o,f'{w}x{h} {js}: off screen or small {o[:4]}')
     b.close()
+def t_offline5(p):
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v9");return [k,!!(await c.match("econ.js?v=9"))]})()')
+  check(ok==[['sota-s1-v9'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
 def t_s5_code_clean(p):
   src=''.join(open(os.path.join(ROOT,f)).read() for f in['econ.js','party.js'])
   check('fetch(' not in src and 'http' not in src and 'XMLHttpRequest' not in src,'network in stage 5 code')

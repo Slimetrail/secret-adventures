@@ -410,7 +410,7 @@ function cookbook(back){s5init();const w=page("cookbook");w.appendChild(head("Co
   else{c.appendChild(el("b","dim",(i+1)+". ? ? ?"));c.appendChild(el("div","s4sub dim","not learned"));}g.appendChild(c);});w.appendChild(g);}
 function tentScreen(t){s5init();const w=page("tent");w.appendChild(head("Crafter - tent",()=>tavernScreen(t)));goldLine(w);
  w.appendChild(el("div","s4note","A tent weighs nothing. You need one to camp and save at a camp. Each tent lasts "+E.TENT.nights+" nights. Tents owned: "+haveN("tent")+"."));
- const bt=tapBtn("Buy a tent · "+E.TENT.buy+" gold",()=>{buy("tent");tentScreen(t);},"small");bt.dataset.buytent="1";if(live.gold<E.TENT.buy)bt.classList.add("off");w.appendChild(bt);
+ const bt=tapBtn("Buy a tent · "+E.TENT.buy+" gold",()=>{buy("tent");tentScreen(t);},"small");bt.dataset.buytent="1";if(live.gold<E.TENT.buy)bt.classList.add("off");const br0=el("div","s4row");br0.appendChild(bt);w.appendChild(br0);
  w.appendChild(el("div","s4lab","Or build one: parts + "+E.TENT.fee+" gold fee"));const need=tentNeed();
  need.forEach(x=>{const P=E.PARTS[x.id],z=P[2],r=el("div","s4st s5need"+(x.have>=x.n?" ok":""));r.dataset.need=x.id;r.appendChild(el("span","s4k",R.ITEMS[x.id].n+" ("+(z.length===1?"only zone "+z[0]:"zones "+z[0]+"-"+z[z.length-1])+")"));r.appendChild(el("span","s4v",Math.min(x.have,x.n)+" / "+x.n));w.appendChild(r);});
  const ok=need.every(x=>x.have>=x.n),row=el("div","s4row"),sj=spareJunk().reduce((s,id)=>s+E.sellPrice(id),0);
