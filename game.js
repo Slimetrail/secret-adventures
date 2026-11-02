@@ -42,7 +42,7 @@ let bump=0;
 // ---------- renderer ----------
 const cv=document.getElementById("view"),ctx=cv.getContext("2d",{alpha:false});
 let W=0,H=0,img=null,buf=null,zbuf=null;
-function resize(){const vw=window.innerWidth,vh=window.innerHeight,asp=vw/vh;const px=window.__SOTA_PIX||64000;
+function resize(){const vw=window.innerWidth,vh=window.innerHeight,asp=vw/vh;const px=window.__SOTA_PIX||110000;
  W=Math.max(120,Math.round(Math.sqrt(px*asp)));H=Math.max(120,Math.round(W/asp));cv.width=W;cv.height=H;img=ctx.createImageData(W,H);buf=new Uint32Array(img.data.buffer);}
 window.addEventListener("resize",resize);resize();
 const fogNow=[...ZA[zoneOf[st.y*N+st.x]].fog];
