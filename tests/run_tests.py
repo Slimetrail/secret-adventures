@@ -53,6 +53,9 @@ def t_route_walk(p):
   for i in range(1,len(r)):
     (x0,y0),(x1,y1)=r[i-1],r[i];d=D.index((x1-x0,y1-y0));turn_to(pg,B,d);tap(pg,B,'fwd')
     s=S(pg);check((s['x'],s['y'])==(x1,y1),f'step {i} at {s} want {x1},{y1}')
+    if i%25==0:
+      tap(pg,B,'back');s=S(pg);check((s['x'],s['y'],s['f'])==(x0,y0,d),f'back step {i} gave {s}')
+      tap(pg,B,'fwd');s=S(pg);check((s['x'],s['y'])==(x1,y1),f're-step {i}')
   s=S(pg);check((s['x'],s['y'],s['zone'])==(32,32,5),'not at centre');b.close()
 
 def t_walls(p):
@@ -106,6 +109,10 @@ def t_offline(p):
   check(pg.evaluate('typeof SOTA.state')=='function','offline load failed')
   ok=pg.evaluate('Promise.all(["manifest.json","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png"].map(u=>fetch(u).then(r=>r.ok,()=>false)))')
   check(all(ok),f'offline assets {ok}')
+  # Playwright offline mode may not cover worker fetches, so also prove every file the page loaded is in the worker's saved copy.
+  miss=pg.evaluate('''(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));const u=[location.href.split("?")[0],...performance.getEntriesByType("resource").map(e=>e.name)].filter(x=>x.startsWith(location.origin));
+    const out=[];for(const x of u){if(!(await c.match(x,{ignoreSearch:x.endsWith(".html")})))out.push(x);}return out;})()''')
+  check(not miss,f'not cached: {miss}')
   reg=pg.evaluate('navigator.serviceWorker.getRegistration().then(r=>r.updateViaCache)');check(reg=='none','updateViaCache not none')
   b.close()
 
