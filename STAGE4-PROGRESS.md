@@ -91,3 +91,12 @@ Not tested: real phone; real installed-app (standalone display mode could not be
   - stage2 fit_open and marker dropped 915x412
 - The sw_autoreload pretend v8 now expects the v8 cache. sw_update also starts from c5b7de7 (v6).
 - Old boxed `branch` code is still in party.js but is no longer used in fights.
+
+## Fight v4 (turn rotation, tree beside the name, left arrows)
+- The name tabs stack in turn order. The member whose turn it is is always the top tab and sticks out. After acting, that member moves to the bottom with a short shift animation, which is off under reduced motion.
+- The tree opens to the left of the active name, starting at its top. Deeper levels open further left, each one beside the choice that opened it.
+- On narrow phones (360) the older column slides away, and Back brings it back.
+- Arrows ‹ now sit on the left of each label. The active tab shows a ‹ hint while its menu is closed.
+- Service worker v8. sw_autoreload now uses a pretend v9, and sw_update also starts from 222db21 (v7).
+- Test renames: fight_v3_names is now fight_v4_names and fight_v3_tree is now fight_v4_tree. fight_v4_rotate is new, and mutations4_fix has 7 new v4 mutations.
+- fight_branch now taps Back when a narrow phone has slid level 0 away.
