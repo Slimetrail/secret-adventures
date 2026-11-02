@@ -66,6 +66,17 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 #s4hint{display:none;position:fixed;top:calc(62px + env(safe-area-inset-top));right:10px;max-width:200px;padding:6px 10px;font:600 15px Georgia,serif;color:#efe0b8;background:rgba(20,10,40,.8);border:1px solid rgba(160,120,255,.7);border-radius:8px;pointer-events:none;text-align:right}
 #s4toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);max-width:86vw;padding:8px 14px;font:600 16px Georgia,serif;color:#efe0b8;background:rgba(20,10,40,.88);border:1px solid rgba(160,120,255,.8);border-radius:10px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;text-align:center}
 #s4toast.on{opacity:1}
+.s5here{position:fixed;top:calc(60px + env(safe-area-inset-top));right:8px;z-index:15;min-height:44px;padding:0 12px;border-radius:9px 7px 10px 6px;font:700 15px Georgia,serif;color:#2b1a0e;display:none}
+.s5tabs{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.s5tab{min-width:150px}
+.s5kc{display:flex;gap:10px;align-items:center}.s5keep{width:80px;height:80px;border-radius:8px}
+.s5gold{color:#ffe08a;font-weight:700}
+.s5chips{display:flex;flex-wrap:wrap;gap:6px}.s5chip{font-size:14px}.s5chip.sel{border-color:#ffe08a;color:#ffe08a}
+.s5book{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.s5rc{border:1px solid rgba(160,120,255,.45);border-radius:8px;padding:6px;min-height:58px;font-size:14px;overflow-wrap:anywhere}.s5rc.known{border-color:#c9a34a}.s5rc.bought{border-color:#7fb6ff}
+.s5cnt{position:absolute;right:3px;bottom:2px;font:700 12px Georgia,serif;color:#ffe08a;text-shadow:0 0 3px #000}.s4bag .s4sq{position:relative}
+.s5pop{position:fixed;left:50%;top:14%;transform:translateX(-50%);width:min(320px,86vw);z-index:35;background:rgba(14,8,30,.96);border:2px solid #ffe08a;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
+.s5need.ok .s4v{color:#9fe39f}
+.s5rowR{justify-content:flex-end}
+
 html.s4open,html.s4open body{touch-action:pan-y}
 #s4{display:none;position:fixed;inset:0;z-index:20;background:radial-gradient(ellipse at 50% 20%,#241838,#0b0714 70%);color:#efe0b8;font:16px Georgia,serif;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;user-select:none;scroll-padding-bottom:130px}
 #s4.open{display:block}#s4 button,#s4 input,#s4br button{touch-action:manipulation}#s4 input{user-select:text;-webkit-user-select:text}

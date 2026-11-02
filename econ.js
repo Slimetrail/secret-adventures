@@ -43,7 +43,7 @@ Object.assign(I,{ration:{n:"Ration",slot:"use",w:0.4,heal:0.15,camp:true,v:2},lo
 const PRICE={ration:4,potion:20,ether:25,lockpick:15,rope:10,tent:900,w_sword:40,w_dagger:20,w_bow:35,w_staff:35,w_leather:35,w_helm:40,w_buckler:25,p_silk:30,p_hide:40,p_shard:15};
 for(const k in ING)PRICE["i_"+k]=TIERP[ING[k][1]]||0;
 function price(id){return PRICE[id]||0;}
-function sellPrice(id){const it=I[id];if(!it||it.tent&&false)return 0;if(it.slot==="junk"||it.slot==="part")return it.v||0;return Math.max(1,Math.floor((PRICE[id]||it.v||2)/2));}
+function sellPrice(id){const it=I[id];if(!it)return 0;if(it.tent||it.slot==="junk"||it.slot==="part"||it.slot==="dish"||it.slot==="ing")return it.v||0;return Math.max(1,Math.floor((PRICE[id]||it.v||(it.atk||it.def||it.mag?16:2))/2));}
 // ---- tavern shops (index 0-3 = Tavern 1-4). Taverns 3 and 4 also sell tent parts ----
 const KEEPERS=[{name:"Brannoc",look:"dwarf",tag:"Stout dwarf, braided beard"},{name:"Wynn",look:"human",tag:"Blond human, quick smile"},{name:"Sylvaine",look:"elf",tag:"Silver-haired elf, calm"},{name:"Miso",look:"cat",tag:"White-haired cat-folk, sharp eyes"}];
 function stock(t){const s=["ration","potion","ether","lockpick","rope","tent"];
