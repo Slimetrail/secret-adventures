@@ -30,15 +30,15 @@ function makeBg(){dpr=Math.min(2,window.devicePixelRatio||1);BW=Math.round(inner
  const e=8*dpr,pts=[];const per=(x,y)=>pts.push([x,y]);
  for(let x=e;x<BW-e;x+=10*dpr)per(x,e+r()*7*dpr);for(let y=e;y<BH-e;y+=10*dpr)per(BW-e-r()*7*dpr,y);
  for(let x=BW-e;x>e;x-=10*dpr)per(x,BH-e-r()*7*dpr);for(let y=BH-e;y>e;y-=10*dpr)per(e+r()*7*dpr,y);
- g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();
- g.save();g.clip();g.fillStyle="#e3cf9f";g.fillRect(0,0,BW,BH);
+ const edge=new Path2D();pts.forEach((p,i)=>i?edge.lineTo(p[0],p[1]):edge.moveTo(p[0],p[1]));edge.closePath();
+ g.save();g.clip(edge);g.fillStyle="#e3cf9f";g.fillRect(0,0,BW,BH);
  for(let k=0;k<260;k++){const x=r()*BW,y=r()*BH,s=(4+r()*40)*dpr,gr=g.createRadialGradient(x,y,0,x,y,s);const d=r()<.5;
-  gr.addColorStop(0,d?"rgba(140,95,40,.10)":"rgba(255,245,215,.12)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-s,y-s,2*s,2*s);}
+  gr.addColorStop(0,d?"rgba(140,95,40,.07)":"rgba(255,245,215,.12)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-s,y-s,2*s,2*s);}
  for(let k=0;k<9;k++){const x=r()*BW,y=r()*BH,s=(25+r()*70)*dpr;g.strokeStyle="rgba(120,75,30,.07)";g.lineWidth=3*dpr;g.beginPath();for(let a=0;a<=6.3;a+=.3){const q=s*(.85+r()*.3);g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q*.75);}g.stroke();
   const gr=g.createRadialGradient(x,y,0,x,y,s);gr.addColorStop(0,"rgba(150,100,45,.06)");gr.addColorStop(.85,"rgba(150,100,45,.12)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-s,y-s,2*s,2*s);}
  for(let k=0;k<700;k++){g.fillStyle=`rgba(90,60,25,${r()*.08})`;g.fillRect(r()*BW,r()*BH,(1+r()*30)*dpr,dpr*.8);}
  const vg=g.createRadialGradient(BW/2,BH/2,Math.min(BW,BH)*.25,BW/2,BH/2,Math.hypot(BW,BH)*.58);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(80,45,15,.6)");g.fillStyle=vg;g.fillRect(0,0,BW,BH);
- g.restore();g.strokeStyle="rgba(70,40,15,.7)";g.lineWidth=2*dpr;g.stroke();}
+ g.restore();g.strokeStyle="rgba(70,40,15,.7)";g.lineWidth=2*dpr;g.stroke(edge);}
 // ---- view ----
 const view={cx:0,cy:0,z:22};const ZMIN=6,ZMAX=60;
 function center(){const s=S.state();view.cx=s.x+.5;view.cy=s.y+.5;}
