@@ -91,8 +91,9 @@ def t_change_race_class(p):
   check(ev(pg,'document.querySelector("[data-cls].sel").dataset.cls')!='mage','class not reset when not allowed')
   cl=ev(pg,'document.querySelector("[data-cls].sel").dataset.cls');sk=ev(pg,'[...document.querySelectorAll("[data-skill]")].map(e=>e.dataset.skill)')
   check(sk==ev(pg,'c=>RPG.SKILLS[c].slice(0,3).map(s=>s.id)',cl),'skill list not updated');check(not ev(pg,'!!document.querySelector("[data-skill].sel")'),'old skill still picked')
-  ttap(pg,'[data-cls=rogue]');check(ev(pg,'[...document.querySelectorAll("[data-skill]")].map(e=>e.dataset.skill)')==ev(pg,'RPG.SKILLS.rogue.slice(0,3).map(s=>s.id)'),'skill list not updated on class change')
-  ttap(pg,'[data-race=cat]');check(ev(pg,'document.querySelector("[data-cls=archer]").disabled'),'archer not greyed for cat');ttap(pg,'[data-race=human]')
+  ttap(pg,'[data-skill]');ttap(pg,'[data-cls=rogue]');check(not ev(pg,'!!document.querySelector("[data-skill].sel")'),'old class skill still picked after class change');check(ev(pg,'[...document.querySelectorAll("[data-skill]")].map(e=>e.dataset.skill)')==ev(pg,'RPG.SKILLS.rogue.slice(0,3).map(s=>s.id)'),'skill list not updated on class change')
+  type_name(pg,'Skilly');ttap(pg,'#ccgo');check('skill' in err(pg).lower(),'stale skill from the old class was kept');ttap(pg,'#s4 [data-race=cat]')
+  check(ev(pg,'document.querySelector("[data-cls=archer]").disabled'),'archer not greyed for cat');ttap(pg,'[data-race=human]')
   check(not ev(pg,'[...document.querySelectorAll("[data-cls]")].some(e=>e.disabled)'),'classes still greyed after going back to human');b.close()
 def t_confirm_messages(p):
   b,c=ctx(p);pg=fresh(c);ttap(pg,'#ccgo');check('name' in err(pg).lower(),'no empty-name message')
@@ -116,6 +117,8 @@ def t_standalone(p):
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg')
   if not ev(pg,'matchMedia("(display-mode: standalone)").matches'):print('   NOTE standalone display-mode could not be emulated here: ran as browser only (standalone NOT CHECKED)')
   full_create(pg,'Appy');b.close()
+def copy_app(src,d):
+  shutil.copytree(src,d,dirs_exist_ok=True,ignore=shutil.ignore_patterns('.git','tests','tools','*.md'))
 def serve(d):
   s=socket.socket();s.bind(('127.0.0.1',0));port=s.getsockname()[1];s.close()
   pr=subprocess.Popen([PY,'-m','http.server',str(port),'--bind','127.0.0.1'],cwd=d,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(0.8);return pr,f'http://127.0.0.1:{port}/'
@@ -128,7 +131,7 @@ def t_sw_update(p):
       b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
       check(ev(pg,'caches.keys()')==['sota-s1-v'+ver],'old cache not in place');pg.reload();pg.wait_for_timeout(400)
       check(ev(pg,'document.querySelector("script[src*=boot]").src').endswith('v='+ver) or ver=='4','old files not being served')
-      subprocess.run(f'git -C {ROOT} ls-files | grep -v "^tests/\\|^tools/" | tar -C {ROOT} -cf - -T - | tar -x -C {d}',shell=True,check=True)
+      copy_app(ROOT,d)
       pg.reload();t0=time.time()
       while time.time()-t0<20:
         try:
@@ -140,6 +143,21 @@ def t_sw_update(p):
       check(ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'),f'v{ver} -> v6: creation never showed')
       check(ev(pg,'caches.keys()')==['sota-s1-v6'],'new cache not active');full_create(pg,'Swy');b.close()
     finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
+def t_sw_autoreload(p):
+  """from v6 on: a new version (here a pretend v7) reloads by itself when no hero exists yet - no banner tap needed"""
+  d=tempfile.mkdtemp(prefix='sota-swup7-');copy_app(ROOT,d);pr,url=serve(d)
+  try:
+    b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
+    check(ev(pg,'caches.keys()')==['sota-s1-v6'],'v6 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
+    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="6"','VER="7"'))
+    ev(pg,'navigator.serviceWorker.getRegistration().then(r=>r&&r.update())');t0=time.time()
+    while time.time()-t0<20:
+      try:
+        if ev(pg,'!window.__mark&&!!(window.SOTA&&SOTA.rpg)'):break
+      except Exception:pass
+      pg.wait_for_timeout(300)
+    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v7'],'v7 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
+  finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 # ---------------- branch menus ----------------
 def hero(pg,name='Tess',cls='warrior',race='human'):
   full_create(pg,name,race,cls)

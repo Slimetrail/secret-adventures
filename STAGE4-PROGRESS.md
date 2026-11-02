@@ -41,3 +41,28 @@ Branch `stage4` on top of stage 3 commit c11ccd5. Nothing published.
 ## Not tested
 - Real phone (only pretend phone: Playwright Chromium with touch). Real GPU frame time not checked (fight draw numbers are script time only).
 - Long play balance to level 50; landscape layout of stage 4 screens.
+
+## Fix round 1 (Nov 2, 2026)
+Reported problem: "make a hero" does not work on the phone.
+
+Cause (pretend phone = Playwright Chromium with touch, not a real phone):
+- REPRODUCED: typing the hero name lost letters. The walk keys (w a s d, arrows) and the map key (m) are caught on the whole window and eaten, so "Jeremy Sword" became "Jerey Sor" and "m" opened the map. Fixed with a capture listener in party.js that stops those keys while a stage 4 screen is open or a text box has focus (game.js and map.js not touched). On a real Android keyboard keys may arrive as "Unidentified": not checked.
+- READ IN CODE: no hero meant no creation screen; the player had to find and tap the small sword button. Now creation opens by itself when there is no hero.
+- READ IN CODE: empty name silently became "Hero"; points-left and no-skill gave no message. Now clear red messages on a sticky Confirm bar.
+- READ IN CODE: every tap rebuilt the screen and jumped back to the top. Scroll is now kept.
+- READ IN CODE: an old v4/v5 service worker keeps serving the old files until "New version ready" is tapped. Tested: v4 and v5 -> v6 reach creation after the banner tap. From v6 on, an update with no hero yet reloads by itself.
+- NOT REPRODUCED (corrected): touch-drag scrolling of the creation screen. An earlier check said it did not scroll, but that check used a gesture tool that does not work in this headless browser. With raw touch events the old build scrolls too. touch-action was still loosened while a screen is open, to be safe.
+
+What changed:
+- Creation: name, race, class, 10 points (rising cost), starting skill, difficulty, big sticky Confirm. Race change refunds points, resets a class that is not allowed and clears the skill. Class change clears the skill. Confirm saves at once; reload keeps the hero; an old stage 3 save keeps its position and solved rooms.
+- Fights: slim name tabs per party member (turn marked with arrow and glow, plus a marker over the hero in the scene). Tap the name: a small tree branches out - Defend, Attack (targets), Spells (list), Items (list), Run. It flips near screen edges, labels at least 44px. Ref-6 style: enemies left, party right, enemy list + party HP/MP list at the bottom; landscape puts the panel on the right.
+- Party screen: portrait-plus-panel cards (picture, level/race/class, thin HP and MP bars, stats line, two gear lines). Tap anywhere on a card to open the character sheet.
+- Character sheet: figure with square slots on both sides (helmet, chest, gloves, boots, weapon, off-hand, 2 rings, potions count), stats box, backpack as square boxes. Tap item then slot, or slot then item; allowed slots glow, not allowed show a message; stat change preview (+/-). Select-character strip at the top. Two columns in landscape.
+- Fight backdrop: painted stone wall (shaded blocks, cracks), arch, flagstone floor, flickering torch light, vignette and frame. Cached, so it costs little per frame.
+- sw v6; boot.js reloads on update if there is no hero yet.
+- Old tests: they now set the test-only `sota.dev.nofight` switch in their browser setup, so the auto-opened creation screen does not block them; stage 4 tests open the name menu / card before tapping commands. Version strings bumped to v6.
+- Tests: `tests/stage4_fix_tests.py`, `tests/mutations4_fix.py`. Screenshots: `tools/shots4fix.py` -> ../stage4-fix-shots/.
+
+PENDING: art finish pass (heroes, monsters, companions, backgrounds). Boss and monster shapes stay simple placeholders.
+
+Not tested: real phone; real installed-app (standalone display mode could not be emulated here, ran as plain browser); real phone keyboard (Playwright keyboard + small viewport only).

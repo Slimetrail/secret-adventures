@@ -122,7 +122,7 @@ function fits(id,s){const t=R.ITEMS[id];return t&&(t.slot===s||(s.startsWith("ac
 function figure(c){const cv=document.createElement("canvas");cv.className="s4fig";cv.width=240;cv.height=300;const g=cv.getContext("2d");
  const rg=g.createRadialGradient(120,110,10,120,150,190);rg.addColorStop(0,"#3a2a4a");rg.addColorStop(1,"#0a0610");g.fillStyle=rg;g.fillRect(0,0,240,300);
  const tg=g.createRadialGradient(40,40,2,40,40,160);tg.addColorStop(0,"rgba(255,170,80,.35)");tg.addColorStop(1,"rgba(255,170,80,0)");g.fillStyle=tg;g.fillRect(0,0,240,300);
- g.fillStyle="rgba(0,0,0,.45)";g.beginPath();g.ellipse(120,282,62,10,0,0,7);g.fill();drawHero(g,Object.assign({},c,{hp:1}),120,282,230,0,false);
+ g.fillStyle="rgba(0,0,0,.45)";g.beginPath();g.ellipse(120,282,62,10,0,0,7);g.fill();drawHero(g,Object.assign({},c,{hp:1}),120,286,175,0,false);
  g.strokeStyle="rgba(200,160,90,.5)";g.lineWidth=2;g.strokeRect(3,3,234,294);return cv;}
 let sheetSel=null; // {slot} or {bag:index}
 function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};const w=page("equip");w.classList.add("sheet");w.appendChild(head(c.name,()=>{sheetSel=null;partyScreen();}));
