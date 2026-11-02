@@ -25,89 +25,156 @@ function restore(){live=clone(save);const r=save.rooms;C.solvedR.fill(0);C.clear
  S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
 function toast(t){const d=$("s4toast");d.textContent=t;d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 // ---------- screens ----------
-const ov=$("s4");function openUI(kind){ui=kind;ov.className="open "+kind;ov.dataset.kind=kind;}
-function closeUI(){ui=null;ov.className="";ov.dataset.kind="";ov.innerHTML="";updBtn();}
+const ov=$("s4");function openUI(kind){ui=kind;ov.className="open "+kind;ov.dataset.kind=kind;closeBranch();}
+function closeUI(){ui=null;ov.className="";ov.dataset.kind="";ov.dataset.result="";ov.innerHTML="";closeBranch();updBtn();}
 S.uiOpen=()=>!!ui;
 function head(title,back){const h=el("div","s4head");h.appendChild(el("div","s4title",title));if(back)h.appendChild(tapBtn("Back",back,"s4back"));return h;}
+// typing in a stage 4 screen must never reach the walk/map keys (w a s d m and arrows were eaten before = fix round 1)
+window.addEventListener("keydown",e=>{const t=e.target&&e.target.tagName;if(ui||t==="INPUT"||t==="TEXTAREA")e.stopImmediatePropagation();},true);
+// re-render a page but keep where it was scrolled to
+function page(kind){const top=ui===kind?ov.scrollTop:0;openUI(kind);ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);requestAnimationFrame(()=>{ov.scrollTop=top;});ov.scrollTop=top;return w;}
+// ---- portraits: small busts cut from the fight figure (same art, cached) ----
+const PCACHE=new Map();
+function portrait(c){const k=c.race+"|"+c.cls;if(PCACHE.has(k))return PCACHE.get(k);const cv=document.createElement("canvas");cv.width=cv.height=96;const g=cv.getContext("2d");
+ const bgc={warrior:"#3a1620",rogue:"#1a1f2c",archer:"#14281c",mage:"#1e1840"}[c.cls],rg=g.createRadialGradient(40,30,4,48,48,70);rg.addColorStop(0,bgc);rg.addColorStop(1,"#07040e");g.fillStyle=rg;g.fillRect(0,0,96,96);
+ drawHero(g,Object.assign({},c,{hp:1}),56,150,150,0,false);const u=cv.toDataURL();PCACHE.set(k,u);return u;}
+function pimg(c,cls){const i=el("img",cls||"s4por");i.src=portrait(c);i.alt="";return i;}
+function bar(v,mx,cls){const b=el("span","s4bar "+(cls||""));const f=el("span","s4barf");f.style.width=Math.max(0,Math.min(100,v/mx*100))+"%";b.appendChild(f);return b;}
+// ---- compact branching menu: tap a name, small labels branch out (flip near edges) ----
+let br=null;
+function closeBranch(){if(br){br.remove();br=null;}}
+// items: [{t:label, fn, kids:[...] or ()=>[...], off, d:{data attrs}}]
+function branch(anchor,items,level,owner){level=level||0;if(level===0){closeBranch();br=el("div","s4br");br.id="s4br";br.addEventListener("click",e=>{if(e.target===br)closeBranch();});
+  br.insertAdjacentHTML("beforeend",'<svg class="s4brl"></svg>');document.body.appendChild(br);}
+ [...br.querySelectorAll(".s4bcol")].filter(c=>+c.dataset.lv>=level).forEach(c=>c.remove());[...br.querySelectorAll("path")].filter(p=>+p.dataset.lv>=level).forEach(p=>p.remove());
+ const col=el("div","s4bcol");col.dataset.lv=level;br.appendChild(col);
+ items.forEach(it=>{const b=el("button","s4bi"+(it.off?" off":""),it.t);if(it.d)for(const k in it.d)b.dataset[k]=it.d[k];if(it.kids)b.classList.add("more");
+  b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(it.off)return;[...col.children].forEach(x=>x.classList.remove("open"));
+   if(it.kids){b.classList.add("open");const k=typeof it.kids==="function"?it.kids():it.kids;branch(b,k.length?k:[{t:"(none)",off:true}],level+1);}else{closeBranch();it.fn();}});col.appendChild(b);});
+ // place: to the right of the anchor, or flip left near the edge; centre on the anchor, keep inside the screen (flip up near the bottom)
+ const a=anchor.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,cw=col.offsetWidth,ch=col.offsetHeight,gap=22;
+ let left=a.right+gap,fx=0;if(left+cw>vw-4){left=a.left-gap-cw;fx=1;}if(left<4){left=Math.max(4,Math.min(vw-cw-4,a.left));fx=2;}
+ let top=a.top+a.height/2-ch/2,fy=0;if(top+ch>vh-4){top=vh-4-ch;fy=1;}if(top<4){top=4;fy=fy?2:0;}
+ col.style.left=left+"px";col.style.top=top+"px";col.dataset.flipx=fx;col.dataset.flipy=fy;br.dataset.flipx=fx;br.dataset.flipy=fy;
+ const svg=br.querySelector("svg");svg.setAttribute("width",vw);svg.setAttribute("height",vh);
+ const ax=fx===1?a.left:fx===2?a.left+a.width/2:a.right,ay=fx===2?(top>a.top?a.bottom:a.top):a.top+a.height/2;
+ [...col.children].forEach(b=>{const r=b.getBoundingClientRect(),bx=fx===1?r.right:fx===2?r.left+12:r.left,by=r.top+r.height/2,mx=(ax+bx)/2;
+  const d=fx===2?"M"+ax+" "+ay+" C"+ax+" "+by+" "+ax+" "+by+" "+bx+" "+by:"M"+ax+" "+ay+" C"+mx+" "+ay+" "+mx+" "+by+" "+bx+" "+by;svg.insertAdjacentHTML("beforeend",'<path data-lv="'+level+'" d="'+d+'"/>');});
+ return col;}
 // ---- character creation ----
-const cc={name:"",race:"human",cls:"warrior",add:{str:0,sta:0,man:0},skill:null,diff:"normal"};
+const cc={name:"",race:"human",cls:"warrior",add:{str:0,sta:0,man:0},skill:null,diff:"normal",warned:false,err:""};
 function ccSpent(){const b=R.RACES[cc.race].base;return ["str","sta","man"].reduce((t,k)=>t+R.spendCost(b[k],b[k]+cc.add[k]),0);}
-function creation(){openUI("create");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head("Make your hero"));
- const nm=el("input","s4name");nm.id="ccname";nm.maxLength=14;nm.placeholder="Hero name";nm.value=cc.name;nm.addEventListener("input",()=>cc.name=nm.value);w.appendChild(nm);
- w.appendChild(el("div","s4lab","Race"));const rr=el("div","s4row");for(const k in R.RACES){const b=tapBtn(R.RACES[k].name,()=>{cc.race=k;if(!R.allowed(k,cc.cls))cc.cls=R.RACES[k].classes[0];cc.add={str:0,sta:0,man:0};cc.skill=null;creation();},cc.race===k?"sel":"");b.dataset.race=k;rr.appendChild(b);}w.appendChild(rr);
+function ccChange(f){return ()=>{f();cc.warned=false;cc.err="";creation();};}
+function creation(){const w=page("create");w.classList.add("cc");w.appendChild(head("Make your hero"));
+ w.appendChild(el("div","s4note","Pick a name, race and class, spend 10 points, choose a skill, then Confirm."));
+ w.appendChild(el("div","s4lab","1. Name"));const nm=el("input","s4name");nm.id="ccname";nm.maxLength=14;nm.placeholder="Type your hero's name";nm.value=cc.name;nm.autocomplete="off";nm.setAttribute("enterkeyhint","done");
+ nm.addEventListener("input",()=>{cc.name=nm.value;if(cc.err&&nm.value.trim()){cc.err="";const e=$("ccerr");if(e)e.textContent="";}});nm.addEventListener("keydown",e=>{if(e.key==="Enter")nm.blur();});w.appendChild(nm);
+ w.appendChild(el("div","s4lab","2. Race"));const rr=el("div","s4row");for(const k in R.RACES){const b=tapBtn(R.RACES[k].name,ccChange(()=>{cc.race=k;if(!R.allowed(k,cc.cls))cc.cls=R.RACES[k].classes[0];cc.add={str:0,sta:0,man:0};cc.skill=null;}),cc.race===k?"sel":"");b.dataset.race=k;rr.appendChild(b);}w.appendChild(rr);
  w.appendChild(el("div","s4note",{human:"Any class, any armor. Average.",elf:"Mage, archer, rogue, warrior. Armor up to medium. Strong mana.",dwarf:"Warrior, rogue, archer. No magic. Very strong, carries a lot.",cat:"Mage, rogue, warrior. Light armor only. Strong stamina, weak strength, carries little."}[cc.race]));
- w.appendChild(el("div","s4lab","Class"));const cr=el("div","s4row");for(const k in R.CLASSES){const ok=R.allowed(cc.race,k),b=tapBtn(R.CLASSES[k].name,()=>{if(!ok)return;cc.cls=k;cc.skill=null;creation();},(cc.cls===k?"sel":"")+(ok?"":" off"));b.dataset.cls=k;b.disabled=!ok;cr.appendChild(b);}w.appendChild(cr);
- const left=R.START_POINTS-ccSpent();w.appendChild(el("div","s4lab","Stats - points left: "+left)).id="ccleft";
+ w.appendChild(el("div","s4lab","3. Class"));const cr=el("div","s4row");for(const k in R.CLASSES){const ok=R.allowed(cc.race,k),b=tapBtn(R.CLASSES[k].name,ccChange(()=>{if(!ok)return;cc.cls=k;cc.skill=null;}),(cc.cls===k?"sel":"")+(ok?"":" off"));b.dataset.cls=k;b.disabled=!ok;cr.appendChild(b);}w.appendChild(cr);
+ const left=R.START_POINTS-ccSpent();const lab=el("div","s4lab","4. Stats - points left: "+left);lab.id="ccleft";w.appendChild(lab);
  const SN={str:"Strength",sta:"Stamina",man:"Mana"},b=R.RACES[cc.race].base;
  for(const k of["str","sta","man"]){const v=b[k]+cc.add[k],row=el("div","s4stat");row.appendChild(el("span","s4sn",SN[k]+(R.CLASSES[cc.cls].main===k?" *":"")));
-  const minus=tapBtn("-",()=>{if(cc.add[k]>0){cc.add[k]--;creation();}},"s4pm");minus.dataset.dec=k;row.appendChild(minus);
+  const minus=tapBtn("-",ccChange(()=>{if(cc.add[k]>0)cc.add[k]--;}),"s4pm"+(cc.add[k]>0?"":" off"));minus.dataset.dec=k;row.appendChild(minus);
   const vv=el("span","s4sv",String(v));vv.dataset.val=k;row.appendChild(vv);
-  const blocked=cc.race==="dwarf"&&k==="man",c=R.cost(v),plus=tapBtn("+",()=>{if(!blocked&&left>=c){cc.add[k]++;creation();}},"s4pm"+(blocked||left<c?" off":""));plus.dataset.inc=k;row.appendChild(plus);
+  const blocked=cc.race==="dwarf"&&k==="man",c=R.cost(v),plus=tapBtn("+",ccChange(()=>{if(!blocked&&left>=c)cc.add[k]++;}),"s4pm"+(blocked||left<c?" off":""));plus.dataset.inc=k;row.appendChild(plus);
   row.appendChild(el("span","s4cost",blocked?"no magic":"next costs "+c));w.appendChild(row);}
- w.appendChild(el("div","s4lab","Starting skill"));const sr=el("div","s4row");R.SKILLS[cc.cls].slice(0,3).forEach(s=>{const bt=tapBtn(s.n,()=>{cc.skill=s.id;creation();},cc.skill===s.id?"sel":"");bt.dataset.skill=s.id;sr.appendChild(bt);});w.appendChild(sr);
- w.appendChild(el("div","s4lab","Difficulty"));const dr=el("div","s4row");for(const k in R.DIFF){const bt=tapBtn(R.DIFF[k].name,()=>{cc.diff=k;creation();},cc.diff===k?"sel":"");bt.dataset.diff=k;dr.appendChild(bt);}w.appendChild(dr);
+ w.appendChild(el("div","s4note","* main stat for this class. Higher stats cost more points."));
+ w.appendChild(el("div","s4lab","5. Starting skill"));const sr=el("div","s4row");R.SKILLS[cc.cls].slice(0,3).forEach(s=>{const bt=tapBtn(s.n,ccChange(()=>{cc.skill=s.id;}),cc.skill===s.id?"sel":"");bt.dataset.skill=s.id;sr.appendChild(bt);});w.appendChild(sr);
+ w.appendChild(el("div","s4lab","6. Difficulty"));const dr=el("div","s4row");for(const k in R.DIFF){const bt=tapBtn(R.DIFF[k].name,ccChange(()=>{cc.diff=k;}),cc.diff===k?"sel":"");bt.dataset.diff=k;dr.appendChild(bt);}w.appendChild(dr);
  w.appendChild(el("div","s4note",{story:"Story: heroes have double health, monsters hit half as hard.",normal:"Normal: the game as planned.",hard:"Hard: monsters hit 50% harder."}[cc.diff]));
- const go=tapBtn("Start adventure",()=>{if(!cc.skill){toast("Pick a starting skill");return;}const h=R.newChar(cc.name.trim()||"Hero",cc.race,cc.cls,cc.add,cc.skill);
-  const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{if(id==="leather"&&!R.canEquip(h,id,"chest"))id="robe";h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","ether");
-  live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0};live.party[0].hp=R.maxHp(h,hpMul());doSave(true);closeUI();toast("Welcome, "+h.name+". Game saved.");},"s4go");go.id="ccgo";w.appendChild(go);}
-// ---- party screen ----
-function partyScreen(){openUI("party");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head("Party",closeUI));
- w.appendChild(el("div","s4note","Gold: "+live.gold+"   Mode: "+R.DIFF[live.diff].name+"   Last save: "+(save.at.name||"?")));
- live.party.forEach((c,i)=>{const card=el("div","s4card");card.appendChild(el("div","s4cn",c.name+" - "+R.RACES[c.race].name+" "+R.CLASSES[c.cls].name+"  Lv "+c.lvl));
-  card.appendChild(el("div","s4note","HP "+c.hp+"/"+R.maxHp(c,hpMul())+"  MP "+c.mp+"/"+R.maxMp(c)+"  STR "+c.stats.str+" STA "+c.stats.sta+" MANA "+c.stats.man+"  XP "+c.xp+"/"+R.xpNeed(c.lvl)));
-  card.appendChild(el("div","s4note","Skills: "+c.skills.map(id=>R.SKILLS[c.cls].find(s=>s.id===id).n).join(", ")));
-  const row=el("div","s4row");const e=tapBtn("Equip",()=>equipScreen(i));e.dataset.equip=i;row.appendChild(e);const b=tapBtn("Backpack",()=>bagScreen(i));b.dataset.bag=i;row.appendChild(b);
-  const pts=R.pointsEarned(c.lvl)-c.spent;if(pts>0)row.appendChild(tapBtn("Stats ("+pts+")",()=>statScreen(i)));
-  if(c.skills.length<R.skillSlots(c.lvl))row.appendChild(tapBtn("New skill",()=>skillScreen(i),"glow"));card.appendChild(row);w.appendChild(card);});}
-function statScreen(i){const c=live.party[i];openUI("stats");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head(c.name+" - stats",partyScreen));
+ const foot=el("div","s4foot");const er=el("div","s4err",cc.err);er.id="ccerr";er.setAttribute("role","alert");foot.appendChild(er);
+ const go=tapBtn(cc.warned?"Confirm anyway":"Confirm hero",ccConfirm,"s4go");go.id="ccgo";foot.appendChild(go);w.appendChild(foot);}
+function ccConfirm(){const nmEl=$("ccname");if(nmEl)cc.name=nmEl.value;const left=R.START_POINTS-ccSpent();
+ if(!cc.name.trim()){cc.err="Type a name for your hero first.";creation();const n=$("ccname");if(n)n.scrollIntoView({block:"center"});return;}
+ if(!cc.skill){cc.err="Pick a starting skill (step 5).";creation();return;}
+ if(left>0&&!cc.warned){cc.warned=true;cc.err="You still have "+left+" stat point"+(left>1?"s":"")+" left. Spend them, or tap Confirm anyway.";creation();return;}
+ const h=R.newChar(cc.name.trim(),cc.race,cc.cls,cc.add,cc.skill);
+ const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{if(id==="leather"&&!R.canEquip(h,id,"chest"))id="robe";h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","ether");
+ live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0};live.party[0].hp=R.maxHp(h,hpMul());doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");}
+// ---- party screen: roster cards, tap a name for a small branch menu ----
+function partyBranch(i,anchor){const c=live.party[i],pts=R.pointsEarned(c.lvl)-c.spent,items=[{t:"Status",fn:()=>charScreen(i),d:{status:i}},{t:"Equip",fn:()=>charScreen(i),d:{equip:i}},{t:"Backpack",fn:()=>bagScreen(i),d:{bag:i}},
+ {t:"Skills",d:{skills:i},kids:()=>{const k=c.skills.map(id=>({t:R.SKILLS[c.cls].find(s=>s.id===id).n,off:true}));if(c.skills.length<R.skillSlots(c.lvl))k.push({t:"Learn new skill",fn:()=>skillScreen(i),d:{learn:i}});return k;}}];
+ if(pts>0)items.push({t:"Stats ("+pts+")",fn:()=>statScreen(i),d:{stats:i}});return branch(anchor,items);}
+function partyScreen(){const w=page("party");w.appendChild(head("Party",closeUI));
+ w.appendChild(el("div","s4note","Gold "+live.gold+"  ·  "+R.DIFF[live.diff].name+"  ·  last save: "+(save.at.name||"?")));
+ const g=el("div","s4roster");live.party.forEach((c,i)=>{const card=el("div","s4rc");card.appendChild(pimg(c));const info=el("div","s4ri");
+  const nb=el("button","s4nl",c.name);nb.dataset.pname=i;nb.addEventListener("click",e=>{e.preventDefault();partyBranch(i,nb);});info.appendChild(nb);
+  info.appendChild(el("div","s4sub",R.RACES[c.race].name+" "+R.CLASSES[c.cls].name+" · Lv "+c.lvl));
+  const mx=R.maxHp(c,hpMul());const h=el("div","s4hpl");h.appendChild(el("span","s4k","HP"));h.appendChild(bar(c.hp,mx,"hp"));h.appendChild(el("span","s4v",c.hp+"/"+mx));info.appendChild(h);
+  const m=el("div","s4hpl");m.appendChild(el("span","s4k","MP"));m.appendChild(bar(c.mp,R.maxMp(c),"mp"));m.appendChild(el("span","s4v",c.mp+"/"+R.maxMp(c)));info.appendChild(m);
+  const flags=[];if(R.pointsEarned(c.lvl)-c.spent>0)flags.push("stat points");if(c.skills.length<R.skillSlots(c.lvl))flags.push("new skill");if(flags.length)info.appendChild(el("div","s4sub glowt",flags.join(" · ")+" ready"));
+  card.appendChild(info);g.appendChild(card);});w.appendChild(g);w.appendChild(el("div","s4note dim","Tap a name for Status, Equip, Backpack and Skills."));}
+function statScreen(i){const c=live.party[i];const w=page("stats");w.appendChild(head(c.name+" - stats",partyScreen));
  w.appendChild(el("div","s4lab","Points left: "+(R.pointsEarned(c.lvl)-c.spent)));
- for(const k of["str","sta","man"]){const row=el("div","s4stat");row.appendChild(el("span","s4sn",{str:"Strength",sta:"Stamina",man:"Mana"}[k]));row.appendChild(el("span","s4sv",String(c.stats[k])));
+ for(const k of["str","sta","man"]){const row=el("div","s4stat");row.appendChild(el("span","s4sn",{str:"Strength",sta:"Stamina",man:"Mana"}[k]));row.appendChild(el("span",""));row.appendChild(el("span","s4sv",String(c.stats[k])));
   row.appendChild(tapBtn("+",()=>{R.raise(c,k);statScreen(i);},"s4pm"));row.appendChild(el("span","s4cost","costs "+R.cost(c.stats[k])));w.appendChild(row);}}
-function skillScreen(i){const c=live.party[i];openUI("skill");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head(c.name+" - new skill",partyScreen));
- R.SKILLS[c.cls].filter(s=>!c.skills.includes(s.id)).forEach(s=>w.appendChild(tapBtn(s.n+"  ("+s.mp+" MP)",()=>{R.learn(c,s.id);partyScreen();},"wide")));}
-const SLN={weapon:"Weapon",offhand:"Off-hand / shield",helmet:"Helmet",chest:"Chest",gloves:"Gloves",boots:"Boots",acc1:"Accessory 1",acc2:"Accessory 2"};
-function equipScreen(i,pick){const c=live.party[i];openUI("equip");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head(c.name+" - equip",partyScreen));
- w.appendChild(el("div","s4note","Armor allowed: "+["","light","up to medium","any"][R.armorCap(c)]+".  Attack "+Math.round(R.power(c))+"  Defense "+Math.round(R.defense(c))));
- const g=el("div","s4slots");R.SLOTS.forEach(s=>{const it=c.equip[s]&&R.ITEMS[c.equip[s]],b=tapBtn("",()=>equipScreen(i,s),pick===s?"sel":"");b.dataset.slot=s;b.appendChild(el("div","s4sl",SLN[s]));b.appendChild(el("div","s4it",it?it.n:"- empty -"));g.appendChild(b);});w.appendChild(g);
- if(pick){const opts=[...new Set(c.bag)].filter(id=>{const it=R.ITEMS[id];return it&&(it.slot===pick||(pick.startsWith("acc")&&it.slot==="acc"));});
-  w.appendChild(el("div","s4lab",SLN[pick]+": choose"));if(!opts.length)w.appendChild(el("div","s4note","Nothing in the backpack fits here."));
-  opts.forEach(id=>{const ok=R.canEquip(c,id,pick),b=tapBtn(R.ITEMS[id].n+(ok?"":" (not allowed)"),()=>{if(R.equip(c,id,pick))equipScreen(i);else toast(R.ITEMS[id].n+": your race or class can't use this");},"wide"+(ok?"":" off"));b.dataset.opt=id;w.appendChild(b);});
-  if(c.equip[pick])w.appendChild(tapBtn("Take off",()=>{if(!R.unequip(c,pick))toast("Backpack too heavy");equipScreen(i);},"wide"));}}
-function bagScreen(i){const c=live.party[i];openUI("bag");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head(c.name+" - backpack",partyScreen));
- const wt=R.bagWeight(c),lim=R.carryLimit(c);const meter=el("div","s4meter");const f=el("div","s4fill");f.style.width=Math.min(100,wt/lim*100)+"%";meter.appendChild(f);w.appendChild(el("div","s4lab","Weight "+(Math.round(wt*10)/10)+" / "+lim+" kg"));w.appendChild(meter);
+function skillScreen(i){const c=live.party[i];const w=page("skill");w.appendChild(head(c.name+" - new skill",partyScreen));
+ R.SKILLS[c.cls].filter(s=>!c.skills.includes(s.id)).forEach(s=>{const b=tapBtn(s.n+"  ("+s.mp+" MP)",()=>{R.learn(c,s.id);partyScreen();},"wide");b.dataset.lskill=s.id;w.appendChild(b);});}
+// ---- character screen: select-character strip, status, equip slots with stat change preview ----
+const SLN={weapon:"Weapon",offhand:"Off-hand",helmet:"Helmet",chest:"Chest",gloves:"Gloves",boots:"Boots",acc1:"Accessory",acc2:"Accessory"};
+const ICON={weapon:"M8 32 L28 12 M24 8 L32 8 L32 16 M11 25 L15 29",offhand:"M20 6 L32 10 L31 22 Q28 31 20 34 Q12 31 9 22 L8 10 Z",helmet:"M8 26 Q8 8 20 8 Q32 8 32 26 L26 26 L26 20 L14 20 L14 26 Z",chest:"M12 8 L20 12 L28 8 L33 14 L29 18 L29 33 L11 33 L11 18 L7 14 Z",
+ gloves:"M12 33 L12 16 Q12 12 15 12 L15 20 L15 8 Q18 6 19 8 L19 19 L20 7 Q23 5 24 8 L24 19 L26 10 Q29 9 29 12 L28 33 Z",boots:"M14 6 L24 6 L24 24 L33 28 L33 34 L12 34 Z",acc1:"M20 30 A8 8 0 1 0 20.01 30 M16 12 L20 7 L24 12",acc2:"M20 30 A8 8 0 1 0 20.01 30 M16 12 L20 7 L24 12"};
+function icon(s){const v=el("span","s4icw");v.innerHTML='<svg class="s4ic" viewBox="0 0 40 40"><path d="'+ICON[s]+'"/></svg>';return v;}
+function statLine(c){return {atk:Math.round(R.power(c)),mag:Math.round(R.magicPower(c)),def:Math.round(R.defense(c)),hp:R.maxHp(c,hpMul())};}
+function diffText(a,b){const out=[];for(const[k,n]of[["atk","ATK"],["mag","MAG"],["def","DEF"],["hp","HP"]]){const d=b[k]-a[k];if(d)out.push((d>0?"+":"")+d+" "+n);}return out;}
+function charScreen(i,pick){const c=live.party[i];const w=page("equip");w.appendChild(head(c.name,partyScreen));
+ const strip=el("div","s4pick");live.party.forEach((m,k)=>{const b=el("button","s4pk"+(k===i?" sel":""));b.dataset.pick=k;b.appendChild(pimg(m,"s4pkp"));const t=el("span","s4pkt");t.appendChild(el("b","",m.name));t.appendChild(el("span","",R.CLASSES[m.cls].name+" Lv "+m.lvl));b.appendChild(t);b.addEventListener("click",e=>{e.preventDefault();charScreen(k);});strip.appendChild(b);});w.appendChild(strip);
+ const st=el("div","s4status");const sl=statLine(c);
+ [["Race",R.RACES[c.race].name],["Class",R.CLASSES[c.cls].name],["Level",c.lvl],["XP to next",c.lvl>=R.CAP?"max":R.xpNeed(c.lvl)-c.xp],["HP",c.hp+" / "+sl.hp],["MP",c.mp+" / "+R.maxMp(c)],["Strength",c.stats.str],["Stamina",c.stats.sta],["Mana",c.stats.man],["Attack",sl.atk],["Magic",sl.mag],["Defense",sl.def]].forEach(([k,v])=>{const r=el("div","s4st");r.appendChild(el("span","s4k",k));r.appendChild(el("span","s4v",String(v)));st.appendChild(r);});
+ w.appendChild(st);w.appendChild(el("div","s4lab","Equipment  ·  armor allowed: "+["","light","up to medium","any"][R.armorCap(c)]));
+ const list=el("div","s4slots");R.SLOTS.forEach(s=>{const it=c.equip[s]&&R.ITEMS[c.equip[s]],b=el("button","s4slot"+(pick===s?" sel":""));b.dataset.slot=s;b.appendChild(icon(s));b.appendChild(el("span","s4sl",SLN[s]));b.appendChild(el("span","s4it",it?it.n:"—"));
+  b.addEventListener("click",e=>{e.preventDefault();charScreen(i,pick===s?null:s);});list.appendChild(b);
+  if(pick===s){const box=el("div","s4opts");const opts=[...new Set(c.bag)].filter(id=>{const t=R.ITEMS[id];return t&&(t.slot===s||(s.startsWith("acc")&&t.slot==="acc"));});
+   if(!opts.length)box.appendChild(el("div","s4note","Nothing in the backpack fits here."));
+   opts.forEach(id=>{const ok=R.canEquip(c,id,s);let pv=[];if(ok){const t=clone(c);R.equip(t,id,s);pv=diffText(sl,statLine(t));}
+    const o=el("button","s4opt"+(ok?"":" off"));o.dataset.opt=id;o.appendChild(el("span","s4on",R.ITEMS[id].n+(ok?"":" (not allowed)")));const pe=el("span","s4pv");pv.forEach(x=>pe.appendChild(el("span",x[0]==="+"?"up":"down",x)));o.appendChild(pe);
+    o.addEventListener("click",e=>{e.preventDefault();if(R.equip(c,id,s))charScreen(i);else toast(R.ITEMS[id].n+": your race or class can't use this");});box.appendChild(o);});
+   if(c.equip[s]){const o=el("button","s4opt","Take off");o.dataset.unequip=s;o.addEventListener("click",e=>{e.preventDefault();if(!R.unequip(c,s))toast("Backpack too heavy");charScreen(i);});box.appendChild(o);}
+   list.appendChild(box);}});w.appendChild(list);
+ const row=el("div","s4row");const bb=tapBtn("Backpack",()=>bagScreen(i),"small");bb.dataset.bagb=i;row.appendChild(bb);w.appendChild(row);}
+function equipScreen(i,pick){charScreen(i,pick);}
+function bagScreen(i){const c=live.party[i];const w=page("bag");w.appendChild(head(c.name+" - backpack",partyScreen));
+ const wt=R.bagWeight(c),lim=R.carryLimit(c);w.appendChild(el("div","s4lab","Weight "+(Math.round(wt*10)/10)+" / "+lim+" kg"));w.appendChild(bar(wt,lim,"wt"));
  if(!c.bag.length)w.appendChild(el("div","s4note","Empty."));
- c.bag.forEach((id,k)=>{const it=R.ITEMS[id],row=el("div","s4item");row.appendChild(el("span","s4in",it.n+"  "+it.w+" kg"+(it.slot==="junk"?"  (junk, worth "+it.v+" gold at a tavern)":"")));
-  if(it.slot==="use")row.appendChild(tapBtn("Use",()=>{c.bag.splice(k,1);if(it.heal)c.hp=Math.min(R.maxHp(c,hpMul()),c.hp+Math.round(R.maxHp(c,hpMul())*it.heal));else c.mp=R.maxMp(c);bagScreen(i);}));
-  row.appendChild(tapBtn("Drop",()=>{c.bag.splice(k,1);bagScreen(i);}));w.appendChild(row);});}
+ c.bag.forEach((id,k)=>{const it=R.ITEMS[id],row=el("div","s4item");row.appendChild(el("span","s4in",it.n+"  ·  "+it.w+" kg"+(it.slot==="junk"?"  (junk, "+it.v+" gold at a tavern)":"")));
+  if(it.slot==="use")row.appendChild(tapBtn("Use",()=>{c.bag.splice(k,1);if(it.heal)c.hp=Math.min(R.maxHp(c,hpMul()),c.hp+Math.round(R.maxHp(c,hpMul())*it.heal));else c.mp=R.maxMp(c);bagScreen(i);},"small"));
+  row.appendChild(tapBtn("Drop",()=>{c.bag.splice(k,1);bagScreen(i);},"small"));w.appendChild(row);});}
 function addLoot(id){for(const c of live.party)if(R.canCarry(c,id)){c.bag.push(id);return c.name;}return null;}
 // ---------- fights ----------
-let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0,mode="menu",pendingCmd=null;
-function startFight(mons,why){const p=S.state();F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;turnI=0;nextAlive();mode="menu";fx=[];openUI("fight");ov.innerHTML="";
- const w=el("div","s4fight");fcv=el("canvas");fcv.id="fcv";w.appendChild(fcv);const log=el("div","s4log","");log.id="flog";w.appendChild(log);const pr=el("div","s4party");pr.id="fparty";w.appendChild(pr);
- const mn=el("div","s4menu");mn.id="fmenu";w.appendChild(mn);ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
+let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0;
+function startFight(mons,why){F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;turnI=0;nextAlive();fx=[];openUI("fight");ov.innerHTML="";ov.dataset.result="";
+ const w=el("div","s4fight");const top=el("div","s4stage");fcv=el("canvas");fcv.id="fcv";top.appendChild(fcv);const log=el("div","s4log","");log.id="flog";top.appendChild(log);w.appendChild(top);
+ const bot=el("div","s4fbot");const en=el("div","s4enemies");en.id="fen";bot.appendChild(en);const pr=el("div","s4party");pr.id="fparty";bot.appendChild(pr);const mn=el("div","s4menu");mn.id="fmenu";bot.appendChild(mn);w.appendChild(bot);
+ ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
 function sizeF(){const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(fcv.clientWidth*d),h=Math.round(fcv.clientHeight*d);if(w&&h&&(fcv.width!==w||fcv.height!==h)){fcv.width=w;fcv.height=h;}}
 function say(t){const l=$("flog");if(l)l.textContent=t;}
 function nextAlive(){while(turnI<live.party.length&&live.party[turnI].hp<=0)turnI++;}
-function drawParty(){const pr=$("fparty");if(!pr)return;pr.innerHTML="";live.party.forEach((c,i)=>{const r=el("div","s4pr"+(i===turnI&&!F.over?" now":"")+(c.hp<=0?" dead":""));const mx=R.maxHp(c,hpMul());
- r.appendChild(el("span","s4pn",c.name));const bar=el("span","s4hp");const f=el("span","s4hpf");f.style.width=(c.hp/mx*100)+"%";bar.appendChild(f);r.appendChild(bar);r.appendChild(el("span","s4pv",c.hp+"/"+mx+"  MP "+c.mp));pr.appendChild(r);});}
-function drawMenu(){drawParty();const mn=$("fmenu");if(!mn)return;mn.innerHTML="";if(F.over){endFight();return;}const c=live.party[turnI];
- if(mode==="menu"){mn.appendChild(el("div","s4who",c.name+"'s turn"));
-  [["Attack","attack"],["Skill"+(R.CLASSES[c.cls].magic?" / Magic":""),"skill"],["Item","item"],["Defend","defend"],["Run","run"]].forEach(([t,k])=>{const b=tapBtn(t,()=>choose(k));b.dataset.cmd4=k;mn.appendChild(b);});}
- else if(mode==="target"){mn.appendChild(el("div","s4who","Pick a target"));F.m.forEach((m,i)=>{if(m.hp<=0)return;const b=tapBtn(m.n+" ("+m.hp+")",()=>doAct(pendingCmd.cmd,pendingCmd.arg,i));b.dataset.tgt=i;mn.appendChild(b);});mn.appendChild(tapBtn("Back",()=>{mode="menu";drawMenu();}));}
- else if(mode==="skill"){mn.appendChild(el("div","s4who","Choose a skill"));c.skills.forEach(id=>{const s=R.SKILLS[c.cls].find(x=>x.id===id),ok=c.mp>=s.mp,b=tapBtn(s.n+" "+s.mp+"MP",()=>{if(!ok)return;if(s.k==="phys"||s.k==="magic"){if(s.all)doAct("skill",id,0);else{pendingCmd={cmd:"skill",arg:id};mode="target";drawMenu();}}else doAct("skill",id,0);},ok?"":"off");b.dataset.sk=id;mn.appendChild(b);});mn.appendChild(tapBtn("Back",()=>{mode="menu";drawMenu();}));}
- else if(mode==="item"){mn.appendChild(el("div","s4who","Use an item"));const u=[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use");if(!u.length)mn.appendChild(el("div","s4note","No items."));u.forEach(id=>{const b=tapBtn(R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,()=>doAct("item",id,turnI));b.dataset.item=id;mn.appendChild(b);});mn.appendChild(tapBtn("Back",()=>{mode="menu";drawMenu();}));}}
-function choose(k){if(k==="attack"){pendingCmd={cmd:"attack"};mode="target";}else if(k==="skill")mode="skill";else if(k==="item")mode="item";else{doAct(k,null,0);return;}drawMenu();}
-function doAct(cmd,arg,targ){const c=live.party[turnI],before=F.m.map(m=>m.hp);const t=F.act(turnI,cmd,arg,targ);mode="menu";
+function targets(cmd,arg){return F.m.map((m,i)=>m.hp>0?{t:m.n+" · "+m.hp,fn:()=>doAct(cmd,arg,i),d:{tgt:i}}:null).filter(Boolean);}
+function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const sk=c.skills.map(id=>R.SKILLS[c.cls].find(x=>x.id===id));
+ const skItem=s=>({t:s.n+" "+s.mp+"MP",off:c.mp<s.mp,d:{sk:s.id},...((s.k==="phys"||s.k==="magic")&&!s.all?{kids:()=>targets("skill",s.id)}:{fn:()=>doAct("skill",s.id,0)})});
+ const phys=sk.filter(s=>s.k==="phys"||s.k==="guard"),mag=sk.filter(s=>s.k==="magic"||s.k==="heal");
+ const items=[{t:"Attack",d:{cmd4:"attack"},kids:()=>targets("attack")}];
+ if(phys.length)items.push({t:"Skill",d:{cmd4:"skill"},kids:()=>phys.map(skItem)});
+ items.push({t:"Magic",d:{cmd4:"magic"},off:!mag.length,kids:()=>mag.map(skItem)});
+ items.push({t:"Item",d:{cmd4:"item"},kids:()=>[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use").map(id=>({t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,fn:()=>doAct("item",id,turnI),d:{item:id}}))});
+ items.push({t:"Defend",d:{cmd4:"defend"},fn:()=>doAct("defend",null,0)},{t:"Run",d:{cmd4:"run"},fn:()=>doAct("run",null,0)});return branch(anchor,items);}
+function drawParty(){const pr=$("fparty");if(!pr)return;pr.innerHTML="";live.party.forEach((c,i)=>{const now=i===turnI&&!F.over&&c.hp>0,r=el("div","s4pr"+(now?" now":"")+(c.hp<=0?" dead":""));const mx=R.maxHp(c,hpMul());
+ r.appendChild(el("span","s4arrow",now?"▶":""));const nb=el("button","s4nl",c.name);nb.dataset.hero=i;nb.disabled=!now;nb.addEventListener("click",e=>{e.preventDefault();if(now)heroMenu(nb);});r.appendChild(nb);
+ const bars=el("span","s4bars");bars.appendChild(bar(c.hp,mx,"hp"));bars.appendChild(bar(c.mp,R.maxMp(c),"mp"));r.appendChild(bars);r.appendChild(el("span","s4pv",c.hp+"/"+mx));pr.appendChild(r);});
+ const en=$("fen");if(en){en.innerHTML="";F.m.forEach(m=>{if(m.hp>0)en.appendChild(el("div","s4en",m.n));});}}
+function drawMenu(){drawParty();const mn=$("fmenu");if(!mn)return;mn.innerHTML="";if(F.over){endFight();return;}const c=live.party[turnI];mn.appendChild(el("div","s4who",c.name+"'s turn - tap the name"));}
+function doAct(cmd,arg,targ){closeBranch();const c=live.party[turnI],before=F.m.map(m=>m.hp);const t=F.act(turnI,cmd,arg,targ);
  const s=cmd==="skill"&&R.SKILLS[c.cls].find(x=>x.id===arg);F.m.forEach((m,i)=>{if(m.hp<before[i])fx.push({i,t0:performance.now(),k:s&&s.k==="magic"?"magic":"hit"});});if(s&&s.k==="heal")fx.push({ally:true,t0:performance.now(),k:"heal"});
  say(t);turnI++;nextAlive();if(!F.over&&turnI>=live.party.length){const out=F.monstersTurn();setTimeout(()=>{if(out.length&&F&&!F.over)say(out.join(". "));},450);turnI=0;nextAlive();}drawMenu();}
-function endFight(){const mn=$("fmenu"),how=F.over;cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+function endFight(){const mn=$("fmenu"),how=F.over;closeBranch();
  if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+(c.skills.length<R.skillSlots(c.lvl)?" - new skill ready!":""));}else c.hp=1;});
   const jn=rw.junk.map(id=>{const who=addLoot(id);return R.ITEMS[id].n+(who?"":" (no room, left behind)");});
   mn.appendChild(el("div","s4win","Victory!"));mn.appendChild(el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: "+jn.join(", "):"")));ups.forEach(u=>mn.appendChild(el("div","s4note glowt",u)));
-  const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go");b.id="fdone";mn.appendChild(b);ov.dataset.result="win";}
+  const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="win";}
  else if(how==="lose"){mn.appendChild(el("div","s4lose","The party has fallen"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
-  const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
- else{const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);ov.dataset.result="ran";}
+  const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
+ else{const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);ov.dataset.result="ran";}
  drawParty();}
 // ---- fight drawing (side view, dark dungeon, inked figures, purple/blue magic) ----
 const ZC=[null,[150,112,60],[92,108,62],[70,92,124],[128,52,50],[96,62,128]];
@@ -148,7 +215,7 @@ function loop(t){if(!F||!fcv){return;}sizeF();const t0=performance.now(),g=fctx,
  const s=Math.min(W/5,H/2.6),fy=H*0.8;const alive=F.m;alive.forEach((m,i)=>{if(m.hp<=0)return;const x=W*(0.13+0.13*(i%3))+(i>2?W*0.06:0),y=fy-s*0.6-(i%2)*s*0.25;
   const f=fx.find(e=>e.i===i&&t-e.t0<120);g.save();if(f){g.translate((Math.random()-.5)*s*0.15,0);}drawMon(g,m,x,y,s*0.9,t);g.restore();
   g.fillStyle="#22152e";g.fillRect(x-s*0.4,y-s*1.0,s*0.8,s*0.07);g.fillStyle="#c04060";g.fillRect(x-s*0.4,y-s*1.0,s*0.8*m.hp/m.max,s*0.07);});
- live.party.forEach((c,i)=>{const x=W*(0.58+0.12*i),y=fy-s*0.6-(i%2)*s*0.18;drawHero(g,c,x,y,s*0.75,t,i===turnI&&!F.over);});
+ live.party.forEach((c,i)=>{const x=W*(0.58+0.12*i),y=fy-s*0.6-(i%2)*s*0.18;drawHero(g,c,x,y,s*0.75,t,i===turnI&&!F.over);if(i===turnI&&!F.over&&c.hp>0){const ay=y-s*1.0+Math.sin(t/180)*s*0.05;g.fillStyle="#ffe08a";g.shadowColor="rgba(255,220,120,.9)";g.shadowBlur=s*0.15;g.beginPath();g.moveTo(x-s*0.1,ay);g.lineTo(x+s*0.1,ay);g.lineTo(x,ay+s*0.13);g.closePath();g.fill();g.shadowBlur=0;}});
  fx=fx.filter(e=>t-e.t0<700);fx.forEach(e=>{const p=(t-e.t0)/700;if(e.k==="magic"&&!e.ally){const i=e.i,x=W*(0.13+0.13*(i%3))+(i>2?W*0.06:0),y=fy-s*0.6-(i%2)*s*0.25;burst(g,x,y,s,p,"magic");}
   else if(e.k==="heal"){live.party.forEach((c,i)=>{if(c.hp>0)burst(g,W*(0.58+0.12*i),fy-s*0.9,s*0.6,p,"heal");});}
   else if(e.k==="hit"){const i=e.i,x=W*(0.13+0.13*(i%3))+(i>2?W*0.06:0),y=fy-s*0.6-(i%2)*s*0.25;g.strokeStyle="rgba(255,240,220,"+(1-p)+")";g.lineWidth=s*0.05;g.beginPath();g.moveTo(x-s*0.4,y-s*0.4+p*s*0.3);g.lineTo(x+s*0.4,y+s*0.3-p*s*0.1);g.stroke();}});
@@ -170,8 +237,8 @@ S.onRoomOpen=id=>{if(!live||localStorage.getItem(DEV_NOFIGHT)==="1")return;const
 // ---------- top button + hint ----------
 const pb=$("partyb");function updBtn(){pb.classList.toggle("need",!live);$("s4hint").style.display=live?"none":"block";}
 pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())return;if(S.puzzleOpen&&S.puzzleOpen())return;if(ui)return;if(!live)creation();else partyScreen();});
-updBtn();window.addEventListener("resize",()=>{if(fcv&&ui==="fight")sizeF();});
+updBtn();if(!live&&localStorage.getItem(DEV_NOFIGHT)!=="1")creation();window.addEventListener("resize",()=>{if(fcv&&ui==="fight")sizeF();closeBranch();});
 // test and debug hooks (no network, no secrets)
 S.rpg={live:()=>live,save:()=>save,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
- setLive:o=>{live=o;},forceEnd:how=>{if(F){F.over=how;drawMenu();}},act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI};
+ setLive:o=>{live=o;},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI};
 })();

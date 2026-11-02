@@ -11,7 +11,7 @@ def go(pg,cells):
 with sync_playwright() as p:
   b=p.chromium.launch()
   def newpg(w,h):
-    pg=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='block').new_page();pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA');return pg
+    c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='block');c.add_init_script("try{localStorage.setItem('sota.dev.nofight','1')}catch(e){}");pg=c.new_page();pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA');return pg
   r,camps,mons=W.zone1_tour()
   if os.environ.get('V2B'):
     for (w,h) in [(412,915),(915,412),(360,800)]:

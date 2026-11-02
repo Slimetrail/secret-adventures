@@ -12,7 +12,7 @@ class Fail(Exception):pass
 def check(c,msg):
   if not c:raise Fail(msg)
 def ctx(p,sw=False):
-  b=p.chromium.launch();c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block')
+  b=p.chromium.launch();c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block');c.add_init_script("try{localStorage.setItem('sota.dev.nofight','1')}catch(e){}")
   return b,c
 def page(c,errs=None,reqs=None):
   pg=c.new_page()

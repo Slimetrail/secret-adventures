@@ -6,7 +6,7 @@ with sync_playwright() as p:
   b=p.chromium.launch()
   for w,h in [(360,800),(412,915),(915,412)]:
     for thr in [1,4]:
-      c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='block');pg=c.new_page()
+      c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='block');c.add_init_script("try{localStorage.setItem('sota.dev.nofight','1')}catch(e){}");pg=c.new_page()
       cdp=c.new_cdp_session(pg);cdp.send('Emulation.setCPUThrottlingRate',{'rate':thr})
       pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('SOTA.teleport(22,31,2)');pg.wait_for_timeout(500)
       r=[pg.evaluate('SOTA.renderOnce()') for _ in range(60)]
@@ -21,7 +21,7 @@ import sys,os;sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__f
 with sync_playwright() as p:
   b=p.chromium.launch()
   for thr in [1,4]:
-    c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='block');pg=c.new_page()
+    c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='block');c.add_init_script("try{localStorage.setItem('sota.dev.nofight','1')}catch(e){}");pg=c.new_page()
     c.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':thr});pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA')
     r=[tuple(x) for x in W.MZ['main_route'][:300]];cs,_=W.cmds(r,0);pg.evaluate('SOTA.setAnim(false)');pg.evaluate('c=>c.forEach(k=>SOTA.act(k))',cs)
     t0=pg.evaluate('(()=>{const t=performance.now();SOTA.map.open();return performance.now()-t})()')
@@ -33,7 +33,7 @@ with sync_playwright() as p:
 with sync_playwright() as p:
   b=p.chromium.launch()
   for thr in [1,4]:
-    c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='block');pg=c.new_page()
+    c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='block');c.add_init_script("try{localStorage.setItem('sota.dev.nofight','1')}catch(e){}");pg=c.new_page()
     c.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':thr});pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA')
     rm=pg.evaluate('MAZE.rooms[5]');st0=pg.evaluate('SOTA.state()');pa=W.path((st0['x'],st0['y']),tuple(rm['c']));a=pa[-2];d=W.D.index((pa[-1][0]-a[0],pa[-1][1]-a[1]))
     pg.evaluate('a=>SOTA.teleport(a[0],a[1],a[2])',[a[0],a[1],d]);pg.wait_for_timeout(300)

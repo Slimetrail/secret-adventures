@@ -1,5 +1,5 @@
-const VER="5",CACHE="sota-s1-v"+VER;
-const SHELL=["./","index.html","maze-data.js?v=5","tex.js?v=5","doors.js?v=5","game.js?v=5","puzzles.js?v=5","puzzle-ui.js?v=5","map.js?v=5","rules.js?v=5","party.js?v=5","boot.js?v=5","manifest.json","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png"];
+const VER="6",CACHE="sota-s1-v"+VER;
+const SHELL=["./","index.html","maze-data.js?v=6","tex.js?v=6","doors.js?v=6","game.js?v=6","puzzles.js?v=6","puzzle-ui.js?v=6","map.js?v=6","rules.js?v=6","party.js?v=6","boot.js?v=6","manifest.json","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png"];
 // all-or-nothing install: if any file is missing the install fails and the old version keeps running
 self.addEventListener("install",e=>{e.waitUntil(caches.has(CACHE).then(had=>caches.open(CACHE).then(c=>c.addAll(SHELL.map(u=>new Request(u,{cache:"reload"})))).then(()=>self.skipWaiting(),err=>(had?Promise.resolve():caches.delete(CACHE)).then(()=>{throw err}))))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("sota-s1-")&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

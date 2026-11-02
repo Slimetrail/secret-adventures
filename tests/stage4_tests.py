@@ -15,12 +15,20 @@ def page(c,pre=None):
   if pre:pg.evaluate('p=>{for(const k in p)localStorage.setItem(k,p[k])}',pre)
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)');return pg
 def tap(pg,sel):
+  # fix round 1: fight commands and party actions now sit in a branch menu opened by tapping a name
+  if pg.locator(sel).count()==0:
+    m=re.match(r'\[data-(equip|bag)="(\d+)"\]',sel)
+    if m:tap(pg,f'[data-pname="{m.group(2)}"]')
+    elif sel.startswith('[data-cmd4'):tap(pg,'#fparty button.s4nl:not([disabled])')
   l=pg.locator(sel).first;check(l.count()>0,'no element '+sel);l.scroll_into_view_if_needed();b=l.bounding_box();check(b,'no element '+sel);pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2)
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
 def create(pg,race='human',cls='warrior',inc=('str','str','str'),skill=None,diff='normal',name='Jer'):
-  tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','creation did not open');tap(pg,f'[data-race={race}]');tap(pg,f'[data-cls={cls}]');pg.fill('#ccname',name)
+  if ev(pg,'SOTA.rpg.ui()')!='create':tap(pg,'#partyb')
+  check(ev(pg,'SOTA.rpg.ui()')=='create','creation did not open');tap(pg,f'[data-race={race}]');tap(pg,f'[data-cls={cls}]');pg.fill('#ccname',name)
   for k in inc:tap(pg,f'[data-inc={k}]')
-  tap(pg,f'[data-skill={skill or ev(pg,"c=>RPG.SKILLS[c][0].id",cls)}]');tap(pg,f'[data-diff={diff}]');tap(pg,'#ccgo');check(ev(pg,'SOTA.rpg.ui()') is None,'creation did not close')
+  tap(pg,f'[data-skill={skill or ev(pg,"c=>RPG.SKILLS[c][0].id",cls)}]');tap(pg,f'[data-diff={diff}]');tap(pg,'#ccgo')
+  if ev(pg,'SOTA.rpg.ui()')=='create':tap(pg,'#ccgo')
+  check(ev(pg,'SOTA.rpg.ui()') is None,'creation did not close')
 def step_into(pg,c):
   """stand next to cell c facing it, then press forward"""
   for d in range(4):
@@ -99,7 +107,7 @@ def t_fight_ui(p):
   for k in['fwd','left']:ev(pg,f'SOTA.act("{k}")')
   pots=ev(pg,'SOTA.rpg.live().party[0].bag.filter(x=>x=="potion").length');m0=ev(pg,'SOTA.rpg.fight().m[0].hp')
   tap(pg,'[data-cmd4=attack]');tap(pg,'[data-tgt="0"]');check(ev(pg,'SOTA.rpg.fight().m[0].hp')<m0,'attack did nothing')
-  mp=ev(pg,'SOTA.rpg.live().party[0].mp');tap(pg,'[data-cmd4=skill]');tap(pg,'[data-sk=bolt]');tap(pg,'[data-tgt="1"]');check(ev(pg,'SOTA.rpg.live().party[0].mp')<mp,'magic used no mana')
+  mp=ev(pg,'SOTA.rpg.live().party[0].mp');tap(pg,'[data-cmd4=magic]');tap(pg,'[data-sk=bolt]');tap(pg,'[data-tgt="1"]');check(ev(pg,'SOTA.rpg.live().party[0].mp')<mp,'magic used no mana')
   tap(pg,'[data-cmd4=item]');tap(pg,'[data-item=potion]');check(ev(pg,'SOTA.rpg.live().party[0].bag.filter(x=>x=="potion").length')==pots-1,'potion not used')
   tap(pg,'[data-cmd4=defend]');check('defends' in ev(pg,'SOTA.rpg.fight().log.join("|")'),'defend')
   for i in range(30):
@@ -155,7 +163,7 @@ def t_ui_fit(p):
     def chk(tag):
       r=ev(pg,'[...document.querySelectorAll("#s4 button")].map(e=>{const r=e.getBoundingClientRect();return [e.textContent.slice(0,20),r.width,r.height,r.right]})');bad.extend([(tag,x) for x in r if x[1]<44 or x[2]<44 or x[3]>innerW+1])
       check(ev(pg,'document.getElementById("s4").scrollWidth<=innerWidth'),f'{tag} wider than screen')
-    innerW=w;chk('create');tap(pg,'[data-race=human]');tap(pg,'[data-skill=cleave]');tap(pg,'#ccgo')
+    innerW=w;chk('create');tap(pg,'[data-race=human]');pg.fill('#ccname','Fit');tap(pg,'[data-skill=cleave]');tap(pg,'#ccgo');tap(pg,'#ccgo')
     ev(pg,'SOTA.rpg.live().party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1),RPG.makeCompanion(RPG.COMPANIONS[2],1))')
     ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>RPG.makeMonster(1,i,1,0,"normal")))');chk('fight');tap(pg,'[data-cmd4=skill]');chk('skills')
     check(ev(pg,'(()=>{const m=document.getElementById("fmenu").getBoundingClientRect();return m.bottom<=innerHeight+1})()'),'menu off screen')
@@ -163,8 +171,8 @@ def t_ui_fit(p):
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()
 def t_offline4(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v5");const r=[];for(const f of["rules.js?v=5","party.js?v=5","game.js?v=5","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v5'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v6");const r=[];for(const f of["rules.js?v=6","party.js?v=6","game.js?v=6","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v6'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 def t_unchanged(p):
   d=subprocess.run(['git','diff','--stat','c11ccd52511198071301d9c30bb032a4cfaed635','--','tex.js','puzzles.js','puzzle-ui.js','map.js','doors.js','maze-data.js'],cwd=ROOT,capture_output=True,text=True).stdout
