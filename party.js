@@ -371,7 +371,7 @@ setInterval(updHere,400);
 function sideTabs(w,list){const box=el("div","s5tabs");list.forEach(([label,kids,fn,key])=>{const b=el("button","s4bi s5tab",(kids?"‹ ":"")+label);b.dataset.tab=key;b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(fn){fn();return;}slideTree.at=b;slideTree(kids(),0);slideTree.at=null;});box.appendChild(b);});w.appendChild(box);return box;}
 function goldLine(w){const g=el("div","s4note s5gold","Gold "+live.gold);g.id="s5gold";w.appendChild(g);}
 function keeperArt(i){const cv=document.createElement("canvas");cv.width=cv.height=96;cv.className="s5keep";const g=cv.getContext("2d");
- const hair=["#7a4a24","#e8c860","#cfd6e6","#f4f1ea"][i],skin=["#d8a47c","#efc8a4","#e9d6c6","#f0d2c0"][i];
+ const hair=["#7a4a24","#e8c860","#cfd6e6","#f4f1ea"][i],skin=["#d8a47c","#efc8a4","#e9d6c6","#8a5a3c"][i];
  g.fillStyle="#1c1230";g.fillRect(0,0,96,96);g.fillStyle="#3a2a52";g.beginPath();g.moveTo(14,96);g.quadraticCurveTo(48,52,82,96);g.fill();
  if(i===3){g.fillStyle=hair;g.beginPath();g.moveTo(26,30);g.lineTo(32,8);g.lineTo(42,26);g.moveTo(54,26);g.lineTo(64,8);g.lineTo(70,30);g.fill();}
  g.fillStyle=skin;g.beginPath();g.ellipse(48,46,i===0?22:18,22,0,0,7);g.fill();
