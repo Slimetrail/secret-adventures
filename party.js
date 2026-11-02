@@ -9,7 +9,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 function tapBtn(label,fn,cls){const b=el("button","ink s4b"+(cls?" "+cls:""),label);b.addEventListener("click",e=>{e.preventDefault();fn();});return b;}
 // ---------- state ----------
 // live: what you have now. save: the last camp/tavern save (the only thing kept in storage).
-let save=null,live=null,ui=null,stepsSince=99,fightNo=0;
+let save=null,live=null,ui=null,stepsSince=99,fightNo=0,roll=null;
 function validSave(o){try{return o&&o.v===1&&Array.isArray(o.party)&&o.party.length>=1&&o.party.length<=4&&o.party.every(c=>R.allowed(c.race,c.cls)&&c.lvl>=1&&c.lvl<=R.CAP)&&R.DIFF[o.diff]&&o.at&&o.at.x>=0&&o.at.x<N&&o.at.y>=0&&o.at.y<N&&o.rooms&&Array.isArray(o.rooms.s)&&Array.isArray(o.rooms.c);}catch(e){return false;}}
 try{const o=JSON.parse(localStorage.getItem(SAVE)||"null");if(validSave(o)){save=o;live=clone(o);}}catch(e){}
 function hpMul(){return R.DIFF[live.diff].hp;}
@@ -48,7 +48,7 @@ function creation(){openUI("create");ov.innerHTML="";const w=el("div","s4page");
  w.appendChild(el("div","s4lab","Difficulty"));const dr=el("div","s4row");for(const k in R.DIFF){const bt=tapBtn(R.DIFF[k].name,()=>{cc.diff=k;creation();},cc.diff===k?"sel":"");bt.dataset.diff=k;dr.appendChild(bt);}w.appendChild(dr);
  w.appendChild(el("div","s4note",{story:"Story: heroes have double health, monsters hit half as hard.",normal:"Normal: the game as planned.",hard:"Hard: monsters hit 50% harder."}[cc.diff]));
  const go=tapBtn("Start adventure",()=>{if(!cc.skill){toast("Pick a starting skill");return;}const h=R.newChar(cc.name.trim()||"Hero",cc.race,cc.cls,cc.add,cc.skill);
-  const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","ether");
+  const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{if(id==="leather"&&!R.canEquip(h,id,"chest"))id="robe";h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","ether");
   live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0};live.party[0].hp=R.maxHp(h,hpMul());doSave(true);closeUI();toast("Welcome, "+h.name+". Game saved.");},"s4go");go.id="ccgo";w.appendChild(go);}
 // ---- party screen ----
 function partyScreen(){openUI("party");ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);w.appendChild(head("Party",closeUI));
@@ -162,8 +162,8 @@ S.afterStep=rid=>{if(!live||localStorage.getItem(DEV_NOFIGHT)==="1")return;const
   if(t>=0){const def=R.companionFor(t,live.party);if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";}}
   doSave(false);toast(joined+"Game saved at "+placeName(p.x,p.y)+".");updBtn();return;}
  if(S.panelOpen())return; // first entry into a room: the room itself decides (see onRoomOpen)
- if(stepsSince<6)return;const r=R.rng((live.seed^(p.x*7349+p.y*131+S.visitedCount()*17))>>>0)();
- if(r<(rid>=0?0.3:0.035)){stepsSince=0;fightHere("random");}};
+ if(stepsSince<10)return;if(!roll)roll=R.rng(live.seed>>>0);const r=roll();
+ if(r<(rid>=0?0.15:0.02)){stepsSince=0;fightHere("random");}};
 S.onRoomOpen=id=>{if(!live||localStorage.getItem(DEV_NOFIGHT)==="1")return;const r=M.rooms[id];
  if(r.k==="monster"){stepsSince=0;fightHere("room");}
  else if(r.k==="treasure"){const l=R.loot(r.z,(live.seed^(id*2654435761))>>>0);live.gold+=l.gold*2;const got=l.junk.map(j=>addLoot(j)?R.ITEMS[j].n:null).filter(Boolean);toast("Treasure: +"+l.gold*2+" gold"+(got.length?", "+got.join(", "):""));}};
@@ -173,5 +173,5 @@ pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())ret
 updBtn();window.addEventListener("resize",()=>{if(fcv&&ui==="fight")sizeF();});
 // test and debug hooks (no network, no secrets)
 S.rpg={live:()=>live,save:()=>save,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
- setLive:o=>{live=o;},act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI};
+ setLive:o=>{live=o;},forceEnd:how=>{if(F){F.over=how;drawMenu();}},act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI};
 })();

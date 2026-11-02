@@ -199,7 +199,7 @@ def t_offline2(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA')
   pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
   c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.map',timeout=8000)
-  ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=4"))&&(await caches.keys()).length})()')
+  ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=5"))&&(await caches.keys()).length})()')
   check(ok==1,f'map.js not cached / old caches kept {ok}');tap(pg,'#mapb');check(MD(pg)['cells']=='1' or int(MD(pg)['cells'])>=1,'map offline');b.close()
 
 def t_console_network2(p):
