@@ -132,8 +132,8 @@ def t_difficulty(p):
 
 def t_offline3(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=(await caches.keys());const c=await caches.open(k.find(x=>x=="sota-s1-v7"));const r=[];for(const f of["puzzles.js?v=7","puzzle-ui.js?v=7","doors.js?v=7","game.js?v=7"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v7'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
+  ok=pg.evaluate('(async()=>{const k=(await caches.keys());const c=await caches.open(k.find(x=>x=="sota-s1-v8"));const r=[];for(const f of["puzzles.js?v=8","puzzle-ui.js?v=8","doors.js?v=8","game.js?v=8"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v8'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 
 def t_console_network3(p):

@@ -42,7 +42,7 @@ function pimg(c,cls){const i=el("img",cls||"s4por");i.src=portrait(c);i.alt="";r
 function bar(v,mx,cls){const b=el("span","s4bar "+(cls||""));const f=el("span","s4barf");f.style.width=Math.max(0,Math.min(100,v/mx*100))+"%";b.appendChild(f);return b;}
 // ---- compact branching menu: tap a name, small labels branch out (flip near edges) ----
 let br=null,brBox=null;
-function closeBranch(){if(br){br.remove();br=null;}brBox=null;}
+function closeBranch(){if(br){br.remove();br=null;}brBox=null;const fp=document.getElementById("fparty");if(fp)fp.classList.remove("treeopen");}
 // items: [{t:label, fn, kids:[...] or ()=>[...], off, d:{data attrs}}]
 function branch(anchor,items,level,owner,fight){level=level||0;if(level===0){closeBranch();if(fight){const P=$("fbot").getBoundingClientRect(),land=innerWidth>innerHeight;brBox={r:P,dir:land?"col":"row"};}br=el("div","s4br");br.id="s4br";br.addEventListener("click",e=>{if(e.target===br)closeBranch();});
   br.insertAdjacentHTML("beforeend",'<svg class="s4brl"></svg>');document.body.appendChild(br);if(brBox){const P=brBox.r,bk=el("div","s4brbk");bk.style.cssText="left:"+P.left+"px;top:"+P.top+"px;width:"+P.width+"px;height:"+P.height+"px";bk.addEventListener("click",()=>closeBranch());br.insertBefore(bk,br.firstChild);}}
@@ -81,9 +81,9 @@ function branch(anchor,items,level,owner,fight){level=level||0;if(level===0){clo
  return col;}
 // fight v3: the decision tree slides in from the right edge, one column per level; Back or a tap outside closes
 function slideTree(items,level){if(level===0){closeBranch();br=el("div","s4br slide");br.id="s4br";br.addEventListener("click",e=>{if(e.target===br)closeBranch();});
-  const sl=el("div","s4sl");const P=$("fparty"),pb=P?P.getBoundingClientRect().bottom:60;sl.style.top=Math.round(pb+8)+"px";br.appendChild(sl);document.body.appendChild(br);}
+  const sl=el("div","s4sl");const A=document.querySelector("#fparty .s4pr.now .s4nl")||document.querySelector("#fparty .s4nl"),ar=A?A.getBoundingClientRect():{top:60,left:innerWidth-150};sl.style.top=Math.round(ar.top)+"px";sl.style.right=Math.round(innerWidth-ar.left+6)+"px";br.appendChild(sl);document.body.appendChild(br);const fp=$("fparty");if(fp)fp.classList.add("treeopen");}
  const sl=br.querySelector(".s4sl");[...sl.querySelectorAll(".s4bcol")].filter(c=>+c.dataset.lv>=level).forEach(c=>c.remove());
- const col=el("div","s4bcol sliding");col.dataset.lv=level;sl.appendChild(col);
+ const col=el("div","s4bcol sliding");col.dataset.lv=level;sl.appendChild(col);const op=level>0&&sl.querySelector('.s4bcol[data-lv="'+(level-1)+'"] .s4bi.open');col.style.marginTop=op?(op.offsetTop)+"px":"0px";
  const done=()=>col.classList.remove("sliding");col.addEventListener("animationend",done);setTimeout(done,450);
  if(level>0){const bk=el("button","s4bi back","‹ Back");bk.dataset.back=level;bk.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();
    [...sl.querySelectorAll(".s4bcol")].forEach(c=>{const lv=+c.dataset.lv;if(lv>=level)c.remove();else if(lv===level-1){c.style.display="";c.querySelectorAll(".open").forEach(x=>x.classList.remove("open"));}else if(lv>=level-2)c.style.display="";});});col.appendChild(bk);}
@@ -213,8 +213,11 @@ function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const s
   {t:"Spells",d:{cmd4:"spells"},off:!sk.length,kids:()=>sk.map(skItem)},
   {t:"Items",d:{cmd4:"item"},kids:()=>[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use").map(id=>({t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,fn:()=>doAct("item",id,turnI),d:{item:id}}))},
   {t:"Run",d:{cmd4:"run"},fn:()=>doAct("run",null,0)}];return slideTree(items,0);}
-function drawParty(){const pr=$("fparty");if(!pr)return;pr.innerHTML="";live.party.forEach((c,i)=>{const now=i===turnI&&!F.over&&c.hp>0,r=el("div","s4pr"+(now?" now":"")+(c.hp<=0?" dead":""));const mx=R.maxHp(c,hpMul());
- const nb=el("button","s4nl");nb.dataset.hero=i;nb.disabled=!now;const top=el("span","s4nlt");top.appendChild(el("span","s4arrow",now?"▶":""));top.appendChild(el("span","s4nn",c.name));top.appendChild(el("span","s4pv",c.hp+"/"+mx));nb.appendChild(top);
+let rotTop=0;
+// fight v4: tabs stack in turn order; the member whose turn it is is the top tab, the one who just acted goes to the bottom
+function turnOrder(){const n=live.party.length;if(F&&!F.over&&live.party[turnI]&&live.party[turnI].hp>0)rotTop=turnI;rotTop=Math.min(rotTop,n-1);return [...Array(n).keys()].map(k=>(rotTop+k)%n);}
+function drawParty(){const pr=$("fparty");if(!pr)return;const was=pr.dataset.top;pr.innerHTML="";const ord=turnOrder();pr.dataset.top=ord[0];if(was!==undefined&&was!==String(ord[0])){pr.classList.remove("rot");void pr.offsetWidth;pr.classList.add("rot");}ord.forEach(i=>{const c=live.party[i];const now=i===turnI&&!F.over&&c.hp>0,r=el("div","s4pr"+(now?" now":"")+(c.hp<=0?" dead":""));const mx=R.maxHp(c,hpMul());
+ const nb=el("button","s4nl");nb.dataset.hero=i;nb.disabled=!now;const top=el("span","s4nlt");top.appendChild(el("span","s4arrow",now?"‹":""));top.appendChild(el("span","s4nn",c.name));top.appendChild(el("span","s4pv",c.hp+"/"+mx));nb.appendChild(top);
  const bars=el("span","s4bars");bars.appendChild(bar(c.hp,mx,"hp"));bars.appendChild(bar(c.mp,R.maxMp(c),"mp"));nb.appendChild(bars);nb.addEventListener("click",e=>{e.preventDefault();if(now)heroMenu(nb);});r.appendChild(nb);pr.appendChild(r);});
  const en=$("fen");if(en){en.textContent=F.m.filter(m=>m.hp>0).map(m=>m.n).join(" · ");}}
 function drawMenu(){drawParty();const mn=$("fmenu");if(!mn)return;mn.innerHTML="";const fw=document.querySelector(".s4fight");if(fw)fw.classList.toggle("over",!!F.over);if(F.over){endFight();return;}const c=live.party[turnI];mn.appendChild(el("div","s4who",c.name+"'s turn - tap the name"));}
