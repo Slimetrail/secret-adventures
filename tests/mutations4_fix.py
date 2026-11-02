@@ -36,7 +36,7 @@ T=os.path.join(ROOT,'tests/stage4_fix_tests.py');bad=0
 for name,f,a,b_,test in MUT:
   d=tempfile.mkdtemp(prefix='sota-mut4f-');shutil.copytree(ROOT,d,dirs_exist_ok=True,ignore=shutil.ignore_patterns('.git'))
   s=open(os.path.join(d,f)).read();assert a in s,f'anchor missing: {name}';open(os.path.join(d,f),'w').write(s.replace(a,b_,1))
-  pr,url=serve(d);r=subprocess.run([PY,T,url,test],capture_output=True,text=True);pr.terminate();shutil.rmtree(d)
+  pr,url=serve(d);r=subprocess.run([PY,os.path.join(d,'tests/stage4_fix_tests.py'),url,test],capture_output=True,text=True)  # run the copy's tests so app-copying tests use the mutated files;pr.terminate();shutil.rmtree(d)
   k=r.returncode!=0;bad+=not k;print(('KILLED ' if k else 'SURVIVED ')+f'{name} -> {test}: '+(r.stdout.strip().splitlines() or ['?'])[-1][:150])
 pr,url=serve(ROOT);r=subprocess.run([PY,T,url]+sorted({m[4] for m in MUT}),capture_output=True,text=True);pr.terminate()
 print('REAL APP:',r.stdout.strip().replace('\n',' | ')[-300:]);bad+=r.returncode!=0;sys.exit(1 if bad else 0)
