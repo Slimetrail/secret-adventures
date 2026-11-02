@@ -18,7 +18,7 @@ const RACES={
  dwarf:{name:"Dwarf",classes:["warrior","rogue","archer"],armor:3,anyWeapon:true,base:{str:9,sta:7,man:1},carry:1.6},
  cat:{name:"Cat person",classes:["mage","rogue","warrior"],armor:1,anyWeapon:false,base:{str:2,sta:9,man:5},carry:0.6}};
 function allowed(race,cls){return !!(RACES[race]&&CLASSES[cls]&&RACES[race].classes.includes(cls));}
-function armorCap(c){return Math.min(RACES[c.race].armor,CLASSES[c.cls].armor+(RACES[c.race].anyWeapon&&c.race==="dwarf"?1:0));}
+function armorCap(c){return RACES[c.race].armor;} // armor limits come from race only, as in the design sheet
 // skills: k = attack kind (phys / magic / heal / guard), p = power, mp = cost
 const SKILLS={
  warrior:[{id:"cleave",n:"Cleave",k:"phys",p:1.6,mp:3,all:1},{id:"bash",n:"Shield Bash",k:"phys",p:1.4,mp:2},{id:"rally",n:"Rally",k:"guard",p:1,mp:3},{id:"rage",n:"Berserk Blow",k:"phys",p:2.4,mp:6},{id:"quake",n:"Ground Slam",k:"phys",p:1.9,mp:8,all:1},{id:"titan",n:"Titan Strike",k:"phys",p:3.4,mp:12}],
