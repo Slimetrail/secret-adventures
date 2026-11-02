@@ -61,6 +61,32 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 #puz.land #pboard{flex-direction:row;flex-wrap:wrap;justify-content:center;max-height:calc(100vh - 20px)}
 #panel{display:none;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);width:min(320px,86vw);padding:20px 16px;border:3px solid #2b1a0e;border-radius:10px 14px 9px 12px;background:radial-gradient(circle at 40% 35%,#efe0b8,#cdb07a);color:#2b1a0e;font:18px Georgia,serif;text-align:center;box-shadow:0 6px 30px rgba(0,0,0,.6)}
 #panel.open{display:block}#pgo{margin-top:14px;min-width:140px;height:50px;border-radius:12px 9px 13px 8px;font:700 18px Georgia,serif}
+#partyb{position:fixed;top:calc(6px + env(safe-area-inset-top));right:64px;width:48px;height:48px;border-radius:12px 9px 13px 8px}
+#partyb.need{box-shadow:0 0 0 3px rgba(160,120,255,.9),0 0 18px 4px rgba(120,140,255,.8)}
+#s4hint{display:none;position:fixed;top:calc(62px + env(safe-area-inset-top));right:10px;max-width:200px;padding:6px 10px;font:600 15px Georgia,serif;color:#efe0b8;background:rgba(20,10,40,.8);border:1px solid rgba(160,120,255,.7);border-radius:8px;pointer-events:none;text-align:right}
+#s4toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);max-width:86vw;padding:8px 14px;font:600 16px Georgia,serif;color:#efe0b8;background:rgba(20,10,40,.88);border:1px solid rgba(160,120,255,.8);border-radius:10px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;text-align:center}
+#s4toast.on{opacity:1}
+#s4{display:none;position:fixed;inset:0;z-index:20;background:radial-gradient(ellipse at 50% 20%,#241838,#0b0714 70%);color:#efe0b8;font:16px Georgia,serif;overflow:auto;-webkit-overflow-scrolling:touch}
+#s4.open{display:block}
+.s4page{max-width:520px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 12px 24px;display:flex;flex-direction:column;gap:8px}
+.s4head{display:flex;align-items:center;justify-content:space-between;gap:8px}.s4title{font:700 24px Georgia,serif;color:#f3e2b5;text-shadow:0 0 12px rgba(150,110,255,.6)}
+.s4b{min-height:48px;min-width:48px;padding:0 12px;border-radius:12px 9px 13px 8px;font:700 16px Georgia,serif}
+.s4b.sel{outline:3px solid #8f6bff;box-shadow:0 0 14px 2px rgba(130,110,255,.85)}.s4b.off{opacity:.4}.s4b.glow{box-shadow:0 0 12px 3px rgba(120,160,255,.9)}.s4b.wide{width:100%;text-align:left}
+.s4row{display:flex;flex-wrap:wrap;gap:8px}.s4lab{font:700 17px Georgia,serif;margin-top:6px;color:#cdb7ff}.s4note{font:15px Georgia,serif;opacity:.92;line-height:1.3}.glowt{color:#a9c8ff;text-shadow:0 0 8px rgba(120,150,255,.9)}
+.s4name{height:48px;font:700 20px Georgia,serif;padding:0 12px;border-radius:10px;border:2.5px solid #2b1a0e;background:#efe0b8;color:#2b1a0e}
+.s4stat{display:grid;grid-template-columns:1fr 52px 40px 52px auto;align-items:center;gap:6px}.s4sv{text-align:center;font:700 20px Georgia,serif}.s4pm{font-size:24px}.s4cost{font-size:13px;opacity:.8;min-width:70px}
+.s4go{min-height:56px;font-size:19px;margin-top:10px;width:100%}
+.s4card{border:1px solid rgba(160,120,255,.45);border-radius:10px;padding:8px;background:rgba(10,5,25,.45);display:flex;flex-direction:column;gap:6px}.s4cn{font:700 17px Georgia,serif}
+.s4slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}.s4slots .s4b{min-height:60px;text-align:left;padding:4px 10px}.s4sl{font:12px Georgia,serif;opacity:.75}.s4it{font:700 15px Georgia,serif}
+.s4item{display:flex;align-items:center;gap:8px}.s4in{flex:1}.s4meter{height:12px;border-radius:6px;background:#1b1230;border:1px solid #5a4590;overflow:hidden}.s4fill{height:100%;background:linear-gradient(90deg,#6a7cff,#b07aff)}
+.s4fight{position:absolute;inset:0;display:flex;flex-direction:column}
+#fcv{width:100%;height:42%;display:block;border-bottom:2px solid rgba(150,110,255,.5)}
+.s4log{min-height:42px;padding:6px 12px;font:600 15px Georgia,serif;color:#e8dcff;background:rgba(10,5,25,.7)}
+.s4party{padding:4px 12px;display:flex;flex-direction:column;gap:3px}.s4pr{display:grid;grid-template-columns:80px 1fr auto;gap:8px;align-items:center;font:14px Georgia,serif;padding:2px 4px;border-radius:6px}
+.s4pr.now{background:rgba(130,110,255,.25)}.s4pr.dead{opacity:.45}.s4hp{height:10px;background:#2a1830;border-radius:5px;overflow:hidden}.s4hpf{display:block;height:100%;background:linear-gradient(90deg,#4fd08a,#9ff0b8)}
+.s4menu{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 12px calc(12px + env(safe-area-inset-bottom));align-content:start;overflow:auto}
+.s4menu .s4who,.s4menu .s4note,.s4menu .s4win,.s4menu .s4lose,.s4menu .s4go{grid-column:1/-1}.s4who{font:700 17px Georgia,serif;color:#cdb7ff}
+.s4menu .s4b{min-height:52px}.s4win{font:700 30px Georgia,serif;color:#ffe08a;text-align:center;text-shadow:0 0 16px rgba(255,200,90,.8)}.s4lose{font:700 26px Georgia,serif;color:#ff8aa0;text-align:center;text-shadow:0 0 16px rgba(200,60,120,.8)}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="vig"></div><div id="hud"></div><button id="dbg" class="ink" aria-label="Show or hide info">i</button>
@@ -74,6 +100,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 <button id="preset" class="ink" aria-label="Reset puzzle"><svg viewBox="0 0 40 40"><path d="M30 14 A11 11 0 1 0 31 24 M30 6 L30 14 L22 14" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 <div id="pside"><div id="ptitle"></div><div id="pinfo"></div><div id="pstat"></div><button id="penter" class="ink">Enter room</button></div><div id="pboard"></div></div>
 <div id="panel" role="dialog"><div id="ptxt"></div><button id="pgo" class="ink">Continue</button></div>
+<button id="partyb" class="ink" aria-label="Party"><svg viewBox="0 0 40 40"><path d="M9 31 L27 13 M24 9 L31 9 L31 16 M12 24 L16 28 M7 33 L11 29" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div id="s4hint">Tap the sword to make your hero</div><div id="s4toast"></div><div id="s4" aria-label="Party and fights"></div>
 <button id="updb">New version ready - tap to restart</button>
-<script src="maze-data.js?v=4"></script><script src="tex.js?v=4"></script><script src="doors.js?v=4"></script><script src="game.js?v=4"></script><script src="map.js?v=4"></script><script src="puzzles.js?v=4"></script><script src="puzzle-ui.js?v=4"></script><script src="boot.js?v=4"></script>
+<script src="maze-data.js?v=5"></script><script src="tex.js?v=5"></script><script src="doors.js?v=5"></script><script src="game.js?v=5"></script><script src="map.js?v=5"></script><script src="puzzles.js?v=5"></script><script src="puzzle-ui.js?v=5"></script><script src="rules.js?v=5"></script><script src="party.js?v=5"></script><script src="boot.js?v=5"></script>
 </body></html>

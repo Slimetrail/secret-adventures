@@ -62,12 +62,12 @@ let animOn=true;
 function startAnim(dur){anim.fx=vis.x;anim.fy=vis.y;anim.fa=vis.a;anim.tx=st.x;anim.ty=st.y;
  let d=st.f*Math.PI/2-vis.a;d=((d%(2*Math.PI))+3*Math.PI)%(2*Math.PI)-Math.PI;anim.ta=vis.a+d;anim.t0=performance.now();anim.dur=dur;anim.on=animOn;
  if(!animOn){vis.x=st.x;vis.y=st.y;vis.a=anim.ta;}}
-function blocked(){return !!(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen())||panelOn));}
+function blocked(){return !!(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen())||(SOTA.uiOpen&&SOTA.uiOpen())||panelOn));}
 function act(cmd){if(blocked())return; // logical state changes at once; the animation only follows it, so no press is ever lost
  if(cmd==="fwd"||cmd==="back"){const d=cmd==="fwd"?st.f:(st.f+2)%4;
   if(canMove(st.x,st.y,d)){const ti=(st.y+DIRS[d][1])*N+st.x+DIRS[d][0],rid=roomAt[ti];
    if(locked(rid)){bump=performance.now();if(window.SOTA&&SOTA.openPuzzle)SOTA.openPuzzle(rid,cmd);updHud();return;}
-   st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);if(rid>=0&&!clearedR[rid])showPanel(rid);}else bump=performance.now();}
+   st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);if(rid>=0&&!clearedR[rid])showPanel(rid);if(window.SOTA&&SOTA.afterStep)SOTA.afterStep(rid);}else bump=performance.now();}
  else if(cmd==="left"){st.f=(st.f+3)%4;save();startAnim(160);}
  else if(cmd==="right"){st.f=(st.f+1)%4;save();startAnim(160);}
  updHud();}
@@ -132,7 +132,7 @@ function render(t){
 const DT=window.DOORTEX,panel=document.getElementById("panel");let panelOn=false,panelRoom=-1;
 const PTXT={treasure:"Treasure room (loot comes in a later stage)",monster:"Monster room (fight comes later)",story:"Story room (story comes later)"};
 function showPanel(id){panelRoom=id;panelOn=true;document.getElementById("ptxt").textContent=PTXT[M.rooms[id].k];panel.classList.add("open");}
-document.getElementById("pgo").addEventListener("pointerdown",e=>{e.preventDefault();if(panelRoom>=0){clearedR[panelRoom]=1;saveRooms();}panelOn=false;panelRoom=-1;panel.classList.remove("open");});
+document.getElementById("pgo").addEventListener("pointerdown",e=>{e.preventDefault();const opened=panelRoom;if(panelRoom>=0){clearedR[panelRoom]=1;saveRooms();}panelOn=false;panelRoom=-1;panel.classList.remove("open");if(opened>=0&&window.SOTA&&SOTA.onRoomOpen)SOTA.onRoomOpen(opened);});
 // ---------- loop ----------
 const ft=[];let lastT=0;
 function frame(t){
@@ -156,7 +156,7 @@ window.SOTA={state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,can
  frameTimes:()=>ft.slice(),setAnim:v=>{animOn=!!v;},animating:()=>anim.on,renderOnce:()=>{const t0=performance.now();render(performance.now());return performance.now()-t0;},
  items:()=>items.slice(),rooms:()=>({solved:[...solvedR.keys()].filter(i=>solvedR[i]),cleared:[...clearedR.keys()].filter(i=>clearedR[i])}),
  roomAt:(x,y)=>roomAt[y*N+x],isSolved:i=>!!solvedR[i],panelOpen:()=>panelOn,
- markSolved:i=>{solvedR[i]=1;saveRooms();},visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
+ markSolved:i=>{solvedR[i]=1;saveRooms();},saveRooms,visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
  core:{solvedR,clearedR,mask,zoneOf,visited,trail:()=>trail,M,DIRS,BIT},
  teleport:(x,y,f)=>{st.x=x;st.y=y;st.f=f;visit(y*N+x);trail=[y*N+x];if(window.SOTA.onStep)SOTA.onStep();vis.x=x;vis.y=y;vis.a=f*Math.PI/2;anim.on=false;const z=ZA[zoneOf[y*N+x]].fog;fogNow[0]=z[0];fogNow[1]=z[1];fogNow[2]=z[2];save();updHud();},
  size:()=>({W,H}),vis:()=>({x:vis.x,y:vis.y,a:vis.a}),N,zones:()=>{const c=[0,0,0,0,0,0];for(let i=0;i<N*N;i++)c[zoneOf[i]]++;return c;}};
