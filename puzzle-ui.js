@@ -42,8 +42,8 @@ function render(){const t0=performance.now();const {pz,s}=cur,done=P.solved(pz,s
  else if(pz.t===2){h+=`<div class="pclues">`;pz.clues.forEach(cl=>{h+=`<div class="pclue">${cl.g.map(d=>`<span class="pdig">${d}</span>`).join("")}<span class="pfb">${"\u25CF".repeat(cl.a)}${"\u25CB".repeat(cl.b)}${cl.a+cl.b?"":"\u2014"}</span></div>`;});
   h+=`</div><div class="pentry">`;for(let i=0;i<pz.len;i++)h+=`<span class="pdig big">${s.e[i]||(done?"":"")}</span>`;h+=`</div><div class="pkeys">`;
   for(let d=1;d<=pz.digits;d++)h+=btn("pkey "+(s.e.includes(d)?"used":""),`data-mv="${d}"`,d);h+=btn("pkey",`data-mv="clr" aria-label="Clear"`,"\u232B")+`</div>`;}
- else if(pz.t===3){const n=pz.n,c=cellSize(n,1.3),W=n*c;let b="";
-  pz.blk.forEach((bk,i)=>{const[x,y]=s.q[i],w=bk.h?bk.len*c:c,hh=bk.h?c:bk.len*c;b+=btn("pblk"+(i===0?" key":"")+(sel===i?" sel":""),`data-blk="${i}" aria-label="Block ${i}"`,"",`left:${x*c+3}px;top:${y*c+3}px;width:${w-6}px;height:${hh-6}px`);});
+ else if(pz.t===3){const n=pz.n,c=Math.max(46,cellSize(n,1.3)),W=n*c;let b="";
+  pz.blk.forEach((bk,i)=>{const[x,y]=s.q[i],w=bk.h?bk.len*c:c,hh=bk.h?c:bk.len*c;b+=btn("pblk"+(i===0?" key":"")+(sel===i?" sel":""),`data-blk="${i}" aria-label="Block ${i}"`,"",`left:${x*c+1}px;top:${y*c+1}px;width:${w-2}px;height:${hh-2}px`);});
   const ex=`<div class="pexit" style="left:${W}px;top:${pz.r*c}px;height:${c}px;width:${Math.round(c*.3)}px"></div>`;
   h=`<div class="pgrid pblocks" style="width:${W}px;height:${W}px;background-size:${c}px ${c}px;background-color:${ZC[pz.zone]}33">${b}${ex}</div><div class="parrows">${btn("parr",`data-dir="-1" aria-label="Move back"`,sel>=0&&!pz.blk[sel].h?"\u25B2":"\u25C0")}${btn("parr",`data-dir="1" aria-label="Move on"`,sel>=0&&!pz.blk[sel].h?"\u25BC":"\u25B6")}</div>`;}
  else if(pz.t===4){const n=pz.n,c=cellSize(n,0.6),W=n*c;

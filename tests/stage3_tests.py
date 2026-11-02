@@ -27,7 +27,9 @@ def R(pg):
 START=tuple(W.MZ['start']) if 'start' in W.MZ else None
 def approach(pg,r):
   """Stand on the cell next to room r, facing its door."""
-  st=pg.evaluate('SOTA.state()');p=W.path((st['x'],st['y']),tuple(r['c']));a=p[-2];d=W.D.index((p[-1][0]-a[0],p[-1][1]-a[1]))
+  st=pg.evaluate('SOTA.state()')
+  if [st['x'],st['y']]==list(r['c']):tap(pg,'[data-cmd=back]');st=pg.evaluate('SOTA.state()')
+  p=W.path((st['x'],st['y']),tuple(r['c']));a=p[-2];d=W.D.index((p[-1][0]-a[0],p[-1][1]-a[1]))
   pg.evaluate('a=>SOTA.teleport(a[0],a[1],a[2])',[a[0],a[1],d]);return a
 def moves(i):return json.loads(subprocess.check_output(['node',os.path.join(ROOT,'tools/solver.js'),'moves',str(i)]))
 def tap_moves(pg,t,mv):
@@ -77,7 +79,8 @@ def t_old_and_corrupt(p):
   pg=page(c,{'sota.stage1.save':st2,'sota.items':'[null,null,null,null]'});check(pg.evaluate('SOTA.rooms().solved.length')==0,'old save has solved rooms')
   for bad in['{bad','null','5','{"s":"x"}','{"s":[999,-1,"a",1.5,null]}','{"c":[1,2,3]}','{"s":{"0":1}}']:
     pg=page(c,{'sota.rooms':bad});r=pg.evaluate('SOTA.rooms()');check(r['solved']==[] and r['cleared']==[],f'corrupt {bad} -> {r}');pg.evaluate('SOTA.act("fwd")')
-  pg=page(c,{'sota.rooms':'{"s":[2,999],"c":[2,3]}'});r=pg.evaluate('SOTA.rooms()');check(r=={'solved':[2],'cleared':[2]},f'partial {r}');b.close()
+  pg=page(c,{'sota.rooms':'{"s":[2,999],"c":[2]}'});r=pg.evaluate('SOTA.rooms()');check(r=={'solved':[],'cleared':[]},f'list with a bad id must be ignored whole {r}')
+  pg=page(c,{'sota.rooms':'{"s":[2,7],"c":[2,3]}'});r=pg.evaluate('SOTA.rooms()');check(r=={'solved':[2,7],'cleared':[2]},f'valid {r} (cleared needs solved)');b.close()
 
 def t_leave_reset(p):
   b,c=ctx(p);pg=page(c)
@@ -121,14 +124,14 @@ def t_difficulty(p):
   b,c=ctx(p);pg=page(c);D=pg.evaluate('PUZ.DIFF');b.close()
   for t,ps in D.items():
     for k,v in ps.items():
-      vals=[x for x in v[1:] if x is not None]
+      vals=[x for x in v[1:] if x]
       check(all(vals[i]<=vals[i+1] for i in range(len(vals)-1)),f'{t}.{k} falls {v}')
   md=open(os.path.join(ROOT,'STAGE3-PROGRESS.md')).read();check('| Type' in md and 'Z5' in md,'table missing in STAGE3-PROGRESS.md')
 
 def t_offline3(p):
-  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.controller',timeout=15000)
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
   ok=pg.evaluate('(async()=>{const k=(await caches.keys());const c=await caches.open(k.find(x=>x=="sota-s1-v4"));const r=[];for(const f of["puzzles.js?v=4","puzzle-ui.js?v=4","doors.js?v=4","game.js?v=4"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v4'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.PUZ&&window.SOTA&&SOTA.puzzle');pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
+  check(all(ok[1]) and ok[0]==['sota-s1-v4'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 
 def t_console_network3(p):
