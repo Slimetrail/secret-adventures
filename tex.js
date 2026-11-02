@@ -33,19 +33,19 @@ function moss(t,r){const n=noise(r,8),c=[60,140,50],c2=[120,190,70];
  for(let k=0;k<2+r()*2;k++){let x=r()*S;for(let y=0;y<S;y++){x+=Math.sin(y*0.3+k)*0.6;put(t,x|0,y,[30,90,30],0.9);if(r()<0.12){put(t,(x|0)+1,y,[110,200,80],1);put(t,(x|0)+2,y,[90,170,60],0.8);}}}}
 function cobweb(t,r){const cx=r()<0.5?0:63,cy=0,c=[230,225,205];for(let a=0;a<6;a++){const an=(cx?Math.PI/2:0)+a*Math.PI/10;line(t,cx,cy,cx+Math.cos(an)*(cx?-1:1)*22,cy+Math.sin(an)*22,c,0.45);}
  for(let rr=5;rr<22;rr+=5)for(let a=0;a<12;a++){const an=a*Math.PI/22;put(t,(cx+(cx?-1:1)*Math.cos(an)*rr)|0,(Math.sin(an)*rr)|0,c,0.4);}}
-function ice(t,r){for(let k=0;k<4+r()*4;k++){const x=r()*S,y=r()*S,h=3+r()*7,w=1.5+r()*2.5;
-  for(let yy=-h;yy<=h;yy++){const ww=w*(1-Math.abs(yy)/h);for(let xx=-ww;xx<=ww;xx++)put(t,(x+xx)|0,(y+yy)|0,mix([150,220,255],[235,250,255],Math.abs(xx)<0.8?1:0.3),0.9,0.35);}}
+function ice(t,r){for(let k=0;k<4+r()*4;k++){const x=r()*S,y=r()*S,h=2+r()*4,w=1+r()*1.5;
+  for(let yy=-h;yy<=h;yy++){const ww=w*(1-Math.abs(yy)/h);for(let xx=-ww;xx<=ww;xx++)put(t,(x+xx)|0,(y+yy)|0,mix([120,190,235],[210,240,255],Math.abs(xx)<0.6?0.8:0.2),0.7,0.25);}}
  for(let k=0;k<3;k++){const x=r()*S|0;const l=4+r()*14;for(let y=0;y<l;y++)put(t,x,y,[120,170,210],0.5*(1-y/l));}}
 function embers(t,r){for(let k=0;k<22;k++){const x=r()*S|0,y=r()*S|0;const i=y*S+x;if(t.r[i]<70){put(t,x,y,[255,140,40],1,0.9);put(t,x+1,y,[220,80,20],0.6,0.5);}}
  for(let y=S-14;y<S;y++)for(let x=0;x<S;x++){const k=(y-(S-14))/14;put(t,x,y,[255,110,40],0.18*k,0.0);}}
 function runes(t,r){const c=[220,150,255];for(let k=0;k<2+r()*2;k++){let x=8+r()*48,y=8+r()*44;const sz=4+r()*4;
-  for(let s=0;s<4;s++){const a=Math.floor(r()*8)*Math.PI/4,nx=x+Math.cos(a)*sz,ny=y+Math.sin(a)*sz;line(t,x|0,y|0,nx|0,ny|0,c,1,1);line(t,(x|0)+1,y|0,(nx|0)+1,ny|0,[150,80,230],0.6,0.6);x=nx;y=ny;}}
+  for(let s=0;s<4;s++){const a=Math.floor(r()*8)*Math.PI/4,nx=x+Math.cos(a)*sz,ny=y+Math.sin(a)*sz;line(t,x|0,y|0,nx|0,ny|0,c,0.85,0.8);line(t,(x|0)+1,y|0,(nx|0)+1,ny|0,[150,80,230],0.6,0.6);x=nx;y=ny;}}
  for(let k=0;k<3;k++){const x=r()*S,y=r()*S;for(let yy=-4;yy<=4;yy++)for(let xx=-2;xx<=2;xx++)if(Math.abs(xx)*2+Math.abs(yy)<=4)put(t,(x+xx)|0,(y+yy)|0,mix([120,60,200],[240,200,255],(4-Math.abs(yy))/4),0.9,0.55);}}
 function floorTex(t,r,P){const n=noise(r,8),n2=noise(r,32);// irregular flagstones
  const pts=[];for(let i=0;i<9;i++)pts.push([r()*S,r()*S,mix(P.f1,P.f2,r())]);
  for(let y=0;y<S;y++)for(let x=0;x<S;x++){let b1=1e9,b2=1e9,bc=null;for(const p of pts){let dx=Math.abs(x-p[0]),dy=Math.abs(y-p[1]);dx=Math.min(dx,S-dx);dy=Math.min(dy,S-dy);const d=dx*dx+dy*dy;if(d<b1){b2=b1;b1=d;bc=p[2];}else if(d<b2)b2=d;}
   const e=Math.sqrt(b2)-Math.sqrt(b1);const k=0.8+0.3*n(x,y)+0.1*n2(x,y);
-  if(e<1.1)put(t,x,y,P.ink,1);else put(t,x,y,[bc[0]*k,bc[1]*k,bc[2]*k],1);}}
+  if(e<0.6)put(t,x,y,P.ink,0.85);else if(e<1.4)put(t,x,y,mix(P.ink,[bc[0]*k,bc[1]*k,bc[2]*k],0.55),1);else put(t,x,y,[bc[0]*k,bc[1]*k,bc[2]*k],1);}}
 function ceilTex(t,r,P){const n=noise(r,16);for(let y=0;y<S;y++)for(let x=0;x<S;x++){const k=0.7+0.5*n(x,y);put(t,x,y,[P.ce[0]*k,P.ce[1]*k,P.ce[2]*k],1);}
  for(let x=0;x<S;x++){put(t,x,0,P.ink,1);put(t,x,32,P.ink,0.8);}for(let y=0;y<S;y++){put(t,0,y,P.ink,0.6);}}
 // Zone palettes (from Jeremy's painting: 1 yellow, 2 green, 3 blue, 4 pink/red, 5 purple)

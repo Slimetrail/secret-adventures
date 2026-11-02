@@ -5,6 +5,7 @@
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:system-ui,sans-serif}
 #view{position:fixed;inset:0;width:100vw;height:100vh;image-rendering:auto;display:block}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 48%,rgba(0,0,0,0) 45%,rgba(5,0,15,.55) 100%)}
 #hud{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;color:#fff;font:600 13px system-ui;background:rgba(10,5,25,.55);padding:4px 8px;border-radius:6px;pointer-events:none}
 #dbg{position:fixed;top:calc(6px + env(safe-area-inset-top));right:8px;width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,235,200,.6);background:rgba(20,10,40,.5);color:#fff;font:700 16px serif}
 .pad{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px}
@@ -15,7 +16,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 #updb{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:10px;border:0;background:#e8c070;font:600 14px system-ui}
 </style></head><body>
 <canvas id="view"></canvas>
-<div id="hud"></div><button id="dbg" aria-label="Show or hide info">i</button>
+<div id="vig"></div><div id="hud"></div><button id="dbg" aria-label="Show or hide info">i</button>
 <div class="pad" id="padL"><button data-cmd="fwd" aria-label="Step forward">&#9650;</button><button data-cmd="back" aria-label="Step back">&#9660;</button></div>
 <div class="pad" id="padR"><button data-cmd="left" aria-label="Turn left">&#8630;</button><button data-cmd="right" aria-label="Turn right">&#8631;</button></div>
 <div id="tag">Stage 1 try-out<br>temporary buttons</div>

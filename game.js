@@ -17,11 +17,11 @@ const mkList=[];function addMark(c,k){mark[c[1]*N+c[0]]=mkList.length;mkList.pus
 M.rooms.forEach(r=>addMark(r.c,r.k));M.camps.forEach(c=>addMark(c,"camp"));M.taverns.forEach(c=>addMark(c,"tavern"));
 // zone atmosphere: fog colour, fog density, torch tint, ambient, glow
 const ZA=[null,
- {fog:[60,45,25],fd:0.11,tint:[1.15,1.0,0.75],amb:0.16,glow:1.0},
- {fog:[18,42,28],fd:0.13,tint:[0.95,1.08,0.8],amb:0.14,glow:1.0},
- {fog:[30,52,85],fd:0.10,tint:[0.82,0.95,1.2],amb:0.2,glow:1.4},
- {fog:[60,18,22],fd:0.12,tint:[1.25,0.85,0.7],amb:0.14,glow:1.8},
- {fog:[34,14,58],fd:0.12,tint:[1.0,0.8,1.25],amb:0.15,glow:2.2}];
+ {fog:[78,58,30],fd:0.13,tint:[1.12,0.98,0.78],amb:0.10,glow:1.0},
+ {fog:[22,52,36],fd:0.15,tint:[0.95,1.05,0.82],amb:0.09,glow:1.0},
+ {fog:[36,62,100],fd:0.12,tint:[0.85,0.97,1.15],amb:0.12,glow:1.3},
+ {fog:[72,22,30],fd:0.14,tint:[1.2,0.85,0.72],amb:0.09,glow:1.7},
+ {fog:[46,20,78],fd:0.14,tint:[1.0,0.82,1.2],amb:0.10,glow:2.0}];
 // ---------- state ----------
 const st={x:M.entrance[0],y:M.entrance[1],f:0};
 try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(s&&s.x>=0&&s.x<N&&s.y>=0&&s.y<N&&s.f>=0&&s.f<4&&(s.x|0)===s.x&&(s.y|0)===s.y)Object.assign(st,{x:s.x,y:s.y,f:s.f|0});}catch(e){}
@@ -52,7 +52,7 @@ function render(t){
  const flick=0.92+0.05*Math.sin(t*0.011)+0.03*Math.sin(t*0.037+1.3)+(t-bump<120?-0.15:0);
  const px=2*vis.x+1.5,py=2*vis.y+1.5,a=vis.a-Math.PI/2,dx=Math.cos(a),dy=Math.sin(a);
  const plane=Math.min(0.8,Math.max(0.55,0.5*W/H)),plx=-dy*plane,ply=dx*plane,foc=W/(2*plane),h2=H/2;
- const Lt=new Float32Array(64);for(let i=0;i<64;i++){const d=i*0.25;Lt[i]=flick*1.25/(1+d*d*0.055);}
+ const Lt=new Float32Array(64);for(let i=0;i<64;i++){const d=i*0.25;Lt[i]=flick*1.3/(1+d*0.18+d*d*0.06);}
  const light=d=>{const i=d*4;return i>=63?Lt[63]:Lt[i|0];};
  const colTop=new Int32Array(W),colBot=new Int32Array(W);
  for(let x=0;x<W;x++){
@@ -87,7 +87,7 @@ function render(t){
    const bx=wx|0,by=wy|0;if(bx<0||by<0||bx>=G||by>=G){buf[y*W+x]=0xff000000;continue;}
    const z=bzone[by*G+bx],tn=ZA[z].tint;const fxf=wx-bx,fyf=wy-by;
    const tex=fl?TX.floors[z][(bx*7+by*13)&1]:TX.ceils[z][(bx+by)&1];
-   const ti=((((fyf*TS)|0)&63)*TS+(((fxf*TS)|0)&63))*4;let k=(L*(fl?0.9:0.55))+amb;
+   const fh=(bx*31+by*17)&3,ux=fh&1?1-fxf:fxf,uy=fh&2?1-fyf:fyf;const ti=((((uy*TS*2)|0)&63)*TS+(((ux*TS*2)|0)&63))*4;let k=(L*(fl?0.62:0.45))+amb*0.8;
    let r=tex[ti]*k*tn[0],g=tex[ti+1]*k*tn[1],b=tex[ti+2]*k*tn[2];
    if(fl&&(bx&1)&&(by&1)){const mi=mark[((by-1)>>1)*N+((bx-1)>>1)];if(mi>=0){const ddx=fxf-0.5,ddy=fyf-0.5,dd=ddx*ddx+ddy*ddy;
      if(dd<0.12){const c=mkList[mi],ring=dd>0.07&&dd<0.1?1:(dd<0.04?0.55:0.25),pul=0.75+0.25*Math.sin(t*0.004);r+=(c[0]-r)*ring*pul;g+=(c[1]-g)*ring*pul;b+=(c[2]-b)*ring*pul;}}}
