@@ -18,7 +18,9 @@ def tap(pg,sel):
   # fix round 1: fight commands and party actions now sit in a branch menu opened by tapping a name
   if pg.locator(sel).count()==0:
     m=re.match(r'\[data-(equip|bag)="(\d+)"\]',sel)
-    if m:tap(pg,f'[data-pname="{m.group(2)}"]')
+    if m:  # the character sheet (opened by tapping the card) holds equip slots and the backpack
+      if pg.locator('.s4pk.sel').count()==0:tap(pg,f'[data-card="{m.group(2)}"]')
+      return
     elif sel.startswith('[data-cmd4'):tap(pg,'#fparty button.s4nl:not([disabled])')
   l=pg.locator(sel).first;check(l.count()>0,'no element '+sel);l.scroll_into_view_if_needed();b=l.bounding_box();check(b,'no element '+sel);pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2)
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
@@ -107,7 +109,7 @@ def t_fight_ui(p):
   for k in['fwd','left']:ev(pg,f'SOTA.act("{k}")')
   pots=ev(pg,'SOTA.rpg.live().party[0].bag.filter(x=>x=="potion").length');m0=ev(pg,'SOTA.rpg.fight().m[0].hp')
   tap(pg,'[data-cmd4=attack]');tap(pg,'[data-tgt="0"]');check(ev(pg,'SOTA.rpg.fight().m[0].hp')<m0,'attack did nothing')
-  mp=ev(pg,'SOTA.rpg.live().party[0].mp');tap(pg,'[data-cmd4=magic]');tap(pg,'[data-sk=bolt]');tap(pg,'[data-tgt="1"]');check(ev(pg,'SOTA.rpg.live().party[0].mp')<mp,'magic used no mana')
+  mp=ev(pg,'SOTA.rpg.live().party[0].mp');tap(pg,'[data-cmd4=spells]');tap(pg,'[data-sk=bolt]');tap(pg,'[data-tgt="1"]');check(ev(pg,'SOTA.rpg.live().party[0].mp')<mp,'magic used no mana')
   tap(pg,'[data-cmd4=item]');tap(pg,'[data-item=potion]');check(ev(pg,'SOTA.rpg.live().party[0].bag.filter(x=>x=="potion").length')==pots-1,'potion not used')
   tap(pg,'[data-cmd4=defend]');check('defends' in ev(pg,'SOTA.rpg.fight().log.join("|")'),'defend')
   for i in range(30):
@@ -165,7 +167,7 @@ def t_ui_fit(p):
       check(ev(pg,'document.getElementById("s4").scrollWidth<=innerWidth'),f'{tag} wider than screen')
     innerW=w;chk('create');tap(pg,'[data-race=human]');pg.fill('#ccname','Fit');tap(pg,'[data-skill=cleave]');tap(pg,'#ccgo');tap(pg,'#ccgo')
     ev(pg,'SOTA.rpg.live().party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1),RPG.makeCompanion(RPG.COMPANIONS[2],1))')
-    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>RPG.makeMonster(1,i,1,0,"normal")))');chk('fight');tap(pg,'[data-cmd4=skill]');chk('skills')
+    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>RPG.makeMonster(1,i,1,0,"normal")))');chk('fight');tap(pg,'[data-cmd4=spells]');chk('skills')
     check(ev(pg,'(()=>{const m=document.getElementById("fmenu").getBoundingClientRect();return m.bottom<=innerHeight+1})()'),'menu off screen')
     ev(pg,'SOTA.rpg.forceEnd("ran")');tap(pg,'#fdone');tap(pg,'#partyb');chk('party');tap(pg,'[data-equip="0"]');tap(pg,'[data-slot=weapon]');chk('equip');tap(pg,'.s4back');tap(pg,'[data-bag="0"]');chk('bag')
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()

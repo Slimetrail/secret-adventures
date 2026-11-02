@@ -24,7 +24,7 @@ MUT=[
  ("fights far too often","party.js","if(r<(rid>=0?0.15:0.02))","if(r<0.5)","random_fights"),
  ("potion not used up","rules.js","if(k<0||!it||it.slot!==\"use\")return \"\";c.bag.splice(k,1);","if(k<0||!it||it.slot!==\"use\")return \"\";","fight_ui"),
  ("equip ignores limits","rules.js","if(!canEquip(c,id,slot)||!c.bag.includes(id))return false;","if(!c.bag.includes(id))return false;","equip_bag_ui"),
- ("tiny fight buttons","index.html",".s4menu .s4b{min-height:52px}",".s4menu .s4b{min-height:30px}.s4b{min-height:30px!important}","ui_fit"),
+ ("tiny name buttons","index.html",".s4nl{min-height:44px;min-width:44px;",".s4nl{min-height:30px;min-width:30px;","ui_fit"),
  ("party.js not cached","sw.js",'"party.js?v=6",','',"offline4"),
  ("calls outside","party.js","S.uiOpen=()=>!!ui;","S.uiOpen=()=>!!ui;fetch('https://example.invalid/x').catch(()=>{});","console_network4"),
 ]
