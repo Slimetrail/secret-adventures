@@ -74,13 +74,13 @@ function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransfo
   if(x<-z||y<-z||x>BW+z||y>BH+z){cnt[k==="camp"||k==="tavern"?k:"door"]++;if(k==="monster")cnt.monster++;continue;}
   icon(k,x,y,z*0.95);if(k==="camp")cnt.camp++;else if(k==="tavern")cnt.tavern++;else{cnt.door++;if(k==="monster")cnt.monster++;}}
  const s=S.state(),pcx=ox+(s.x+.5)*z,pcy=oy+(s.y+.5)*z,pul=0.5+0.5*Math.sin(performance.now()*0.006);
- const ir=z*0.95*0.45,rr=Math.max(8*dpr,z*0.62),aa=Math.max(9*dpr,z*0.34); // icon radius, ring radius, arrow half-length
- ctx.save();ctx.lineWidth=Math.max(3*dpr,z*.1);ctx.strokeStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.arc(pcx,pcy,rr+ctx.lineWidth*.5,0,6.3);ctx.stroke();
- ctx.strokeStyle=`rgba(20,70,220,${0.75+0.25*pul})`;ctx.lineWidth=Math.max(2.5*dpr,z*.08);ctx.beginPath();ctx.arc(pcx,pcy,rr+ctx.lineWidth*.5+(1+pul*2)*dpr,0,6.3);ctx.stroke();
- const dd=rr+aa+4*dpr,D=C.DIRS[s.f],ax=pcx+D[0]*dd,ay=pcy+D[1]*dd;ctx.translate(ax,ay);ctx.rotate(s.f*Math.PI/2);
+ const ir=z*0.95*0.45,R0=Math.max(8*dpr,z*0.62),aa=Math.max(9*dpr,z*0.34); // icon radius, ring radius, arrow half-length
+ ctx.save();ctx.lineWidth=Math.max(3*dpr,z*.1);ctx.strokeStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.arc(pcx,pcy,R0+ctx.lineWidth*.5,0,6.3);ctx.stroke();
+ ctx.strokeStyle=`rgba(20,70,220,${0.75+0.25*pul})`;ctx.lineWidth=Math.max(2.5*dpr,z*.08);ctx.beginPath();ctx.arc(pcx,pcy,R0+ctx.lineWidth*.5+(1+pul*2)*dpr,0,6.3);ctx.stroke();
+ const dd=R0+aa+4*dpr,D=C.DIRS[s.f],ax=pcx+D[0]*dd,ay=pcy+D[1]*dd;ctx.translate(ax,ay);ctx.rotate(s.f*Math.PI/2);
  ctx.fillStyle="#1f4fd8";ctx.strokeStyle="#fff";ctx.lineWidth=2.5*dpr;ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(0,-aa);ctx.lineTo(aa*.8,aa*.75);ctx.lineTo(0,aa*.35);ctx.lineTo(-aa*.8,aa*.75);ctx.closePath();ctx.stroke();ctx.fill();
  ctx.strokeStyle="#0c1a40";ctx.lineWidth=1*dpr;ctx.stroke();ctx.restore();
- mk={px:pcx/dpr,py:pcy/dpr,ax:ax/dpr,ay:ay/dpr,ar:aa/dpr,rr:rr/dpr,ir:ir/dpr};
+ mk={px:pcx/dpr,py:pcy/dpr,ax:ax/dpr,ay:ay/dpr,ar:aa/dpr,rr:R0/dpr,ir:ir/dpr};
  ctx.restore();
  // title + north mark
  ctx.fillStyle="#2b1a0e";ctx.font=`italic 700 ${26*dpr}px Georgia,serif`;ctx.textAlign="center";ctx.fillText("Map",BW/2,40*dpr);

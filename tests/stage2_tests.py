@@ -93,12 +93,75 @@ def t_map_arrow(p):
   b.close()
 
 def t_map_panzoom(p):
-  b,c=ctx(p);pg=page(c);walk(pg,[tuple(x) for x in MZ['main_route'][:20]]);tap(pg,'#mapb');v0=MD(pg);s=S(pg)
-  check(abs(float(v0['cx'])-(s['x']+.5))<1e-6 and abs(float(v0['cy'])-(s['y']+.5))<1e-6,'not centred on player')
+  # Stage 2b change: the map now opens fitted to the explored area (not centred on the player), and recentre returns to that fit.
+  b,c=ctx(p);pg=page(c);walk(pg,[tuple(x) for x in MZ['main_route'][:20]]);tap(pg,'#mapb');v0=MD(pg)
   tap(pg,'#mzin');check(float(MD(pg)['z'])>float(v0['z']),'zoom in');tap(pg,'#mzout');tap(pg,'#mzout');check(float(MD(pg)['z'])<float(v0['z']),'zoom out')
-  pg.mouse.move(200,400);pg.mouse.down();pg.mouse.move(260,450,steps=5);pg.mouse.up();pg.wait_for_timeout(100);v1=MD(pg)
-  check(v1['cx']!=v0['cx'] and v1['cy']!=v0['cy'],'drag did not pan')
-  tap(pg,'#mctr');pg.wait_for_timeout(100);v2=MD(pg);check(v2['cx']==v0['cx'] and v2['cy']==v0['cy'],'recenter failed');b.close()
+  tap(pg,'#mzin');tap(pg,'#mzin');tap(pg,'#mzin');v0b=MD(pg)
+  pg.mouse.move(200,400);pg.mouse.down();pg.mouse.move(240,430,steps=5);pg.mouse.up();pg.wait_for_timeout(100);v1=MD(pg)
+  check(v1['cx']!=v0b['cx'] and v1['cy']!=v0b['cy'],'drag did not pan')
+  tap(pg,'#mctr');pg.wait_for_timeout(100);v2=MD(pg);check(v2['cx']==v0['cx'] and v2['cy']==v0['cy'] and v2['z']==v0['z'],'recenter did not restore fit');b.close()
+
+def inside(r,w,h):return r['l']>=0 and r['t']>=0 and r['r']<=w and r['b']<=h
+def t_fit_open(p):
+  for (w,h) in [(360,800),(412,915),(915,412)]:
+    for n in [30,98]:
+      b,c=ctx(p,w,h);pg=page(c);cells=[tuple(x) for x in MZ['main_route'][:n]]
+      if n==98:cells=tour()
+      walk(pg,cells);tap(pg,'#mapb');r=pg.evaluate('SOTA.map.bboxScreen()');a=pg.evaluate('SOTA.map.area()')
+      check(r['l']>=a['l']-1 and r['t']>=a['t']-1 and r['r']<=a['r']+1 and r['b']<=a['b']+1,f'{w}x{h} n{n} box {r} not in {a}')
+      check(r['z']<=r['cap']+1e-9,'over cap');b.close()
+  b,c=ctx(p);pg=page(c);tap(pg,'#mapb');r=pg.evaluate('SOTA.map.bboxScreen()');check(r['z']<=r['cap'] and r['z']<=48,f'1-cell zoom {r["z"]}');b.close()
+
+def t_marker(p):
+  # Data method: the marker exports its geometry (cell centre, ring radius, arrow centre+size, icon radius) in css px.
+  # The icon is drawn inside radius ir around the cell centre; the ring must lie outside it and the arrow must not reach into it.
+  import math
+  for (w,h,cell) in [(412,915,(14,49)),(360,800,(15,50)),(915,412,(14,49))]:
+    b,c=ctx(p,w,h);pg=page(c);cs=W.path((0,64),cell) if cell==(14,49) else tour()[:tour().index(cell)+1];walk(pg,cs)
+    check((S(pg)['x'],S(pg)['y'])==cell,'not on poi');
+    for z in ['open','out','out','out','out','out','out']:
+      if z=='open':tap(pg,'#mapb')
+      else:tap(pg,'#mzout')
+      m=pg.evaluate('SOTA.map.marker()');check(0<=m['px']<=w and 0<=m['py']<=h and 0<=m['ax']<=w and 0<=m['ay']<=h,f'marker off screen {m}')
+      check(m['rr']*2>=16 and m['ar']*2>=16,f'marker too small {m}')
+      dd=math.hypot(m['ax']-m['px'],m['ay']-m['py']);check(m['rr']>m['ir'] and dd-m['ar']>m['ir'],f'marker covers icon {m}')
+    b.close()
+
+def t_drag(p):
+  b,c=ctx(p);pg=page(c);walk(pg,tour());tap(pg,'#mapb')
+  for _ in range(3):tap(pg,'#mzin')
+  v0=MD(pg);z=float(v0['z'])
+  pg.mouse.move(150,450);pg.mouse.down();pg.mouse.move(210,410,steps=8);pg.mouse.up();pg.wait_for_timeout(100);v1=MD(pg)
+  dx=(float(v0['cx'])-float(v1['cx']))*z;dy=(float(v0['cy'])-float(v1['cy']))*z
+  check(abs(dx-60)<6 and abs(dy+40)<6,f'drag moved {dx:.1f},{dy:.1f} want 60,-40')
+  # drag that ends over the close and zoom buttons must not press them
+  cb=bb(pg,'#mclose');pg.mouse.move(200,300);pg.mouse.down();pg.mouse.move(cb['x']+20,cb['y']+20,steps=6);pg.mouse.up()
+  zb=bb(pg,'#mzin');zz=MD(pg)['z'];pg.mouse.move(200,500);pg.mouse.down();pg.mouse.move(zb['x']+20,zb['y']+20,steps=6);pg.mouse.up();pg.wait_for_timeout(100)
+  check(pg.locator('#map').is_visible(),'drag closed the map');check(MD(pg)['z']==zz,'drag pressed zoom')
+  # touch drag works too
+  cdp=c.new_cdp_session(pg);v2=MD(pg)
+  cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':200,'y':400}]})
+  for i in range(1,6):cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':200-8*i,'y':400}]})
+  cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]});pg.wait_for_timeout(100)
+  check(float(MD(pg)['cx'])>float(v2['cx']),'touch drag did not pan');b.close()
+
+def t_pan_clamp(p):
+  b,c=ctx(p);pg=page(c);walk(pg,[tuple(x) for x in MZ['main_route'][:30]]);tap(pg,'#mapb')
+  for _ in range(4):tap(pg,'#mzin')
+  for (dx,dy) in [(500,0),(-500,0),(0,500),(0,-500)]:
+    pg.evaluate(f'SOTA.map.pan({dx},{dy})');pg.wait_for_timeout(50);r=pg.evaluate('SOTA.map.bboxScreen()')
+    check(r['r']>0 and r['l']<412 and r['b']>0 and r['t']<915,f'explored area lost {dx},{dy}: {r}')
+    pg.mouse.move(200,400);pg.mouse.down();pg.mouse.move(200+dx,400+dy,steps=4);pg.mouse.up();r=pg.evaluate('SOTA.map.bboxScreen()')
+    check(r['r']>0 and r['l']<412 and r['b']>0 and r['t']<915,f'drag lost area: {r}')
+  tap(pg,'#mctr');r=pg.evaluate('SOTA.map.bboxScreen()');a=pg.evaluate('SOTA.map.area()');check(r['l']>=a['l']-1 and r['r']<=a['r']+1,'recentre not fit');b.close()
+
+def t_pinch(p):
+  b,c=ctx(p);pg=page(c);walk(pg,tour());tap(pg,'#mapb');z0=float(MD(pg)['z']);cdp=c.new_cdp_session(pg)
+  T=lambda t,pts:cdp.send('Input.dispatchTouchEvent',{'type':t,'touchPoints':[{'x':x,'y':y,'id':i} for i,(x,y) in enumerate(pts)]})
+  T('touchStart',[(200,450),(220,450)])
+  for i in range(1,8):T('touchMove',[(200-12*i,450),(220+12*i,450)])
+  T('touchEnd',[]);pg.wait_for_timeout(150);z1=float(MD(pg)['z']);check(z1>z0*1.5,f'pinch zoom {z0}->{z1}')
+  check(pg.locator('#map').is_visible(),'pinch closed map');b.close()
 
 def t_map_save(p):
   b,c=ctx(p);pg=page(c);cells=[tuple(x) for x in MZ['main_route'][:60]];walk(pg,cells);walk(pg,W.path(cells[-1],cells[40]))
