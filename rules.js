@@ -41,12 +41,13 @@ function raise(c,k){const v=c.stats[k],p=cost(v);if(c.race==="dwarf"&&k==="man")
 function gearSum(c,key){let t=0;for(const s in c.equip){const it=c.equip[s]&&ITEMS[c.equip[s]];if(it&&it[key])t+=it[key];}return t;}
 function maxHp(c,hpMul){return Math.round((24+4*c.stats.sta+3*c.stats.str+7*c.lvl+gearSum(c,"hp"))*(hpMul||1));}
 function maxMp(c){return c.race==="dwarf"&&!CLASSES[c.cls].magic?6+2*c.stats.sta+c.lvl:8+2*c.stats.man+2*c.lvl;}
-function power(c){const m=CLASSES[c.cls].main,s=c.stats;return (m==="str"?2.2*s.str:m==="sta"?2.2*s.sta+0.5*s.str:0.8*s.str+0.6*s.sta)+c.lvl*1.5+gearSum(c,"atk")+4;}
+function buffOf(c,k){const b=c.buff;return b&&b.f>0&&b[k]?b[k]/100:0;}
+function power(c){const m=CLASSES[c.cls].main,s0=c.stats,bs=buffOf(c,"sta"),s={str:s0.str,sta:s0.sta*(1+bs),man:s0.man};return (1+buffOf(c,"str"))*((m==="str"?2.2*s.str:m==="sta"?2.2*s.sta+0.5*s.str:0.8*s.str+0.6*s.sta)+c.lvl*1.5+gearSum(c,"atk")+4);}
 function magicPower(c){return 2.6*c.stats.man+c.lvl*1.8+gearSum(c,"mag")+4;}
 function defense(c){return gearSum(c,"def")+c.stats.sta*0.6+c.lvl*0.8;}
 function carryLimit(c){return Math.round((12+3*c.stats.str)*RACES[c.race].carry);}
-function bagWeight(c){return c.bag.reduce((t,id)=>t+((ITEMS[id]&&ITEMS[id].w)||0),0);}
-function canCarry(c,id){return bagWeight(c)+ITEMS[id].w<=carryLimit(c);}
+function bagWeight(c){const np=c.bag.filter(id=>ITEMS[id]&&ITEMS[id].slot==="part").length,bulk=window.ECON?window.ECON.partBulk(np):0;return c.bag.reduce((t,id)=>t+((ITEMS[id]&&ITEMS[id].w)||0),0)+bulk;}
+function canCarry(c,id){return bagWeight({bag:c.bag.concat([id])})<=carryLimit(c);}
 function gainXp(c,n,hpMul){const gained=[];if(c.lvl>=CAP)return gained;c.xp+=n;
  while(c.lvl<CAP&&c.xp>=xpNeed(c.lvl)){c.xp-=xpNeed(c.lvl);c.lvl++;gained.push(c.lvl);}
  if(c.lvl>=CAP)c.xp=0;c.hp=Math.min(maxHp(c,hpMul),c.hp+Math.round(maxHp(c,hpMul)*0.3));c.mp=maxMp(c);return gained;}
