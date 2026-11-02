@@ -22,7 +22,7 @@ with sync_playwright() as p:
   b=p.chromium.launch()
   for thr in [1,4]:
     c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='block');pg=c.new_page()
-    c.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':thr});pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA')
+    c.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':thr});pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA')
     r=[tuple(x) for x in W.MZ['main_route'][:300]];cs,_=W.cmds(r,0);pg.evaluate('SOTA.setAnim(false)');pg.evaluate('c=>c.forEach(k=>SOTA.act(k))',cs)
     t0=pg.evaluate('(()=>{const t=performance.now();SOTA.map.open();return performance.now()-t})()')
     d=[pg.evaluate('(()=>{const t=performance.now();SOTA.map.pan(0.3,0.2);return performance.now()-t})()') for _ in range(60)];d.sort()

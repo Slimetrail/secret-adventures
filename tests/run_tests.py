@@ -27,7 +27,7 @@ def btn(pg):
   return o
 def tap(pg,B,k):pg.touchscreen.tap(*B[k])
 def S(pg):return pg.evaluate('SOTA.state()')
-def fresh(pg):pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA')
+def fresh(pg):pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA')
 
 def t_maze_loads(p):
   b,c=ctx(p);pg=page(c);fresh(pg)

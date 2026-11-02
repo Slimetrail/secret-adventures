@@ -13,7 +13,7 @@ def page(c,errs=None,reqs=None):
   pg=c.new_page()
   if errs is not None:pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:errs.append(str(e)))
   if reqs is not None:pg.on('request',lambda r:reqs.append(r.url))
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA');return pg
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA');return pg
 def bb(pg,sel):return pg.locator(sel).bounding_box()
 def ctr(b):return (b['x']+b['width']/2,b['y']+b['height']/2)
 def tap(pg,sel):
@@ -199,7 +199,7 @@ def t_offline2(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA')
   pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
   c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.map',timeout=8000)
-  ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=3"))&&(await caches.keys()).length})()')
+  ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=4"))&&(await caches.keys()).length})()')
   check(ok==1,f'map.js not cached / old caches kept {ok}');tap(pg,'#mapb');check(MD(pg)['cells']=='1' or int(MD(pg)['cells'])>=1,'map offline');b.close()
 
 def t_console_network2(p):
