@@ -69,7 +69,9 @@ def t_persist_and_once(p):
   b,c=ctx(p);pg=page(c);r=next(x for x in R(pg) if x['p']==1);solve_ui(pg,r);tap(pg,'#penter');check(pg.evaluate('SOTA.panelOpen()'),'panel');
   check(pg.inner_text('#ptxt') in('Treasure room (loot comes in a later stage)','Monster room (fight comes later)','Story room (story comes later)'),'panel text')
   tap(pg,'#pgo');check(not pg.evaluate('SOTA.panelOpen()'),'panel stays');tap(pg,'[data-cmd=back]');tap(pg,'[data-cmd=fwd]');check(not pg.evaluate('SOTA.panelOpen()'),'panel shown twice')
-  pg.reload();pg.wait_for_function('window.SOTA');check(pg.evaluate(f"SOTA.isSolved({r['id']})"),'solved lost on reload');approach(pg,r);tap(pg,'[data-cmd=fwd]')
+  r2=next(x for x in R(pg) if x['p']==4);solve_ui(pg,r2);tap(pg,'#pclose')  # solved but not entered
+  pg.reload();pg.wait_for_function('window.SOTA');check(pg.evaluate(f"SOTA.isSolved({r['id']})"),'solved lost on reload')
+  check(pg.evaluate(f"SOTA.isSolved({r2['id']})"),'solved-not-entered lost on reload');approach(pg,r);tap(pg,'[data-cmd=fwd]')
   s=pg.evaluate('SOTA.state()');check([s['x'],s['y']]==r['c'] and not pg.evaluate('SOTA.puzzleOpen()'),'solved room relocked');check(not pg.evaluate('SOTA.panelOpen()'),'panel after reload')
   # 3D draws the open doorway for a solved room and the sealed door for a locked one (checked by pixel glow in shots/mutations)
   b.close()
@@ -135,6 +137,9 @@ def t_offline3(p):
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 
 def t_console_network3(p):
+  b,c=ctx(p);pg=page(c)
+  for i in range(0,85,7):pg.evaluate(f'SOTA.puzzle.open({i})');pg.wait_for_timeout(30);pg.evaluate('SOTA.puzzle.close()')
+  pg.wait_for_timeout(300);b.close()
   check(not ERRS,f'console errors {ERRS[:5]}');bad=[u for u in REQS if not u.startswith(BASE) and not u.startswith('data:') and not u.startswith('blob:')];check(not bad,f'outside requests {bad[:5]}')
   src=''.join(open(os.path.join(ROOT,f)).read() for f in['puzzles.js','puzzle-ui.js','doors.js']);check('console.log' not in src,'logging in puzzle code');check('http' not in src,'link in puzzle code')
 
