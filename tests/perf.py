@@ -29,3 +29,20 @@ with sync_playwright() as p:
     print(f'map 412x915 cpu x{thr}: {pg.evaluate("SOTA.visitedCount()")} cells, first open {t0:.1f} ms (makes parchment+layer), pan redraw median {st.median(d):.1f} ms, p95 {d[int(len(d)*.95)]:.1f} ms')
     c.close()
   b.close()
+# Stage 3: 3D view looking at a locked (sealed) door, and each puzzle screen's redraw time, 412x915
+with sync_playwright() as p:
+  b=p.chromium.launch()
+  for thr in [1,4]:
+    c=b.new_context(viewport={'width':412,'height':915},has_touch=True,is_mobile=True,service_workers='block');pg=c.new_page()
+    c.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':thr});pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA')
+    rm=pg.evaluate('MAZE.rooms[5]');st0=pg.evaluate('SOTA.state()');pa=W.path((st0['x'],st0['y']),tuple(rm['c']));a=pa[-2];d=W.D.index((pa[-1][0]-a[0],pa[-1][1]-a[1]))
+    pg.evaluate('a=>SOTA.teleport(a[0],a[1],a[2])',[a[0],a[1],d]);pg.wait_for_timeout(300)
+    r=sorted(pg.evaluate('SOTA.renderOnce()') for _ in range(60))
+    print(f'3D facing locked door 412x915 cpu x{thr}: render median {st.median(r):.1f} ms, p95 {r[int(len(r)*.95)]:.1f} ms')
+    for t in range(5):
+      for z in (1,5):
+        rid=pg.evaluate(f'MAZE.rooms.find(r=>r.p=={t}&&r.z=={z}).id');pg.evaluate(f'SOTA.puzzle.open({rid})')
+        q=sorted(pg.evaluate('(()=>{const t=performance.now();SOTA.puzzle.renderOnce();document.body.offsetHeight;return performance.now()-t})()') for _ in range(30));pg.evaluate('SOTA.puzzle.close()')
+        print(f'  puzzle type {t} zone {z} cpu x{thr}: redraw median {st.median(q):.1f} ms, p95 {q[int(len(q)*.95)]:.1f} ms')
+    c.close()
+  b.close()
