@@ -34,7 +34,7 @@ function makeBg(){dpr=Math.min(2,window.devicePixelRatio||1);BW=Math.round(inner
  g.save();g.clip();g.fillStyle="#e3cf9f";g.fillRect(0,0,BW,BH);
  for(let k=0;k<260;k++){const x=r()*BW,y=r()*BH,s=(4+r()*40)*dpr,gr=g.createRadialGradient(x,y,0,x,y,s);const d=r()<.5;
   gr.addColorStop(0,d?"rgba(140,95,40,.10)":"rgba(255,245,215,.12)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-s,y-s,2*s,2*s);}
- for(let k=0;k<9;k++){const x=r()*BW,y=r()*BH,s=(25+r()*70)*dpr;g.strokeStyle="rgba(120,75,30,.18)";g.lineWidth=2*dpr;g.beginPath();g.ellipse(x,y,s,s*(.6+r()*.4),r()*3,0,6.3);g.stroke();
+ for(let k=0;k<9;k++){const x=r()*BW,y=r()*BH,s=(25+r()*70)*dpr;g.strokeStyle="rgba(120,75,30,.07)";g.lineWidth=3*dpr;g.beginPath();for(let a=0;a<=6.3;a+=.3){const q=s*(.85+r()*.3);g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q*.75);}g.stroke();
   const gr=g.createRadialGradient(x,y,0,x,y,s);gr.addColorStop(0,"rgba(150,100,45,.06)");gr.addColorStop(.85,"rgba(150,100,45,.12)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-s,y-s,2*s,2*s);}
  for(let k=0;k<700;k++){g.fillStyle=`rgba(90,60,25,${r()*.08})`;g.fillRect(r()*BW,r()*BH,(1+r()*30)*dpr,dpr*.8);}
  const vg=g.createRadialGradient(BW/2,BH/2,Math.min(BW,BH)*.25,BW/2,BH/2,Math.hypot(BW,BH)*.58);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(80,45,15,.6)");g.fillStyle=vg;g.fillRect(0,0,BW,BH);
@@ -53,6 +53,7 @@ function icon(k,x,y,z){ctx.save();ctx.translate(x,y);const s=z/32;ctx.scale(s,s)
 let open=false,last={};const ft=[];
 function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(bg,0,0);
  const z=view.z*dpr,ox=BW/2-view.cx*z,oy=BH/2-view.cy*z;ctx.imageSmoothingEnabled=true;
+ ctx.save();ctx.beginPath();ctx.rect(14*dpr,14*dpr,BW-28*dpr,BH-28*dpr);ctx.clip();
  ctx.drawImage(lay,ox,oy,N*z,N*z);
  const v=C.visited,cnt={cells:drawnCount,camp:0,door:0,monster:0,tavern:0,dots:0};
  // trail dots (in walking order; the last entry is where you stand, marked by the arrow)
@@ -63,6 +64,7 @@ function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransfo
   icon(k,x,y,z*0.95);if(k==="camp")cnt.camp++;else if(k==="tavern")cnt.tavern++;else{cnt.door++;if(k==="monster")cnt.monster++;}}
  const s=S.state(),ax=ox+(s.x+.5)*z,ay=oy+(s.y+.5)*z;ctx.save();ctx.translate(ax,ay);ctx.rotate(s.f*Math.PI/2);const a=Math.max(7*dpr,z*.42);
  ctx.fillStyle="#1f4fb8";ctx.strokeStyle="#0c1a40";ctx.lineWidth=1.5*dpr;ctx.beginPath();ctx.moveTo(0,-a);ctx.lineTo(a*.72,a*.7);ctx.lineTo(0,a*.35);ctx.lineTo(-a*.72,a*.7);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ ctx.restore();
  // title + north mark
  ctx.fillStyle="#2b1a0e";ctx.font=`italic 700 ${26*dpr}px Georgia,serif`;ctx.textAlign="center";ctx.fillText("Map",BW/2,40*dpr);
  ctx.font=`700 ${14*dpr}px Georgia,serif`;ctx.fillText("N",30*dpr,BH-62*dpr);ctx.beginPath();ctx.moveTo(30*dpr,BH-56*dpr);ctx.lineTo(24*dpr,BH-28*dpr);ctx.lineTo(30*dpr,BH-34*dpr);ctx.lineTo(36*dpr,BH-28*dpr);ctx.closePath();ctx.fill();
