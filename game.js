@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 1: maze engine + first-person 3D view. Private build, no ads, no network. */
+/* Secret of the Adventures - Stage 1+2: maze engine, first-person 3D view, visited cells + trail (map in map.js). Private build, no ads, no network. */
 (function(){
 "use strict";
 const M=window.MAZE,TX=window.TEX,N=M.n,G=2*N+1,TS=TX.S;
@@ -24,17 +24,39 @@ const ZA=[null,
  {fog:[46,20,78],fd:0.14,tint:[1.0,0.82,1.2],amb:0.10,glow:2.0}];
 // ---------- state ----------
 const st={x:M.entrance[0],y:M.entrance[1],f:0};
-try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(s&&s.x>=0&&s.x<N&&s.y>=0&&s.y<N&&s.f>=0&&s.f<4&&(s.x|0)===s.x&&(s.y|0)===s.y)Object.assign(st,{x:s.x,y:s.y,f:s.f|0});}catch(e){}
-function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({x:st.x,y:st.y,f:st.f}));}catch(e){}}
 function canMove(x,y,d){return (mask[y*N+x]&BIT[d])!==0;}
+// Stage 2: visited cells (bitset, saved as hex) and the walked trail (start cell + one char 0-3 per step, last TRAIL_CAP steps kept)
+const TRAIL_CAP=4000,visited=new Uint8Array(N*N);let trail=[],visCount=0;
+function visit(i){if(!visited[i]){visited[i]=1;visCount++;}}
+let saved=null;try{saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");}catch(e){saved=null;}
+if(saved&&typeof saved==="object"&&saved.x>=0&&saved.x<N&&saved.y>=0&&saved.y<N&&saved.f>=0&&saved.f<4&&(saved.x|0)===saved.x&&(saved.y|0)===saved.y&&(saved.f|0)===saved.f)Object.assign(st,{x:saved.x,y:saved.y,f:saved.f});
+else saved=null;
+(function loadMap(){ // any bad part: start the map fresh from the current cell (never crash)
+ try{if(!saved||typeof saved.v!=="string"||saved.v.length!==Math.ceil(N*N/4)||!/^[0-9a-f]+$/.test(saved.v)||typeof saved.t!=="object"||!saved.t)throw 0;
+  const tv=new Uint8Array(N*N);let c=0;for(let i=0;i<N*N;i++){if((parseInt(saved.v[i>>2],16)>>(i&3))&1){tv[i]=1;c++;}}
+  const s0=saved.t.s,ms=saved.t.m;if(!(s0>=0&&s0<N*N&&(s0|0)===s0)||typeof ms!=="string"||ms.length>TRAIL_CAP||!/^[0-3]*$/.test(ms))throw 0;
+  let x=s0%N,y=(s0/N)|0;const tr=[s0];for(const ch of ms){const d=+ch;if(!canMove(x,y,d))throw 0;x+=DIRS[d][0];y+=DIRS[d][1];tr.push(y*N+x);}
+  if(x!==st.x||y!==st.y)throw 0;for(const i of tr)if(!tv[i])throw 0;
+  visited.set(tv);visCount=c;trail=tr;}
+ catch(e){visited.fill(0);visCount=0;trail=[st.y*N+st.x];}
+ visit(st.y*N+st.x);})();
+function enc(){let h="";for(let i=0;i<N*N;i+=4){let v=0;for(let k=0;k<4;k++)if(i+k<N*N&&visited[i+k])v|=1<<k;h+=v.toString(16);}
+ let m="";for(let i=1;i<trail.length;i++){const a=trail[i-1],b=trail[i],dx=b%N-a%N,dy=((b/N)|0)-((a/N)|0);m+=DIRS.findIndex(d=>d[0]===dx&&d[1]===dy);}
+ return {v:h,t:{s:trail[0],m}};}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(Object.assign({x:st.x,y:st.y,f:st.f},enc())));}catch(e){}}
+function stepped(){const i=st.y*N+st.x;visit(i);trail.push(i);if(trail.length>TRAIL_CAP+1)trail.splice(0,trail.length-TRAIL_CAP-1);if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
+// item boxes: 4 free slots, empty for now; later stages fill them
+const ITEM_KEY="sota.items";let items=[null,null,null,null];
+try{const a=JSON.parse(localStorage.getItem(ITEM_KEY)||"null");if(Array.isArray(a)&&a.length===4)items=a;}catch(e){}
+try{localStorage.setItem(ITEM_KEY,JSON.stringify(items));}catch(e){}
 const vis={x:st.x,y:st.y,a:st.f*Math.PI/2},anim={on:false,t0:0,dur:1,fx:0,fy:0,fa:0,tx:0,ty:0,ta:0};
 let animOn=true;
 function startAnim(dur){anim.fx=vis.x;anim.fy=vis.y;anim.fa=vis.a;anim.tx=st.x;anim.ty=st.y;
  let d=st.f*Math.PI/2-vis.a;d=((d%(2*Math.PI))+3*Math.PI)%(2*Math.PI)-Math.PI;anim.ta=vis.a+d;anim.t0=performance.now();anim.dur=dur;anim.on=animOn;
  if(!animOn){vis.x=st.x;vis.y=st.y;vis.a=anim.ta;}}
-function act(cmd){ // logical state changes at once; the animation only follows it, so no press is ever lost
+function act(cmd){if(window.SOTA&&SOTA.mapOpen&&SOTA.mapOpen())return; // logical state changes at once; the animation only follows it, so no press is ever lost
  if(cmd==="fwd"||cmd==="back"){const d=cmd==="fwd"?st.f:(st.f+2)%4;
-  if(canMove(st.x,st.y,d)){st.x+=DIRS[d][0];st.y+=DIRS[d][1];save();startAnim(150);}else bump=performance.now();}
+  if(canMove(st.x,st.y,d)){st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);}else bump=performance.now();}
  else if(cmd==="left"){st.f=(st.f+3)%4;save();startAnim(160);}
  else if(cmd==="right"){st.f=(st.f+1)%4;save();startAnim(160);}
  updHud();}
@@ -101,19 +123,23 @@ function frame(t){
  if(anim.on){let k=(t-anim.t0)/anim.dur;if(!(k<1)){k=1;anim.on=false;}const e=k*k*(3-2*k);
   vis.x=anim.fx+(anim.tx-anim.fx)*e;vis.y=anim.fy+(anim.ty-anim.fy)*e;vis.a=anim.fa+(anim.ta-anim.fa)*e;}
  else{vis.x=st.x;vis.y=st.y;vis.a=st.f*Math.PI/2+Math.round((vis.a-st.f*Math.PI/2)/(2*Math.PI))*2*Math.PI;}
+ if(window.SOTA&&SOTA.mapOpen&&SOTA.mapOpen()){lastT=t;requestAnimationFrame(frame);return;}
  const t0=performance.now();render(t);const dt=performance.now()-t0;ft.push(dt);if(ft.length>240)ft.shift();
  lastT=t;requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 // ---------- HUD + input ----------
-const hud=document.getElementById("hud");let hudOn=true;
+const hud=document.getElementById("hud"),HUD_KEY="sota.hud";let hudOn=true;try{hudOn=localStorage.getItem(HUD_KEY)!=="0";}catch(e){}
 function updHud(){hud.textContent="Zone "+zoneOf[st.y*N+st.x]+"  cell "+st.x+","+st.y+"  facing "+FN[st.f];hud.style.display=hudOn?"block":"none";}
 updHud();
+document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.remove("pressed");void b.offsetWidth;b.classList.add("pressed");});b.addEventListener("animationend",()=>b.classList.remove("pressed"));b.addEventListener("contextmenu",e=>e.preventDefault());});
 document.querySelectorAll("[data-cmd]").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();act(b.dataset.cmd);});b.addEventListener("contextmenu",e=>e.preventDefault());});
-document.getElementById("dbg").addEventListener("pointerdown",e=>{e.preventDefault();hudOn=!hudOn;updHud();});
+document.getElementById("dbg").addEventListener("pointerdown",e=>{e.preventDefault();hudOn=!hudOn;try{localStorage.setItem(HUD_KEY,hudOn?"1":"0");}catch(e){}updHud();});
 window.addEventListener("keydown",e=>{const k={ArrowUp:"fwd",w:"fwd",ArrowDown:"back",s:"back",ArrowLeft:"left",a:"left",ArrowRight:"right",d:"right"}[e.key];if(k){e.preventDefault();act(k);}});
 // test/debug hooks (read-only views + direct commands)
 window.SOTA={state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,
  frameTimes:()=>ft.slice(),setAnim:v=>{animOn=!!v;},animating:()=>anim.on,renderOnce:()=>{const t0=performance.now();render(performance.now());return performance.now()-t0;},
- teleport:(x,y,f)=>{st.x=x;st.y=y;st.f=f;vis.x=x;vis.y=y;vis.a=f*Math.PI/2;anim.on=false;const z=ZA[zoneOf[y*N+x]].fog;fogNow[0]=z[0];fogNow[1]=z[1];fogNow[2]=z[2];save();updHud();},
+ items:()=>items.slice(),visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
+ core:{mask,zoneOf,visited,trail:()=>trail,M,DIRS,BIT},
+ teleport:(x,y,f)=>{st.x=x;st.y=y;st.f=f;visit(y*N+x);trail=[y*N+x];if(window.SOTA.onStep)SOTA.onStep();vis.x=x;vis.y=y;vis.a=f*Math.PI/2;anim.on=false;const z=ZA[zoneOf[y*N+x]].fog;fogNow[0]=z[0];fogNow[1]=z[1];fogNow[2]=z[2];save();updHud();},
  size:()=>({W,H}),vis:()=>({x:vis.x,y:vis.y,a:vis.a}),N,zones:()=>{const c=[0,0,0,0,0,0];for(let i=0;i<N*N;i++)c[zoneOf[i]]++;return c;}};
 })();

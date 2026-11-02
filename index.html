@@ -6,20 +6,37 @@
 html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:system-ui,sans-serif}
 #view{position:fixed;inset:0;width:100vw;height:100vh;image-rendering:auto;display:block}
 #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 48%,rgba(0,0,0,0) 45%,rgba(5,0,15,.55) 100%)}
-#hud{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;color:#fff;font:600 13px system-ui;background:rgba(10,5,25,.55);padding:4px 8px;border-radius:6px;pointer-events:none}
-#dbg{position:fixed;top:calc(6px + env(safe-area-inset-top));right:8px;width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,235,200,.6);background:rgba(20,10,40,.5);color:#fff;font:700 16px serif}
-.pad{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px}
-#padL{left:14px;flex-direction:column}#padR{right:14px}
-.pad button{width:68px;height:68px;border-radius:16px;border:2px solid rgba(255,235,200,.55);background:rgba(25,12,45,.55);color:#fff4dd;font-size:30px;touch-action:none}
-.pad button:active{background:rgba(120,80,190,.7)}
-#tag{position:fixed;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);color:rgba(255,240,210,.55);font:11px system-ui;pointer-events:none;text-align:center}
-#updb{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:10px;border:0;background:#e8c070;font:600 14px system-ui}
+#hud{position:fixed;top:calc(10px + env(safe-area-inset-top));left:66px;color:#fff;font:600 13px system-ui;background:rgba(10,5,25,.55);padding:4px 8px;border-radius:6px;pointer-events:none}
+.ink{border:2.5px solid #2b1a0e;background:radial-gradient(circle at 35% 30%,#efe0b8,#d9c08a 70%,#b8965e);color:#2b1a0e;box-shadow:0 2px 0 rgba(0,0,0,.55),inset 0 0 6px rgba(90,55,20,.45);touch-action:none;padding:0;-webkit-tap-highlight-color:transparent}
+.ink svg{width:62%;height:62%;display:block;margin:auto;pointer-events:none}
+.ink:active,.ink.pressed{filter:brightness(.82);transform:translateY(1px)}
+#dbg{position:fixed;top:calc(6px + env(safe-area-inset-top));right:8px;width:48px;height:48px;border-radius:50%;font:700 20px Georgia,serif}
+#mapb{position:fixed;top:calc(6px + env(safe-area-inset-top));left:8px;width:48px;height:48px;border-radius:12px 9px 13px 8px}
+#bar{position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-between;padding:0 12px;pointer-events:none}
+#bar>*{pointer-events:auto}
+.pad{display:flex;gap:8px}#padL{flex-direction:column}
+.pad button{width:62px;height:62px;border-radius:14px 11px 15px 10px}
+#slots{flex:1;display:grid;grid-template-columns:repeat(2,52px);gap:6px;justify-content:center;align-content:end;margin:0 6px}
+@media (min-aspect-ratio:1/1){#slots{grid-template-columns:repeat(4,56px)}.slot{height:56px!important}}
+.slot{width:auto;height:52px;border-radius:9px 12px 8px 11px;border:2.5px dashed #2b1a0e;background:radial-gradient(circle at 40% 35%,rgba(239,224,184,.92),rgba(196,166,110,.9));box-shadow:0 2px 0 rgba(0,0,0,.5),inset 0 0 8px rgba(90,55,20,.5);padding:0;touch-action:none}
+.slot:nth-child(2){transform:rotate(1.2deg)}.slot:nth-child(3){transform:rotate(-1deg)}.slot:nth-child(4){transform:rotate(.7deg)}
+.slot.pressed{animation:sp .18s ease-out}@keyframes sp{50%{filter:brightness(.75);scale:.92}}
+.slot svg{width:60%;height:60%;opacity:.35;pointer-events:none}
+#updb{display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:10px;border:0;background:#e8c070;font:600 14px system-ui}
+#map{display:none;position:fixed;inset:0;background:#2a1a10;touch-action:none}#map.open{display:block}
+#mapc{position:absolute;inset:0;width:100%;height:100%;display:block}
+#mclose{position:absolute;top:calc(8px + env(safe-area-inset-top));right:10px;width:48px;height:48px;border-radius:50%}
+#mtools{position:absolute;right:10px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+#mtools button{width:48px;height:48px;border-radius:12px 9px 13px 8px;font:700 26px Georgia,serif}
 </style></head><body>
 <canvas id="view"></canvas>
-<div id="vig"></div><div id="hud"></div><button id="dbg" aria-label="Show or hide info">i</button>
-<div class="pad" id="padL"><button data-cmd="fwd" aria-label="Step forward">&#9650;</button><button data-cmd="back" aria-label="Step back">&#9660;</button></div>
-<div class="pad" id="padR"><button data-cmd="left" aria-label="Turn left">&#8630;</button><button data-cmd="right" aria-label="Turn right">&#8631;</button></div>
-<div id="tag">Stage 1 try-out<br>temporary buttons</div>
+<div id="vig"></div><div id="hud"></div><button id="dbg" class="ink" aria-label="Show or hide info">i</button>
+<button id="mapb" class="ink" aria-label="Open map"><svg viewBox="0 0 40 40"><path d="M6 10 L15 6 L25 10 L34 6 L34 30 L25 34 L15 30 L6 34 Z M15 6 L15 30 M25 10 L25 34" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<div id="bar"><div class="pad" id="padL"><button class="ink" data-cmd="fwd" aria-label="Step forward"><svg viewBox="0 0 40 40"><path d="M20 7 L32 24 L24 24 L24 33 L16 33 L16 24 L8 24 Z" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="ink" data-cmd="back" aria-label="Step back"><svg viewBox="0 0 40 40"><path d="M20 33 L32 16 L24 16 L24 7 L16 7 L16 16 L8 16 Z" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+<div id="slots"><button class="slot" data-slot="0" aria-label="Item box 1 (empty)"></button><button class="slot" data-slot="1" aria-label="Item box 2 (empty)"></button><button class="slot" data-slot="2" aria-label="Item box 3 (empty)"></button><button class="slot" data-slot="3" aria-label="Item box 4 (empty)"></button></div>
+<div class="pad" id="padR"><button class="ink" data-cmd="left" aria-label="Turn left"><svg viewBox="0 0 40 40"><path d="M30 32 L30 18 Q30 10 22 10 L11 10 M17 4 L10 10 L17 16" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="ink" data-cmd="right" aria-label="Turn right"><svg viewBox="0 0 40 40"><path d="M10 32 L10 18 Q10 10 18 10 L29 10 M23 4 L30 10 L23 16" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
+<div id="map" aria-label="Map"><canvas id="mapc"></canvas><button id="mclose" class="ink" aria-label="Close map"><svg viewBox="0 0 40 40"><path d="M11 11 L29 29 M29 11 L11 29" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<div id="mtools"><button id="mzin" class="ink" aria-label="Zoom in">+</button><button id="mzout" class="ink" aria-label="Zoom out">&#8722;</button><button id="mctr" class="ink" aria-label="Centre on me"><svg viewBox="0 0 40 40"><path d="M20 6 L20 13 M20 27 L20 34 M6 20 L13 20 M27 20 L34 20 M20 14 A6 6 0 1 0 20.01 14" fill="none" stroke="#2b1a0e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
 <button id="updb">New version ready - tap to restart</button>
-<script src="maze-data.js?v=1"></script><script src="tex.js?v=1"></script><script src="game.js?v=1"></script><script src="boot.js?v=1"></script>
+<script src="maze-data.js?v=2"></script><script src="tex.js?v=2"></script><script src="game.js?v=2"></script><script src="map.js?v=2"></script><script src="boot.js?v=2"></script>
 </body></html>
