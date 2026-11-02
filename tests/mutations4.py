@@ -19,7 +19,7 @@ MUT=[
  ("death keeps progress","party.js","function restore(){live=clone(save);","function restore(){","death_restore"),
  ("death keeps solved rooms","party.js","r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();","","death_restore"),
  ("save anywhere","party.js","if(!start&&!R.isSavePoint(M,p.x,p.y))return false;","","save_only_camps"),
- ("save every step","party.js","S.afterStep=rid=>{if(!live||","S.afterStep=rid=>{if(live)try{localStorage.setItem(SAVE,JSON.stringify(live));}catch(e){}if(!live||","save_only_camps"),
+ ("save every step","party.js","S.afterStep=rid=>{if(!live)return;","S.afterStep=rid=>{if(live)try{localStorage.setItem(SAVE,JSON.stringify(live));}catch(e){}if(!live)return;","save_only_camps"),
  ("companions any order","rules.js","return nx&&nx.tavern===tIdx?nx:null;","return nx&&tIdx>0?nx:null;","companions"),
  ("fights far too often","party.js","if(r<(rid>=0?0.15:0.02))","if(r<0.5)","random_fights"),
  ("potion not used up","rules.js","if(k<0||!it||it.slot!==\"use\")return \"\";c.bag.splice(k,1);","if(k<0||!it||it.slot!==\"use\")return \"\";","fight_ui"),

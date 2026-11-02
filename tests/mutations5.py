@@ -28,7 +28,8 @@ MUT=[
  ("recipes not saved","party.js","seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0};","seed:(Math.random()*1e9)|0,steps:0,fresh:{},tentWear:0};Object.defineProperty(live,\"recipes\",{value:{},enumerable:false,writable:true});","save_keeps_s5"),
  ("tiny shop tabs","index.html",".s5tabs .s5tab{width:150px;min-width:150px}",".s5tabs .s5tab{width:150px;min-width:150px;min-height:30px!important;height:30px}","fit_s5"),
  ("econ.js not cached","sw.js",'"econ.js?v=9",','',"offline5"),
-]def port():
+]
+def port():
   s=socket.socket();s.bind(('127.0.0.1',0));p=s.getsockname()[1];s.close();return p
 def serve(d):
   p=port();pr=subprocess.Popen([PY,'-m','http.server',str(p),'--bind','127.0.0.1'],cwd=d,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(0.8);return pr,f'http://127.0.0.1:{p}/'

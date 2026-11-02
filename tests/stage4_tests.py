@@ -125,7 +125,7 @@ def t_fight_ui(p):
   check(ev(pg,'document.getElementById("s4").dataset.result')=='win','no win screen');g=ev(pg,'SOTA.rpg.live().gold');check(g>20,'no gold');tap(pg,'#fdone');check(ev(pg,'SOTA.state()')==s0,'moved after win');b.close()
 def t_save_only_camps(p):
   b,c=ctx(p);pg=page(c);create(pg);s0=ev(pg,'localStorage.getItem("sota.party")')
-  check(ev(pg,'SOTA.rpg.doSave()')==False,'saved away from camp');ev(pg,'SOTA.rpg.live().gold=999');tap(pg,'[data-cmd=fwd]');finish(pg)
+  ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');check(ev(pg,'SOTA.rpg.doSave()')==False,'saved away from camp');ev(pg,'SOTA.rpg.live().gold=999');tap(pg,'[data-cmd=fwd]');finish(pg)
   check(ev(pg,'localStorage.getItem("sota.party")')==s0,'storage changed on a plain step')
   cp=ev(pg,'MAZE.camps[0]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');step_into(pg,cp);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==999 and [sv['at']['x'],sv['at']['y']]==cp,'camp did not save')
   tv=ev(pg,'MAZE.taverns[0]');ev(pg,'SOTA.rpg.live().gold=5');step_into(pg,tv);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==5 and 'Tavern 1'==sv['at']['name'],'tavern did not save')
