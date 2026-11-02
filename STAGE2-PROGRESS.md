@@ -7,6 +7,7 @@ Tests: `/workspace/.pwvenv/bin/python tests/run_tests.py` (Stage 1, 8), `tests/s
 - map.js: full-screen hand-inked map on cached parchment (stains, torn edge, vignette), jittered ink walls, zone-tinted floors, only visited cells (cached layer, drawn once per new cell), trail dots, blue facing arrow, tent/door/door+red X/mug icons, + / - / recenter buttons, drag pan, pinch zoom, key M toggles.
 - Save: position + visited bitset (hex) + trail (start + one char per step, last 4000 steps). Old Stage 1 saves load (visited = current cell); bad map data -> fresh map from current cell.
 - sw.js v2 lists map.js; 3D look (tex.js, palette, fog, render) untouched.
+- 2b: map opens fitted to all visited cells (cap 44 px per cell, min 3), recentre = fit; player ring + offset arrow (min 16 px), icon stays visible; pan clamped to keep explored area on screen; sw v3.
 - Note: SOTA.teleport (debug only) resets the trail to the new cell.
 ## Next
 - Stage 3 (puzzles) after Jeremy's yes. Items have no function yet. Real-phone test not done.

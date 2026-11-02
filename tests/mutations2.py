@@ -11,10 +11,18 @@ MUT=[
  ("map close breaks movement","map.js",'tap("mclose",()=>setOpen(false));','tap("mclose",()=>{el.classList.remove("open");});',"map_open_close"),
  ("map.js missing from offline list","sw.js",'"map.js?v=3",','',"offline2"),
  ("trail not recorded","game.js","visit(i);trail.push(i);","visit(i);","map_markers"),
- ("recenter does nothing","map.js",'tap("mctr",()=>{center();req();});','tap("mctr",()=>{req();});',"map_panzoom"),
+ ("recenter does nothing","map.js",'tap("mctr",()=>{bbox();fit();req();});','tap("mctr",()=>{req();});',"map_panzoom"),
  ("old save crashes map","game.js","catch(e){visited.fill(0);visCount=0;trail=[st.y*N+st.x];}","catch(e){visited.fill(0);visCount=0;trail=[0];}","old_and_corrupt_save"),
  ("slot tap eats input","game.js",'document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",e=>{','document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",e=>{animOn=false;anim.dur=1e9;window.SOTA.act=null;st.f=(st.f+1)%4;','slot_tap'),
  ("hud off by default","game.js",'hudOn=localStorage.getItem(HUD_KEY)!=="0";','hudOn=localStorage.getItem(HUD_KEY)==="1";',"hud_default"),
+ ("fit ignores part of box","map.js","bw=b.x1-b.x0+2*m,","bw=(b.x1-b.x0)/2+2*m,","fit_open"),
+ ("no fit zoom cap","map.js","Math.min(FIT_CAP,(a.r-a.l)/bw","Math.min(999,(a.r-a.l)/bw","fit_open"),
+ ("marker covers icon","map.js","const dd=R0+aa+4*dpr,","const dd=0,","marker"),
+ ("drag disabled","map.js","if(pts.size===1){view.cx-=","if(pts.size===9){view.cx-=","drag"),
+ ("no pan clamp","map.js","function clamp(){","function clamp(){return;","pan_clamp"),
+ ("recentre not restoring fit","map.js",'tap("mctr",()=>{bbox();fit();req();});','tap("mctr",()=>{center();req();});',"map_panzoom"),
+ ("tiny marker when zoomed out","map.js","aa=Math.max(9*dpr,z*0.34)","aa=z*0.34","marker"),
+ ("pinch disabled","map.js","if(pinch)view.z=","if(0)view.z=","pinch"),
 ]
 def port():
   s=socket.socket();s.bind(('127.0.0.1',0));p=s.getsockname()[1];s.close();return p

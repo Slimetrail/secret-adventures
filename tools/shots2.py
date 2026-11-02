@@ -12,6 +12,19 @@ with sync_playwright() as p:
   b=p.chromium.launch()
   def newpg(w,h):
     pg=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='block').new_page();pg.goto(URL);pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA');return pg
+  r,camps,mons=W.zone1_tour()
+  if os.environ.get('V2B'):
+    for (w,h) in [(412,915),(915,412),(360,800)]:
+      pg=newpg(w,h);go(pg,r[:40]);pg.evaluate('SOTA.map.open()');pg.wait_for_timeout(200);pg.screenshot(path=f'{OUT}/v2b-map-fit-short-{w}x{h}.png')
+      pg.evaluate('SOTA.map.close()');go(pg,r[39:]);go(pg,W.path(r[-1],(15,50)));go(pg,W.path((15,50),(14,51)));go(pg,W.path((14,51),(17,53)))
+      pg.evaluate('SOTA.map.open()');pg.wait_for_timeout(200);pg.screenshot(path=f'{OUT}/v2b-map-fit-zone1-{w}x{h}.png')
+      if w==412:
+        pg.evaluate('SOTA.map.close()');go(pg,W.path((17,53),(15,50)));pg.evaluate('SOTA.map.open()');pg.wait_for_timeout(200);pg.screenshot(path=f'{OUT}/v2b-map-player-on-camp-{w}x{h}.png')
+        for _ in range(3):pg.click('#mzin')
+        pg.wait_for_timeout(150);pg.screenshot(path=f'{OUT}/v2b-map-player-on-camp-zoomed-{w}x{h}.png')
+        pg.mouse.move(150,450);pg.mouse.down();pg.mouse.move(260,380,steps=8);pg.mouse.up();pg.wait_for_timeout(150);pg.screenshot(path=f'{OUT}/v2b-map-zoomed-dragged-{w}x{h}.png')
+        pg.evaluate('SOTA.map.close()');go(pg,W.path((15,50),(14,49)));pg.evaluate('SOTA.map.open()');pg.wait_for_timeout(200);pg.screenshot(path=f'{OUT}/v2b-map-player-on-tavern-{w}x{h}.png')
+    b.close();print('done');sys.exit(0)
   pg=newpg(412,915);pg.wait_for_timeout(400);pg.screenshot(path=f'{OUT}/controls-zone1-start-412x915.png')
   r,camps,mons=W.zone1_tour()
   go(pg,r[:40]);pg.wait_for_timeout(300);pg.screenshot(path=f'{OUT}/controls-zone1-walked-412x915.png')
