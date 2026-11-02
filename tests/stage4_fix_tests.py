@@ -238,6 +238,10 @@ def t_fight_tree3(p):
     ev(pg,'SOTA.rpg.live().party[0].skills=["bolt"];SOTA.rpg.live().party[0].mp=30')
     ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>{const m=RPG.makeMonster(1,i,1,0,"normal");m.hp=m.max=300;return m}))');pg.wait_for_timeout(200)
     ttap(pg,'#fparty [data-hero="0"]');ttap(pg,'#s4br [data-cmd4=spells]');ttap(pg,'#s4br [data-sk=bolt]')
+    bs=ev(pg,'[...document.querySelectorAll("#s4br .s4bi")].filter(b=>b.offsetParent).map(b=>{const r=b.getBoundingClientRect();return [r.top,r.bottom,r.left,r.right]})')
+    check(bs and all(t_>=0 and b_<=h+0.5 for t_,b_,_,_ in bs),f'{w}x{h}: 3rd tree level off screen {bs}')
+    for i in range(len(bs)):
+      for j in range(i+1,len(bs)):A,B=bs[i],bs[j];check(A[1]<=B[0]+0.5 or B[1]<=A[0]+0.5 or A[3]<=B[2]+0.5 or B[3]<=A[2]+0.5,f'{w}x{h}: tree buttons overlap {A} {B}')
     m0=ev(pg,'SOTA.rpg.fight().m[2].hp');ttap(pg,'#s4br [data-tgt="2"]');check(ev(pg,'SOTA.rpg.fight().m[2].hp')<m0,f'{w}x{h}: bolt on far target did nothing');b.close()
 def t_fight_view_v2(p):
   """fight v2: slim menu panel, big far-camera scene, tree kept out of the scene, every figure inside the canvas"""

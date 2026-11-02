@@ -58,6 +58,9 @@ function branch(anchor,items,level,owner,fight){level=level||0;if(level===0){clo
   if(brBox.dir==="row"&&level>=2){ // only two rows fit in the slim panel: keep the last two levels
    br.querySelectorAll(".s4bcol").forEach(c=>{const lv=+c.dataset.lv;if(lv<level-1)c.style.display="none";else if(lv===level-1)c.style.top=(B.top+4)+"px";});
    br.querySelectorAll("path").forEach(p=>{if(+p.dataset.lv<level)p.remove();});}
+  if(brBox.dir==="col"&&level>=2&&a.right+12+col.offsetWidth>B.right-4){ // strip too narrow for 3 columns: keep the last two
+   br.querySelectorAll(".s4bcol").forEach(c=>{const lv=+c.dataset.lv;if(lv<level-1)c.style.display="none";else if(lv===level-1)c.style.left=(B.left+4)+"px";});
+   br.querySelectorAll("path").forEach(p=>{if(+p.dataset.lv<level)p.remove();});}
   a=anchor.getBoundingClientRect();
   const cw=col.offsetWidth,ch=col.offsetHeight;let left,top,fx=0,fy=0;
   if(brBox.dir==="row"){top=B.top+4+Math.min(level,1)*50;left=Math.max(B.left+4,Math.min(B.right-cw-4,a.left+a.width/2-cw/2));fx=2;}

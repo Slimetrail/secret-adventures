@@ -32,7 +32,9 @@ MUT=[
  ("tall fight menu panel","index.html",'.s4fbot{min-height:calc(108px','.s4fbot{min-height:calc(260px',"fight_view_v2"),
  ("landscape menu strip too wide","index.html",'.s4stage{flex:1 1 74%}.s4fbot{flex:0 0 26%;','.s4stage{flex:1 1 50%}.s4fbot{flex:0 0 50%;',"fight_view_v2"),
  ("heroes pushed off the right edge","party.js",'W*(0.585+0.093*i)','W*(0.72+0.12*i)',"fight_view_v2"),
- ("third tree level falls off the panel","party.js",'if(brBox.dir==="row"&&level>=2){','if(false){',"fight_tree3"),
+ ("3rd level drawn over the 2nd","party.js",'if(brBox.dir==="row"&&level>=2){','if(false){',"fight_tree3"),
+ ("landscape 3rd column drawn over the 2nd","party.js",'if(brBox.dir==="col"&&level>=2&&','if(false&&',"fight_tree3"),
+ ("third tree level falls off the panel","party.js",'top=B.top+4+Math.min(level,1)*50;','top=B.top+4+level*50;',"fight_tree3"),
 ]
 def port():
   s=socket.socket();s.bind(('127.0.0.1',0));p=s.getsockname()[1];s.close();return p
