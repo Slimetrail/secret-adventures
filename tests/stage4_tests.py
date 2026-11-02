@@ -116,7 +116,7 @@ def t_save_only_camps(p):
   tv=ev(pg,'MAZE.taverns[0]');ev(pg,'SOTA.rpg.live().gold=5');step_into(pg,tv);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==5 and 'Tavern 1'==sv['at']['name'],'tavern did not save')
   ev(pg,'SOTA.rpg.live().gold=777');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'SOTA.rpg.live().gold')==5,'progress after save kept over reload');b.close()
 def t_death_restore(p):
-  b,c=ctx(p);pg=page(c);create(pg);cp=ev(pg,'MAZE.camps[1]');step_into(pg,cp);g=ev(pg,'SOTA.rpg.live().gold')
+  b,c=ctx(p);pg=page(c);create(pg);r0=ev(pg,'MAZE.rooms.find(r=>r.k==="treasure").id');ev(pg,f'SOTA.markSolved({r0})');cp=ev(pg,'MAZE.camps[1]');step_into(pg,cp);g=ev(pg,'SOTA.rpg.live().gold')
   r=ev(pg,'MAZE.rooms.find(r=>r.k==="story"&&!SOTA.isSolved(r.id)).id');ev(pg,f'SOTA.markSolved({r})');ev(pg,'SOTA.rpg.live().gold+=500;SOTA.rpg.live().party[0].xp+=5');ev(pg,'SOTA.teleport(5,63,0)')
   ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(5,1,40,1,"hard")])')
   for i in range(40):
@@ -124,7 +124,7 @@ def t_death_restore(p):
     tap(pg,'[data-cmd4=defend]')
   check(ev(pg,'document.getElementById("s4").dataset.result')=='lose','did not lose');tap(pg,'#fdone')
   s=ev(pg,'SOTA.state()');check([s['x'],s['y']]==cp,'not back at camp');check(ev(pg,'SOTA.rpg.live().gold')==g,'gold since save kept')
-  check(not ev(pg,f'SOTA.isSolved({r})'),'room solved since save kept');check(ev(pg,'SOTA.rpg.live().party[0].hp')>0,'hero dead after restore');b.close()
+  check(not ev(pg,f'SOTA.isSolved({r})'),'room solved since save kept');check(ev(pg,f'SOTA.isSolved({r0})'),'room solved before save lost');check(r0 in json.loads(ev(pg,'localStorage.getItem("sota.rooms")'))['s'],'restored rooms not stored');check(ev(pg,'SOTA.rpg.live().party[0].hp')>0,'hero dead after restore');b.close()
 def t_companions(p):
   b,c=ctx(p);pg=page(c);create(pg);T=ev(pg,'MAZE.taverns')
   step_into(pg,T[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of story order');step_into(pg,T[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'tavern 1 companion')
@@ -140,7 +140,7 @@ def t_random_fights(p):
     if ev(pg,'SOTA.panelOpen()'):tap(pg,'#pgo')
     if ev(pg,'SOTA.rpg.ui()')=='fight':fights+=1;finish(pg)
     if ev(pg,'SOTA.rpg.ui()'):ev(pg,'SOTA.rpg.ui()') and pg.evaluate('document.querySelector("#s4 .s4back")&&document.querySelector("#s4 .s4back").click()')
-  print('   steps',steps,'fights',fights);check(0<fights<steps/8,f'fight rate {fights}/{steps}');b.close()
+  print('   steps',steps,'fights',fights);check(0<fights<steps/15,f'fight rate {fights}/{steps}');b.close()
 def t_equip_bag_ui(p):
   b,c=ctx(p);pg=page(c);create(pg,race='cat',cls='warrior',inc=('str',))
   ev(pg,'SOTA.rpg.live().party[0].bag.push("plate","robe","ring")');tap(pg,'#partyb');tap(pg,'[data-equip="0"]');tap(pg,'[data-slot=chest]')
