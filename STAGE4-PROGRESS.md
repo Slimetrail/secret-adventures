@@ -66,3 +66,10 @@ What changed:
 PENDING: art finish pass (heroes, monsters, companions, backgrounds). Boss and monster shapes stay simple placeholders.
 
 Not tested: real phone; real installed-app (standalone display mode could not be emulated here, ran as plain browser); real phone keyboard (Playwright keyboard + small viewport only).
+
+## Fight v2 (smaller menu, bigger far-camera scene)
+- Menu panel: one-line enemy list, party as 2x2 name tabs (1 column in landscape) with name, hp number and thin hp/mp bars inside each 44px tab. Panel about 108-125px in portrait; landscape uses a slim right strip (about 26%).
+- The Defend/Attack/Spells/Items/Run tree now opens inside the menu panel (rows in portrait, columns in landscape) on a solid backing, so it never covers the fight scene. It does cover the HP tabs while open. A 3rd level (Spells > spell > target) keeps the last two rows.
+- Scene: horizon at 0.6H, deeper floor, back pillars, wide front pillars, smaller arch, torches on the wall; figures about half their old size; every figure inside the canvas (checked by test).
+- New tests: fight_view_v2, fight_tree3 (+6 mutations). Shots: stage4-fix-shots/v2-*.
+- PENDING: the sw cache version was not bumped (still v6); a phone with the old v6 cache keeps old files until the next version bump.

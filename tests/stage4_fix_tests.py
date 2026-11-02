@@ -231,6 +231,37 @@ def t_fight_layout(p):
     for i,(l,t,rr,bt) in enumerate(r):check(l>=-1 and t>=-1 and rr<=w+1 and bt<=h+1,f'{w}x{h}: fight part {i} off screen {r[i]}')
     check(r[0][3]-r[0][1]>=150,f'{w}x{h}: fight view too small');check(ev(pg,'document.querySelectorAll("#fparty .s4pr").length')==4,'party HP list')
     ev(pg,'SOTA.rpg.forceEnd("win")');check(visible(pg,'#fdone') or True,'');ttap(pg,'#fdone');check(ui(pg) is None,'Continue failed');b.close()
+def t_fight_tree3(p):
+  """a 3-level tree (Spells > Bolt > target) fits the slim panel at every size, even with one hero"""
+  for w,h in SIZES:
+    b,c=ctx(p,w,h);pg=fresh(c);full_create(pg,'Ana',race='elf',cls='mage')
+    ev(pg,'SOTA.rpg.live().party[0].skills=["bolt"];SOTA.rpg.live().party[0].mp=30')
+    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>{const m=RPG.makeMonster(1,i,1,0,"normal");m.hp=m.max=300;return m}))');pg.wait_for_timeout(200)
+    ttap(pg,'#fparty [data-hero="0"]');ttap(pg,'#s4br [data-cmd4=spells]');ttap(pg,'#s4br [data-sk=bolt]')
+    m0=ev(pg,'SOTA.rpg.fight().m[2].hp');ttap(pg,'#s4br [data-tgt="2"]');check(ev(pg,'SOTA.rpg.fight().m[2].hp')<m0,f'{w}x{h}: bolt on far target did nothing');b.close()
+def t_fight_view_v2(p):
+  """fight v2: slim menu panel, big far-camera scene, tree kept out of the scene, every figure inside the canvas"""
+  for w,h in SIZES:
+    b,c=ctx(p,w,h);pg=fresh(c);hero(pg);ev(pg,'SOTA.rpg.live().party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1),RPG.makeCompanion(RPG.COMPANIONS[2],1))')
+    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>{const m=RPG.makeMonster(1,i,1,0,"normal");m.hp=m.max=300;return m}))');pg.wait_for_timeout(200)
+    R=lambda i:ev(pg,f'(()=>{{const r=document.getElementById("{i}").getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]}})()')
+    cv,bt=R('fcv'),R('fbot');land=w>h
+    if land:check(cv[2]-cv[0]>=0.7*w and bt[2]-bt[0]<=0.3*w,f'{w}x{h}: scene {cv} / strip {bt} not slim enough')
+    else:check(cv[3]-cv[1]>=0.75*h and bt[3]-bt[1]<=170,f'{w}x{h}: scene {cv} / panel {bt} not slim enough')
+    f=ev(pg,'SOTA.rpg.figs()');check(f['s']<=0.32*min(f['w'],f['h']*1.0),f'{w}x{h}: figures too big {f["s"]}')
+    for k in['mons','heroes']:
+      for q in f[k]:check(q['l']>=0 and q['r']<=f['w'] and q['t']>=0 and q['b']<=f['h'],f'{w}x{h}: a figure is cut off {k} {q}')
+    sz=ev(pg,'parseFloat(getComputedStyle(document.querySelector("#fparty .s4nn")).fontSize)');check(11<=sz<=15,f'{w}x{h}: name text size {sz}')
+    def tree_ok(tag):
+      bs=ev(pg,'[...document.querySelectorAll("#s4br .s4bi")].filter(b=>b.offsetParent).map(b=>{const r=b.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]})')
+      check(len(bs)>0,f'{w}x{h} {tag}: no tree')
+      for l,t_,r_,b_ in bs:
+        check(b_-t_>=44 and r_-l>=44,f'{w}x{h} {tag}: small target');check(l>=0 and t_>=0 and r_<=w+0.5 and b_<=h+0.5,f'{w}x{h} {tag}: off screen')
+        check(r_<=cv[0] or l>=cv[2] or b_<=cv[1] or t_>=cv[3],f'{w}x{h} {tag}: tree covers the fight scene')
+    ttap(pg,'#fparty [data-hero="0"]');tree_ok('open');ttap(pg,'#s4br [data-cmd4=attack]');tree_ok('targets')
+    ttap(pg,'#s4br [data-cmd4=spells]');tree_ok('spells');mp=ev(pg,'SOTA.rpg.live().party[0].mp');ttap(pg,'#s4br [data-sk]')
+    if pg.locator('#s4br [data-tgt="2"]').count():tree_ok('spell targets');ttap(pg,'#s4br [data-tgt="2"]')
+    check(ev(pg,'SOTA.rpg.live().party[0].mp')<mp,f'{w}x{h}: spell did nothing');b.close()
 T=[(n[2:],f) for n,f in list(globals().items()) if n.startswith('t_')]
 if __name__=='__main__':
   fails=0

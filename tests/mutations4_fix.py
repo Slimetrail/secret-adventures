@@ -27,6 +27,12 @@ MUT=[
  ("bag ignores selected slot","party.js",'if(sel&&sel.slot&&fits(id,sel.slot)){tryEquip(c,i,id,sel.slot);return;}','',"sheet_equip"),
  ("sheet one column in landscape","index.html",'.s4cols{flex-direction:row;align-items:flex-start}','',"sheet_equip"),
  ("victory button hidden","party.js",'b.id="fdone";mn.appendChild(b);\n  mn.appendChild(el("div","s4note","+"+rw.xp','b.id="fdone";b.style.display="none";mn.appendChild(b);\n  mn.appendChild(el("div","s4note","+"+rw.xp',"fight_layout"),
+ ("fight tree not kept in the panel","party.js",'brBox={r:P,dir:land?"col":"row"};','',"fight_view_v2"),
+ ("fight figures drawn big (close camera)","party.js",'function scl(W,H){return Math.min(W/8.5,H/3.4);}','function scl(W,H){return Math.min(W/4,H/2);}',"fight_view_v2"),
+ ("tall fight menu panel","index.html",'.s4fbot{min-height:calc(108px','.s4fbot{min-height:calc(260px',"fight_view_v2"),
+ ("landscape menu strip too wide","index.html",'.s4stage{flex:1 1 74%}.s4fbot{flex:0 0 26%;','.s4stage{flex:1 1 50%}.s4fbot{flex:0 0 50%;',"fight_view_v2"),
+ ("heroes pushed off the right edge","party.js",'W*(0.585+0.093*i)','W*(0.72+0.12*i)',"fight_view_v2"),
+ ("third tree level falls off the panel","party.js",'if(brBox.dir==="row"&&level>=2){','if(false){',"fight_tree3"),
 ]
 def port():
   s=socket.socket();s.bind(('127.0.0.1',0));p=s.getsockname()[1];s.close();return p
@@ -36,7 +42,7 @@ T=os.path.join(ROOT,'tests/stage4_fix_tests.py');bad=0
 for name,f,a,b_,test in MUT:
   d=tempfile.mkdtemp(prefix='sota-mut4f-');shutil.copytree(ROOT,d,dirs_exist_ok=True,ignore=shutil.ignore_patterns('.git'))
   s=open(os.path.join(d,f)).read();assert a in s,f'anchor missing: {name}';open(os.path.join(d,f),'w').write(s.replace(a,b_,1))
-  pr,url=serve(d);r=subprocess.run([PY,os.path.join(d,'tests/stage4_fix_tests.py'),url,test],capture_output=True,text=True)  # run the copy's tests so app-copying tests use the mutated files;pr.terminate();shutil.rmtree(d)
+  pr,url=serve(d);r=subprocess.run([PY,os.path.join(d,'tests/stage4_fix_tests.py'),url,test],capture_output=True,text=True);pr.terminate();shutil.rmtree(d)  # run the copy's tests so app-copying tests use the mutated files
   k=r.returncode!=0;bad+=not k;print(('KILLED ' if k else 'SURVIVED ')+f'{name} -> {test}: '+(r.stdout.strip().splitlines() or ['?'])[-1][:150])
 pr,url=serve(ROOT);r=subprocess.run([PY,T,url]+sorted({m[4] for m in MUT}),capture_output=True,text=True);pr.terminate()
 print('REAL APP:',r.stdout.strip().replace('\n',' | ')[-300:]);bad+=r.returncode!=0;sys.exit(1 if bad else 0)

@@ -126,6 +126,26 @@ html.s4open,html.s4open body{touch-action:pan-y}
 @media (orientation:landscape) and (max-height:520px){.sheet{max-width:900px}.s4cols{flex-direction:row;align-items:flex-start}.s4colA{flex:0 0 46%}.s4colB{flex:1}.s4fig{max-height:210px}.s4doll{grid-template-columns:56px 1fr 56px}}
 @media (orientation:landscape) and (max-height:520px){.s4fight{flex-direction:row}.s4stage{flex:1 1 58%}.s4fbot{flex:0 0 42%;border-top:none;border-left:2px solid #5a4590;grid-template-columns:1fr;grid-template-areas:"pa" "en" "mn";align-content:start;overflow-y:auto;touch-action:pan-y}.s4enemies{border-right:none}
  .s4page{max-width:900px}.s4status{grid-template-columns:1fr 1fr 1fr}}
+
+/* fight v2: slim menu panel, bigger scene */
+.s4fbot{grid-template-columns:1fr;grid-template-areas:"en" "pa" "mn"}
+.s4enemies{display:block;padding:2px 10px 0;border-right:none;font:12px Georgia,serif;color:#e8b0b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s4party{display:grid;grid-template-columns:1fr 1fr;gap:3px 6px;padding:2px 6px}
+.s4pr{display:block}
+.s4pr .s4nl{width:100%;display:flex;flex-direction:column;justify-content:center;gap:2px;text-align:left;color:#f3e2b5}
+.s4nlt{display:flex;align-items:center;gap:4px;font:700 13px Georgia,serif;min-width:0}
+.s4nn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s4nlt .s4arrow{color:#ffe08a;font-size:10px}
+.s4nlt .s4pv{font:700 11px Georgia,serif;color:#d8c8a0}
+.s4pr .s4bars{display:flex;flex-direction:row;gap:3px}.s4pr .s4bars .s4bar{flex:1;height:4px}.s4pr .s4bars .s4bar.mp{flex:.6}
+.s4menu{padding:0 10px 4px;gap:0}
+.s4who{font:700 12px Georgia,serif}
+.s4bcol.row{flex-direction:row;flex-wrap:wrap}
+.s4br.boxed .s4bi{font-size:14px;padding:0 10px}
+@media (orientation:landscape) and (max-height:520px){.s4stage{flex:1 1 74%}.s4fbot{flex:0 0 26%;min-width:200px;grid-template-areas:"en" "pa" "mn"}.s4party{grid-template-columns:1fr}}
+.s4brbk{position:absolute;background:rgba(10,6,20,.94);border-top:2px solid #8a6a3a}
+.s4fbot{min-height:calc(108px + env(safe-area-inset-bottom))}
+@media (orientation:landscape) and (max-height:520px){.s4fbot{min-height:0}}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="vig"></div><div id="hud"></div><button id="dbg" class="ink" aria-label="Show or hide info">i</button>
