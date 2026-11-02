@@ -115,7 +115,8 @@ def t_tent_build_ui(p):
   ev(pg,'SOTA.rpg.s5.tentScreen(2)');check(ev(pg,'document.querySelectorAll(".s5need.ok").length')==3,'parts not shown as ready')
   tap(pg,'[data-build=junk]');r=L(pg,'return [X.haveN("tent"),L.gold,X.haveN("p_silk"),X.haveN("p_feather")]')
   check(r[0]==1 and r[2]==0,f'tent not built {r}');check(r[3]<3 and r[1]==100-max(0,60-22*(3-r[3])),f'fee not paid with junk {r}')
-  L(pg,'L.gold=10');ev(pg,'SOTA.rpg.s5.tentScreen(2)');tap(pg,'[data-buytent]');check(L(pg,'return X.haveN("tent")')==1,'bought a tent with 10 gold');b.close()
+  L(pg,'L.gold=10');ev(pg,'SOTA.rpg.s5.tentScreen(2)');tap(pg,'[data-buytent]');check(L(pg,'return X.haveN("tent")')==1,'bought a tent with 10 gold')
+  L(pg,'L.gold=999;L.party.forEach(c=>c.bag=c.bag.filter(x=>!x.startsWith("p_")))');ev(pg,'SOTA.rpg.s5.tentScreen(2)');tap(pg,'[data-build=gold]');check(L(pg,'return [X.haveN("tent"),L.gold]')==[1,999],'built a tent without parts');b.close()
 def t_give_item(p):
   b,pg=setup(p);L(pg,'L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1));L.party[0].bag.push("j_tooth");')
   tap(pg,'#partyb');tap(pg,'[data-card="0"]');tap(pg,'.s4bag [data-item=j_tooth]');tap(pg,'[data-giveb]');noslide(pg);pg.wait_for_timeout(100)
