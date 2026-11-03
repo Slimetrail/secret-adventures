@@ -5,7 +5,7 @@
 const R=window.RPG,S=window.SOTA,M=window.MAZE,C=S.core,N=M.n;
 const SAVE="sota.party",DEV_NOFIGHT="sota.dev.nofight";
 // Stage 6 story hooks: story.js fills window.S6H; off in maze-only test mode (dev.nofight)
-function h6(k,a,b){try{const H=window.S6H;if(!H||!H[k]||localStorage.getItem(DEV_NOFIGHT)==="1")return undefined;return H[k](a,b);}catch(e){console.error(e);return undefined;}}
+function h6(k,a,b){try{const H=window.S6H;if(!H||!H[k]||localStorage.getItem(DEV_NOFIGHT)==="1"||localStorage.getItem("sota.dev.nostory")==="1")return undefined;return H[k](a,b);}catch(e){console.error(e);return undefined;}}
 const $=id=>document.getElementById(id),el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function tapBtn(label,fn,cls){const b=el("button","ink s4b"+(cls?" "+cls:""),label);b.addEventListener("click",e=>{e.preventDefault();fn();});return b;}

@@ -8,7 +8,7 @@ MUT=[
  ("left turns right","game.js",'else if(cmd==="left"){st.f=(st.f+3)%4;','else if(cmd==="left"){st.f=(st.f+1)%4;',"turning"),
  ("save disabled","game.js","localStorage.setItem(SAVE_KEY,","void(SAVE_KEY,","save_reload"),
  ("input dropped while animating","game.js","function act(cmd){","function act(cmd){if(anim.on)return;","mash"),
- ("worker misses game.js","sw.js",'"game.js?v=10",','',"offline"),
+ ("worker misses game.js","sw.js",'"game.js?v=11",','',"offline"),
  ("outside request","game.js",'"use strict";','"use strict";try{fetch("https://example.invalid/x").catch(()=>{});}catch(e){}',"network_console"),
  ("zone data shifted","maze-data.js",'"zone":"3','"zone":"1',"maze_loads"),
  ("back moves forward","game.js",'const d=cmd==="fwd"?st.f:(st.f+2)%4;','const d=st.f;',"route_walk"),

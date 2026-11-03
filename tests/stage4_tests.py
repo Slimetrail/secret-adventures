@@ -8,7 +8,8 @@ def check(c,m):
   if not c:raise Fail(m)
 ERRS=[];REQS=[]
 def ctx(p,w=390,h=844,sw=False):
-  b=p.chromium.launch();return b,b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block')
+  # stage 6: story scenes are switched off for the older suites (they test the game under the story); stage6_tests covers the story
+  b=p.chromium.launch();c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block');c.add_init_script("try{localStorage.setItem('sota.dev.nostory','1')}catch(e){}");return b,c
 def page(c,pre=None):
   pg=c.new_page();pg.on('console',lambda m:ERRS.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.on('request',lambda r:REQS.append(r.url))
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('localStorage.clear()')
@@ -144,7 +145,7 @@ def t_companions(p):
   b,c=ctx(p);pg=page(c);create(pg);T=ev(pg,'MAZE.taverns')
   step_into(pg,T[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of story order');step_into(pg,T[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'tavern 1 companion')
   for i in(1,2,3):step_into(pg,T[i])
-  n=ev(pg,'SOTA.rpg.live().party.map(c=>c.name)');check(n==['Jer','Pip','Orla','Kira'],f'party {n}');step_into(pg,T[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==4,'joined twice');b.close()
+  n=ev(pg,'SOTA.rpg.live().party.map(c=>c.name)');check(n==['Jer','Mira','Sorrel','Brunn'],f'party {n}');step_into(pg,T[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==4,'joined twice');b.close()
 def t_random_fights(p):
   b,c=ctx(p);pg=page(c);create(pg);fights=0;steps=0;rooms=0
   for i in range(400):
@@ -178,8 +179,8 @@ def t_ui_fit(p):
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()
 def t_offline4(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v10");const r=[];for(const f of["rules.js?v=10","party.js?v=10","game.js?v=10","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v10'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v11");const r=[];for(const f of["rules.js?v=11","party.js?v=11","game.js?v=11","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v11'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 def t_unchanged(p):
   d=subprocess.run(['git','diff','--stat','c11ccd52511198071301d9c30bb032a4cfaed635','--','tex.js','puzzles.js','puzzle-ui.js','map.js','doors.js','maze-data.js'],cwd=ROOT,capture_output=True,text=True).stdout

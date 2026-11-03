@@ -10,7 +10,8 @@ def check(c,m):
   if not c:raise Fail(m)
 ERRS=[]
 def ctx(p,w=390,h=844,sw=False):
-  b=p.chromium.launch();return b,b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block')
+  # stage 6: story scenes are switched off for the older suites (they test the game under the story); stage6_tests covers the story
+  b=p.chromium.launch();c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block');c.add_init_script("try{localStorage.setItem('sota.dev.nostory','1')}catch(e){}");return b,c
 def noslide(pg):
   for _ in range(40):
     if not pg.evaluate('!!document.querySelector("#s4br .sliding")'):return
@@ -129,7 +130,7 @@ def serve(d):
   pr=subprocess.Popen([PY,'-m','http.server',str(port),'--bind','127.0.0.1'],cwd=d,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(0.8);return pr,f'http://127.0.0.1:{port}/'
 def t_sw_update(p):
   """an old worker (v4 = c11ccd5, v5 = a248cec) is serving cached old files; the new files land; the player ends up in creation"""
-  for old,ver in[('c11ccd5','4'),('a248cec','5'),('c5b7de7','6'),('222db21','7'),('9f821ec','8'),('d118e0a','9')]:
+  for old,ver in[('c11ccd5','4'),('a248cec','5'),('c5b7de7','6'),('222db21','7'),('9f821ec','8'),('d118e0a','9'),('db7809e','10')]:
     d=tempfile.mkdtemp(prefix='sota-swup-')
     subprocess.run(f'git -C {ROOT} archive {old} | tar -x -C {d}',shell=True,check=True);pr,url=serve(d)
     try:
@@ -140,28 +141,28 @@ def t_sw_update(p):
       pg.reload();t0=time.time()
       while time.time()-t0<20:
         try:
-          if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")') and ev(pg,'caches.keys()')==["sota-s1-v10"]:break
+          if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")') and ev(pg,'caches.keys()')==["sota-s1-v11"]:break
           if ev(pg,'(()=>{const u=document.getElementById("updb");return !!u&&getComputedStyle(u).display!=="none"})()'):
             bb=pg.locator('#updb').bounding_box();pg.touchscreen.tap(bb['x']+bb['width']/2,bb['y']+bb['height']/2)
         except Exception:pass
         pg.wait_for_timeout(300)
-      check(ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'),f'v{ver} -> v10: creation never showed')
-      k=ev(pg,'caches.keys()');check(k==['sota-s1-v10'],f'new cache not active {k}');full_create(pg,'Swy');b.close()
+      check(ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'),f'v{ver} -> v11: creation never showed')
+      k=ev(pg,'caches.keys()');check(k==['sota-s1-v11'],f'new cache not active {k}');full_create(pg,'Swy');b.close()
     finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 def t_sw_autoreload(p):
-  """from v6 on: a new version (here a pretend v11) reloads by itself when no hero exists yet - no banner tap needed"""
+  """from v6 on: a new version (here a pretend v12) reloads by itself when no hero exists yet - no banner tap needed"""
   d=tempfile.mkdtemp(prefix='sota-swup7-');copy_app(ROOT,d);pr,url=serve(d)
   try:
     b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-    check(ev(pg,'caches.keys()')==['sota-s1-v10'],'v10 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
-    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="10"','VER="11"'))
+    check(ev(pg,'caches.keys()')==['sota-s1-v11'],'v11 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
+    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="11"','VER="12"'))
     ev(pg,'navigator.serviceWorker.getRegistration().then(r=>r&&r.update())');t0=time.time()
     while time.time()-t0<20:
       try:
         if ev(pg,'!window.__mark&&!!(window.SOTA&&SOTA.rpg)'):break
       except Exception:pass
       pg.wait_for_timeout(300)
-    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v11'],'v11 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
+    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v12'],'v12 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
   finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 # ---------------- branch menus ----------------
 def hero(pg,name='Tess',cls='warrior',race='human'):
