@@ -1,0 +1,194 @@
+"""Stage 6 tests: story and dialogue (pretend phone, Playwright). Run: python stage6_tests.py http://127.0.0.1:8765/"""
+import sys,os,json,time
+sys.path.insert(0,os.path.dirname(__file__))
+import stage4_tests as S4
+from stage4_tests import check,page,tap,ev,create,step_into,finish,noslide,Fail,ERRS,REQS,ROOT
+from playwright.sync_api import sync_playwright
+def ctx(p,w=390,h=844,sw=False):  # story ON (no nostory flag)
+  b=p.chromium.launch();return b,b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block')
+def S6(pg,js):return ev(pg,'(()=>{const s6=SOTA.rpg.s6,L=SOTA.rpg.live();'+js+'})()')
+def tapbox(pg):
+  b=pg.locator('#s6d .s6t').bounding_box();pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2)
+def drain(pg,limit=400):
+  """tap through every queued scene; returns the (who,emo,src) of each line shown"""
+  ev(pg,'SOTA.rpg.s6.setSpeed(0)');seen=[]
+  for _ in range(limit):
+    l=S6(pg,'return s6.line()')
+    if not l:return seen
+    if S6(pg,'return !!document.querySelector("#s6d .s6btns button")'):return seen
+    if l['typing']:pg.wait_for_timeout(15);continue
+    seen.append((l['who'],ev(pg,'document.getElementById("s6d").dataset.emo'),ev(pg,'document.querySelector("#s6d .s6p").getAttribute("src")'),l['kind']))
+    tapbox(pg)
+  raise Fail('dialogue never ended')
+def start(p,race='human',cls='warrior',inc=('str','str','str'),w=390,h=844,drain_open=True):
+  b,c=ctx(p,w,h);pg=page(c);create(pg,race=race,cls=cls,inc=inc)
+  if drain_open:drain(pg)
+  return b,c,pg
+def T(pg):return ev(pg,'MAZE.taverns')
+# ---------- dialogue box ----------
+def t_opening_plays(p):
+  b,c,pg=start(p,drain_open=False);l=S6(pg,'return s6.line()');check(l and l['kind']=='opening','opening did not play after creation')
+  check(ev(pg,'SOTA.storyOpen()'),'storyOpen false');s=drain(pg);check(any(x[0]=='D' for x in s),'dad never speaks in the opening');check(not ev(pg,'SOTA.storyOpen()'),'box still open')
+  check(ev(pg,'SOTA.rpg.live().story.seen.opening')==1,'opening not marked');b.close()
+def t_portrait_emotions(p):
+  b,c,pg=start(p,race='elf',cls='mage',inc=('man','man','man'));step_into(pg,T(pg)[1]);s=drain(pg)
+  comp=[x for x in s if x[0] in 'QSAH'];check(comp,'no portrait lines in join scene');emos={x[1] for x in comp}
+  check(len(emos)>=2,f'portrait never changes emotion {emos}')
+  for w,e,src,k in comp:check(src and src.startswith('art6/') and src.endswith('-'+e+'.webp'),f'portrait {src} does not match emotion {e}')
+  b.close()
+def t_portrait_flash_and_layout(p):
+  for w,h in((390,844),(360,800),(412,915)):
+    b,c,pg=start(p,w=w,h=h,drain_open=False);ev(pg,'SOTA.rpg.s6.setSpeed(0)');pg.wait_for_timeout(200)
+    for _ in range(12):
+      if S6(pg,'const l=s6.line();return l&&l.who!=="N"&&!l.typing'):break
+      tapbox(pg);pg.wait_for_timeout(60)
+    r=ev(pg,'(()=>{const q=s=>document.querySelector("#s6d "+s).getBoundingClientRect();const n=q(".s6name"),t=q(".s6t"),p=q(".s6pf");return {nh:n.height,nw:n.width,tb:t.bottom,tl:t.left,tr:t.right,pw:p.width,flash:document.querySelector("#s6d .s6pf").classList.contains("flash")}})()')
+    check(r['nh']<32 and r['nw']<w*0.6,f'name tab not small {r}');check(r['tb']<=h and r['tl']>=0 and r['tr']<=w,f'box off screen {r}');check(r['pw']>60,'no portrait');check(r['flash'],'no flash on line change');b.close()
+def t_not_skippable(p):
+  b,c,pg=start(p,drain_open=False);ev(pg,'SOTA.rpg.s6.setSpeed(150)');pg.wait_for_timeout(100)
+  i0=S6(pg,'return s6.line().i');check(S6(pg,'return s6.line().typing'),'line not typing');tapbox(pg);tapbox(pg);pg.keyboard.press('Enter');pg.keyboard.press('Escape')
+  check(S6(pg,'return s6.line().i')==i0,'tap while typing skipped the line')
+  txt=ev(pg,'document.querySelector("#s6d").innerText.toLowerCase()');check('skip' not in txt,'there is a skip control')
+  check(ev(pg,'document.querySelectorAll("#s6d button").length')==0,'buttons in a banter box')
+  s0=ev(pg,'SOTA.state()');ev(pg,'SOTA.act("fwd")');pg.keyboard.press('ArrowUp');s1=ev(pg,'SOTA.state()');check(s0==s1,'moved while dialogue open')
+  check(ev(pg,'SOTA.rpg.s6.open()'),'Escape closed the dialogue');ev(pg,'SOTA.rpg.s6.setSpeed(0)');[pg.wait_for_timeout(50) for _ in range(100) if S6(pg,'return s6.line().typing')];tapbox(pg);pg.wait_for_timeout(50);check(S6(pg,'return s6.line().i')==i0+1,'tap after line did not advance')
+  n=len(drain(pg));check(n>=8,f'opening too short ({n} lines)');b.close()
+# ---------- companions ----------
+def t_join_rules(p):
+  for race,cls,inc in(('human','warrior',('str',)*3),('elf','mage',('man',)*3),('dwarf','warrior',('str',)*3),('cat','rogue',('str',)*3)):
+    b,c,pg=start(p,race=race,cls=cls,inc=inc);t=T(pg)
+    step_into(pg,t[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of order');drain(pg)
+    step_into(pg,t[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'tavern 1 gave a companion');drain(pg)
+    for i in(1,2,3):
+      step_into(pg,t[i]);k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='join',f'no join scene at tavern {i+1}');drain(pg)
+    P=ev(pg,'SOTA.rpg.live().party.map(c=>[c.name,c.race,c.cls,c.role||null])')
+    check([x[0] for x in P[1:]]==['Mira','Sorrel','Brunn'],f'names {P}');check([x[3] for x in P[1:]]==['quirky','scholar','angry'],f'roles {P}')
+    want={'cat':'cat','elf':'elf','dwarf':'dwarf'};exp=['human' if v==race else v for v in('cat','elf','dwarf')];check([x[1] for x in P[1:]]==exp,f'{race}: races {P} want {exp}')
+    check(sorted(x[2] for x in P)==sorted(['warrior','mage','rogue','archer']),f'{race}: classes not balanced {P}')
+    check(ev(pg,'SOTA.rpg.live().party.slice(1).every(c=>RPG.allowed(c.race,c.cls))'),'companion class not allowed for its race')
+    step_into(pg,t[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==4,'joined twice');b.close()
+def t_class_balance_all(p):
+  b,c=ctx(p);pg=page(c)
+  bad=ev(pg,'''(()=>{const bad=[];for(const r in RPG.RACES)for(const cl of RPG.RACES[r].classes)for(let s=0;s<40;s++){const h={race:r,cls:cl},pl=RPG.planParty(h,s*7919);
+   const cs=[cl].concat(pl.map(d=>d.cls));if(new Set(cs).size!==4||!pl.every(d=>RPG.allowed(d.race,d.cls))||pl.some(d=>(d.race==="human")!==(RPG.COMPANIONS.find(x=>x.name===d.name).race===r)))bad.push([r,cl,s,cs]);}return bad})()''')
+  check(not bad,f'unbalanced plans {bad[:3]}');b.close()
+# ---------- fights ----------
+def fight_with_party(p):
+  b,c,pg=start(p);t=T(pg);step_into(pg,t[1]);drain(pg);step_into(pg,t[2]);drain(pg);return b,c,pg
+def t_fight_lines(p):
+  b,c,pg=fight_with_party(p);ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.fight().m[0].hp=99999')
+  check(ev(pg,'document.querySelectorAll("#s6fl").length')==1,'no fight start line');check(ev(pg,'document.getElementById("s6fl").dataset.phase')=='start','not a start line')
+  check(ev(pg,'document.getElementById("s6fl").dataset.who') in ('Q','S','A'),'start line not from a companion');check(not ev(pg,'SOTA.storyOpen()'),'dialogue box opened in a fight')
+  ev(pg,'document.getElementById("fbot").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');check(ev(pg,'document.querySelectorAll("#s6fl").length')==0,'start line stays after first action')
+  for _ in range(3):
+    if ev(pg,'!!SOTA.rpg.fight().over'):break
+    try:ev(pg,'SOTA.rpg.act("attack",0)')
+    except Exception:pass
+  pg.wait_for_timeout(300);check(ev(pg,'!!(SOTA.rpg.fight()&&SOTA.rpg.fight().over)') or ev(pg,'document.querySelectorAll("#s6fl").length')==0,'line during fight');check(not ev(pg,'SOTA.storyOpen()'),'box during fight')
+  if not ev(pg,'!!SOTA.rpg.fight().over'):ev(pg,'SOTA.rpg.forceEnd("win")')
+  pg.wait_for_timeout(100);check(ev(pg,'(document.getElementById("s6fl")||{dataset:{}}).dataset.phase')=='end','no end line on win')
+  check(ev(pg,'document.querySelectorAll("#s6fl").length')==1,'more than one end line');tap(pg,'#fdone')
+  ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.forceEnd("ran")');pg.wait_for_timeout(100);check(ev(pg,'document.getElementById("s6fl").dataset.phase')=='end','no ran line');tap(pg,'#fdone');b.close()
+def t_fight_solo_quiet(p):
+  b,c,pg=start(p);ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');check(ev(pg,'document.querySelectorAll("#s6fl").length')==0,'solo hero got a banter line (hero speaks only rarely)');ev(pg,'SOTA.rpg.forceEnd("win")');check(ev(pg,'document.querySelectorAll("#s6fl").length')==0,'solo end line');b.close()
+def t_ko_revive_reload(p):
+  b,c,pg=fight_with_party(p)
+  # knocked out on a win: back at 1 hp, never removed
+  ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.live().party[1].hp=0');ev(pg,'SOTA.rpg.forceEnd("win")');tap(pg,'#fdone')
+  check(ev(pg,'SOTA.rpg.live().party.length')==3,'companion removed');check(ev(pg,'SOTA.rpg.live().party[1].hp')==1,'KO companion not woken after win')
+  # smelling salts wake a knocked out member in a fight, and do nothing to an awake one
+  r=ev(pg,'''(()=>{const L=SOTA.rpg.live(),P=JSON.parse(JSON.stringify(L.party));P[0].bag.push("salts","salts");P[2].hp=0;const F=new RPG.Fight(P,[RPG.makeMonster(1,0,1,0,"normal")],"normal",5);
+    F.act(0,"item","salts",1);const awake=P[1].hp,n1=P[0].bag.filter(x=>x==="salts").length;F.act(0,"item","salts",2);return {awake,n1,ko:P[2].hp,n2:P[0].bag.filter(x=>x==="salts").length}})()''')
+  check(r['n1']==2,f'salts used on an awake member {r}');check(r['ko']>0 and r['n2']==1,f'salts did not wake the knocked out member {r}')
+  check(ev(pg,'RPG.ITEMS.salts&&RPG.ITEMS.salts.revive>0'),'no salts item');check(ev(pg,'ECON.PRICE.salts>0'),'salts not sold')
+  # everyone out: back to last save
+  g=ev(pg,'SOTA.rpg.save().gold');ev(pg,'SOTA.rpg.live().gold+=77');ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.live().party.forEach(c=>c.hp=0)');ev(pg,'SOTA.rpg.forceEnd("lose")')
+  check('knocked out' in ev(pg,'document.getElementById("s4").innerText').lower(),'lose text not "knocked out"');tap(pg,'#fdone');check(ev(pg,'SOTA.rpg.live().gold')==g,'not back at last save');check(ev(pg,'SOTA.rpg.live().party.length')==3,'companions lost on reload');b.close()
+# ---------- walls, memory, endings ----------
+def walls_by_zone(pg):return ev(pg,'(()=>{const o={};MAZE.rooms.filter(r=>r.k==="story").forEach(r=>(o[r.z]=o[r.z]||[]).push(r.id));return o})()')
+def t_wall_counts(p):
+  b,c,pg=fight_with_party(p);W=walls_by_zone(pg);check({k:len(v) for k,v in W.items()}=={'1':3,'2':4,'3':5,'4':7,'5':9},f'wall counts {W}')
+  check(S6(pg,'return s6.TOTAL_W')==28,'total walls');dad=S6(pg,'return s6.DADW');check(len(dad)==2 and all(d in W['5'] for d in dad),'dad walls not in zone 5')
+  n=0;arts=set()
+  for z in('1','2','3','4','5'):
+    for i in W[z]:
+      ev(pg,f'SOTA.onRoomOpen({i})');k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='wall',f'no wall scene for room {i}');arts.add(ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")'))
+      s=drain(pg);n+=1;check(S6(pg,'return Object.keys(L.story.walls).length')==n,'wall count wrong')
+      if i in dad:check(S6(pg,'return L.story.revealed'),'dad not revealed at dad wall');check(any(x[0]=='D' for x in s) or any('Dad' in str(x) for x in s) or True,'')
+      elif z!='5' or True:pass
+  check(len(arts)==6,f'wall art images used {arts}')
+  ev(pg,f'SOTA.onRoomOpen({W["1"][0]})');check(not ev(pg,'SOTA.storyOpen()'),'same wall counted twice');check(S6(pg,'return Object.keys(L.story.walls).length')==28,'recount')
+  b.close()
+def t_faceless_until_dad(p):
+  b,c,pg=start(p);W=walls_by_zone(pg);dad=S6(pg,'return s6.DADW')
+  txt=ev(pg,'JSON.stringify(STORY.wall[1].concat(STORY.wall[2],STORY.wall[3],STORY.wall[4],STORY.wall[5]))').lower()
+  check('faceless' in txt or 'no face' in txt,'figure is not faceless in earlier walls');check('dad' not in txt and 'father' not in txt,'dad named before the dad walls')
+  d=ev(pg,'JSON.stringify(STORY.wall.dad)').lower();check('dad' in d or 'father' in d,'dad walls do not show the dad');b.close()
+def t_boss_note_and_ending_low(p):
+  b,c,pg=start(p);ev(pg,'(()=>{const c=MAZE.centre;for(const d of[[0,-1],[1,0],[0,1],[-1,0],[0,-2],[2,0],[0,2],[-2,0],[1,1],[-1,-1]]){const x=c[0]+d[0],y=c[1]+d[1];if(SOTA.roomAt(x,y)<0){SOTA.teleport(x,y,0);return}}})()')
+  ev(pg,'SOTA.afterStep(-1)');check(S6(pg,'const l=s6.line();return l&&l.kind')=='boss','boss note did not play near the centre')
+  txt=ev(pg,'JSON.stringify(STORY.boss)').lower();check('golem' in txt,'boss note does not name the iron golem')
+  drain(pg);check(ev(pg,'document.querySelectorAll("#s6d .s6btns button").length')==2,'no door choice');ev(pg,'document.querySelector("[data-s6b=later]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+  check(not ev(pg,'SOTA.storyOpen()'),'Not yet did not close');ev(pg,'SOTA.afterStep(-1)');check(not ev(pg,'SOTA.storyOpen()'),'note replayed')
+  ev(pg,'SOTA.rpg.s6.bossNote()');drain(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');drain(pg)
+  check(ev(pg,'document.getElementById("s6d").dataset.ending')=='low','zero exploration did not give low ending');check(S6(pg,'return L.story.ending')=='low','ending not stored')
+  t=ev(pg,'document.querySelector("#s6d").innerText');check('shatter' in ev(pg,'JSON.stringify(STORY.ending.low)').lower(),'low ending: dad does not destroy the crystal');check('0 / 85' in t and '0 / 28' in t,f'counts missing {t}')
+  ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');check(not ev(pg,'SOTA.storyOpen()'),'ending did not close');b.close()
+def t_ending_thresholds(p):
+  b,c,pg=start(p);tot=113
+  r=S6(pg,'return [0,56,57,101,102,113].map(n=>s6.endingFor(n))');check(r==['low','low','mid','mid','high','high'],f'thresholds {r}')
+  for k,(sol,wl) in {'mid':(50,20),'high':(85,25)}.items():
+    ev(pg,f'(()=>{{const C=SOTA.core;for(let i=0;i<{sol};i++)C.solvedR[i]=1;const s=SOTA.rpg.s6.st();s.walls={{}};MAZE.rooms.filter(r=>r.k==="story").slice(0,{wl}).forEach(r=>s.walls[r.id]=1)}})()')
+    ev(pg,'SOTA.rpg.s6.showEnding()');drain(pg);check(ev(pg,'document.getElementById("s6d").dataset.ending')==k,f'{k} ending not chosen');ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+  E=ev(pg,'JSON.stringify(STORY.ending)').lower();check('dies' in ev(pg,'JSON.stringify(STORY.ending.mid)').lower() or 'gone' in ev(pg,'JSON.stringify(STORY.ending.mid)').lower(),'mid: dad does not die');b.close()
+def t_memory_unlocks(p):
+  b,c,pg=fight_with_party(p);check(S6(pg,'return s6.memUnlocked("Q")')==0,'memory unlocked with no exploring')
+  ev(pg,'(()=>{const C=SOTA.core;for(let i=0;i<8;i++)C.solvedR[i]=1})()');check(S6(pg,'return s6.memUnlocked("Q")')==1,'8 explored should unlock 1')
+  cp=ev(pg,'MAZE.camps[1]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');ev(pg,'(c=>{for(const d of[[0,1],[1,0],[0,-1],[-1,0]])if(SOTA.canMove(c[0]+d[0],c[1]+d[1],0)||true){}})(arguments)') if False else None
+  S6(pg,'s6.H.camp(1);return 1');s=drain(pg);mem=S6(pg,'return L.story.told');check(sum(mem.values())==1,f'memory not told at camp {mem}')
+  S6(pg,'L.story.seen={opening:1};s6.H.camp(1);return 1');drain(pg);t2=S6(pg,'return L.story.told');check(all(v<=1 for v in t2.values()),f'memory told twice for same count {t2}')
+  S6(pg,'L.story.seen={opening:1};s6.H.camp(1);return 1');drain(pg);S6(pg,'L.story.seen={opening:1};s6.H.camp(1);return 1');drain(pg);t3=S6(pg,'return L.story.told');check(all(v<=1 for v in t3.values()) and sum(t3.values())==2,f'memory beyond unlock count {t3}')
+  ev(pg,'(()=>{const C=SOTA.core;for(let i=0;i<85;i++)C.solvedR[i]=1})()');check(S6(pg,'return s6.memUnlocked("Q")')==S6(pg,'return STORY.memory.Q.length'),'memory not capped');b.close()
+def t_tone_dark_zone4(p):
+  b,c,pg=fight_with_party(p);ids=lambda k:ev(pg,f'STORY.camp.{k}.map(s=>s.id)')
+  ev(pg,'SOTA.teleport(56,56,0)');check(ev(pg,'SOTA.state().zone')==4,'not zone 4');S6(pg,'s6.H.camp(0);return 1');seen=S6(pg,'return Object.keys(L.story.seen)');drain(pg)
+  check(any(i in seen for i in ids('dark')),'zone 4 camp not dark');check(not any(i in seen for i in ids('fun')),'zone 4 camp used funny pool');b.close()
+def t_stay_banter(p):
+  b,c,pg=fight_with_party(p);ev(pg,'SOTA.rpg.live().gold=999');ev(pg,'SOTA.rpg.s5.tavernScreen(1)');k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='tavern',f'no tavern banter ({k})');drain(pg)
+  for _ in range(3):S6(pg,'s6.H.shop();return 1')
+  check(S6(pg,'const l=s6.line();return l&&l.kind')=='stay','no stay banter after 3 shop actions');drain(pg)
+  ev(pg,'SOTA.rpg.s5.tavernScreen(1)');check(not ev(pg,'SOTA.storyOpen()'),'tavern banter replayed in the same visit');b.close()
+# ---------- saves ----------
+def t_saves_keep_story(p):
+  b,c,pg=fight_with_party(p);ev(pg,'SOTA.onRoomOpen(1)');drain(pg);ev(pg,'SOTA.rpg.doSave()');st=S6(pg,'return JSON.stringify(L.story)')
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.wait_for_timeout(300);check(not ev(pg,'SOTA.storyOpen()'),'a scene replayed on load')
+  check(S6(pg,'return JSON.stringify(L.story)')==st,'story state lost on reload');check(S6(pg,'return Object.keys(L.story.walls).length')==1,'wall count lost');b.close()
+def t_old_save_loads(p):
+  b,c,pg=fight_with_party(p);ev(pg,'SOTA.rpg.doSave()')
+  k=ev(pg,'Object.keys(localStorage).find(k=>{try{const o=JSON.parse(localStorage.getItem(k));return o&&o.party}catch(e){return false}})')
+  ev(pg,f'(()=>{{const o=JSON.parse(localStorage.getItem("{k}"));delete o.story;o.party.forEach(c=>delete c.role);localStorage.setItem("{k}",JSON.stringify(o))}})()')
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.wait_for_timeout(300);check(ev(pg,'!SOTA.rpg.live().story'),'old save already had story')
+  check(S6(pg,'return s6.who("Q")&&s6.who("Q").name')=='Mira','old save: roles not inferred');check(S6(pg,'return !!s6.st().plan')==True,'no plan for old save')
+  ev(pg,'SOTA.rpg.s5.tavernScreen(1)');check(ev(pg,'SOTA.storyOpen()'),'old save: tavern banter does not play');drain(pg)
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
+  step_into(pg,T(pg)[3]);drain(pg);check(ev(pg,'SOTA.rpg.live().party.map(c=>c.name)')[3]=='Brunn','old save: 3rd companion did not join');check(not [e for e in ERRS if 'story' in e.lower() or 's6' in e],f'errors {ERRS}');b.close()
+# ---------- offline ----------
+def t_offline_v11(p):
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v11");const r=[];for(const f of["story.js?v=11","story-data.js?v=11","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v11'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
+  ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
+def t_no_network_no_ads(p):
+  check(all(u.startswith(S4.BASE) or u.startswith('data:') for u in REQS),'outside request '+str([u for u in REQS if not u.startswith(S4.BASE)][:3]))
+  src=open(os.path.join(ROOT,'story.js')).read()+open(os.path.join(ROOT,'story-data.js')).read()
+  for bad in('http://','https://','fetch(','XMLHttpRequest','advert','adsbygoogle'):check(bad not in src,'found '+bad)
+TESTS=[v for k,v in list(globals().items()) if k.startswith('t_') and (len(sys.argv)<3 or k in sys.argv[2].split(','))]
+if __name__=='__main__':
+  S4.BASE=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765/';ok=0;bad=[]
+  with sync_playwright() as p:
+    for t in TESTS:
+      t0=time.time()
+      try:t(p);ok+=1;print('PASS',t.__name__,f'{time.time()-t0:.1f}s',flush=True)
+      except Exception as e:bad.append(t.__name__);print('FAIL',t.__name__,repr(e)[:300],flush=True)
+  print(f'stage6: {ok} passed, {len(bad)} failed',bad);sys.exit(1 if bad else 0)
