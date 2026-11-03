@@ -7,7 +7,7 @@ MUT=[
  ("portrait ignores emotion",'story.js','"-"+ln.e+".webp"','"-calm.webp"',"t_portrait_emotions"),
  ("no portrait flash","story.js",'pf.classList.add("flash");',"","t_portrait_flash_and_layout"),
  ("fight start line stays","story.js",'if(bot)bot.addEventListener("pointerdown",hide,{once:true});setTimeout(hide,3200);',"","t_fight_lines"),
- ("solo hero banter in fight","story.js","if(!cs.length)return;code=",'if(!cs.length)cs.push("H");code=',"t_fight_solo_quiet"),
+ ("solo hero banter in fight","story.js","if(!cs.length)return;code=",'if(!cs.length){cs.push("H");D.fight.start.H=D.fight.start.Q;D.fight.end.H=D.fight.end.Q;}code=',"t_fight_solo_quiet"),
  ("same race stays same race","rules.js",'return def.race===heroRace?"human":def.race;',"return def.race;","t_join_rules"),
  ("join at any tavern","rules.js","return nx&&nx.tavern===tIdx?nx:null;","return nx||null;","t_join_rules"),
  ("plans ignore race rules","rules.js","if(pre.every((c,i)=>allowed(races[i],c)))ok.push(pre);","ok.push(pre);","t_class_balance_all"),
