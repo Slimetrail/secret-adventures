@@ -6,9 +6,14 @@
 const S=window.SOTA,R=window.RPG,M=window.MAZE,D=window.STORY;if(!S||!R||!M||!D)return;
 const live=()=>S.rpg&&S.rpg.live&&S.rpg.live();
 const SHEET={human:"knight",elf:"elf",dwarf:"dwarf",cat:"cat"},ROLE={Q:"quirky",S:"scholar",A:"angry"},IDX={Q:1,S:2,A:3};
-const WALLS=M.rooms.filter(r=>r.k==="story"),TOTAL_P=M.rooms.length,TOTAL_W=WALLS.length,MEM_STEP=8;
+// Wall-art rooms. OPEN QUESTION for Jeremy: do monster/treasure rooms carry art too? Then set WALL_ART_ROOMS=85 (= every room).
+const WALL_ART_ROOMS=28;
+const WALLS=WALL_ART_ROOMS>=M.rooms.length?M.rooms.slice():M.rooms.filter(r=>r.k==="story"),TOTAL_P=M.rooms.length,TOTAL_W=WALL_ART_ROOMS,MEM_STEP=8;
+// The story is told by the ORDER rooms are found: the Nth art room found shows the Nth piece, in any room.
+// Pieces: zone 1..5 scenes in order, then the two Dad pieces last (the figure is faceless until those). The very last is Dad arguing with the council.
+const PIECES=[1,2,3,4,5].reduce((a,z)=>a.concat(D.wall[z]),[]).concat(D.wall.dad),DAD_FROM=PIECES.length-2;
+const pieceFor=n=>Math.min(PIECES.length-1,Math.floor(n*PIECES.length/TOTAL_W)); // n = rooms found before this one (0-based)
 const cd=r=>Math.abs(r.c[0]-M.centre[0])+Math.abs(r.c[1]-M.centre[1]);
-const DADW=WALLS.filter(r=>r.z===5).sort((a,b)=>cd(a)-cd(b)||a.id-b.id).slice(0,2).map(r=>r.id); // the two zone-5 walls nearest the centre show the dad
 let speed=24; // ms per letter
 // ---------- story state (kept inside the save) ----------
 function st(){const l=live();if(!l||!l.party||!l.party.length)return null;let s=l.story;
@@ -64,12 +69,10 @@ H.tavern=t=>{const s=st(),l=live();if(!s)return;const vk=t+":"+l.steps;if(s.visi
 H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN%3)return;const sc=seenFirst(D.stay[dark()?"dark":"fun"],s);
  if(sc){s.seen[sc.id]=1;play("stay",sc.lines,{bg:tavBg(+s.visit.split(":")[0])});}};
 H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fun"],s);if(sc){s.seen[sc.id]=1;play("camp",withMem(sc.lines),{bg:null});}};
-H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||r.k!=="story"||s.walls[id])return;
- const di=DADW.indexOf(id);let lines;
- if(di>=0){const n=DADW.filter(x=>s.walls[x]).length;lines=D.wall.dad[Math.min(1,n)];s.revealed=true;}
- else{const n=WALLS.filter(w=>w.z===r.z&&s.walls[w.id]&&!DADW.includes(w.id)).length,pool=D.wall[r.z];lines=pool[n%pool.length].slice();
-  if(r.z!==3&&who("S"))lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Crude. Not like the ones in zone three.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);}
- s.walls[id]=1;play("wall",withMem(lines),{wall:di>=0?"art6/zone5.webp":wallArt(r.z,Object.keys(s.walls).length)});};
+H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r)||s.walls[id])return;
+ const n=Object.keys(s.walls).length,pi=pieceFor(n);let lines=PIECES[pi].slice();if(pi>=DAD_FROM)s.revealed=true;
+ if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Crude. Not like the ones in zone three.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
+ s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(r.z,n+1)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 function bossNote(){play("boss",D.boss,{end:()=>{btns([["‹ Open the door",()=>{finish();showEnding();},"open"],["Not yet",()=>finish(),"later"]]);}});}
 function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
@@ -90,7 +93,7 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,DADW,TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`

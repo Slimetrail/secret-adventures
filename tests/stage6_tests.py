@@ -106,21 +106,42 @@ def t_ko_revive_reload(p):
   check('knocked out' in ev(pg,'document.getElementById("s4").innerText').lower(),'lose text not "knocked out"');tap(pg,'#fdone');check(ev(pg,'SOTA.rpg.live().gold')==g,'not back at last save');check(ev(pg,'SOTA.rpg.live().party.length')==3,'companions lost on reload');b.close()
 # ---------- walls, memory, endings ----------
 def walls_by_zone(pg):return ev(pg,'(()=>{const o={};MAZE.rooms.filter(r=>r.k==="story").forEach(r=>(o[r.z]=o[r.z]||[]).push(r.id));return o})()')
+def first_line(pg):
+  """text of the first line of the wall scene now open"""
+  return ev(pg,'SOTA.rpg.s6.line()&&SOTA.rpg.s6.line().i===0?document.querySelector("#s6d .s6t").dataset.full||null:null')
+def piece_text(pg,k):return ev(pg,f'(()=>{{const P=[1,2,3,4,5].reduce((a,z)=>a.concat(STORY.wall[z]),[]).concat(STORY.wall.dad);return P[{k}][0][2]}})()')
+def open_wall(pg,i):
+  ev(pg,f'SOTA.onRoomOpen({i})');k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='wall',f'no wall scene for room {i}')
+  ev(pg,'SOTA.rpg.s6.setSpeed(0)');[pg.wait_for_timeout(20) for _ in range(200) if S6(pg,'const l=s6.line();return l.i===0&&l.typing')]
+  t=ev(pg,'document.querySelector("#s6d .s6t").textContent');art=ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")');drain(pg);return t,art
+def run_walls(pg,order):
+  W=ev(pg,'SOTA.rpg.s6.artRooms()');n=ev(pg,'SOTA.rpg.s6.WALL_ART_ROOMS');P=ev(pg,'SOTA.rpg.s6.PIECES()');got=[]
+  for k,i in enumerate(order):
+    t,art=open_wall(pg,i);want=piece_text(pg,ev(pg,f'SOTA.rpg.s6.pieceFor({k})'));check(t==want,f'{k+1}th room found (room {i}) shows wrong piece: {t[:50]!r} want {want[:50]!r}')
+    z=ev(pg,f'MAZE.rooms[{i}].z');check(art.startswith(f'art6/zone{z}'),f'room {i} in zone {z} uses art {art}')
+    check(S6(pg,'return Object.keys(L.story.walls).length')==k+1,'count wrong');got.append(t)
+  return got
 def t_wall_counts(p):
-  b,c,pg=fight_with_party(p);W=walls_by_zone(pg);check({k:len(v) for k,v in W.items()}=={'1':3,'2':4,'3':5,'4':7,'5':9},f'wall counts {W}')
-  check(S6(pg,'return s6.TOTAL_W')==28,'total walls');dad=S6(pg,'return s6.DADW');check(len(dad)==2 and all(d in W['5'] for d in dad),'dad walls not in zone 5')
-  n=0;arts=set()
-  for z in('1','2','3','4','5'):
-    for i in W[z]:
-      ev(pg,f'SOTA.onRoomOpen({i})');k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='wall',f'no wall scene for room {i}');arts.add(ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")'))
-      s=drain(pg);n+=1;check(S6(pg,'return Object.keys(L.story.walls).length')==n,'wall count wrong')
-      if i in dad:check(S6(pg,'return L.story.revealed'),'dad not revealed at dad wall');check(any(x[0]=='D' for x in s) or any('Dad' in str(x) for x in s) or True,'')
-      elif z!='5' or True:pass
-  check(len(arts)==6,f'wall art images used {arts}')
-  ev(pg,f'SOTA.onRoomOpen({W["1"][0]})');check(not ev(pg,'SOTA.storyOpen()'),'same wall counted twice');check(S6(pg,'return Object.keys(L.story.walls).length')==28,'recount')
+  b,c,pg=fight_with_party(p);W=walls_by_zone(pg);N=S6(pg,'return s6.WALL_ART_ROOMS')
+  check(len(S6(pg,'return s6.artRooms()'))==N,'art room list does not match WALL_ART_ROOMS');check(S6(pg,'return s6.PIECES()')==N,'pieces != WALL_ART_ROOMS')
+  if N==28:check({k:len(v) for k,v in W.items()}=={'1':3,'2':4,'3':5,'4':7,'5':9},f'story rooms per zone {W}')
+  order=S6(pg,'return s6.artRooms()');got=run_walls(pg,order)
+  check(S6(pg,'return L.story.revealed'),'dad not revealed by the last pieces');check('council' in got[-1].lower() and 'dad' in got[-1].lower(),f'last piece is not Dad arguing with the council: {got[-1][:80]}')
+  check(S6(pg,'return L.story.order.length')==N,'discovery order not kept')
+  ev(pg,f'SOTA.onRoomOpen({order[0]})');check(not ev(pg,'SOTA.storyOpen()'),'same wall counted twice');check(S6(pg,'return Object.keys(L.story.walls).length')==N,'recount')
   b.close()
+def t_wall_order_independent(p):
+  b,c,pg=fight_with_party(p);order=S6(pg,'return s6.artRooms()')[::-1]  # zone 5 rooms first, zone 1 last
+  got=run_walls(pg,order[:3]);check(got[0]==piece_text(pg,0),'1st room found (a zone-5 room) did not get the 1st piece (blood)')
+  check('blood' in got[0].lower(),'1st piece is not the red blood art');check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
+  b.close()
+def t_wall_count_saved(p):
+  b,c,pg=fight_with_party(p);o=S6(pg,'return s6.artRooms()');run_walls(pg,[o[5],o[9]]);ev(pg,'SOTA.rpg.doSave()')
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.wait_for_timeout(300);ev(pg,'SOTA.setAnim(false)')
+  check(S6(pg,'return Object.keys(L.story.walls).length')==2,'count lost on reload');check(S6(pg,'return L.story.order')==[o[5],o[9]],'order lost')
+  t,_=open_wall(pg,o[1]);check(t==piece_text(pg,S6(pg,'return s6.pieceFor(2)')),'3rd room after reload did not show the 3rd piece');b.close()
 def t_faceless_until_dad(p):
-  b,c,pg=start(p);W=walls_by_zone(pg);dad=S6(pg,'return s6.DADW')
+  b,c,pg=start(p);N=S6(pg,'return s6.PIECES()');df=S6(pg,'return s6.DAD_FROM');check(df==N-2,'dad not exactly the last two pieces')
   txt=ev(pg,'JSON.stringify(STORY.wall[1].concat(STORY.wall[2],STORY.wall[3],STORY.wall[4],STORY.wall[5]))').lower()
   check('faceless' in txt or 'no face' in txt,'figure is not faceless in earlier walls');check('dad' not in txt and 'father' not in txt,'dad named before the dad walls')
   d=ev(pg,'JSON.stringify(STORY.wall.dad)').lower();check('dad' in d or 'father' in d,'dad walls do not show the dad');b.close()
@@ -132,7 +153,7 @@ def t_boss_note_and_ending_low(p):
   check(not ev(pg,'SOTA.storyOpen()'),'Not yet did not close');ev(pg,'SOTA.afterStep(-1)');check(not ev(pg,'SOTA.storyOpen()'),'note replayed')
   ev(pg,'SOTA.rpg.s6.bossNote()');drain(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');drain(pg)
   check(ev(pg,'document.getElementById("s6d").dataset.ending')=='low','zero exploration did not give low ending');check(S6(pg,'return L.story.ending')=='low','ending not stored')
-  t=ev(pg,'document.querySelector("#s6d").innerText');check('shatter' in ev(pg,'JSON.stringify(STORY.ending.low)').lower(),'low ending: dad does not destroy the crystal');check('0 / 85' in t and '0 / 28' in t,f'counts missing {t}')
+  t=ev(pg,'document.querySelector("#s6d").innerText');check('shatter' in ev(pg,'JSON.stringify(STORY.ending.low)').lower(),'low ending: dad does not destroy the crystal');check('0 / 85' in t and f"0 / {S6(pg,'return s6.WALL_ART_ROOMS')}" in t,f'counts missing {t}')
   ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');check(not ev(pg,'SOTA.storyOpen()'),'ending did not close');b.close()
 def t_ending_thresholds(p):
   b,c,pg=start(p);tot=113
@@ -171,12 +192,15 @@ def t_old_save_loads(p):
   check(S6(pg,'return s6.who("Q")&&s6.who("Q").name')=='Mira','old save: roles not inferred');check(S6(pg,'return !!s6.st().plan')==True,'no plan for old save')
   ev(pg,'SOTA.rpg.s5.tavernScreen(1)');check(ev(pg,'SOTA.storyOpen()'),'old save: tavern banter does not play');drain(pg)
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
+  o=S6(pg,'return s6.artRooms()');ev(pg,f'(()=>{{const k=Object.keys(localStorage).find(k=>{{try{{return JSON.parse(localStorage.getItem(k)).party}}catch(e){{}}}});const v=JSON.parse(localStorage.getItem(k));v.story={{seen:{{opening:1}},walls:{{"{o[0]}":1,"{o[1]}":1}}}};localStorage.setItem(k,JSON.stringify(v))}})()')
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
+  t,_=open_wall(pg,o[7]);check(t==piece_text(pg,S6(pg,'return s6.pieceFor(2)')),'old save with 2 walls (no order) did not show piece 3');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
   step_into(pg,T(pg)[3]);drain(pg);check(ev(pg,'SOTA.rpg.live().party.map(c=>c.name)')[3]=='Brunn','old save: 3rd companion did not join');check(not [e for e in ERRS if 'story' in e.lower() or 's6' in e],f'errors {ERRS}');b.close()
 # ---------- offline ----------
-def t_offline_v11(p):
+def t_offline_v12(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v11");const r=[];for(const f of["story.js?v=11","story-data.js?v=11","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(ok[0]==['sota-s1-v11'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v12");const r=[];for(const f of["story.js?v=12","story-data.js?v=12","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v12'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
   check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
   ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
 def t_no_network_no_ads(p):
