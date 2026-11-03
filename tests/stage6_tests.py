@@ -144,7 +144,7 @@ def t_wall_technique(p):
     cap=ev(pg,'(()=>{const e=document.querySelector("#s6d .s6cap");return getComputedStyle(e).display!=="none"?e.textContent:""})()');art=ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")')
     check(want[z] in cap.lower(),f'zone {z} caption {cap!r} does not say {want[z]}');check(('zone'+z) in art,f'zone {z} shows {art}');drain(pg)
   txt=ev(pg,'JSON.stringify([1,2,3,4,5].map(z=>STORY.wall[z]).concat([STORY.wall.dad]))').lower()
-  for w in ['charcoal','blood','painted','paint,','purple paint','bright color','bright paint']:check(w not in txt,f'piece text names a medium ({w}) - would clash with the zone look')
+  for w in ['red scrawl','red handprint','charcoal','blood','painted','paint,','purple paint','bright color','bright paint']:check(w not in txt,f'piece text names a medium ({w}) - would clash with the zone look')
   b.close()
 def t_wall_count_saved(p):
   b,c,pg=fight_with_party(p);o=S6(pg,'return s6.artRooms()');run_walls(pg,[o[5],o[9]]);ev(pg,'SOTA.rpg.doSave()')

@@ -86,8 +86,8 @@ camp:{
 // wall-art rooms. Zone talk rotates by how many walls of that zone you've found.
 wall:{
  1:[[["N","calm","Crude red figures are smeared on the rock. A stick man fights a huge rat."],["H","shock","Who would draw THAT down here?"],["H","calm","Whoever it was, they were in a hurry."]],
-  [["N","calm","More red scrawls. The stick man runs. The rat is bigger now."],["H","calm","Somebody really didn't like rats."]],
-  [["N","calm","A red handprint, and a figure with no face pointing deeper into the maze."],["H","calm","Okay. That's unsettling. I'm not following a handprint."],["H","calm","...I'm following the handprint."]]],
+  [["N","calm","More scrawls. The stick man runs. The rat is bigger now."],["H","calm","Somebody really didn't like rats."]],
+  [["N","calm","A handprint, and a figure with no face pointing deeper into the maze."],["H","calm","Okay. That's unsettling. I'm not following a handprint."],["H","calm","...I'm following the handprint."]]],
  2:[[["N","calm","Lines cover the whole wall: corridors, crossings, dead ends. A map drawn by someone going mad."],["Q","happy","Ooh, abstract! I'd hang it in my room."],["Q","calm","If I had a room. Or a wall."],["H","calm","It's the maze. Someone was trying to figure it out from the inside."]],
   [["N","calm","The same faceless figure again, sitting small at the bottom of a giant maze."],["Q","shock","Aww, he looks lonely."],["H","calm","Whoever drew this was really unhinged. And really lost."]],
   [["N","calm","Hundreds of tally marks scratched under a drawn doorway."],["Q","calm","Counting days? Counting doors?"],["Q","happy","Counting snacks. I'm deciding it's snacks."]],
