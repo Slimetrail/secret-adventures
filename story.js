@@ -35,13 +35,13 @@ function withMem(lines){const m=memLine();return m?lines.concat([["N","calm","(A
 let cur=null;const queue=[];let box=null;
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 function build(){if(box)return box;box=el("div","s6d");box.id="s6d";
- box.innerHTML='<div class="s6bg"></div><img class="s6wall" alt=""><div class="s6box"><div class="s6pf"><img class="s6p" alt=""></div><div class="s6name"></div><div class="s6t"></div><div class="s6more">▼</div><div class="s6btns"></div></div>';
+ box.innerHTML='<div class="s6bg"></div><img class="s6wall" alt=""><div class="s6cap"></div><div class="s6box"><div class="s6pf"><img class="s6p" alt=""></div><div class="s6name"></div><div class="s6t"></div><div class="s6more">▼</div><div class="s6btns"></div></div>';
  box.addEventListener("pointerdown",tap);box.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();});document.body.appendChild(box);return box;}
 function q(sel){return box.querySelector(sel);}
 function play(kind,lines,opt){const L=resolve(lines||[]);opt=opt||{};if(!L.length){if(opt.done)opt.done();return false;}queue.push({kind,L,opt});if(!cur)nextScene();return true;}
 function nextScene(){const sc=queue.shift();if(!sc){close();return;}build();cur={kind:sc.kind,L:sc.L,opt:sc.opt,i:-1,typing:false};
  box.className="s6d on"+(sc.opt.bg?" hasbg":"")+(sc.opt.wall?" haswall":"");box.dataset.scene=sc.kind;
- q(".s6bg").style.backgroundImage=sc.opt.bg?'url("'+sc.opt.bg+'")':"none";const w=q(".s6wall");if(sc.opt.wall){w.src=sc.opt.wall;w.style.display="block";}else{w.removeAttribute("src");w.style.display="none";}
+ q(".s6bg").style.backgroundImage=sc.opt.bg?'url("'+sc.opt.bg+'")':"none";const w=q(".s6wall");if(sc.opt.wall){w.src=sc.opt.wall;w.style.display="block";}else{w.removeAttribute("src");w.style.display="none";}const cp=q(".s6cap");cp.textContent=sc.opt.cap||"";cp.style.display=sc.opt.cap?"block":"none";
  q(".s6btns").innerHTML="";document.documentElement.classList.add("s6open");adv();}
 function adv(){if(!cur)return;cur.i++;if(cur.i>=cur.L.length){const sc=cur;cur=null;if(sc.opt.end){cur=sc;cur.i=sc.L.length-1;cur.ending=true;sc.opt.end();return;}
   if(queue.length)nextScene();else close();if(sc.opt.done)sc.opt.done();return;}show();}
@@ -58,6 +58,7 @@ function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.r
 function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close();if(sc&&sc.opt.done)sc.opt.done();}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
+const TECH={1:"Drawn in blood",2:"Drawn in charcoal",3:"Two-tone paint: blue and purple, deep shadows",4:"Full color, but a hasty hand",5:"Vibrant: fully painted, every detail"};
 function wallArt(z,n){return z===1?"art6/zone1-"+(n%2+1)+".webp":"art6/zone"+z+".webp";}
 function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(sc.need))&&(!sc.after||s.revealed));}
 const H={};
@@ -72,7 +73,7 @@ H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fu
 H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r)||s.walls[id])return;
  const n=Object.keys(s.walls).length,pi=pieceFor(n);let lines=PIECES[pi].slice();if(pi>=DAD_FROM)s.revealed=true;
  if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Crude. Not like the ones in zone three.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
- s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(r.z,n+1)});};
+ s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(r.z,n+1),cap:TECH[r.z]});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 function bossNote(){play("boss",D.boss,{end:()=>{btns([["‹ Open the door",()=>{finish();showEnding();},"open"],["Not yet",()=>finish(),"later"]]);}});}
 function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
@@ -93,13 +94,14 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,TECH,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
 .s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,#241838,#08050e 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}
 .s6d.on{display:block}
 .s6bg{position:absolute;left:0;right:0;top:0;height:42vh;background-size:cover;background-position:center;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent);opacity:.95}
+.s6cap{display:none;position:absolute;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translateX(-50%);max-width:84vw;padding:2px 10px;border-radius:10px;background:rgba(8,5,14,.78);color:#e8dcff;font:italic 12px/1.4 Georgia,serif;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:2}
 .s6wall{display:none;position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);max-width:88vw;max-height:calc(100vh - 360px);border:2px solid #6f58b8;border-radius:6px;box-shadow:0 0 24px rgba(0,0,0,.8)}
 .s6box{position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom))}
 .s6pf{width:124px;height:124px;border:2px solid #b89cff;border-radius:10px;overflow:hidden;background:#140c22;box-shadow:0 4px 14px rgba(0,0,0,.7)}

@@ -134,7 +134,17 @@ def t_wall_counts(p):
 def t_wall_order_independent(p):
   b,c,pg=fight_with_party(p);order=S6(pg,'return s6.artRooms()')[::-1]  # zone 5 rooms first, zone 1 last
   got=run_walls(pg,order[:3]);check(got[0]==piece_text(pg,0),'1st room found (a zone-5 room) did not get the 1st piece (blood)')
-  check('blood' in got[0].lower(),'1st piece is not the red blood art');check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
+  check('red' in got[0].lower() and 'rat' in got[0].lower(),'1st piece is not the red stick-man art');check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
+  b.close()
+def t_wall_technique(p):
+  """t1623u: the look and the technique caption follow the room's zone: blood, charcoal, two-tone, hasty color, vibrant"""
+  b,c,pg=fight_with_party(p);W=walls_by_zone(pg);want={'1':'blood','2':'charcoal','3':'two-tone','4':'hasty','5':'vibrant'}
+  for z in ['5','3','1','4','2']:
+    i=W[z][0];ev(pg,f'SOTA.onRoomOpen({i})');check(S6(pg,'const l=s6.line();return l&&l.kind')=='wall',f'no wall scene z{z}')
+    cap=ev(pg,'(()=>{const e=document.querySelector("#s6d .s6cap");return getComputedStyle(e).display!=="none"?e.textContent:""})()');art=ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")')
+    check(want[z] in cap.lower(),f'zone {z} caption {cap!r} does not say {want[z]}');check(('zone'+z) in art,f'zone {z} shows {art}');drain(pg)
+  txt=ev(pg,'JSON.stringify([1,2,3,4,5].map(z=>STORY.wall[z]).concat([STORY.wall.dad]))').lower()
+  for w in ['charcoal','blood','painted','paint,','purple paint','bright color','bright paint']:check(w not in txt,f'piece text names a medium ({w}) - would clash with the zone look')
   b.close()
 def t_wall_count_saved(p):
   b,c,pg=fight_with_party(p);o=S6(pg,'return s6.artRooms()');run_walls(pg,[o[5],o[9]]);ev(pg,'SOTA.rpg.doSave()')
@@ -198,10 +208,10 @@ def t_old_save_loads(p):
   t,_=open_wall(pg,o[7]);check(t==piece_text(pg,S6(pg,'return s6.pieceFor(2)')),'old save with 2 walls (no order) did not show piece 3');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
   step_into(pg,T(pg)[3]);drain(pg);check(ev(pg,'SOTA.rpg.live().party.map(c=>c.name)')[3]=='Brunn','old save: 3rd companion did not join');check(not [e for e in ERRS if 'story' in e.lower() or 's6' in e],f'errors {ERRS}');b.close()
 # ---------- offline ----------
-def t_offline_v12(p):
+def t_offline_v13(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v12");const r=[];for(const f of["story.js?v=12","story-data.js?v=12","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(ok[0]==['sota-s1-v12'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v13");const r=[];for(const f of["story.js?v=13","story-data.js?v=13","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v13'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
   check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
   ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
 def t_no_network_no_ads(p):

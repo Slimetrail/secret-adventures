@@ -35,7 +35,7 @@ MUT=[
  ("sell lists shop stock","party.js","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;w.appendChild(el(\"div\",\"s4lab\",c.name));","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag.concat([\"rope\"]));if(!s.length)return;w.appendChild(el(\"div\",\"s4lab\",c.name));","sell_party_only"),
  ("sell only first member","party.js","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;","live.party.forEach((c,ci)=>{const s=ci?[]:E.stacks(c.bag);if(!s.length)return;","sell_party_only"),
  ("give overlays drop","party.js",'const gr=el("div","s4row s5give");','const gr=el("div","s4row s5give");gr.style.marginTop="-48px";',"give_item"),
- ("econ.js not cached","sw.js",'"econ.js?v=12",','',"offline5"),
+ ("econ.js not cached","sw.js",'"econ.js?v=13",','',"offline5"),
 ]
 def port():
   s=socket.socket();s.bind(('127.0.0.1',0));p=s.getsockname()[1];s.close();return p
