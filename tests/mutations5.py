@@ -30,7 +30,7 @@ MUT=[
  ("recipes not saved","party.js","seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0};","seed:(Math.random()*1e9)|0,steps:0,fresh:{},tentWear:0};Object.defineProperty(live,\"recipes\",{value:{},enumerable:false,writable:true});","save_keeps_s5"),
  ("tiny shop tabs","index.html",".s5tabs .s5tab{width:150px;min-width:150px}",".s5tabs .s5tab{width:150px;min-width:150px;min-height:30px!important;height:30px}","fit_s5"),
  ("buy lists items directly","party.js",'sideTabs(w,[["‹ Recipes",null,()=>shopList(t,"recipes"),"recipes"],','shopList(t,"food");return;sideTabs(w,[["‹ Recipes",null,()=>shopList(t,"recipes"),"recipes"],',"buy_flow"),
- ("food lists everything","party.js",'else if(kind==="food"){["ration","potion","ether"].concat(st.ing).forEach(item);}','else if(kind==="food"){["ration","potion","ether","tent"].concat(st.ing).forEach(item);}',"buy_flow"),
+ ("food lists everything","party.js",'else if(kind==="food"){["ration","potion","ether","salts"].concat(st.ing).forEach(item);}','else if(kind==="food"){["ration","potion","ether","salts","tent"].concat(st.ing).forEach(item);}',"buy_flow"),
  ("back skips buy screen","party.js",'[kind],()=>buyScreen(t)));','[kind],()=>tavernScreen(t)));',"buy_flow"),
  ("sell lists shop stock","party.js","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;w.appendChild(el(\"div\",\"s4lab\",c.name));","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag.concat([\"rope\"]));if(!s.length)return;w.appendChild(el(\"div\",\"s4lab\",c.name));","sell_party_only"),
  ("sell only first member","party.js","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;","live.party.forEach((c,ci)=>{const s=ci?[]:E.stacks(c.bag);if(!s.length)return;","sell_party_only"),

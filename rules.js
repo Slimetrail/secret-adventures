@@ -54,7 +54,7 @@ function gainXp(c,n,hpMul){const gained=[];if(c.lvl>=CAP)return gained;c.xp+=n;
 function learn(c,id){if(c.skills.length>=skillSlots(c.lvl))return false;const s=SKILLS[c.cls].find(x=>x.id===id);if(!s||c.skills.includes(id))return false;c.skills.push(id);return true;}
 // items: slot, w weight (kg), a armor class 1-3, t weapon type, stats; junk has v value; potions use
 const ITEMS={
- potion:{n:"Healing potion",slot:"use",w:0.5,heal:0.45,v:8},ether:{n:"Mana potion",slot:"use",w:0.5,mana:0.5,v:10},
+ potion:{n:"Healing potion",slot:"use",w:0.5,heal:0.45,v:8},ether:{n:"Mana potion",slot:"use",w:0.5,mana:0.5,v:10},salts:{n:"Smelling salts",slot:"use",w:0.2,revive:0.3,v:12},
  sword:{n:"Iron sword",slot:"weapon",t:"sword",w:4,atk:6},axe:{n:"Hand axe",slot:"weapon",t:"axe",w:5,atk:7},mace:{n:"Mace",slot:"weapon",t:"mace",w:5,atk:6},
  dagger:{n:"Dagger",slot:"weapon",t:"dagger",w:1,atk:4},bow:{n:"Short bow",slot:"weapon",t:"bow",w:2,atk:5},staff:{n:"Oak staff",slot:"weapon",t:"staff",w:2,atk:2,mag:5},
  buckler:{n:"Buckler",slot:"offhand",a:2,w:3,def:2},towershield:{n:"Tower shield",slot:"offhand",a:3,w:8,def:5},tome:{n:"Rune tome",slot:"offhand",a:1,w:1,mag:3},
@@ -103,8 +103,8 @@ Fight.prototype.act=function(ci,cmd,arg,targ){ // one hero action. returns text
   if(s.k==="heal"){const w=this.alive(this.p).sort((a,b)=>a.hp/maxHp(a,this.d.hp)-b.hp/maxHp(b,this.d.hp))[0],h=Math.round(magicPower(c)*s.p);w.hp=Math.min(maxHp(w,this.d.hp),w.hp+h);t=c.name+" casts "+s.n+": +"+h;}
   else if(s.k==="guard"){this.p.forEach((x,i)=>this.guard.add(i));t=c.name+" uses "+s.n;}
   else{const list=s.all?foes:[tg],pw=(s.k==="magic"?magicPower(c):power(c))*s.p;let tot=0;list.forEach(f=>{const d=hit(pw,f.def,r());f.hp=Math.max(0,f.hp-d);tot+=d;});t=c.name+" uses "+s.n+" for "+tot;}}
- else if(cmd==="item"){const id=arg,k=c.bag.indexOf(id),it=ITEMS[id];const who=this.p[targ!=null&&this.p[targ]&&this.p[targ].hp>0?targ:ci];if(k<0||!it||it.slot!=="use")return "";c.bag.splice(k,1);
-  if(it.heal){const h=Math.round(maxHp(who,this.d.hp)*it.heal);who.hp=Math.min(maxHp(who,this.d.hp),who.hp+h);t=c.name+" uses "+it.n+": +"+h;}else{who.mp=maxMp(who);t=c.name+" uses "+it.n;}}
+ else if(cmd==="item"){const id=arg,k=c.bag.indexOf(id),it=ITEMS[id];if(it&&it.revive){const tg=this.p[targ];if(k<0||!tg||tg.hp>0)return "";c.bag.splice(k,1);tg.hp=Math.max(1,Math.round(maxHp(tg,this.d.hp)*it.revive));t=c.name+" uses "+it.n+": "+tg.name+" is back up!";}else{const who=this.p[targ!=null&&this.p[targ]&&this.p[targ].hp>0?targ:ci];if(k<0||!it||it.slot!=="use")return "";c.bag.splice(k,1);
+  if(it.heal){const h=Math.round(maxHp(who,this.d.hp)*it.heal);who.hp=Math.min(maxHp(who,this.d.hp),who.hp+h);t=c.name+" uses "+it.n+": +"+h;}else{who.mp=maxMp(who);t=c.name+" uses "+it.n;}}}
  else if(cmd==="defend"){this.guard.add(ci);t=c.name+" defends";}
  else if(cmd==="run"){if(this.m.some(x=>x.boss)){t="Can't run!";}else if(r()<0.6){this.over="ran";t="The party ran away";}else t="Couldn't get away";}
  this.log.push(t);this.check();return t;};
@@ -120,14 +120,23 @@ function simulate(party,mons,diff,seed,maxTurns){const f=new Fight(party,mons,di
  return f;}
 // save points: only camps and taverns
 function isSavePoint(M,x,y){return M.camps.some(c=>c[0]===x&&c[1]===y)||M.taverns.some(c=>c[0]===x&&c[1]===y);}
-// companions join at taverns 2, 3, 4 in story order (simple placeholders)
-const COMPANIONS=[{tavern:1,name:"Pip",race:"human",cls:"rogue",note:"Companion 1, the quirky one (placeholder)",alloc:{sta:5},skill:"stab"},
- {tavern:2,name:"Orla",race:"elf",cls:"mage",note:"Companion 2, the scholar (placeholder)",alloc:{man:4},skill:"mend"},
- {tavern:3,name:"Kira",race:"cat",cls:"warrior",note:"Companion 3, the angry girl (placeholder)",alloc:{str:5},skill:"cleave"}];
-function companionFor(tIdx,party){const nx=COMPANIONS[party.length-1];return nx&&nx.tavern===tIdx?nx:null;}
-function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;
- const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"]}[def.cls];kit.forEach(id=>{c.bag.push(id);equip(c,id,ITEMS[id].slot);});return c;}
+// Stage 6: companions join at taverns 2, 3, 4 (index 1..3): cat girl (quirky), elf (scholar), dwarf (angry).
+// The companion who shares the hero's race is human instead. Classes are rolled from the hero's build so the party covers melee, magic, range and stealth.
+const COMPANIONS=[{tavern:1,role:"quirky",name:"Mira",race:"cat",cls:"rogue",note:"The quirky one: bored, a trouble maker, wants adventure",alloc:{sta:3},skill:"stab"},
+ {tavern:2,role:"scholar",name:"Sorrel",race:"elf",cls:"mage",note:"The scholar: just wants to know what is going on",alloc:{man:3},skill:"mend"},
+ {tavern:3,role:"angry",name:"Brunn",race:"dwarf",cls:"warrior",note:"The angry one: joins to save the world when the tavern is too scared",alloc:{str:3},skill:"cleave"}];
+const ROLE_CLS={melee:"warrior",magic:"mage",range:"archer",stealth:"rogue"};
+const START_KIT={warrior:{alloc:{str:3},skill:"cleave"},rogue:{alloc:{sta:3},skill:"stab"},archer:{alloc:{sta:3},skill:"aimed"},mage:{alloc:{man:3},skill:"mend"}};
+function companionRace(def,heroRace){return def.race===heroRace?"human":def.race;}
+// every assignment of the 3 missing classes that the races allow; pick one with the seed (random but repeatable for a save)
+function planParty(hero,seed){const races=COMPANIONS.map(d=>companionRace(d,hero.race)),all=Object.keys(CLASSES),miss=all.filter(c=>c!==hero.cls),ok=[];
+ const perm=(a,pre)=>{if(!a.length){if(pre.every((c,i)=>allowed(races[i],c)))ok.push(pre);return;}a.forEach((x,i)=>perm(a.slice(0,i).concat(a.slice(i+1)),pre.concat([x])));};perm(miss,[]);
+ let pick=ok.length?ok[((seed>>>0)%ok.length)]:COMPANIONS.map((d,i)=>RACES[races[i]].classes[0]);
+ return COMPANIONS.map((d,i)=>Object.assign({},d,{race:races[i],cls:pick[i],alloc:START_KIT[pick[i]].alloc,skill:START_KIT[pick[i]].skill}));}
+function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-1];return nx&&nx.tavern===tIdx?nx:null;}
+function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
+ const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
 const RPG={CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
- ITEMS,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,BOSS,DIFF,partyLevel,centreFactor,monsterLevel,makeMonster,rng,encounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion};
+ ITEMS,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,BOSS,DIFF,partyLevel,centreFactor,monsterLevel,makeMonster,rng,encounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);

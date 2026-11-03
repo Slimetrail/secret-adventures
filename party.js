@@ -4,6 +4,8 @@
 "use strict";
 const R=window.RPG,S=window.SOTA,M=window.MAZE,C=S.core,N=M.n;
 const SAVE="sota.party",DEV_NOFIGHT="sota.dev.nofight";
+// Stage 6 story hooks: story.js fills window.S6H; off in maze-only test mode (dev.nofight)
+function h6(k,a,b){try{const H=window.S6H;if(!H||!H[k]||localStorage.getItem(DEV_NOFIGHT)==="1")return undefined;return H[k](a,b);}catch(e){console.error(e);return undefined;}}
 const $=id=>document.getElementById(id),el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function tapBtn(label,fn,cls){const b=el("button","ink s4b"+(cls?" "+cls:""),label);b.addEventListener("click",e=>{e.preventDefault();fn();});return b;}
@@ -124,7 +126,7 @@ function ccConfirm(){const nmEl=$("ccname");if(nmEl)cc.name=nmEl.value;const lef
  if(left>0&&!cc.warned){cc.warned=true;cc.err="You still have "+left+" stat point"+(left>1?"s":"")+" left. Spend them, or tap Confirm anyway.";creation();return;}
  const h=R.newChar(cc.name.trim(),cc.race,cc.cls,cc.add,cc.skill);
  const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{if(id==="leather"&&!R.canEquip(h,id,"chest"))id="robe";h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","ether");
- live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0};live.party[0].hp=R.maxHp(h,hpMul());doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");}
+ live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0};live.party[0].hp=R.maxHp(h,hpMul());doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");h6("created");}
 // ---- party screen: portrait + panel cards; tap anywhere on a card for the character sheet ----
 function gearText(c){const n=s=>c.equip[s]&&R.ITEMS[c.equip[s]].n;const a=[n("weapon"),n("offhand")].filter(Boolean),b=[n("helmet"),n("chest"),n("gloves"),n("boots"),n("acc1"),n("acc2")].filter(Boolean);return [a.join(", ")||"No weapon",b.join(", ")||"No armor"];}
 function partyScreen(){const w=page("party");w.appendChild(head("Party",closeUI));
@@ -207,7 +209,7 @@ let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0;
 function startFight(mons,why){F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;turnI=0;nextAlive();fx=[];openUI("fight");ov.innerHTML="";ov.dataset.result="";
  const w=el("div","s4fight");const top=el("div","s4stage");fcv=el("canvas");fcv.id="fcv";top.appendChild(fcv);const log=el("div","s4log","");log.id="flog";top.appendChild(log);w.appendChild(top);
  const bot=el("div","s4fbot");bot.id="fbot";const en=el("div","s4enemies");en.id="fen";bot.appendChild(en);const pr=el("div","s4party");pr.id="fparty";bot.appendChild(pr);const mn=el("div","s4menu");mn.id="fmenu";bot.appendChild(mn);w.appendChild(bot);
- ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
+ ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();h6("fightStart");cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
 function sizeF(){const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(fcv.clientWidth*d),h=Math.round(fcv.clientHeight*d);if(w&&h&&(fcv.width!==w||fcv.height!==h)){fcv.width=w;fcv.height=h;}}
 function say(t){const l=$("flog");if(l)l.textContent=t;}
 function nextAlive(){while(turnI<live.party.length&&live.party[turnI].hp<=0)turnI++;}
@@ -216,7 +218,7 @@ function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const s
  const skItem=s=>({t:s.n+" "+s.mp+"MP",off:c.mp<s.mp,d:{sk:s.id},...((s.k==="phys"||s.k==="magic")&&!s.all?{kids:()=>targets("skill",s.id)}:{fn:()=>doAct("skill",s.id,0)})});
  const items=[{t:"Defend",d:{cmd4:"defend"},fn:()=>doAct("defend",null,0)},{t:"Attack",d:{cmd4:"attack"},kids:()=>targets("attack")},
   {t:"Spells",d:{cmd4:"spells"},off:!sk.length,kids:()=>sk.map(skItem)},
-  {t:"Items",d:{cmd4:"item"},kids:()=>[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use").map(id=>({t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,fn:()=>doAct("item",id,turnI),d:{item:id}}))},
+  {t:"Items",d:{cmd4:"item"},kids:()=>[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use").map(id=>R.ITEMS[id].revive?{t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,d:{item:id},kids:()=>{const ko=live.party.map((m,j)=>m.hp<=0?{t:"Wake "+m.name,fn:()=>doAct("item",id,j),d:{revive:j}}:null).filter(Boolean);return ko.length?ko:[{t:"Nobody is knocked out",off:true}];}}:({t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,fn:()=>doAct("item",id,turnI),d:{item:id}}))},
   {t:"Run",d:{cmd4:"run"},fn:()=>doAct("run",null,0)}];return slideTree(items,0);}
 let rotTop=0;
 // fight v4: tabs stack in turn order; the member whose turn it is is the top tab, the one who just acted goes to the bottom
@@ -234,10 +236,10 @@ function endFight(){const mn=$("fmenu"),how=F.over;closeBranch();const fe=$("fen
   const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return R.ITEMS[id].n+(who?"":" (no room, left behind)");});
   mn.appendChild(el("div","s4win","Victory!"));const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(b);
   mn.appendChild(el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: "+jn.join(", "):"")));if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
- else if(how==="lose"){mn.appendChild(el("div","s4lose","The party has fallen"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
+ else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
   const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
  else{const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);tickBuffs();ov.dataset.result="ran";}
- drawParty();}
+ drawParty();h6("fightEnd",how);}
 // ---- fight drawing (side view, dark dungeon, inked figures, purple/blue magic) ----
 const ZC=[null,[150,112,60],[92,108,62],[70,92,124],[128,52,50],[96,62,128]];
 // painted backdrop: stone wall with shaded blocks, arch frame, flagstone floor, vignette (cached), torches flicker per frame
@@ -323,16 +325,17 @@ function loop(t){if(!F||!fcv){return;}sizeF();const t0=performance.now(),g=fctx,
 // ---------- hooks from the walk ----------
 function zoneAt(x,y){return C.zoneOf[y*N+x];}
 function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.x,p.y,N),pl=R.partyLevel(live.party);startFight(R.encounter(z,pl,cf,live.diff,(live.seed+fightNo*104729+p.x*65+p.y)>>>0),why);}
-S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
+S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  if(R.isSavePoint(M,p.x,p.y)){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
-  if(t>=0){const def=R.companionFor(t,live.party);if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";}}
-  const ok=doSave(false);toast(joined+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can't camp or save at "+placeName(p.x,p.y)+". Buy or build one at a tavern."));updBtn();updHere();return;}
+  if(t>=0){const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
+  const ok=doSave(false);if(ok&&t<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));toast(joined+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can't camp or save at "+placeName(p.x,p.y)+". Buy or build one at a tavern."));updBtn();updHere();return;}
  if(S.panelOpen())return; // first entry into a room: the room itself decides (see onRoomOpen)
  if(stepsSince<10)return;if(!roll)roll=R.rng(live.seed>>>0);const r=roll();
  if(r<(rid>=0?0.15:0.02)){stepsSince=0;fightHere("random");}};
 S.onRoomOpen=id=>{if(!live||localStorage.getItem(DEV_NOFIGHT)==="1")return;const r=M.rooms[id];
  if(r.k==="monster"){stepsSince=0;fightHere("room");}
- else if(r.k==="treasure"){const l=R.loot(r.z,(live.seed^(id*2654435761))>>>0);live.gold+=l.gold*2;const got=l.junk.concat(E.drops(r.z,(live.seed^(id*40503))>>>0)).map(j=>addLoot(j)?R.ITEMS[j].n:null).filter(Boolean);toast("Treasure: +"+l.gold*2+" gold"+(got.length?", "+got.join(", "):""));}};
+ else if(r.k==="treasure"){const l=R.loot(r.z,(live.seed^(id*2654435761))>>>0);live.gold+=l.gold*2;const got=l.junk.concat(E.drops(r.z,(live.seed^(id*40503))>>>0)).map(j=>addLoot(j)?R.ITEMS[j].n:null).filter(Boolean);toast("Treasure: +"+l.gold*2+" gold"+(got.length?", "+got.join(", "):""));}
+ else if(r.k==="story")h6("wall",id);};
 // ================= Stage 5: economy, shops, cooking, tent =================
 const E=window.ECON;
 function s5init(){if(!live)return;if(live.steps==null)live.steps=0;live.fresh=live.fresh||{};live.recipes=live.recipes||{};if(live.tentWear==null)live.tentWear=0;}
@@ -354,8 +357,8 @@ function eatFrom(c,k){const id=c.bag[k];c.bag.splice(k,1);gone(id);eatDish(c,id)
 function cookTry(ings){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings.filter(y=>y===x).length))return {err:"missing"};
  const d=E.cook(ings);if(d&&!live.party.some(c=>R.canCarry(c,"d_"+d.id)))return {err:"heavy"};ings.forEach(x=>takeOne("i_"+x));
  if(!d)return {fail:true};giveDish("d_"+d.id);const learnt=!live.recipes[d.id];if(learnt)live.recipes[d.id]="earned";return {dish:d,learnt};}
-function buy(id){const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;toast("Bought "+R.ITEMS[id].n+" ("+who+")");return true;}
-function buyRecipe(did){const d=E.dish(did),p=E.RECIPE_PRICE[d.tier];if(live.recipes[did]){toast("You already know it");return false;}if(live.gold<p){toast("Not enough gold");return false;}live.gold-=p;live.recipes[did]="bought";toast("Recipe bought: "+d.n);return true;}
+function buy(id){const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
+function buyRecipe(did){const d=E.dish(did),p=E.RECIPE_PRICE[d.tier];if(live.recipes[did]){toast("You already know it");return false;}if(live.gold<p){toast("Not enough gold");return false;}live.gold-=p;live.recipes[did]="bought";toast("Recipe bought: "+d.n);h6("shop");return true;}
 function sell(ci,k){const c=live.party[ci],id=c.bag[k];if(id==null)return 0;const v=E.sellPrice(id);c.bag.splice(k,1);gone(id);if(id==="tent"&&!hasTent())live.tentWear=0;live.gold+=v;toast("Sold "+R.ITEMS[id].n+" +"+v+" gold");return v;}
 // tent build: parts + a crafter fee. The fee is paid in gold, or with spare parts/junk at their sell value (gold covers the rest)
 function tentNeed(){return Object.entries(E.TENT.parts).map(([id,n])=>({id,n,have:haveN(id)}));}
@@ -381,7 +384,7 @@ function keeperArt(i){const cv=document.createElement("canvas");cv.width=cv.heig
  if(i===0){g.beginPath();g.moveTo(28,52);g.quadraticCurveTo(48,96,68,52);g.fill();}
  g.fillStyle="#0a0610";g.fillRect(39,44,4,4);g.fillRect(53,44,4,4);g.strokeStyle="#0a0610";g.lineWidth=3;g.strokeRect(1.5,1.5,93,93);return cv;}
 function stackList(ci,fn,filter){const c=live.party[ci];return E.stacks(c.bag).filter(s=>!filter||filter(s.id)).map(s=>({t:R.ITEMS[s.id].n+(s.n>1?" ×"+s.n:"")+" · "+E.sellPrice(s.id)+"g",d:{sell:s.id},fn:()=>fn(ci,c.bag.lastIndexOf(s.id))}));}
-function tavernScreen(t){s5init();const kp=E.KEEPERS[t],w=page("tavern");w.appendChild(head("Tavern "+(t+1),closeUI));
+function tavernScreen(t){s5init();h6("tavern",t);const kp=E.KEEPERS[t],w=page("tavern");w.appendChild(head("Tavern "+(t+1),closeUI));
  const card=el("div","s5kc");card.appendChild(keeperArt(t));const tx=el("div","");tx.appendChild(el("b","",kp.name));tx.appendChild(el("div","s4sub",kp.tag+" · shopkeeper"));tx.appendChild(el("div","s4sub","Taverns always save. Rest is free."));card.appendChild(tx);w.appendChild(card);
  goldLine(w);sideTabs(w,[["Buy",null,()=>buyScreen(t),"buy"],["Sell",null,()=>sellScreen(t),"sell"],["Cook",null,()=>cookScreen("t"+t),"cook"],["Cooking guide",null,()=>cookbook(()=>tavernScreen(t)),"guide"],["Party",null,partyScreen,"party"]]);
  w.querySelectorAll(".s5tab").forEach(b=>{if(b.dataset.tab==="buy"||b.dataset.tab==="sell")b.textContent="‹ "+b.textContent;});}
@@ -393,7 +396,7 @@ function shopList(t,kind){s5init();const st=E.stock(t),w=page("shop-"+kind);w.da
  const item=id=>shopRow(w,R.ITEMS[id].n+" · "+E.price(id)+"g",{buy:id},()=>{buy(id);shopList(t,kind);},live.gold<E.price(id));
  if(kind==="recipes"){const l=E.recipesFor(t).filter(id=>!live.recipes[id]);if(!l.length)w.appendChild(el("div","s4note dim","You know all the recipes sold here."));
   l.forEach(id=>{const d=E.dish(id);shopRow(w,d.n+" · "+E.RECIPE_PRICE[d.tier]+"g",{recipe:id},()=>{buyRecipe(id);shopList(t,kind);},live.gold<E.RECIPE_PRICE[d.tier]);});}
- else if(kind==="food"){["ration","potion","ether"].concat(st.ing).forEach(item);}
+ else if(kind==="food"){["ration","potion","ether","salts"].concat(st.ing).forEach(item);}
  else{w.appendChild(el("div","s4lab","Tent"));item("tent");shopRow(w,"‹ Build a tent from parts",{tentb:"1"},()=>tentScreen(t)).querySelector(".s4on").classList.add("s5more");
   w.appendChild(el("div","s4lab","Gear"));["lockpick","rope"].concat(st.gear).forEach(item);
   if(st.parts.length){w.appendChild(el("div","s4lab","Parts"));st.parts.forEach(item);}

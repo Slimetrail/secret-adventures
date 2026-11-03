@@ -40,7 +40,7 @@ Object.assign(I,{ration:{n:"Ration",slot:"use",w:0.4,heal:0.15,camp:true,v:2},lo
  w_staff:{n:"Scorched staff",slot:"weapon",t:"staff",w:2,atk:2,mag:4,worn:true},w_leather:{n:"Patched vest",slot:"chest",a:2,w:4,def:2,worn:true},w_helm:{n:"Dented helm",slot:"helmet",a:3,w:3,def:2,worn:true},
  w_buckler:{n:"Split buckler",slot:"offhand",a:2,w:3,def:1,worn:true}});
 // ---- prices ----
-const PRICE={ration:4,potion:20,ether:25,lockpick:15,rope:10,tent:100,w_sword:40,w_dagger:20,w_bow:35,w_staff:35,w_leather:35,w_helm:40,w_buckler:25,p_silk:30,p_hide:40,p_shard:15};
+const PRICE={ration:4,potion:20,ether:25,salts:30,lockpick:15,rope:10,tent:100,w_sword:40,w_dagger:20,w_bow:35,w_staff:35,w_leather:35,w_helm:40,w_buckler:25,p_silk:30,p_hide:40,p_shard:15};
 for(const k in ING)PRICE["i_"+k]=TIERP[ING[k][1]]||0;
 function price(id){return PRICE[id]||0;}
 function sellPrice(id){const it=I[id];if(!it)return 0;if(it.tent||it.slot==="junk"||it.slot==="part"||it.slot==="dish"||it.slot==="ing")return it.v||0;return Math.max(1,Math.floor((PRICE[id]||it.v||(it.atk||it.def||it.mag?16:2))/2));}
