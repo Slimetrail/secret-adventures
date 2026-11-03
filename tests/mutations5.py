@@ -19,7 +19,9 @@ MUT=[
  ("buffs never end","party.js","function tickBuffs(){live.party.forEach(c=>{if(c.buff){c.buff.f--;","function tickBuffs(){live.party.forEach(c=>{if(0){","eat_effects"),
  ("camp saves without tent","party.js","if(!hasTent())return false;","","tent_rules"),
  ("tent never wears","party.js","if(live.tentWear>=E.TENT.nights){takeOne(\"tent\");","if(0){","tent_rules"),
- ("cheap tent","econ.js","const TENT={buy:900,","const TENT={buy:200,","tent_costs"),
+ ("cheap tent","econ.js","const TENT={buy:100,","const TENT={buy:40,","tent_costs"),
+ ("pricey tent","econ.js","const TENT={buy:100,","const TENT={buy:900,","tent_costs"),
+ ("build fee too high","econ.js","fee:10,","fee:95,","tent_costs"),
  ("parts at every tavern","econ.js","const parts=t>=2?","const parts=t>=0?","tent_costs"),
  ("build ignores parts","party.js",'if(!tentNeed().every(x=>x.have>=x.n)){toast("Missing parts");return false;}','',"tent_build_ui"),
  ("give copies item","party.js","c.bag.splice(kk,1);m.bag.push(selItem);","m.bag.push(selItem);","give_item"),
@@ -27,6 +29,12 @@ MUT=[
  ("no place tab","party.js",'here.style.display=on?"block":"none";','here.style.display="none";',"place_tab"),
  ("recipes not saved","party.js","seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0};","seed:(Math.random()*1e9)|0,steps:0,fresh:{},tentWear:0};Object.defineProperty(live,\"recipes\",{value:{},enumerable:false,writable:true});","save_keeps_s5"),
  ("tiny shop tabs","index.html",".s5tabs .s5tab{width:150px;min-width:150px}",".s5tabs .s5tab{width:150px;min-width:150px;min-height:30px!important;height:30px}","fit_s5"),
+ ("buy lists items directly","party.js",'sideTabs(w,[["‹ Recipes",null,()=>shopList(t,"recipes"),"recipes"],','shopList(t,"food");return;sideTabs(w,[["‹ Recipes",null,()=>shopList(t,"recipes"),"recipes"],',"buy_flow"),
+ ("food lists everything","party.js",'else if(kind==="food"){["ration","potion","ether"].concat(st.ing).forEach(item);}','else if(kind==="food"){["ration","potion","ether","tent"].concat(st.ing).forEach(item);}',"buy_flow"),
+ ("back skips buy screen","party.js",'[kind],()=>buyScreen(t)));','[kind],()=>tavernScreen(t)));',"buy_flow"),
+ ("sell lists shop stock","party.js","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;w.appendChild(el(\"div\",\"s4lab\",c.name));","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag.concat([\"rope\"]));if(!s.length)return;w.appendChild(el(\"div\",\"s4lab\",c.name));","sell_party_only"),
+ ("sell only first member","party.js","live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;","live.party.forEach((c,ci)=>{const s=ci?[]:E.stacks(c.bag);if(!s.length)return;","sell_party_only"),
+ ("give overlays drop","party.js",'const gr=el("div","s4row s5give");','const gr=el("div","s4row s5give");gr.style.cssText="position:absolute;left:0;top:0";row.style.position="relative";row.appendChild(gr);if(0)',"give_item"),
  ("econ.js not cached","sw.js",'"econ.js?v=10",','',"offline5"),
 ]
 def port():
