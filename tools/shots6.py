@@ -1,0 +1,28 @@
+"""s6- screenshots at 3 phone sizes (pretend phone). python tools/shots6.py http://127.0.0.1:8765/ OUTDIR"""
+import sys,os
+sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..','tests'))
+import stage4_tests as S4,stage6_tests as T6
+from stage4_tests import ev,step_into,create,page
+from playwright.sync_api import sync_playwright
+S4.BASE=sys.argv[1];OUT=sys.argv[2]
+def at_line(pg,pred,limit=60):
+  ev(pg,'SOTA.rpg.s6.setSpeed(0)')
+  for _ in range(limit):
+    l=ev(pg,'SOTA.rpg.s6.line()')
+    if l and not l['typing'] and ev(pg,pred):return
+    if l and l['typing']:pg.wait_for_timeout(20);continue
+    T6.tapbox(pg);pg.wait_for_timeout(30)
+def snap(pg,name,w,h):pg.wait_for_timeout(250);pg.screenshot(path=f'{OUT}/s6-{name}-{w}x{h}.png')
+with sync_playwright() as p:
+  for w,h in((390,844),(360,800),(412,915)):
+    b,c=T6.ctx(p,w,h);pg=page(c);create(pg,race='human',cls='warrior')
+    at_line(pg,'document.getElementById("s6d").dataset.who==="D"');snap(pg,'opening',w,h);T6.drain(pg)
+    t=ev(pg,'MAZE.taverns');step_into(pg,t[1]);at_line(pg,'document.getElementById("s6d").dataset.who==="Q"');snap(pg,'join',w,h);T6.drain(pg)
+    step_into(pg,t[2]);T6.drain(pg)
+    ev(pg,'SOTA.rpg.s5.tavernScreen(2)');at_line(pg,'["Q","S"].includes(document.getElementById("s6d").dataset.who)');snap(pg,'tavern',w,h);T6.drain(pg)
+    pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');ev(pg,'SOTA.setAnim(false)')
+    ev(pg,'SOTA.onRoomOpen(26)');at_line(pg,'document.getElementById("s6d").dataset.who!=="N"');snap(pg,'wall',w,h);T6.drain(pg)
+    ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');snap(pg,'fightstart',w,h);ev(pg,'SOTA.rpg.forceEnd("ran")');S4.tap(pg,'#fdone')
+    ev(pg,'SOTA.rpg.s6.bossNote()');at_line(pg,'true');snap(pg,'bossnote',w,h);T6.drain(pg);snap(pg,'bossdoor',w,h)
+    ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');T6.drain(pg);snap(pg,'ending',w,h);b.close()
+print('done')

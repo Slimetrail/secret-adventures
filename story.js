@@ -94,7 +94,7 @@ S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,DADW,TOTAL_P,TOTAL_W,MEM_ST
  setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
-.s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,rgba(36,24,56,.92),rgba(8,5,14,.97) 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}
+.s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,#241838,#08050e 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}
 .s6d.on{display:block}
 .s6bg{position:absolute;left:0;right:0;top:0;height:42vh;background-size:cover;background-position:center;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent);opacity:.95}
 .s6wall{display:none;position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);max-width:88vw;max-height:calc(100vh - 360px);border:2px solid #6f58b8;border-radius:6px;box-shadow:0 0 24px rgba(0,0,0,.8)}
@@ -110,7 +110,7 @@ const css=document.createElement("style");css.textContent=`
 .s6more{position:absolute;right:14px;bottom:6px;font-size:12px;opacity:0}.s6more.on{opacity:.9;animation:s6b 1s infinite}@keyframes s6b{50%{opacity:.3}}
 .s6btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}.s6btns:empty{display:none}
 .s6title{font:700 18px Georgia,serif;color:#ffe3a0;margin-bottom:6px}.s6cnt{font-size:14px;margin-top:4px}.s6cnt.dim{opacity:.7}
-.s6fl{position:absolute;left:8px;right:8px;top:8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(20,10,40,.9);border:1px solid #8f74e0;border-radius:10px;font:14px Georgia,serif;color:#efe0b8;z-index:3;pointer-events:none}
+.s6fl{position:absolute;left:8px;right:8px;top:38%;display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(20,10,40,.9);border:1px solid #8f74e0;border-radius:10px;font:14px Georgia,serif;color:#efe0b8;z-index:3;pointer-events:none}
 .s6flp{width:36px;height:36px;border-radius:6px;object-fit:cover;flex:none}.s6fln{font-weight:600;flex:none}
 `;document.head.appendChild(css);
 })();
