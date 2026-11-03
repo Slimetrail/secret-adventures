@@ -35,12 +35,12 @@ for(const k in PARTS){const[n,,z,v]=PARTS[k];I[k]={n,slot:"part",w:0.2,v,zones:z
 const FOOD={1:["mushroom","roots","berries"],2:["herbs","egg","meat"],3:["fowl","sage","fish"],4:["griffinegg","firepepper","moonleaf"],5:["hydrascale","dragonmeat","starfruit"]};
 // gear, rations, tent, dead-warrior gear (worse than new)
 Object.assign(I,{ration:{n:"Ration",slot:"use",w:0.4,heal:0.15,camp:true,v:2},lockpick:{n:"Lockpicks",slot:"gear",w:0.1,v:6},rope:{n:"Rope",slot:"gear",w:1,v:4},
- tent:{n:"Tent",slot:"gear",w:0,v:150,tent:true},
+ tent:{n:"Tent",slot:"gear",w:0,v:30,tent:true},
  w_sword:{n:"Worn sword",slot:"weapon",t:"sword",w:4,atk:5,worn:true},w_dagger:{n:"Nicked dagger",slot:"weapon",t:"dagger",w:1,atk:3,worn:true},w_bow:{n:"Cracked bow",slot:"weapon",t:"bow",w:2,atk:4,worn:true},
  w_staff:{n:"Scorched staff",slot:"weapon",t:"staff",w:2,atk:2,mag:4,worn:true},w_leather:{n:"Patched vest",slot:"chest",a:2,w:4,def:2,worn:true},w_helm:{n:"Dented helm",slot:"helmet",a:3,w:3,def:2,worn:true},
  w_buckler:{n:"Split buckler",slot:"offhand",a:2,w:3,def:1,worn:true}});
 // ---- prices ----
-const PRICE={ration:4,potion:20,ether:25,lockpick:15,rope:10,tent:900,w_sword:40,w_dagger:20,w_bow:35,w_staff:35,w_leather:35,w_helm:40,w_buckler:25,p_silk:30,p_hide:40,p_shard:15};
+const PRICE={ration:4,potion:20,ether:25,lockpick:15,rope:10,tent:100,w_sword:40,w_dagger:20,w_bow:35,w_staff:35,w_leather:35,w_helm:40,w_buckler:25,p_silk:30,p_hide:40,p_shard:15};
 for(const k in ING)PRICE["i_"+k]=TIERP[ING[k][1]]||0;
 function price(id){return PRICE[id]||0;}
 function sellPrice(id){const it=I[id];if(!it)return 0;if(it.tent||it.slot==="junk"||it.slot==="part"||it.slot==="dish"||it.slot==="ing")return it.v||0;return Math.max(1,Math.floor((PRICE[id]||it.v||(it.atk||it.def||it.mag?16:2))/2));}
@@ -52,7 +52,7 @@ function stock(t){const s=["ration","potion","ether","lockpick","rope","tent"];
  const parts=t>=2?["p_silk","p_hide","p_shard"]:[];return {basic:s,gear,ing,parts};}
 function recipesFor(t){return DISHES.filter(d=>d.tier<=Math.min(4,t+1)&&d.ing.every(x=>ING[x][1]>0)).map(d=>d.id);}
 // ---- tent: very costly to buy, much cheaper to build from parts. Lasts TENT_NIGHTS camps ----
-const TENT={buy:900,fee:60,parts:{p_silk:4,p_hide:3,p_shard:2},nights:5};
+const TENT={buy:100,fee:10,parts:{p_silk:4,p_hide:3,p_shard:2},nights:5};
 // crafting fee may be paid in gold, or parts/junk (at their sell value), or both
 function payFee(fee,gold,offer){let left=fee;const used=[];for(const id of offer){if(left<=0)break;left-=sellPrice(id);used.push(id);}const g=Math.max(0,left);return g<=gold?{gold:g,parts:used}:null;}
 // ---- drops: gold (rules.loot), plus a zone part and maybe a food item ----

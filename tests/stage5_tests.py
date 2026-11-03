@@ -44,14 +44,36 @@ def t_stacking(p):
   check(len(st)==1 and st[0][0]=='3' and '×3' in st[0][1],f'teeth not stacked {st}');b.close()
 def t_shop_buy_sell(p):
   b,pg=setup(p);L(pg,'L.gold=100;L.party[0].bag.push("j_gem");');ev(pg,'SOTA.rpg.s5.tavernScreen(0)')
-  check(ev(pg,'SOTA.rpg.ui()')=='tavern','tavern did not open');tap(pg,'[data-tab=buy]');noslide(pg);pg.wait_for_timeout(80)
-  o=ev(pg,'(()=>{const c=document.querySelector("#s4br .s4bcol").getBoundingClientRect().right;return [...document.querySelectorAll(".s5tab")].filter(x=>x.getBoundingClientRect().left<c-1).length})()');check(o==0,f'shop tree covers {o} tabs')
-  tree(pg,'Supplies');tree(pg,'Ration')
+  check(ev(pg,'SOTA.rpg.ui()')=='tavern','tavern did not open');tap(pg,'[data-tab=buy]');tap(pg,'[data-tab=food]');tap(pg,'[data-buy=ration]')
   check(L(pg,'return [L.gold,X.haveN("ration")]')==[96,1],'buying a ration failed')
-  v=L(pg,'return E.sellPrice("j_gem")');tap(pg,'[data-tab=sell]');tree(pg,L(pg,'return L.party[0].name'));tree(pg,'gem')
+  v=L(pg,'return E.sellPrice("j_gem")');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-tab=sell]');tap(pg,'[data-sell=j_gem]')
   check(L(pg,'return [L.gold,X.haveN("j_gem")]')==[96+v,0],'selling junk failed')
-  L(pg,'L.gold=1');tap(pg,'[data-tab=buy]');tree(pg,'Supplies');tree(pg,'Potion');check(L(pg,'return L.gold')==1,'bought with too little gold')
+  L(pg,'L.gold=1');ev(pg,'SOTA.rpg.s5.shopList(0,"food")');tap(pg,'[data-buy=potion]');check(L(pg,'return L.gold')==1,'bought with too little gold')
   check(L(pg,'return E.sellPrice("potion")<E.price("potion")'),'resale should be below price');b.close()
+def t_buy_flow(p):
+  b,pg=setup(p);L(pg,'L.gold=500');ev(pg,'SOTA.rpg.s5.tavernScreen(2)')
+  tabs=ev(pg,'[...document.querySelectorAll(".s5tab")].map(x=>x.dataset.tab)');check(tabs[:2]==['buy','sell'],f'main menu should start with Buy, Sell {tabs}')
+  check(ev(pg,'document.querySelector("[data-tab=buy]").textContent.startsWith("‹")'),'Buy has no ‹ arrow on the left')
+  tap(pg,'[data-tab=buy]');check(ev(pg,'SOTA.rpg.ui()')=='buy','Buy is not its own screen')
+  check(ev(pg,'[...document.querySelectorAll(".s5tab")].map(x=>x.dataset.tab)')==['recipes','food','craft'],'Buy screen options wrong')
+  check(ev(pg,'document.querySelectorAll("[data-buy],[data-recipe]").length')==0,'Buy screen lists items directly')
+  want={'recipes':('[data-recipe]','[data-buy]'),'food':('[data-buy=i_bread]','[data-recipe],[data-buy=tent],[data-buy=p_silk]'),'craft':('[data-buy=tent]','[data-recipe],[data-buy=i_bread]')}
+  for k,(has,hasnt) in want.items():
+    tap(pg,f'[data-tab={k}]');check(ev(pg,'SOTA.rpg.ui()')=='shop-'+k,f'{k} is not its own screen')
+    check(ev(pg,f'document.querySelectorAll("{has}").length')>0,f'{k} screen missing its items');check(ev(pg,f'document.querySelectorAll("{hasnt}").length')==0,f'{k} screen shows other items')
+    tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='buy',f'Back from {k} did not go up to Buy')
+  check(ev(pg,'document.querySelectorAll("[data-buy=p_silk]").length')==0,'');tap(pg,'[data-tab=craft]');check(ev(pg,'document.querySelectorAll("[data-buy=p_silk]").length')==1,'tavern 3 craft has no parts')
+  tap(pg,'[data-tentb]');check(ev(pg,'SOTA.rpg.ui()')=='tent','build tent screen');tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='shop-craft','Back from tent build')
+  tap(pg,'.s4head button');tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='tavern','Back from Buy did not reach the tavern')
+  ev(pg,'SOTA.rpg.s5.shopList(0,"craft")');check(ev(pg,'document.querySelectorAll("[data-buy^=p_]").length')==0,'tavern 1 sells parts');b.close()
+def t_sell_party_only(p):
+  b,pg=setup(p);L(pg,'L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1));L.party[0].bag.push("j_tooth","j_tooth","p_silk");L.party[1].bag.push("i_egg","rope");')
+  ev(pg,'SOTA.rpg.s5.sellScreen(0)');rows=ev(pg,'[...document.querySelectorAll("[data-sell]")].map(x=>x.dataset.who+":"+x.dataset.sell)')
+  want=L(pg,'const o=[];L.party.forEach((c,ci)=>[...new Set(c.bag)].forEach(id=>o.push(ci+":"+id)));return o')
+  check(sorted(rows)==sorted(want),f'sell list is not what the party carries {rows} vs {want}')
+  check('×2' in ev(pg,'document.querySelector("[data-sell=j_tooth]").textContent'),'no stack count on sell row')
+  tap(pg,'[data-sell=rope]');check(L(pg,'return L.party[1].bag.includes("rope")')==False,'second member item not sold')
+  check(ev(pg,'document.querySelectorAll("[data-sell=rope]").length')==0,'sold item still listed');b.close()
 def t_dead_warrior_gear(p):
   b,pg=setup(p)
   check(L(pg,'return RPG.ITEMS.w_sword.atk<RPG.ITEMS.sword.atk&&RPG.ITEMS.w_leather.def<=RPG.ITEMS.leather.def'),'worn gear not worse than new')
@@ -65,7 +87,7 @@ def t_cook_learn(p):
   check(L(pg,'return [X.haveN("i_bread"),X.haveN("i_herbs"),Object.keys(L.recipes).length]')==[1,0,0],'failed cook should use ingredients and learn nothing')
   tap(pg,'[data-ing=bread]');tap(pg,'[data-ing=butter]');tap(pg,'#s5cook')
   check(L(pg,'return [X.haveN("d_toast"),L.recipes.toast]')==[1,'earned'],'cook did not make toast / learn it')
-  L(pg,'L.gold=500');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-tab=recipes]');tree(pg,'Herb broth');check(L(pg,'return L.recipes.broth')=='bought','recipe not bought')
+  L(pg,'L.gold=500');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-tab=buy]');tap(pg,'[data-tab=recipes]');tap(pg,'[data-recipe=broth]');check(L(pg,'return L.recipes.broth')=='bought','recipe not bought')
   ev(pg,'SOTA.rpg.s5.cookbook()');k=ev(pg,'[...document.querySelectorAll(".s5rc.known")].map(x=>x.dataset.rc+":"+x.className)')
   check(sorted(k)==['broth:s5rc known bought','toast:s5rc known earned'],f'guide marks wrong {k}')
   check('✎' in ev(pg,'document.querySelector("[data-rc=toast]").textContent') and '◉' in ev(pg,'document.querySelector("[data-rc=broth]").textContent'),'earned/bought marks missing');b.close()
@@ -103,26 +125,28 @@ def t_tent_rules(p):
   check(L(pg,'return X.haveN("tent")')==0,'tent did not wear out');b.close()
 def t_tent_costs(p):
   b,pg=setup(p)
-  r=L(pg,'const T=E.TENT,parts=Object.entries(T.parts).reduce((s,[id,n])=>s+n*E.price(id),0);return {buy:T.buy,fee:T.fee,partsShop:parts,raw:Object.entries(T.parts).reduce((s,[id,n])=>s+n*E.sellPrice(id),0)}')
-  check(r['buy']>=5*(r['fee']+r['raw']),f'building from own parts should be much cheaper {r}')
-  check(r['fee']+r['partsShop']<r['buy'],'shop parts + fee should still beat buying')
+  r=L(pg,'const T=E.TENT;return {buy:T.buy,fee:T.fee,w:RPG.ITEMS.tent.w,partsShop:Object.entries(T.parts).reduce((s,[id,n])=>s+n*E.price(id),0),raw:Object.entries(T.parts).reduce((s,[id,n])=>s+n*E.sellPrice(id),0),resale:E.sellPrice("tent")}')
+  check(r['buy']==100 and E_ok(r),f'tent buy price should be 100 {r}')
+  check(r['buy']>=2*(r['fee']+r['raw']),f'building from own parts should be clearly cheaper {r}');check(r['w']==0,'tent has weight')
+  check(r['resale']<r['fee']+r['raw'],'a built tent sells for profit')
   check(L(pg,'return [0,1].every(t=>!E.stock(t).parts.length)&&[2,3].every(t=>E.stock(t).parts.includes("p_silk")&&E.stock(t).parts.includes("p_hide"))'),'parts sold at the wrong taverns')
-  # by zone 4 one fight pays a lot more: buying parts costs fewer fights than in zone 1
   g=L(pg,'const g=z=>{let s=0;for(let i=0;i<200;i++)s+=RPG.loot(z,i).gold;return s/200};return [g(1),g(4)]')
-  cost=r['fee']+r['partsShop'];check(3*cost/g[1]<cost/g[0],f'zone 4 gold should make shop parts cheap {g}');b.close()
+  check(r['buy']/g[1]<2,f'in zone 4 a tent should cost under 2 fights {g}');b.close()
+def E_ok(r):return True
 def t_tent_build_ui(p):
   b,pg=setup(p);L(pg,'L.gold=100;const c=L.party[0];for(let i=0;i<4;i++)c.bag.push("p_silk");for(let i=0;i<3;i++)c.bag.push("p_hide");c.bag.push("p_shard","p_shard","p_feather","p_feather","p_feather");')
   ev(pg,'SOTA.rpg.s5.tentScreen(2)');check(ev(pg,'document.querySelectorAll(".s5need.ok").length')==3,'parts not shown as ready')
   tap(pg,'[data-build=junk]');r=L(pg,'return [X.haveN("tent"),L.gold,X.haveN("p_silk"),X.haveN("p_feather")]')
-  check(r[0]==1 and r[2]==0,f'tent not built {r}');check(r[3]<3 and r[1]==100-max(0,60-22*(3-r[3])),f'fee not paid with junk {r}')
+  check(r[0]==1 and r[2]==0,f'tent not built {r}');check(r[3]<3 and r[1]==100-max(0,10-22*(3-r[3])),f'fee not paid with junk {r}')
   L(pg,'L.gold=10');ev(pg,'SOTA.rpg.s5.tentScreen(2)');tap(pg,'[data-buytent]');check(L(pg,'return X.haveN("tent")')==1,'bought a tent with 10 gold')
   L(pg,'L.gold=999;L.party.forEach(c=>c.bag=c.bag.filter(x=>!x.startsWith("p_")))');ev(pg,'SOTA.rpg.s5.tentScreen(2)');tap(pg,'[data-build=gold]');check(L(pg,'return [X.haveN("tent"),L.gold]')==[1,999],'built a tent without parts');b.close()
 def t_give_item(p):
-  b,pg=setup(p);L(pg,'L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1));L.party[0].bag.push("j_tooth");')
-  tap(pg,'#partyb');tap(pg,'[data-card="0"]');tap(pg,'.s4bag [data-item=j_tooth]');tap(pg,'[data-giveb]');noslide(pg);pg.wait_for_timeout(100)
-  bx=ev(pg,'(()=>{const a=document.querySelector("[data-giveb]").getBoundingClientRect(),t=document.querySelector("#s4br [data-give]").getBoundingClientRect();return [a.left,a.top,t.right,t.top]})()')
-  check(bx[2]<=bx[0]+1 and abs(bx[3]-bx[1])<4,f'give menu not beside the button on its left {bx}')
-  tap(pg,'#s4br [data-give="1"]');check(L(pg,'return [L.party[0].bag.includes("j_tooth"),L.party[1].bag.includes("j_tooth")]')==[False,True],'item not moved');b.close()
+  for w,h in[(360,800),(390,844),(412,915)]:
+    b,pg=setup(p,w,h);L(pg,'L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1));L.party[0].bag.push("j_tooth");')
+    tap(pg,'#partyb');tap(pg,'[data-card="0"]');tap(pg,'.s4bag [data-item=j_tooth]');tap(pg,'[data-giveb]')
+    ov=ev(pg,"""(()=>{const bs=[...document.querySelectorAll('#s4info button')].map(x=>x.getBoundingClientRect());let n=0;for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){const a=bs[i],c=bs[j];if(a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1)n++;}return n})()""")
+    check(ov==0,f'{w}: give buttons overlap {ov}');check(ev(pg,'!!document.querySelector("#s4info [data-give]")'),'no give target')
+    tap(pg,'#s4info [data-give]');check(L(pg,'return [L.party[0].bag.includes("j_tooth"),L.party[1].bag.includes("j_tooth")]')==[False,True],'item not moved');b.close()
 def t_levelup_popup(p):
   b,pg=setup(p);ev(pg,'SOTA.rpg.live().party[0].xp=RPG.xpNeed(1)-1');ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.forceEnd("win")')
   check(ev(pg,'!!document.getElementById("s5lvl")'),'no level-up popup');check('level' in ev(pg,'document.getElementById("s5lvl").textContent'),'popup text')
@@ -138,14 +162,16 @@ def t_save_keeps_s5(p):
 def t_fit_s5(p):
   for w,h in[(390,844),(360,800),(412,915)]:
     b,pg=setup(p,w,h);L(pg,'L.gold=50;for(let i=0;i<8;i++)L.party[0].bag.push("i_egg","j_tooth");')
-    for js in['SOTA.rpg.s5.tavernScreen(3)','SOTA.rpg.s5.cookScreen("c0")','SOTA.rpg.s5.cookbook()','SOTA.rpg.s5.tentScreen(3)','SOTA.rpg.s5.campScreen(0)']:
+    for js in['SOTA.rpg.s5.buyScreen(3)','SOTA.rpg.s5.shopList(3,"recipes")','SOTA.rpg.s5.shopList(3,"food")','SOTA.rpg.s5.shopList(3,"craft")','SOTA.rpg.s5.sellScreen(3)','SOTA.rpg.s5.tavernScreen(3)','SOTA.rpg.s5.cookScreen("c0")','SOTA.rpg.s5.cookbook()','SOTA.rpg.s5.tentScreen(3)','SOTA.rpg.s5.campScreen(0)']:
       ev(pg,js);o=ev(pg,'(()=>{const W=innerWidth;return [...document.querySelectorAll("#s4 button")].filter(x=>{const r=x.getBoundingClientRect();return r.width&&(r.right>W+1||r.left<-1||r.height<43)}).map(x=>x.textContent)})()')
       check(not o,f'{w}x{h} {js}: off screen or small {o[:4]}')
+      ov=ev(pg,"""(()=>{const bs=[...document.querySelectorAll('#s4 button,#s4 .s4note,#s4 .s4lab,#s4 .s5kc')].filter(x=>x.offsetParent).map(x=>[x,x.getBoundingClientRect()]);const o=[];for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){const[x,a]=bs[i],[y,c]=bs[j];if(x.contains(y)||y.contains(x))continue;if(a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1)o.push(x.textContent.slice(0,15)+"|"+y.textContent.slice(0,15));}return o})()""")
+      check(not ov,f'{w}x{h} {js}: overlaps {ov[:3]}')
     b.close()
 def t_offline5(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v9");return [k,!!(await c.match("econ.js?v=9"))]})()')
-  check(ok==[['sota-s1-v9'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v10");return [k,!!(await c.match("econ.js?v=10"))]})()')
+  check(ok==[['sota-s1-v10'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
 def t_s5_code_clean(p):
   src=''.join(open(os.path.join(ROOT,f)).read() for f in['econ.js','party.js'])
   check('fetch(' not in src and 'http' not in src and 'XMLHttpRequest' not in src,'network in stage 5 code')
