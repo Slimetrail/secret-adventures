@@ -317,7 +317,7 @@ def t_fight_v4_rotate(p):
       t0=ev(pg,RECTS,'#fparty .s4nl')
       check(all(t0[0][0]<=r[0]-12 for r in t0[1:]),'new top tab does not stick out')
     check(ev(pg,'document.getElementById("fparty").classList.contains("rot")'),'no rotate animation class');b.close()
-  b=p.chromium.launch();c=b.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True,service_workers='block',reduced_motion='reduce');pg=fresh(c);hero(pg);fight4(pg)
+  b=p.chromium.launch();c=b.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True,service_workers='block',reduced_motion='reduce');c.add_init_script("try{localStorage.setItem('sota.dev.nostory','1')}catch(e){}");pg=fresh(c);hero(pg);fight4(pg)
   ttap(pg,'#fparty [data-hero="0"]');ttap(pg,'#s4br [data-cmd4=defend]')
   check(ev(pg,'getComputedStyle(document.querySelector("#fparty .s4pr")).animationName')=='none','rotation animates under reduced motion');b.close()
 def t_portrait_lock(p):
