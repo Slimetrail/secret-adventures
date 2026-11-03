@@ -126,6 +126,7 @@ def t_wall_counts(p):
   check(len(S6(pg,'return s6.artRooms()'))==N,'art room list does not match WALL_ART_ROOMS');check(S6(pg,'return s6.PIECES()')==N,'pieces != WALL_ART_ROOMS')
   if N==28:check({k:len(v) for k,v in W.items()}=={'1':3,'2':4,'3':5,'4':7,'5':9},f'story rooms per zone {W}')
   order=S6(pg,'return s6.artRooms()');got=run_walls(pg,order)
+  for i,g in enumerate(got):check(g==piece_text(pg,i),f'room found #{i+1} did not show piece #{i+1}')
   check(S6(pg,'return L.story.revealed'),'dad not revealed by the last pieces');check('council' in got[-1].lower() and 'dad' in got[-1].lower(),f'last piece is not Dad arguing with the council: {got[-1][:80]}')
   check(S6(pg,'return L.story.order.length')==N,'discovery order not kept')
   ev(pg,f'SOTA.onRoomOpen({order[0]})');check(not ev(pg,'SOTA.storyOpen()'),'same wall counted twice');check(S6(pg,'return Object.keys(L.story.walls).length')==N,'recount')
