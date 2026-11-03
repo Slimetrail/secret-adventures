@@ -144,8 +144,10 @@ def t_give_item(p):
   for w,h in[(360,800),(390,844),(412,915)]:
     b,pg=setup(p,w,h);L(pg,'L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1));L.party[0].bag.push("j_tooth");')
     tap(pg,'#partyb');tap(pg,'[data-card="0"]');tap(pg,'.s4bag [data-item=j_tooth]');tap(pg,'[data-giveb]')
-    ov=ev(pg,"""(()=>{const bs=[...document.querySelectorAll('#s4info button')].map(x=>x.getBoundingClientRect());let n=0;for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){const a=bs[i],c=bs[j];if(a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1)n++;}return n})()""")
-    check(ov==0,f'{w}: give buttons overlap {ov}');check(ev(pg,'!!document.querySelector("#s4info [data-give]")'),'no give target')
+    ov=ev(pg,"""(()=>{const es=[...document.querySelectorAll('#s4info button,#s4info span,#s4info .s4row>div')].filter(x=>x.offsetParent&&x.textContent.trim());const bs=es.map(x=>x.getBoundingClientRect());let n=0;for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){if(es[i].contains(es[j])||es[j].contains(es[i]))continue;const a=bs[i],c=bs[j];if(a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1)n++;}return n})()""")
+    check(ov==0,f'{w}: give buttons overlap {ov}');
+    gap=ev(pg,"""(()=>{const g=document.querySelector('#s4info .s5give').getBoundingClientRect(),d=[...document.querySelectorAll('#s4info button')].find(x=>x.textContent.trim()==='Drop').getBoundingClientRect();return g.top-d.bottom})()""")
+    check(gap>=0,f'{w}: Give row sits on the Drop row ({gap}px)');check(ev(pg,'!!document.querySelector("#s4info [data-give]")'),'no give target')
     tap(pg,'#s4info [data-give]');check(L(pg,'return [L.party[0].bag.includes("j_tooth"),L.party[1].bag.includes("j_tooth")]')==[False,True],'item not moved');b.close()
 def t_levelup_popup(p):
   b,pg=setup(p);ev(pg,'SOTA.rpg.live().party[0].xp=RPG.xpNeed(1)-1');ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.forceEnd("win")')
