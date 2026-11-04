@@ -21,12 +21,14 @@ MUT=[
  ("no stay banter","story.js","if(s.shopN%3)return;","return;","t_stay_banter"),
  ("story not kept in save","story.js","if(!s||typeof s!==\"object\")s=l.story={v:1};","if(!s||typeof s!==\"object\")s={v:1};","t_saves_keep_story"),
  ("old saves lose roles","story.js","||(l.party[IDX[code]]&&!l.party[IDX[code]].role?l.party[IDX[code]]:null)","","t_old_save_loads"),
- ("story.js not cached","sw.js",'"story.js?v=13",',"","t_offline_v13"),
+ ("story.js not cached","sw.js",'"story.js?v=14",',"","t_offline_v14"),
  ("wall piece off by one","story.js","Math.floor(n*PIECES.length/TOTAL_W)","Math.floor((n+1)*PIECES.length/TOTAL_W)","t_wall_counts"),
  ("wall piece by zone, not by count found","story.js","const n=Object.keys(s.walls).length,pi=pieceFor(n);","const n=Object.keys(s.walls).length,pi=pieceFor(WALLS.filter(w=>w.z<r.z).length);","t_wall_order_independent"),
  ("discovery order not saved","story.js","s.order.push(id);","","t_wall_count_saved"),
- ("wall caption by piece, not zone","story.js","cap:TECH[r.z]","cap:TECH[Math.min(5,1+Math.floor(pi/6))]","t_wall_technique"),
- ("wall caption missing","story.js",'cp.textContent=sc.opt.cap||"";','',"t_wall_technique"),
+ ("wall image by piece, not zone","story.js","{wall:wallArt(r.z,n+1)}","{wall:wallArt(Math.min(5,1+Math.floor(pi/6)),n+1)}","t_wall_technique"),
+ ("describing caption back on the wall","story.js",'<img class="s6wall" alt="">','<img class="s6wall" alt=""><div class="s6cap" style="position:absolute;top:20px;left:20px;color:#fff">Vibrant: fully painted, every detail</div>',"t_wall_technique"),
+ ("narrator describes the art","story.js","let lines=PIECES[pi].slice();",'let lines=[["N","calm","Crude figures are drawn on the rock."]].concat(PIECES[pi]);',"t_wall_no_description"),
+ ("describing word in a reaction","story-data.js","Another one. Same hand, I think.","Another one, drawn in the same hand.","t_wall_no_description"),
  ("dad shows one piece early","story.js","DAD_FROM=PIECES.length-2","DAD_FROM=PIECES.length-3","t_faceless_until_dad"),
 
 ]

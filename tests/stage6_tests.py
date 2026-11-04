@@ -1,5 +1,5 @@
 """Stage 6 tests: story and dialogue (pretend phone, Playwright). Run: python stage6_tests.py http://127.0.0.1:8765/"""
-import sys,os,json,time
+import sys,os,json,time,re
 sys.path.insert(0,os.path.dirname(__file__))
 import stage4_tests as S4
 from stage4_tests import check,page,tap,ev,create,step_into,finish,noslide,Fail,ERRS,REQS,ROOT
@@ -134,17 +134,40 @@ def t_wall_counts(p):
 def t_wall_order_independent(p):
   b,c,pg=fight_with_party(p);order=S6(pg,'return s6.artRooms()')[::-1]  # zone 5 rooms first, zone 1 last
   got=run_walls(pg,order[:3]);check(got[0]==piece_text(pg,0),'1st room found (a zone-5 room) did not get the 1st piece (blood)')
-  check('red' in got[0].lower() and 'rat' in got[0].lower(),'1st piece is not the red stick-man art');check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
+  check('who would make' in got[0].lower(),'1st room found did not get piece 1');check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
   b.close()
+DESC=re.compile(r"\b(stand|stands|standing|stood|paint\w*|drawn|draw\w*|drew|blood\w*|charcoal|colou?r\w*|vibrant|arguing|argue\w*|table|figures?|brush\w*|scrawl\w*|smear\w*|depict\w*|pictures?|sketch\w*|crystals?|council|two-tone|hasty)\b",re.I)
+def scene_texts(pg,limit=600):
+  """(who,text) of every line in the open scene"""
+  ev(pg,'SOTA.rpg.s6.setSpeed(0)');out=[]
+  for _ in range(limit):
+    l=S6(pg,'return s6.line()')
+    if not l:return out
+    if l['typing']:pg.wait_for_timeout(15);continue
+    out.append((l['who'],ev(pg,'document.querySelector("#s6d .s6t").textContent')));tapbox(pg)
+  raise Fail('wall scene never ended')
 def t_wall_technique(p):
-  """t1623u: the look and the technique caption follow the room's zone: blood, charcoal, two-tone, hasty color, vibrant"""
-  b,c,pg=fight_with_party(p);W=walls_by_zone(pg);want={'1':'blood','2':'charcoal','3':'two-tone','4':'hasty','5':'vibrant'}
+  """look follows the room's zone (t1623u); Jeremy t1650u: no caption describing the art"""
+  b,c,pg=fight_with_party(p);W=walls_by_zone(pg)
   for z in ['5','3','1','4','2']:
     i=W[z][0];ev(pg,f'SOTA.onRoomOpen({i})');check(S6(pg,'const l=s6.line();return l&&l.kind')=='wall',f'no wall scene z{z}')
-    cap=ev(pg,'(()=>{const e=document.querySelector("#s6d .s6cap");return getComputedStyle(e).display!=="none"?e.textContent:""})()');art=ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")')
-    check(want[z] in cap.lower(),f'zone {z} caption {cap!r} does not say {want[z]}');check(('zone'+z) in art,f'zone {z} shows {art}');drain(pg)
-  txt=ev(pg,'JSON.stringify([1,2,3,4,5].map(z=>STORY.wall[z]).concat([STORY.wall.dad]))').lower()
-  for w in ['red scrawl','red handprint','charcoal','blood','painted','paint,','purple paint','bright color','bright paint']:check(w not in txt,f'piece text names a medium ({w}) - would clash with the zone look')
+    art=ev(pg,'document.querySelector("#s6d .s6wall").getAttribute("src")');check(('zone'+z) in art,f'zone {z} shows {art}')
+    vis=ev(pg,'[...document.querySelectorAll("#s6d *")].filter(e=>e!==document.querySelector("#s6d .s6box")&&!e.closest(".s6box")&&e.children.length===0&&e.textContent.trim()&&getComputedStyle(e).display!=="none").map(e=>e.textContent)')
+    check(not vis,f'text outside the dialogue box (caption?) in zone {z}: {vis}');drain(pg)
+  b.close()
+def t_wall_no_description(p):
+  """wall scenes are only thoughts: no narrator line and no describing words, in the data and on screen, in all rooms"""
+  b,c,pg=fight_with_party(p);P=ev(pg,'[1,2,3,4,5].reduce((a,z)=>a.concat(STORY.wall[z]),[]).concat(STORY.wall.dad)')
+  for k,piece in enumerate(P):
+    check(piece[0][0]=='H',f'piece {k+1} does not open with the hero')
+    for w,e,t in piece:
+      check(w!='N',f'piece {k+1} has a narrator line: {t[:60]}');m=DESC.search(t);check(not m,f'piece {k+1} describes the art ({m and m.group(0)}): {t[:70]}')
+      if k<len(P)-2:check(not re.search(r"\b(dad|father|papa)\b",t,re.I),f'dad hint before the last two pieces: piece {k+1}')
+  for i in S6(pg,'return s6.artRooms()'):
+    ev(pg,f'SOTA.onRoomOpen({i})');check(S6(pg,'const l=s6.line();return l&&l.kind')=='wall',f'no wall scene {i}')
+    for w,t in scene_texts(pg):
+      if w in (None,'N') and t=='(A memory, shared by the fire.)':continue
+      check(w not in (None,'N'),f'room {i}: narrator line on screen: {t[:60]}');m=DESC.search(t);check(not m,f'room {i}: describing word {m and m.group(0)!r} on screen: {t[:70]}')
   b.close()
 def t_wall_count_saved(p):
   b,c,pg=fight_with_party(p);o=S6(pg,'return s6.artRooms()');run_walls(pg,[o[5],o[9]]);ev(pg,'SOTA.rpg.doSave()')
@@ -154,7 +177,7 @@ def t_wall_count_saved(p):
 def t_faceless_until_dad(p):
   b,c,pg=start(p);N=S6(pg,'return s6.PIECES()');df=S6(pg,'return s6.DAD_FROM');check(df==N-2,'dad not exactly the last two pieces')
   txt=ev(pg,'JSON.stringify(STORY.wall[1].concat(STORY.wall[2],STORY.wall[3],STORY.wall[4],STORY.wall[5]))').lower()
-  check('faceless' in txt or 'no face' in txt,'figure is not faceless in earlier walls');check('dad' not in txt and 'father' not in txt,'dad named before the dad walls')
+  check('dad' not in txt and 'father' not in txt,'dad named before the dad walls')
   d=ev(pg,'JSON.stringify(STORY.wall.dad)').lower();check('dad' in d or 'father' in d,'dad walls do not show the dad');b.close()
 def t_boss_note_and_ending_low(p):
   b,c,pg=start(p);ev(pg,'(()=>{const c=MAZE.centre;for(const d of[[0,-1],[1,0],[0,1],[-1,0],[0,-2],[2,0],[0,2],[-2,0],[1,1],[-1,-1]]){const x=c[0]+d[0],y=c[1]+d[1];if(SOTA.roomAt(x,y)<0){SOTA.teleport(x,y,0);return}}})()')
@@ -208,10 +231,10 @@ def t_old_save_loads(p):
   t,_=open_wall(pg,o[7]);check(t==piece_text(pg,S6(pg,'return s6.pieceFor(2)')),'old save with 2 walls (no order) did not show piece 3');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
   step_into(pg,T(pg)[3]);drain(pg);check(ev(pg,'SOTA.rpg.live().party.map(c=>c.name)')[3]=='Brunn','old save: 3rd companion did not join');check(not [e for e in ERRS if 'story' in e.lower() or 's6' in e],f'errors {ERRS}');b.close()
 # ---------- offline ----------
-def t_offline_v13(p):
+def t_offline_v14(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v13");const r=[];for(const f of["story.js?v=13","story-data.js?v=13","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(ok[0]==['sota-s1-v13'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v14");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v14'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
   check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
   ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
 def t_no_network_no_ads(p):

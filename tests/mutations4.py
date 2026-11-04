@@ -25,7 +25,7 @@ MUT=[
  ("potion not used up","rules.js","if(k<0||!it||it.slot!==\"use\")return \"\";c.bag.splice(k,1);","if(k<0||!it||it.slot!==\"use\")return \"\";","fight_ui"),
  ("equip ignores limits","rules.js","if(!canEquip(c,id,slot)||!c.bag.includes(id))return false;","if(!c.bag.includes(id))return false;","equip_bag_ui"),
  ("tiny name tabs","index.html",".s4fight .s4pr .s4nl{width:128px;min-height:44px;",".s4fight .s4pr .s4nl{width:128px;min-height:30px;max-height:30px;","ui_fit"),
- ("party.js not cached","sw.js",'"party.js?v=13",','',"offline4"),
+ ("party.js not cached","sw.js",'"party.js?v=14",','',"offline4"),
  ("calls outside","party.js","S.uiOpen=()=>!!ui;","S.uiOpen=()=>!!ui;fetch('https://example.invalid/x').catch(()=>{});","console_network4"),
 ]
 def port():
