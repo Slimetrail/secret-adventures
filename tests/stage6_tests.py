@@ -250,8 +250,8 @@ def t_old_save_loads(p):
 # ---------- offline ----------
 def t_offline_v14(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v15");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5-09-bedside-center.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(ok[0]==['sota-s1-v15'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v16");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5-09-bedside-center.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v16'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
   check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
   ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
 def t_no_network_no_ads(p):

@@ -141,28 +141,28 @@ def t_sw_update(p):
       pg.reload();t0=time.time()
       while time.time()-t0<20:
         try:
-          if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")') and ev(pg,'caches.keys()')==["sota-s1-v15"]:break
+          if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")') and ev(pg,'caches.keys()')==["sota-s1-v16"]:break
           if ev(pg,'(()=>{const u=document.getElementById("updb");return !!u&&getComputedStyle(u).display!=="none"})()'):
             bb=pg.locator('#updb').bounding_box();pg.touchscreen.tap(bb['x']+bb['width']/2,bb['y']+bb['height']/2)
         except Exception:pass
         pg.wait_for_timeout(300)
       check(ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")'),f'v{ver} -> v14: creation never showed')
-      k=ev(pg,'caches.keys()');check(k==['sota-s1-v15'],f'new cache not active {k}');full_create(pg,'Swy');b.close()
+      k=ev(pg,'caches.keys()');check(k==['sota-s1-v16'],f'new cache not active {k}');full_create(pg,'Swy');b.close()
     finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 def t_sw_autoreload(p):
-  """from v6 on: a new version (here a pretend v15) reloads by itself when no hero exists yet - no banner tap needed"""
+  """from v6 on: a new version (here a pretend v16) reloads by itself when no hero exists yet - no banner tap needed"""
   d=tempfile.mkdtemp(prefix='sota-swup7-');copy_app(ROOT,d);pr,url=serve(d)
   try:
     b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-    check(ev(pg,'caches.keys()')==['sota-s1-v15'],'v15 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
-    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="15"','VER="16"'))
+    check(ev(pg,'caches.keys()')==['sota-s1-v16'],'v16 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
+    s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="16"','VER="17"'))
     ev(pg,'navigator.serviceWorker.getRegistration().then(r=>r&&r.update())');t0=time.time()
     while time.time()-t0<20:
       try:
         if ev(pg,'!window.__mark&&!!(window.SOTA&&SOTA.rpg)'):break
       except Exception:pass
       pg.wait_for_timeout(300)
-    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v16'],'v16 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
+    check(ev(pg,'!window.__mark'),'page did not reload by itself on update');check(ev(pg,'caches.keys()')==['sota-s1-v17'],'v17 cache not active');check(ui(pg)=='create','creation not shown after update');b.close()
   finally:pr.terminate();shutil.rmtree(d,ignore_errors=True)
 # ---------------- branch menus ----------------
 def hero(pg,name='Tess',cls='warrior',race='human'):

@@ -172,8 +172,8 @@ def t_fit_s5(p):
     b.close()
 def t_offline5(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v15");return [k,!!(await c.match("econ.js?v=14"))]})()')
-  check(ok==[['sota-s1-v15'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v16");return [k,!!(await c.match("econ.js?v=14"))]})()')
+  check(ok==[['sota-s1-v16'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
 def t_s5_code_clean(p):
   src=''.join(open(os.path.join(ROOT,f)).read() for f in['econ.js','party.js'])
   check('fetch(' not in src and 'http' not in src and 'XMLHttpRequest' not in src,'network in stage 5 code')
