@@ -143,8 +143,9 @@ def t_death_restore(p):
   check(not ev(pg,f'SOTA.isSolved({r})'),'room solved since save kept');check(ev(pg,f'SOTA.isSolved({r0})'),'room solved before save lost');check(r0 in json.loads(ev(pg,'localStorage.getItem("sota.rooms")'))['s'],'restored rooms not stored');check(ev(pg,'SOTA.rpg.live().party[0].hp')>0,'hero dead after restore');b.close()
 def t_companions(p):
   b,c=ctx(p);pg=page(c);create(pg);T=ev(pg,'MAZE.taverns')
-  step_into(pg,T[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of story order');step_into(pg,T[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'tavern 1 companion')
-  for i in(1,2,3):step_into(pg,T[i])
+  step_into(pg,T[3]);step_into(pg,T[1]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of story order')
+  step_into(pg,T[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==2,'no companion at tavern 1');step_into(pg,T[2]);step_into(pg,T[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==2,'joined out of order (skipped tavern 2)')
+  step_into(pg,T[1]);step_into(pg,T[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==3,'someone joined at tavern 3');step_into(pg,T[3])
   n=ev(pg,'SOTA.rpg.live().party.map(c=>c.name)');check(n==['Jer','Mira','Sorrel','Brunn'],f'party {n}');step_into(pg,T[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==4,'joined twice');b.close()
 def t_random_fights(p):
   b,c=ctx(p);pg=page(c);create(pg);fights=0;steps=0;rooms=0
@@ -179,8 +180,8 @@ def t_ui_fit(p):
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()
 def t_offline4(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v14");const r=[];for(const f of["rules.js?v=14","party.js?v=14","game.js?v=14","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v14'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v15");const r=[];for(const f of["rules.js?v=14","party.js?v=14","game.js?v=14","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v15'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 def t_unchanged(p):
   d=subprocess.run(['git','diff','--stat','c11ccd52511198071301d9c30bb032a4cfaed635','--','tex.js','puzzles.js','puzzle-ui.js','map.js','doors.js','maze-data.js'],cwd=ROOT,capture_output=True,text=True).stdout

@@ -31,7 +31,7 @@ def t_opening_plays(p):
   check(ev(pg,'SOTA.storyOpen()'),'storyOpen false');s=drain(pg);check(any(x[0]=='D' for x in s),'dad never speaks in the opening');check(not ev(pg,'SOTA.storyOpen()'),'box still open')
   check(ev(pg,'SOTA.rpg.live().story.seen.opening')==1,'opening not marked');b.close()
 def t_portrait_emotions(p):
-  b,c,pg=start(p,race='elf',cls='mage',inc=('man','man','man'));step_into(pg,T(pg)[1]);s=drain(pg)
+  b,c,pg=start(p,race='elf',cls='mage',inc=('man','man','man'));step_into(pg,T(pg)[0]);s=drain(pg)
   comp=[x for x in s if x[0] in 'QSAH'];check(comp,'no portrait lines in join scene');emos={x[1] for x in comp}
   check(len(emos)>=2,f'portrait never changes emotion {emos}')
   for w,e,src,k in comp:check(src and src.startswith('art6/') and src.endswith('-'+e+'.webp'),f'portrait {src} does not match emotion {e}')
@@ -57,10 +57,13 @@ def t_not_skippable(p):
 def t_join_rules(p):
   for race,cls,inc in(('human','warrior',('str',)*3),('elf','mage',('man',)*3),('dwarf','warrior',('str',)*3),('cat','rogue',('str',)*3)):
     b,c,pg=start(p,race=race,cls=cls,inc=inc);t=T(pg)
-    step_into(pg,t[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of order');drain(pg)
-    step_into(pg,t[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'tavern 1 gave a companion');drain(pg)
-    for i in(1,2,3):
-      step_into(pg,t[i]);k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='join',f'no join scene at tavern {i+1}');drain(pg)
+    # Jeremy t1831u/t1833u: jovial joins at tavern 1, scholar at tavern 2, nobody at tavern 3, angry at tavern 4
+    for i in(3,1,2):step_into(pg,t[i]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,f'joined out of order at tavern {i+1}');drain(pg)
+    for i,n in((0,2),(1,3),(2,3),(3,4)):
+      step_into(pg,t[i]);k=S6(pg,'const l=s6.line();return l&&l.kind')
+      if i==2:check(k!='join','join scene at tavern 3')
+      else:check(k=='join',f'no join scene at tavern {i+1}')
+      drain(pg);check(len(ev(pg,'SOTA.rpg.live().party'))==n,f'party size {n} wanted after tavern {i+1}')
     P=ev(pg,'SOTA.rpg.live().party.map(c=>[c.name,c.race,c.cls,c.role||null])')
     check([x[0] for x in P[1:]]==['Mira','Sorrel','Brunn'],f'names {P}');check([x[3] for x in P[1:]]==['quirky','scholar','angry'],f'roles {P}')
     want={'cat':'cat','elf':'elf','dwarf':'dwarf'};exp=['human' if v==race else v for v in('cat','elf','dwarf')];check([x[1] for x in P[1:]]==exp,f'{race}: races {P} want {exp}')
@@ -74,7 +77,7 @@ def t_class_balance_all(p):
   check(not bad,f'unbalanced plans {bad[:3]}');b.close()
 # ---------- fights ----------
 def fight_with_party(p):
-  b,c,pg=start(p);t=T(pg);step_into(pg,t[1]);drain(pg);step_into(pg,t[2]);drain(pg);return b,c,pg
+  b,c,pg=start(p);t=T(pg);step_into(pg,t[0]);drain(pg);step_into(pg,t[1]);drain(pg);return b,c,pg  # companions now join at taverns 1 and 2 (t1833u)
 def t_fight_lines(p):
   b,c,pg=fight_with_party(p);ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.fight().m[0].hp=99999')
   check(ev(pg,'document.querySelectorAll("#s6fl").length')==1,'no fight start line');check(ev(pg,'document.getElementById("s6fl").dataset.phase')=='start','not a start line')
@@ -117,24 +120,38 @@ def open_wall(pg,i):
 def run_walls(pg,order):
   W=ev(pg,'SOTA.rpg.s6.artRooms()');n=ev(pg,'SOTA.rpg.s6.WALL_ART_ROOMS');P=ev(pg,'SOTA.rpg.s6.PIECES()');got=[]
   for k,i in enumerate(order):
-    t,art=open_wall(pg,i);want=piece_text(pg,ev(pg,f'SOTA.rpg.s6.pieceFor({k})'));check(t==want,f'{k+1}th room found (room {i}) shows wrong piece: {t[:50]!r} want {want[:50]!r}')
-    z=ev(pg,f'MAZE.rooms[{i}].z');check(art.startswith(f'art6/zone{z}'),f'room {i} in zone {z} uses art {art}')
+    t,art=open_wall(pg,i);want=piece_text(pg,ev(pg,f'SOTA.rpg.s6.pieceFor({i})'));check(t==want,f'room {i} ({k+1}th found) shows wrong piece: {t[:50]!r} want {want[:50]!r}')
+    z=ev(pg,f'MAZE.rooms[{i}].z');f=ev(pg,f'SOTA.rpg.s6.roomArt()[{i}][1]');check(art==f'art6/{f}.webp' and f.startswith(f'zone{z}-'),f'room {i} in zone {z} uses art {art} want {f}')
     check(S6(pg,'return Object.keys(L.story.walls).length')==k+1,'count wrong');got.append(t)
   return got
 def t_wall_counts(p):
   b,c,pg=fight_with_party(p);W=walls_by_zone(pg);N=S6(pg,'return s6.WALL_ART_ROOMS')
   check(len(S6(pg,'return s6.artRooms()'))==N,'art room list does not match WALL_ART_ROOMS');check(S6(pg,'return s6.PIECES()')==N,'pieces != WALL_ART_ROOMS')
   if N==28:check({k:len(v) for k,v in W.items()}=={'1':3,'2':4,'3':5,'4':7,'5':9},f'story rooms per zone {W}')
-  order=S6(pg,'return s6.artRooms()');got=run_walls(pg,order)
-  for i,g in enumerate(got):check(g==piece_text(pg,i),f'room found #{i+1} did not show piece #{i+1}')
+  RA=S6(pg,'return s6.roomArt()');check(sorted(RA)==sorted(str(i) for i in S6(pg,'return s6.artRooms()')),'not every story room has its own art')
+  check(sorted(v[0] for v in RA.values())==list(range(N)),'pieces not one per room');check(len({v[1] for v in RA.values()})==N,'art file reused')
+  # fixed spatial assignment (BFS path distance, Jeremy 2026-11-06 t1822u-t1830u)
+  WANT={4:'zone1-01-rat-entrance',5:'zone1-02-slime',1:'zone1-03-spider-toward-tavern',9:'zone2-01-no-way-out',17:'zone2-04-maze-xs-guy-outside',26:'zone3-01-crystal-defined-monsters',36:'zone3-05-crystal-cracked-smoke',37:'zone4-01-robed-circle-crystal',42:'zone4-07-figures-thrown-back-smoke',60:'zone5-01-handshake-crystal',62:'zone5-07-shop-glowing-stones',80:'zone5-08-picnic-farthest',84:'zone5-09-bedside-center'}
+  for i,f in WANT.items():check(RA[str(i)][1]==f,f'room {i} has {RA[str(i)][1]} want {f}')
+  check(RA['84'][0]==N-1 and RA['80'][0]==N-2,'dad pieces not on picnic/bedside rooms')
+  order=sorted(S6(pg,'return s6.artRooms()'),key=lambda i:RA[str(i)][0]);got=run_walls(pg,order)
+  for i,g in enumerate(got):check(g==piece_text(pg,i),f'room with piece #{i+1} did not show it')
   check(S6(pg,'return L.story.revealed'),'dad not revealed by the last pieces');check('dad' in got[-1].lower() and 'for my child' in json.dumps(S6(pg,'return STORY.wall.dad[1]')).lower(),f'last piece is not Dad and his note: {got[-1][:80]}')
   check(S6(pg,'return L.story.order.length')==N,'discovery order not kept')
   ev(pg,f'SOTA.onRoomOpen({order[0]})');check(not ev(pg,'SOTA.storyOpen()'),'same wall counted twice');check(S6(pg,'return Object.keys(L.story.walls).length')==N,'recount')
   b.close()
 def t_wall_order_independent(p):
   b,c,pg=fight_with_party(p);order=S6(pg,'return s6.artRooms()')[::-1]  # zone 5 rooms first, zone 1 last
-  got=run_walls(pg,order[:3]);check(got[0]==piece_text(pg,0),'1st room found (a zone-5 room) did not get the 1st piece (blood)')
-  check('who would make' in got[0].lower(),'1st room found did not get piece 1');check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
+  """each room shows its OWN piece however many walls came before; a skipped room's piece is missed, not inherited"""
+  got=run_walls(pg,order[:3]);check('who would make' not in got[0].lower(),'1st room found (zone 5) got the zone-1 piece by count')
+  check(got[0]==piece_text(pg,S6(pg,f'return s6.pieceFor({order[0]})')),'1st room found did not show its own piece')
+  check(S6(pg,'return L.story.revealed'),'bedside (dad) room found first did not reveal dad')
+  t,art=open_wall(pg,5);check(t==piece_text(pg,1) and 'zone1-02-slime' in art,'slime room after 3 walls did not show the slime piece')
+  check(t!=piece_text(pg,3),'later room inherited a skipped piece');t,_=open_wall(pg,4);check('who would make' in t.lower(),'rat room found last did not get the rat piece')
+  b.close()
+def t_wall_skip_misses(p):
+  b,c,pg=fight_with_party(p);t,art=open_wall(pg,1);check(t==piece_text(pg,2) and art=='art6/zone1-03-spider-toward-tavern.webp','skipping rat/slime: spider room did not show spider piece')
+  check(not S6(pg,'return L.story.revealed'),'dad revealed too early')
   b.close()
 DESC=re.compile(r"\b(stand|stands|standing|stood|paint\w*|drawn|draw\w*|drew|blood\w*|charcoal|colou?r\w*|vibrant|arguing|argue\w*|table|figures?|brush\w*|scrawl\w*|smear\w*|depict\w*|pictures?|sketch\w*|crystals?|council|two-tone|hasty)\b",re.I)
 def scene_texts(pg,limit=600):
@@ -173,7 +190,7 @@ def t_wall_count_saved(p):
   b,c,pg=fight_with_party(p);o=S6(pg,'return s6.artRooms()');run_walls(pg,[o[5],o[9]]);ev(pg,'SOTA.rpg.doSave()')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.wait_for_timeout(300);ev(pg,'SOTA.setAnim(false)')
   check(S6(pg,'return Object.keys(L.story.walls).length')==2,'count lost on reload');check(S6(pg,'return L.story.order')==[o[5],o[9]],'order lost')
-  t,_=open_wall(pg,o[1]);check(t==piece_text(pg,S6(pg,'return s6.pieceFor(2)')),'3rd room after reload did not show the 3rd piece');b.close()
+  t,_=open_wall(pg,o[1]);check(t==piece_text(pg,S6(pg,f'return s6.pieceFor({o[1]})')),'room after reload did not show its own piece');b.close()
 def t_faceless_until_dad(p):
   b,c,pg=start(p);N=S6(pg,'return s6.PIECES()');df=S6(pg,'return s6.DAD_FROM');check(df==N-2,'dad not exactly the last two pieces')
   txt=ev(pg,'JSON.stringify(STORY.wall[1].concat(STORY.wall[2],STORY.wall[3],STORY.wall[4],STORY.wall[5]))').lower()
@@ -228,13 +245,13 @@ def t_old_save_loads(p):
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
   o=S6(pg,'return s6.artRooms()');ev(pg,f'(()=>{{const k=Object.keys(localStorage).find(k=>{{try{{return JSON.parse(localStorage.getItem(k)).party}}catch(e){{}}}});const v=JSON.parse(localStorage.getItem(k));v.story={{seen:{{opening:1}},walls:{{"{o[0]}":1,"{o[1]}":1}}}};localStorage.setItem(k,JSON.stringify(v))}})()')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
-  t,_=open_wall(pg,o[7]);check(t==piece_text(pg,S6(pg,'return s6.pieceFor(2)')),'old save with 2 walls (no order) did not show piece 3');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
+  t,_=open_wall(pg,o[7]);check(t==piece_text(pg,S6(pg,f'return s6.pieceFor({o[7]})')),'old save with 2 walls (no order) did not show that room\'s piece');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)')
   step_into(pg,T(pg)[3]);drain(pg);check(ev(pg,'SOTA.rpg.live().party.map(c=>c.name)')[3]=='Brunn','old save: 3rd companion did not join');check(not [e for e in ERRS if 'story' in e.lower() or 's6' in e],f'errors {ERRS}');b.close()
 # ---------- offline ----------
 def t_offline_v14(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v14");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(ok[0]==['sota-s1-v14'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v15");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5-09-bedside-center.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v15'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
   check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
   ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
 def t_no_network_no_ads(p):

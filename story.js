@@ -9,10 +9,14 @@ const SHEET={human:"knight",elf:"elf",dwarf:"dwarf",cat:"cat"},ROLE={Q:"quirky",
 // Wall-art rooms. OPEN QUESTION for Jeremy: do monster/treasure rooms carry art too? Then set WALL_ART_ROOMS=85 (= every room).
 const WALL_ART_ROOMS=28;
 const WALLS=WALL_ART_ROOMS>=M.rooms.length?M.rooms.slice():M.rooms.filter(r=>r.k==="story"),TOTAL_P=M.rooms.length,TOTAL_W=WALL_ART_ROOMS,MEM_STEP=8;
-// The story is told by the ORDER rooms are found: the Nth art room found shows the Nth piece, in any room.
-// Pieces: zone 1..5 scenes in order, then the two Dad pieces last (the figure is faceless until those). The very last is Dad arguing with the council.
+// Each story room has ONE fixed piece (Jeremy 2026-11-06, t1822u-t1830u): its own painting and its own thoughts.
+// Find the room or miss that piece; how many walls were found before does not matter.
+// Pieces: zone 1..5 scenes in order, then the two Dad pieces last (the figure is faceless until those). The very last is Dad and his note.
 const PIECES=[1,2,3,4,5].reduce((a,z)=>a.concat(D.wall[z]),[]).concat(D.wall.dad),DAD_FROM=PIECES.length-2;
-const pieceFor=n=>Math.min(PIECES.length-1,Math.floor(n*PIECES.length/TOTAL_W)); // n = rooms found before this one (0-based)
+// room id -> [piece index, art6 file]. Order by maze PATH distance (BFS): z1 from the entrance (rat, slime, spider nearest tavern 1),
+// z2/z3/z4 from tavern 1/2/3, z5 pieces 1-7 from tavern 4, picnic = farthest from tavern 4, bedside = nearest the centre.
+const ROOM_ART={4:[0,"zone1-01-rat-entrance"],5:[1,"zone1-02-slime"],1:[2,"zone1-03-spider-toward-tavern"],9:[3,"zone2-01-no-way-out"],13:[4,"zone2-02-maze-guy-question-mark"],15:[5,"zone2-03-maze-guy-xs"],17:[6,"zone2-04-maze-xs-guy-outside"],26:[7,"zone3-01-crystal-defined-monsters"],23:[8,"zone3-02-crystal-monsters-eyes-forming"],22:[9,"zone3-03-crystal-hands-and-monster-shapes"],29:[10,"zone3-04-crystal-hands-only"],36:[11,"zone3-05-crystal-cracked-smoke"],37:[12,"zone4-01-robed-circle-crystal"],46:[13,"zone4-02-robed-circle-raised-hands"],38:[14,"zone4-03-robed-circle-purple-tendrils"],50:[15,"zone4-04-dark-robes-purple-tendrils"],55:[16,"zone4-05-dark-robes-cracked-crystal"],57:[17,"zone4-06-dark-robes-cracked-smoke"],42:[18,"zone4-07-figures-thrown-back-smoke"],60:[19,"zone5-01-handshake-crystal"],69:[20,"zone5-02-figure-holding-book"],58:[21,"zone5-03-figure-hood-down"],67:[22,"zone5-04-crystal-between-two-figures"],83:[23,"zone5-05-figure-before-council"],78:[24,"zone5-06-tavern-toast"],62:[25,"zone5-07-shop-glowing-stones"],80:[26,"zone5-08-picnic-farthest"],84:[27,"zone5-09-bedside-center"]};
+const pieceFor=id=>ROOM_ART[id]?ROOM_ART[id][0]:-1; // id = room id
 const cd=r=>Math.abs(r.c[0]-M.centre[0])+Math.abs(r.c[1]-M.centre[1]);
 let speed=24; // ms per letter
 // ---------- story state (kept inside the save) ----------
@@ -58,7 +62,7 @@ function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.r
 function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close();if(sc&&sc.opt.done)sc.opt.done();}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
-function wallArt(z,n){return z===1?"art6/zone1-"+(n%2+1)+".webp":"art6/zone"+z+".webp";}
+function wallArt(id){return "art6/"+ROOM_ART[id][1]+".webp";}
 function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(sc.need))&&(!sc.after||s.revealed));}
 const H={};
 H.plan=()=>{const s=st();return s?s.plan:null;};
@@ -70,9 +74,9 @@ H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN
  if(sc){s.seen[sc.id]=1;play("stay",sc.lines,{bg:tavBg(+s.visit.split(":")[0])});}};
 H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fun"],s);if(sc){s.seen[sc.id]=1;play("camp",withMem(sc.lines),{bg:null});}};
 H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r)||s.walls[id])return;
- const n=Object.keys(s.walls).length,pi=pieceFor(n);let lines=PIECES[pi].slice();if(pi>=DAD_FROM)s.revealed=true;
+ const pi=pieceFor(id);if(pi<0)return;let lines=PIECES[pi].slice();if(pi>=DAD_FROM)s.revealed=true;
  if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
- s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(r.z,n+1)});};
+ s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 function bossNote(){play("boss",D.boss,{end:()=>{btns([["‹ Open the door",()=>{finish();showEnding();},"open"],["Not yet",()=>finish(),"later"]]);}});}
 function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
@@ -93,7 +97,7 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`

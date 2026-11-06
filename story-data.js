@@ -16,7 +16,7 @@ opening:[
  ["N","calm","That night, {H} packs a bag and slips out the door. The maze mouth is cold and dark."],
  ["H","calm","Sorry, Dad. I'll be back with enough gold for every healer in town."]],
 join:{
- 1:[["N","calm","A loud crash. Someone has fallen off the bar."],
+ 0:[["N","calm","A loud crash. Someone has fallen off the bar."],
   ["Q","happy","Ta-daa! I meant to do that."],
   ["Q","calm","You! You smell like maze dust. Are you going deeper? Take me. Please. I am SO bored."],
   ["H","shock","You don't even know my name."],
@@ -26,7 +26,7 @@ join:{
   ["Q","calm","Plus you need someone to cheer you on. Your face is all frowny."],
   ["H","happy","...Fine. Stay close, and don't poke anything weird."],
   ["Q","happy","No promises!"]],
- 2:[["N","calm","In a corner booth, someone sits behind a wall of old maps and does not look up."],
+ 1:[["N","calm","In a corner booth, someone sits behind a wall of old maps and does not look up."],
   ["S","calm","Zone three. If you are smart, you will turn around right here."],
   ["Q","angry","Rude! We just got here!"],
   ["S","calm","I have walked these halls with ten parties. I was the only one who walked back out. Every time."],
@@ -83,7 +83,7 @@ camp:{
   {id:"c6",need:"Q",lines:[["Q","calm","I used to think this was a big adventure. Now I just want everyone to come home."],["H","calm","Me too. We will."],["Q","happy","...Pinky promise?"],["H","happy","Pinky promise."]]},
   {id:"c7",need:"A",after:"reveal",lines:[["A","angry","Your father did this. All of it. I won't pretend otherwise."],["H","calm","I know."],["A","calm","...But you're not him. Get some sleep. We end this tomorrow."]]},
   {id:"c8",lines:[["N","calm","Nobody talks much tonight. The fire burns low and blue."]]}]},
-// wall-art rooms: only the characters' thoughts about each piece (Jeremy: no description of the art). Nth room found -> Nth piece.
+// wall-art rooms: only the characters' thoughts about each piece (Jeremy: no description of the art). Each story room shows its own fixed piece (see ROOM_ART in story.js).
 wall:{
  1:[[["H","shock","Who would make something like this down here?"],["H","calm","Whoever it was, they were scared. I can feel it just looking."],["H","calm","Focus. Gold for the medicine. That's the job."]],[["H","calm","Another one. Same hand, I think."],["H","calm","Somebody really didn't like it down here."],["H","calm","Anyone sane would turn around. ...Guess I'm not sane."]],[["H","calm","Okay. That's unsettling."],["H","calm","It's like it wants me to go deeper."],["H","calm","...I'm going deeper anyway. Home can't wait much longer."]]],
  2:[[["H","calm","Is someone trying to make sense of this place? Because same."],["Q","happy","Ooh, abstract! I'd hang it in my room."],["Q","calm","If I had a room. Can I keep this wall?"],["H","calm","No, Mira. You can't keep the wall."]],[["H","calm","This one makes me sad, and I don't know why."],["Q","shock","Aww. Lonely vibes."],["Q","happy","Okay, I'm bored. Next room! Next room!"],["H","calm","Whoever made this was really unhinged. And really lost."]],[["H","calm","Someone was counting. Days, maybe."],["Q","calm","Or doors. Or snacks."],["Q","happy","I'm deciding it's snacks."],["H","calm","I hope someone's checking in on things at home."]],[["H","shock","They pushed so hard the rock cracked."],["Q","shock","Somebody REALLY wanted to go to the middle."],["Q","happy","Let's go break something in the middle!"],["H","calm","Let's just get there first."]]],

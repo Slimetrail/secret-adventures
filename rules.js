@@ -122,8 +122,8 @@ function simulate(party,mons,diff,seed,maxTurns){const f=new Fight(party,mons,di
 function isSavePoint(M,x,y){return M.camps.some(c=>c[0]===x&&c[1]===y)||M.taverns.some(c=>c[0]===x&&c[1]===y);}
 // Stage 6: companions join at taverns 2, 3, 4 (index 1..3): cat girl (quirky), elf (scholar), dwarf (angry).
 // The companion who shares the hero's race is human instead. Classes are rolled from the hero's build so the party covers melee, magic, range and stealth.
-const COMPANIONS=[{tavern:1,role:"quirky",name:"Mira",race:"cat",cls:"rogue",note:"The quirky one: bored, a trouble maker, wants adventure",alloc:{sta:3},skill:"stab"},
- {tavern:2,role:"scholar",name:"Sorrel",race:"elf",cls:"mage",note:"The scholar: just wants to know what is going on",alloc:{man:3},skill:"mend"},
+const COMPANIONS=[{tavern:0,role:"quirky",name:"Mira",race:"cat",cls:"rogue",note:"The quirky one: bored, a trouble maker, wants adventure",alloc:{sta:3},skill:"stab"},
+ {tavern:1,role:"scholar",name:"Sorrel",race:"elf",cls:"mage",note:"The scholar: just wants to know what is going on",alloc:{man:3},skill:"mend"},
  {tavern:3,role:"angry",name:"Brunn",race:"dwarf",cls:"warrior",note:"The angry one: joins to save the world when the tavern is too scared",alloc:{str:3},skill:"cleave"}];
 const ROLE_CLS={melee:"warrior",magic:"mage",range:"archer",stealth:"rogue"};
 const START_KIT={warrior:{alloc:{str:3},skill:"cleave"},rogue:{alloc:{sta:3},skill:"stab"},archer:{alloc:{sta:3},skill:"aimed"},mage:{alloc:{man:3},skill:"mend"}};
