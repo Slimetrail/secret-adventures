@@ -339,13 +339,35 @@ S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  if(stepsSince<10)return;if(!roll)roll=R.rng(live.seed>>>0);const r=roll();
  if(r<(rid>=0?0.15:0.02)){stepsSince=0;fightHere("random");}};
+// Chest items wait for an explicit choice when bags are full. No stash, ground pile or sale.
+function treasurePanel(l){const found=[],pending=l.items.slice();
+ // The door opens on pointerdown: its trailing click must not drop/leave an item below it.
+ function blockOpeningClick(){function release(){ov.removeEventListener("click",swallow,true);ov.removeEventListener("pointerdown",release,true);}
+  function swallow(e){release();if(e.detail){e.preventDefault();e.stopImmediatePropagation();}}
+  ov.addEventListener("click",swallow,true);ov.addEventListener("pointerdown",release,true);
+ }
+ const itemText=id=>{const it=R.ITEMS[id];return it.n+" — "+[it.atk&&"ATK +"+it.atk,it.mag&&"MAG +"+it.mag,it.def&&"DEF +"+it.def,it.hp&&"HP +"+it.hp].filter(Boolean).join(", ");};
+ function tryFit(){while(pending.length){const id=pending[0],who=addLoot(id);if(!who)break;found.push({id,who});pending.shift();}}
+ function draw(){const w=page("treasure");w.appendChild(head("Treasure chest"));w.appendChild(el("div","s4lab",{equipment:"Equipment",gold:"Gold",jewelry:"Enchanted jewelry"}[l.kind]));
+  if(l.forName)w.appendChild(el("div","s4note","For "+l.forName+" ("+R.CLASSES[l.forClass].name+")"));
+  if(l.gold)w.appendChild(el("div","s4note","Found "+l.gold+" gold."));
+  found.forEach(f=>w.appendChild(el("div","s4note",itemText(f.id)+(f.who?" (carried by "+f.who+")":" — Left it. Gone."))));
+  if(pending.length){const id=pending[0],canMakeRoom=live.party.some(c=>R.canCarry(Object.assign({},c,{bag:[]}),id));
+   w.appendChild(el("div","s4note",itemText(id)));w.appendChild(el("div","s4lab","Bags are full."));
+   const leave=tapBtn("Leave it",()=>{found.push({id,who:null});pending.shift();tryFit();draw();},"s4go small");leave.dataset.chestleave="1";w.appendChild(leave);
+   if(!canMakeRoom){w.appendChild(el("div","s4note","Too heavy. Even an empty bag cannot hold it. You can only leave it."));return;}
+   w.appendChild(el("div","s4lab","Drop something to make room"));w.appendChild(el("div","s4note","Dropped items are gone. No gold."));
+   live.party.forEach((c,ci)=>{if(!c.bag.length)return;w.appendChild(el("div","s4lab",c.name));E.stacks(c.bag).forEach(({id:drop,n})=>{
+    const b=tapBtn("Drop 1 "+R.ITEMS[drop].n+(n>1?" ("+n+")":""),()=>{const k=c.bag.indexOf(drop);if(k<0)return;c.bag.splice(k,1);gone(drop);if(drop==="tent"&&!hasTent())live.tentWear=0;tryFit();draw();},"wide");b.dataset.chestdrop=ci;b.dataset.chestitem=drop;w.appendChild(b);
+   });});return;
+  }
+  if(found.some(f=>f.who))w.appendChild(el("div","s4note dim","Race and class limits still apply. Keep it for a companion, or sell at a tavern."));w.appendChild(tapBtn("Continue",closeUI,"s4go small"));
+ }
+ blockOpeningClick();tryFit();draw();
+}
 S.onRoomOpen=id=>{if(!live||localStorage.getItem(DEV_NOFIGHT)==="1")return;const r=M.rooms[id];
  if(r.k==="monster"){stepsSince=0;fightHere("room");}
- else if(r.k==="treasure"){const ordinal=M.rooms.filter(q=>q.k==="treasure").findIndex(q=>q.id===id),l=R.treasure(r.z,(live.seed^(id*2654435761))>>>0,R.partyLevel(live.party),ordinal);live.gold+=l.gold;
-  const w=page("treasure");w.appendChild(head("Treasure chest"));w.appendChild(el("div","s4lab",{equipment:"Weapons and armor",gold:"Gold",jewelry:"Enchanted jewelry"}[l.kind]));
-  if(l.gold)w.appendChild(el("div","s4note","Found "+l.gold+" gold."));
-  l.items.forEach(id=>{const it=R.ITEMS[id],who=addLoot(id);w.appendChild(el("div","s4note",it.n+" — "+[it.atk&&"ATK +"+it.atk,it.mag&&"MAG +"+it.mag,it.def&&"DEF +"+it.def,it.hp&&"HP +"+it.hp].filter(Boolean).join(", ")+(who?" (carried by "+who+")":" (bags full — sold for "+E.sellPrice(id)+" gold)")));if(!who)live.gold+=E.sellPrice(id);});
-  if(l.items.length)w.appendChild(el("div","s4note dim","Race and class limits still apply. Keep it for a companion, or sell at a tavern."));w.appendChild(tapBtn("Continue",closeUI,"s4go small"));}
+ else if(r.k==="treasure"){const l=R.treasure(r.z,(live.seed^(id*2654435761))>>>0,R.partyLevel(live.party),live.party);live.gold+=l.gold;treasurePanel(l);}
  else if(r.k==="story")h6("wall",id);};
 // ================= Stage 5: economy, shops, cooking, tent =================
 const E=window.ECON;

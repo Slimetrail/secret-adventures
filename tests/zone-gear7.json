@@ -1,0 +1,5154 @@
+[
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z1_cave_iron_sword",
+    "item": {
+      "n": "Cave-iron sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 6,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z1_scrap_axe",
+    "item": {
+      "n": "Scrap axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 6,
+      "w": 5,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z1_trail_mace",
+    "item": {
+      "n": "Trail mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 6,
+      "w": 5,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z1_notch_dagger",
+    "item": {
+      "n": "Notch dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 4,
+      "w": 1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z1_rusted_short_sword",
+    "item": {
+      "n": "Rusted short-sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 4,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z1_bone_splinter",
+    "item": {
+      "n": "Bone splinter",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 4,
+      "w": 1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z1_root_staff",
+    "item": {
+      "n": "Root staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 2,
+      "mag": 5,
+      "w": 2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z1_knotted_walking_staff",
+    "item": {
+      "n": "Knotted walking staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 2,
+      "mag": 5,
+      "w": 2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z1_cave_ash_staff",
+    "item": {
+      "n": "Cave-ash staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 2,
+      "mag": 5,
+      "w": 2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z1_camp_bow",
+    "item": {
+      "n": "Camp bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 5,
+      "w": 2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z1_bent_short_bow",
+    "item": {
+      "n": "Bent short bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 5,
+      "w": 2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z1_sinew_bow",
+    "item": {
+      "n": "Sinew bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 5,
+      "w": 2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z1_riveted_plate",
+    "item": {
+      "n": "Riveted plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 7,
+      "w": 12,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z1_cave_iron_plate",
+    "item": {
+      "n": "Cave-iron plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 7,
+      "w": 12,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z1_scrap_plate",
+    "item": {
+      "n": "Scrap plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 7,
+      "w": 12,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z1_scavenger_vest",
+    "item": {
+      "n": "Scavenger vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 3,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z1_notch_leather",
+    "item": {
+      "n": "Notch leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 3,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z1_bone_strap_vest",
+    "item": {
+      "n": "Bone-strap vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 3,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z1_travel_robe",
+    "item": {
+      "n": "Travel robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 1,
+      "mag": 2,
+      "w": 1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z1_rootweave_robe",
+    "item": {
+      "n": "Rootweave robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 1,
+      "mag": 2,
+      "w": 1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z1_cave_ash_robe",
+    "item": {
+      "n": "Cave-ash robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 1,
+      "mag": 2,
+      "w": 1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z1_trail_leather",
+    "item": {
+      "n": "Trail leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 3,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z1_camp_leather",
+    "item": {
+      "n": "Camp leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 3,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z1_sinew_jerkin",
+    "item": {
+      "n": "Sinew jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 3,
+      "w": 4,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z1_warrior_iron_band",
+    "item": {
+      "n": "Iron band",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z1_warrior_ember_necklace",
+    "item": {
+      "n": "Ember necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z1_warrior_cave_stone_ring",
+    "item": {
+      "n": "Cave-stone ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z1_rogue_notch_ring",
+    "item": {
+      "n": "Notch ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z1_rogue_bone_pendant",
+    "item": {
+      "n": "Bone pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z1_rogue_scrap_copper_ring",
+    "item": {
+      "n": "Scrap-copper ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z1_mage_moon_ring",
+    "item": {
+      "n": "Moon ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 2,
+      "hp": 5,
+      "w": 0.1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z1_mage_root_pendant",
+    "item": {
+      "n": "Root pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 2,
+      "hp": 5,
+      "w": 0.2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z1_mage_travel_charm",
+    "item": {
+      "n": "Travel charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 2,
+      "hp": 5,
+      "w": 0.2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z1_archer_camp_ring",
+    "item": {
+      "n": "Camp ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z1_archer_sinew_necklace",
+    "item": {
+      "n": "Sinew necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z1_archer_trail_charm",
+    "item": {
+      "n": "Trail charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 2,
+      "hp": 5,
+      "w": 0.2,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "equipment",
+    "class": "warrior",
+    "id": "z1_iron_rim_shield",
+    "item": {
+      "n": "Iron-rim shield",
+      "slot": "offhand",
+      "a": 2,
+      "def": 2,
+      "w": 3,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "equipment",
+    "class": "rogue",
+    "id": "z1_cloth_wraps",
+    "item": {
+      "n": "Cloth wraps",
+      "slot": "gloves",
+      "a": 1,
+      "def": 1,
+      "w": 0.3,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "equipment",
+    "class": "mage",
+    "id": "z1_novice_tome",
+    "item": {
+      "n": "Novice tome",
+      "slot": "offhand",
+      "a": 1,
+      "mag": 3,
+      "w": 1,
+      "v": 40
+    }
+  },
+  {
+    "zone": 1,
+    "kind": "equipment",
+    "class": "archer",
+    "id": "z1_soft_trail_boots",
+    "item": {
+      "n": "Soft trail boots",
+      "slot": "boots",
+      "a": 1,
+      "def": 1,
+      "w": 0.5,
+      "v": 40
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z2_briar_axe",
+    "item": {
+      "n": "Briar axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 16,
+      "w": 5,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z2_thorned_sword",
+    "item": {
+      "n": "Thorned sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 16,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z2_knot_mace",
+    "item": {
+      "n": "Knot mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 16,
+      "w": 5,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z2_greeniron_blade",
+    "item": {
+      "n": "Greeniron blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 16,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z2_quiet_blade",
+    "item": {
+      "n": "Quiet blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 10,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z2_vine_dagger",
+    "item": {
+      "n": "Vine dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 10,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z2_maze_knife",
+    "item": {
+      "n": "Maze knife",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 10,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z2_hidden_short_sword",
+    "item": {
+      "n": "Hidden short-sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 10,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z2_greenwood_staff",
+    "item": {
+      "n": "Greenwood staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 6,
+      "mag": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z2_fairy_wood_staff",
+    "item": {
+      "n": "Fairy-wood staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 6,
+      "mag": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z2_moss_wrapped_staff",
+    "item": {
+      "n": "Moss-wrapped staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 6,
+      "mag": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z2_bark_staff",
+    "item": {
+      "n": "Bark staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 6,
+      "mag": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z2_yew_bow",
+    "item": {
+      "n": "Yew bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z2_bent_yew_bow",
+    "item": {
+      "n": "Bent-yew bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z2_goblin_short_bow",
+    "item": {
+      "n": "Goblin short bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z2_leaf_string_bow",
+    "item": {
+      "n": "Leaf-string bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 12,
+      "w": 2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z2_moss_iron_plate",
+    "item": {
+      "n": "Moss-iron plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 16,
+      "w": 12,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z2_briar_plate",
+    "item": {
+      "n": "Briar plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 16,
+      "w": 12,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z2_thorned_plate",
+    "item": {
+      "n": "Thorned plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 16,
+      "w": 12,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z2_greeniron_plate",
+    "item": {
+      "n": "Greeniron plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 16,
+      "w": 12,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z2_forest_leather",
+    "item": {
+      "n": "Forest leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z2_vine_vest",
+    "item": {
+      "n": "Vine vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z2_maze_leather",
+    "item": {
+      "n": "Maze leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z2_hidden_vest",
+    "item": {
+      "n": "Hidden vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z2_greenweave_robe",
+    "item": {
+      "n": "Greenweave robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 4,
+      "mag": 6,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z2_fairy_thread_robe",
+    "item": {
+      "n": "Fairy-thread robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 4,
+      "mag": 6,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z2_moss_robe",
+    "item": {
+      "n": "Moss robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 4,
+      "mag": 6,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z2_barkcloth_robe",
+    "item": {
+      "n": "Barkcloth robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 4,
+      "mag": 6,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z2_hunt_leather",
+    "item": {
+      "n": "Hunt leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z2_yew_hide_jerkin",
+    "item": {
+      "n": "Yew-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z2_leaf_stitched_leather",
+    "item": {
+      "n": "Leaf-stitched leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z2_goblin_cut_vest",
+    "item": {
+      "n": "Goblin-cut vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 8,
+      "w": 4,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z2_warrior_thorn_ring",
+    "item": {
+      "n": "Thorn ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z2_warrior_briar_necklace",
+    "item": {
+      "n": "Briar necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z2_warrior_moss_iron_ring",
+    "item": {
+      "n": "Moss-iron ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z2_warrior_greeniron_pendant",
+    "item": {
+      "n": "Greeniron pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z2_rogue_vine_ring",
+    "item": {
+      "n": "Vine ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z2_rogue_quiet_pendant",
+    "item": {
+      "n": "Quiet pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z2_rogue_maze_ring",
+    "item": {
+      "n": "Maze ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z2_rogue_hidden_charm",
+    "item": {
+      "n": "Hidden charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z2_mage_greenwood_ring",
+    "item": {
+      "n": "Greenwood ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z2_mage_fairy_pendant",
+    "item": {
+      "n": "Fairy pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z2_mage_moss_charm",
+    "item": {
+      "n": "Moss charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z2_mage_bark_ring",
+    "item": {
+      "n": "Bark ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z2_archer_yew_ring",
+    "item": {
+      "n": "Yew ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z2_archer_leaf_necklace",
+    "item": {
+      "n": "Leaf necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z2_archer_goblin_charm",
+    "item": {
+      "n": "Goblin charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z2_archer_hunt_pendant",
+    "item": {
+      "n": "Hunt pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 6,
+      "hp": 22,
+      "w": 0.2,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "equipment",
+    "class": "warrior",
+    "id": "z2_oak_buckler",
+    "item": {
+      "n": "Oak buckler",
+      "slot": "offhand",
+      "a": 2,
+      "def": 6,
+      "w": 3,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "equipment",
+    "class": "rogue",
+    "id": "z2_thorn_wraps",
+    "item": {
+      "n": "Thorn wraps",
+      "slot": "gloves",
+      "a": 1,
+      "def": 4,
+      "w": 0.3,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "equipment",
+    "class": "mage",
+    "id": "z2_meadow_tome",
+    "item": {
+      "n": "Meadow tome",
+      "slot": "offhand",
+      "a": 1,
+      "mag": 8,
+      "w": 1,
+      "v": 160
+    }
+  },
+  {
+    "zone": 2,
+    "kind": "equipment",
+    "class": "archer",
+    "id": "z2_trail_boots",
+    "item": {
+      "n": "Trail boots",
+      "slot": "boots",
+      "a": 1,
+      "def": 4,
+      "w": 0.5,
+      "v": 160
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z3_moonsteel_sword",
+    "item": {
+      "n": "Moonsteel sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 22,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z3_bone_handled_axe",
+    "item": {
+      "n": "Bone-handled axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 22,
+      "w": 5,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z3_silvered_mace",
+    "item": {
+      "n": "Silvered mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 22,
+      "w": 5,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z3_hollow_steel_blade",
+    "item": {
+      "n": "Hollow-steel blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 22,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z3_grave_iron_sword",
+    "item": {
+      "n": "Grave iron sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 22,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z3_wolffang_dagger",
+    "item": {
+      "n": "Wolffang dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 16,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z3_moon_short_sword",
+    "item": {
+      "n": "Moon short-sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 16,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z3_rib_dagger",
+    "item": {
+      "n": "Rib dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 16,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z3_silent_knife",
+    "item": {
+      "n": "Silent knife",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 16,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z3_pale_blade",
+    "item": {
+      "n": "Pale blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 16,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z3_silvered_staff",
+    "item": {
+      "n": "Silvered staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 10,
+      "mag": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z3_moon_staff",
+    "item": {
+      "n": "Moon staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 10,
+      "mag": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z3_bone_staff",
+    "item": {
+      "n": "Bone staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 10,
+      "mag": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z3_ash_staff",
+    "item": {
+      "n": "Ash staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 10,
+      "mag": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z3_palewood_staff",
+    "item": {
+      "n": "Palewood staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 10,
+      "mag": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z3_bone_bow",
+    "item": {
+      "n": "Bone bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z3_harpy_bow",
+    "item": {
+      "n": "Harpy bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z3_moon_bow",
+    "item": {
+      "n": "Moon bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z3_hollow_bow",
+    "item": {
+      "n": "Hollow bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z3_wolf_sinew_bow",
+    "item": {
+      "n": "Wolf-sinew bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 19,
+      "w": 2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z3_bone_rim_plate",
+    "item": {
+      "n": "Bone-rim plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 25,
+      "w": 12,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z3_moonsteel_plate",
+    "item": {
+      "n": "Moonsteel plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 25,
+      "w": 12,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z3_hollow_steel_plate",
+    "item": {
+      "n": "Hollow-steel plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 25,
+      "w": 12,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z3_grave_iron_plate",
+    "item": {
+      "n": "Grave iron plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 25,
+      "w": 12,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z3_silvered_plate",
+    "item": {
+      "n": "Silvered plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 25,
+      "w": 12,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z3_moon_hide_vest",
+    "item": {
+      "n": "Moon-hide vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z3_wolffang_vest",
+    "item": {
+      "n": "Wolffang vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z3_rib_stitched_vest",
+    "item": {
+      "n": "Rib-stitched vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z3_silent_leather",
+    "item": {
+      "n": "Silent leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z3_pale_hide",
+    "item": {
+      "n": "Pale hide",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z3_ashen_robe",
+    "item": {
+      "n": "Ashen robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 7,
+      "mag": 10,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z3_moon_robe",
+    "item": {
+      "n": "Moon robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 7,
+      "mag": 10,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z3_bone_thread_robe",
+    "item": {
+      "n": "Bone-thread robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 7,
+      "mag": 10,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z3_palewood_robe",
+    "item": {
+      "n": "Palewood robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 7,
+      "mag": 10,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z3_silvered_robe",
+    "item": {
+      "n": "Silvered robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 7,
+      "mag": 10,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z3_moon_hide_jerkin",
+    "item": {
+      "n": "Moon-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z3_bone_laced_jerkin",
+    "item": {
+      "n": "Bone-laced jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z3_harpy_hide_jerkin",
+    "item": {
+      "n": "Harpy-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z3_hollow_leather",
+    "item": {
+      "n": "Hollow leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z3_wolf_hide_jerkin",
+    "item": {
+      "n": "Wolf-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 13,
+      "w": 4,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z3_warrior_moonsteel_ring",
+    "item": {
+      "n": "Moonsteel ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z3_warrior_bone_necklace",
+    "item": {
+      "n": "Bone necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z3_warrior_silvered_ring",
+    "item": {
+      "n": "Silvered ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z3_warrior_hollow_pendant",
+    "item": {
+      "n": "Hollow pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z3_warrior_grave_iron_charm",
+    "item": {
+      "n": "Grave-iron charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z3_rogue_wolffang_ring",
+    "item": {
+      "n": "Wolffang ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z3_rogue_moon_pendant",
+    "item": {
+      "n": "Moon pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z3_rogue_rib_charm",
+    "item": {
+      "n": "Rib charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z3_rogue_silent_ring",
+    "item": {
+      "n": "Silent ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z3_rogue_pale_necklace",
+    "item": {
+      "n": "Pale necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z3_mage_silvered_ring",
+    "item": {
+      "n": "Silvered ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z3_mage_moon_pendant",
+    "item": {
+      "n": "Moon pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z3_mage_bone_charm",
+    "item": {
+      "n": "Bone charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z3_mage_ash_ring",
+    "item": {
+      "n": "Ash ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z3_mage_palewood_necklace",
+    "item": {
+      "n": "Palewood necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z3_archer_bone_ring",
+    "item": {
+      "n": "Bone ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z3_archer_harpy_necklace",
+    "item": {
+      "n": "Harpy necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z3_archer_moon_charm",
+    "item": {
+      "n": "Moon charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z3_archer_hollow_ring",
+    "item": {
+      "n": "Hollow ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z3_archer_wolf_sinew_pendant",
+    "item": {
+      "n": "Wolf-sinew pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 10,
+      "hp": 39,
+      "w": 0.2,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "equipment",
+    "class": "warrior",
+    "id": "z3_stone_face_shield",
+    "item": {
+      "n": "Stone-face shield",
+      "slot": "offhand",
+      "a": 3,
+      "def": 19,
+      "w": 8,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "equipment",
+    "class": "rogue",
+    "id": "z3_night_hood",
+    "item": {
+      "n": "Night hood",
+      "slot": "helmet",
+      "a": 1,
+      "def": 7,
+      "w": 0.5,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "equipment",
+    "class": "mage",
+    "id": "z3_moon_tome",
+    "item": {
+      "n": "Moon tome",
+      "slot": "offhand",
+      "a": 1,
+      "mag": 13,
+      "w": 1,
+      "v": 360
+    }
+  },
+  {
+    "zone": 3,
+    "kind": "equipment",
+    "class": "archer",
+    "id": "z3_strider_boots",
+    "item": {
+      "n": "Strider boots",
+      "slot": "boots",
+      "a": 1,
+      "def": 7,
+      "w": 0.5,
+      "v": 360
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_runic_war_mace",
+    "item": {
+      "n": "Runic war mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 30,
+      "w": 5,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_runic_sword",
+    "item": {
+      "n": "Runic sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 30,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_stone_head_axe",
+    "item": {
+      "n": "Stone-head axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 30,
+      "w": 5,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_griffin_pommel_sword",
+    "item": {
+      "n": "Griffin-pommel sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 30,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_gargoyle_mace",
+    "item": {
+      "n": "Gargoyle mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 30,
+      "w": 5,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_rune_etched_axe",
+    "item": {
+      "n": "Rune-etched axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 30,
+      "w": 5,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z4_heavy_runic_blade",
+    "item": {
+      "n": "Heavy runic blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 30,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_horn_dagger",
+    "item": {
+      "n": "Horn dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 22,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_runic_knife",
+    "item": {
+      "n": "Runic knife",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 22,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_scale_dagger",
+    "item": {
+      "n": "Scale dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 22,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_griffin_talon_dagger",
+    "item": {
+      "n": "Griffin-talon dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 22,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_short_runic_sword",
+    "item": {
+      "n": "Short runic sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 22,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_shadow_horn_blade",
+    "item": {
+      "n": "Shadow horn blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 22,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z4_etched_stiletto",
+    "item": {
+      "n": "Etched stiletto",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 22,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_runic_staff",
+    "item": {
+      "n": "Runic staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_glyph_staff",
+    "item": {
+      "n": "Glyph staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_stone_core_staff",
+    "item": {
+      "n": "Stone-core staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_warding_staff",
+    "item": {
+      "n": "Warding staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_griffin_bone_staff",
+    "item": {
+      "n": "Griffin-bone staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_rune_rod",
+    "item": {
+      "n": "Rune rod",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z4_sigil_staff",
+    "item": {
+      "n": "Sigil staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 14,
+      "mag": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_griffin_feather_bow",
+    "item": {
+      "n": "Griffin-feather bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_runic_bow",
+    "item": {
+      "n": "Runic bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_stone_bow",
+    "item": {
+      "n": "Stone bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_horn_bow",
+    "item": {
+      "n": "Horn bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_scale_string_bow",
+    "item": {
+      "n": "Scale-string bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_long_runic_bow",
+    "item": {
+      "n": "Long runic bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z4_gargoyle_limb_bow",
+    "item": {
+      "n": "Gargoyle-limb bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 26,
+      "w": 2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_gargoyle_plate",
+    "item": {
+      "n": "Gargoyle plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_runic_plate",
+    "item": {
+      "n": "Runic plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_stone_rim_plate",
+    "item": {
+      "n": "Stone-rim plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_griffin_plate",
+    "item": {
+      "n": "Griffin plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_rune_etched_plate",
+    "item": {
+      "n": "Rune-etched plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_heavy_runic_plate",
+    "item": {
+      "n": "Heavy runic plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z4_horn_bound_plate",
+    "item": {
+      "n": "Horn-bound plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 34,
+      "w": 12,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_scale_stitched_vest",
+    "item": {
+      "n": "Scale-stitched vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_horn_vest",
+    "item": {
+      "n": "Horn vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_runic_leather",
+    "item": {
+      "n": "Runic leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_griffin_hide_vest",
+    "item": {
+      "n": "Griffin-hide vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_shadow_scale_vest",
+    "item": {
+      "n": "Shadow scale vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_etched_leather",
+    "item": {
+      "n": "Etched leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z4_scale_vest",
+    "item": {
+      "n": "Scale vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_glyph_robe",
+    "item": {
+      "n": "Glyph robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_runic_robe",
+    "item": {
+      "n": "Runic robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_stone_thread_robe",
+    "item": {
+      "n": "Stone-thread robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_warding_robe",
+    "item": {
+      "n": "Warding robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_griffin_down_robe",
+    "item": {
+      "n": "Griffin-down robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_sigil_robe",
+    "item": {
+      "n": "Sigil robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z4_rune_stitched_robe",
+    "item": {
+      "n": "Rune-stitched robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 10,
+      "mag": 14,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_scale_stitched_jerkin",
+    "item": {
+      "n": "Scale-stitched jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_runic_jerkin",
+    "item": {
+      "n": "Runic jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_stone_laced_jerkin",
+    "item": {
+      "n": "Stone-laced jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_horn_hide_jerkin",
+    "item": {
+      "n": "Horn-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_griffin_hide_jerkin",
+    "item": {
+      "n": "Griffin-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_long_scale_jerkin",
+    "item": {
+      "n": "Long scale jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z4_gargoyle_hide_jerkin",
+    "item": {
+      "n": "Gargoyle-hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 18,
+      "w": 4,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_runic_ring",
+    "item": {
+      "n": "Runic ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_stone_necklace",
+    "item": {
+      "n": "Stone necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_griffin_pendant",
+    "item": {
+      "n": "Griffin pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_gargoyle_ring",
+    "item": {
+      "n": "Gargoyle ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_rune_etched_charm",
+    "item": {
+      "n": "Rune-etched charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_horn_necklace",
+    "item": {
+      "n": "Horn necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z4_warrior_heavy_sigil_ring",
+    "item": {
+      "n": "Heavy sigil ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_horn_ring",
+    "item": {
+      "n": "Horn ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_runic_pendant",
+    "item": {
+      "n": "Runic pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_scale_necklace",
+    "item": {
+      "n": "Scale necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_griffin_talon_charm",
+    "item": {
+      "n": "Griffin-talon charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_shadow_ring",
+    "item": {
+      "n": "Shadow ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_etched_band",
+    "item": {
+      "n": "Etched band",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z4_rogue_short_sigil_pendant",
+    "item": {
+      "n": "Short sigil pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_runic_ring",
+    "item": {
+      "n": "Runic ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_glyph_pendant",
+    "item": {
+      "n": "Glyph pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_stone_core_charm",
+    "item": {
+      "n": "Stone-core charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_warding_necklace",
+    "item": {
+      "n": "Warding necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_griffin_bone_ring",
+    "item": {
+      "n": "Griffin-bone ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_rune_rod_charm",
+    "item": {
+      "n": "Rune rod charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z4_mage_sigil_necklace",
+    "item": {
+      "n": "Sigil necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_griffin_feather_ring",
+    "item": {
+      "n": "Griffin-feather ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_runic_pendant",
+    "item": {
+      "n": "Runic pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_stone_necklace",
+    "item": {
+      "n": "Stone necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_horn_charm",
+    "item": {
+      "n": "Horn charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_scale_string_ring",
+    "item": {
+      "n": "Scale-string ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_long_rune_pendant",
+    "item": {
+      "n": "Long rune pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z4_archer_gargoyle_limb_charm",
+    "item": {
+      "n": "Gargoyle-limb charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 14,
+      "hp": 56,
+      "w": 0.2,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "equipment",
+    "class": "warrior",
+    "id": "z4_runic_tower_shield",
+    "item": {
+      "n": "Runic tower shield",
+      "slot": "offhand",
+      "a": 3,
+      "def": 26,
+      "w": 8,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "equipment",
+    "class": "rogue",
+    "id": "z4_runic_wraps",
+    "item": {
+      "n": "Runic wraps",
+      "slot": "gloves",
+      "a": 1,
+      "def": 10,
+      "w": 0.3,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "equipment",
+    "class": "mage",
+    "id": "z4_warding_tome",
+    "item": {
+      "n": "Warding tome",
+      "slot": "offhand",
+      "a": 1,
+      "mag": 18,
+      "w": 1,
+      "v": 640
+    }
+  },
+  {
+    "zone": 4,
+    "kind": "equipment",
+    "class": "archer",
+    "id": "z4_runic_boots",
+    "item": {
+      "n": "Runic boots",
+      "slot": "boots",
+      "a": 1,
+      "def": 10,
+      "w": 0.5,
+      "v": 640
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_crystal_edge_sword",
+    "item": {
+      "n": "Crystal-edge sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 38,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_crystal_axe",
+    "item": {
+      "n": "Crystal axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 38,
+      "w": 5,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_crystal_mace",
+    "item": {
+      "n": "Crystal mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 38,
+      "w": 5,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_prism_blade",
+    "item": {
+      "n": "Prism blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 38,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_shard_sword",
+    "item": {
+      "n": "Shard sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 38,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_bright_iron_sword",
+    "item": {
+      "n": "Bright-iron sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 38,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_deep_crystal_axe",
+    "item": {
+      "n": "Deep-crystal axe",
+      "slot": "weapon",
+      "t": "axe",
+      "atk": 38,
+      "w": 5,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_facade_mace",
+    "item": {
+      "n": "Facade mace",
+      "slot": "weapon",
+      "t": "mace",
+      "atk": 38,
+      "w": 5,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "warrior",
+    "id": "z5_core_forged_sword",
+    "item": {
+      "n": "Core-forged sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 38,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_crystal_fang",
+    "item": {
+      "n": "Crystal fang",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_shard_dagger",
+    "item": {
+      "n": "Shard dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_prism_knife",
+    "item": {
+      "n": "Prism knife",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_crystal_short_sword",
+    "item": {
+      "n": "Crystal short-sword",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 28,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_glass_edge_dagger",
+    "item": {
+      "n": "Glass-edge dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_core_dagger",
+    "item": {
+      "n": "Core dagger",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_bright_fang",
+    "item": {
+      "n": "Bright fang",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_veil_knife",
+    "item": {
+      "n": "Veil knife",
+      "slot": "weapon",
+      "t": "dagger",
+      "atk": 28,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "rogue",
+    "id": "z5_facet_blade",
+    "item": {
+      "n": "Facet blade",
+      "slot": "weapon",
+      "t": "sword",
+      "atk": 28,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_crystal_staff",
+    "item": {
+      "n": "Crystal staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_prism_staff",
+    "item": {
+      "n": "Prism staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_shard_staff",
+    "item": {
+      "n": "Shard staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_core_staff",
+    "item": {
+      "n": "Core staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_light_well_staff",
+    "item": {
+      "n": "Light-well staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_deep_crystal_rod",
+    "item": {
+      "n": "Deep-crystal rod",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_facet_staff",
+    "item": {
+      "n": "Facet staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_glow_staff",
+    "item": {
+      "n": "Glow staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "mage",
+    "id": "z5_heart_crystal_staff",
+    "item": {
+      "n": "Heart-crystal staff",
+      "slot": "weapon",
+      "t": "staff",
+      "atk": 18,
+      "mag": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_crystal_bow",
+    "item": {
+      "n": "Crystal bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_prism_bow",
+    "item": {
+      "n": "Prism bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_shard_bow",
+    "item": {
+      "n": "Shard bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_core_bow",
+    "item": {
+      "n": "Core bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_light_string_bow",
+    "item": {
+      "n": "Light-string bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_deep_crystal_bow",
+    "item": {
+      "n": "Deep-crystal bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_facet_bow",
+    "item": {
+      "n": "Facet bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_glow_bow",
+    "item": {
+      "n": "Glow bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "weapon",
+    "class": "archer",
+    "id": "z5_heartstring_bow",
+    "item": {
+      "n": "Heartstring bow",
+      "slot": "weapon",
+      "t": "bow",
+      "atk": 33,
+      "w": 2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_crystal_plate",
+    "item": {
+      "n": "Crystal plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_prism_plate",
+    "item": {
+      "n": "Prism plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_shard_plate",
+    "item": {
+      "n": "Shard plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_bright_iron_plate",
+    "item": {
+      "n": "Bright-iron plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_deep_crystal_plate",
+    "item": {
+      "n": "Deep-crystal plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_facade_plate",
+    "item": {
+      "n": "Facade plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_core_forged_plate",
+    "item": {
+      "n": "Core-forged plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_crystal_edge_plate",
+    "item": {
+      "n": "Crystal-edge plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "warrior",
+    "id": "z5_heart_crystal_plate",
+    "item": {
+      "n": "Heart-crystal plate",
+      "slot": "chest",
+      "a": 3,
+      "def": 43,
+      "w": 12,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_drakehide_vest",
+    "item": {
+      "n": "Drakehide vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_crystal_vest",
+    "item": {
+      "n": "Crystal vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_shard_leather",
+    "item": {
+      "n": "Shard leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_prism_vest",
+    "item": {
+      "n": "Prism vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_glass_edge_vest",
+    "item": {
+      "n": "Glass-edge vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_core_hide",
+    "item": {
+      "n": "Core hide",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_bright_hide",
+    "item": {
+      "n": "Bright hide",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_veil_leather",
+    "item": {
+      "n": "Veil leather",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "rogue",
+    "id": "z5_facet_vest",
+    "item": {
+      "n": "Facet vest",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_crystal_thread_robe",
+    "item": {
+      "n": "Crystal-thread robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_prism_robe",
+    "item": {
+      "n": "Prism robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_shard_robe",
+    "item": {
+      "n": "Shard robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_core_robe",
+    "item": {
+      "n": "Core robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_light_well_robe",
+    "item": {
+      "n": "Light-well robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_deep_crystal_robe",
+    "item": {
+      "n": "Deep-crystal robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_facet_robe",
+    "item": {
+      "n": "Facet robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_glow_robe",
+    "item": {
+      "n": "Glow robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "mage",
+    "id": "z5_heart_crystal_robe",
+    "item": {
+      "n": "Heart-crystal robe",
+      "slot": "chest",
+      "a": 1,
+      "def": 13,
+      "mag": 18,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_drakehide_jerkin",
+    "item": {
+      "n": "Drakehide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_crystal_jerkin",
+    "item": {
+      "n": "Crystal jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_prism_jerkin",
+    "item": {
+      "n": "Prism jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_shard_jerkin",
+    "item": {
+      "n": "Shard jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_core_hide_jerkin",
+    "item": {
+      "n": "Core hide jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_light_string_jerkin",
+    "item": {
+      "n": "Light-string jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_deep_crystal_jerkin",
+    "item": {
+      "n": "Deep-crystal jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_facet_jerkin",
+    "item": {
+      "n": "Facet jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "armor",
+    "class": "archer",
+    "id": "z5_heartstring_jerkin",
+    "item": {
+      "n": "Heartstring jerkin",
+      "slot": "chest",
+      "a": 2,
+      "def": 23,
+      "w": 4,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_crystal_ring",
+    "item": {
+      "n": "Crystal ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_prism_necklace",
+    "item": {
+      "n": "Prism necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_shard_band",
+    "item": {
+      "n": "Shard band",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_bright_iron_pendant",
+    "item": {
+      "n": "Bright-iron pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_deep_crystal_ring",
+    "item": {
+      "n": "Deep-crystal ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_facade_charm",
+    "item": {
+      "n": "Facade charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_core_forged_necklace",
+    "item": {
+      "n": "Core-forged necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_crystal_edge_ring",
+    "item": {
+      "n": "Crystal-edge ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "warrior",
+    "id": "z5_warrior_heart_crystal_pendant",
+    "item": {
+      "n": "Heart-crystal pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_crystal_fang_ring",
+    "item": {
+      "n": "Crystal fang ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_shard_pendant",
+    "item": {
+      "n": "Shard pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_prism_necklace",
+    "item": {
+      "n": "Prism necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_glass_edge_band",
+    "item": {
+      "n": "Glass-edge band",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_core_charm",
+    "item": {
+      "n": "Core charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_bright_fang_ring",
+    "item": {
+      "n": "Bright fang ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_veil_necklace",
+    "item": {
+      "n": "Veil necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_facet_ring",
+    "item": {
+      "n": "Facet ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "rogue",
+    "id": "z5_rogue_crystal_short_pendant",
+    "item": {
+      "n": "Crystal short pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_crystal_ring",
+    "item": {
+      "n": "Crystal ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_prism_pendant",
+    "item": {
+      "n": "Prism pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_shard_necklace",
+    "item": {
+      "n": "Shard necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_core_charm",
+    "item": {
+      "n": "Core charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_light_well_ring",
+    "item": {
+      "n": "Light-well ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_deep_crystal_necklace",
+    "item": {
+      "n": "Deep-crystal necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_facet_band",
+    "item": {
+      "n": "Facet band",
+      "slot": "acc",
+      "accessory": "ring",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_glow_pendant",
+    "item": {
+      "n": "Glow pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "mage",
+    "id": "z5_mage_heart_crystal_charm",
+    "item": {
+      "n": "Heart-crystal charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "mag": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_crystal_ring",
+    "item": {
+      "n": "Crystal ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_prism_necklace",
+    "item": {
+      "n": "Prism necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_shard_pendant",
+    "item": {
+      "n": "Shard pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_core_band",
+    "item": {
+      "n": "Core band",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_light_string_charm",
+    "item": {
+      "n": "Light-string charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_deep_crystal_necklace",
+    "item": {
+      "n": "Deep-crystal necklace",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_facet_ring",
+    "item": {
+      "n": "Facet ring",
+      "slot": "acc",
+      "accessory": "ring",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_glow_pendant",
+    "item": {
+      "n": "Glow pendant",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "jewelry",
+    "class": "archer",
+    "id": "z5_archer_heartstring_charm",
+    "item": {
+      "n": "Heartstring charm",
+      "slot": "acc",
+      "accessory": "amulet",
+      "atk": 18,
+      "hp": 73,
+      "w": 0.2,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "equipment",
+    "class": "warrior",
+    "id": "z5_crystal_tower_shield",
+    "item": {
+      "n": "Crystal tower shield",
+      "slot": "offhand",
+      "a": 3,
+      "def": 33,
+      "w": 8,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "equipment",
+    "class": "rogue",
+    "id": "z5_crystal_wraps",
+    "item": {
+      "n": "Crystal wraps",
+      "slot": "gloves",
+      "a": 1,
+      "def": 13,
+      "w": 0.3,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "equipment",
+    "class": "mage",
+    "id": "z5_crystal_tome",
+    "item": {
+      "n": "Crystal tome",
+      "slot": "offhand",
+      "a": 1,
+      "mag": 23,
+      "w": 1,
+      "v": 1000
+    }
+  },
+  {
+    "zone": 5,
+    "kind": "equipment",
+    "class": "archer",
+    "id": "z5_crystal_boots",
+    "item": {
+      "n": "Crystal boots",
+      "slot": "boots",
+      "a": 1,
+      "def": 13,
+      "w": 0.5,
+      "v": 1000
+    }
+  }
+]

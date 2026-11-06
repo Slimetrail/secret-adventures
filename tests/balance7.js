@@ -8,9 +8,13 @@ function preparedParty(R,diff,level=50,tier=5){
   while(c.stats.sta<Math.round(8+level*.45)&&R.raise(c,'sta')){}
   while(R.raise(c,main)){}
   c.skills=R.SKILLS[cls].map(s=>s.id).slice(0,R.skillSlots(level));
-  const kit={warrior:['sword','plate'],rogue:['dagger','robe'],mage:['staff','robe'],archer:['bow','plate']}[cls];
-  for(const id of kit){const key='relic'+tier+'_'+id;c.bag.push(key);R.equip(c,key,R.ITEMS[key].slot);}
-  for(const [id,slot] of [['ring','acc1'],['amulet','acc2']]){const key='relic'+tier+'_'+id;c.bag.push(key);R.equip(c,key,slot);}
+  // Use obtainable named zone gear; cat rogue wears the light mage robe, as race limits require.
+  const pool=Object.keys(R.ITEMS).filter(id=>id.startsWith('z'+tier+'_')),types={warrior:['sword','axe','mace'],rogue:['dagger'],mage:['staff'],archer:['bow']}[cls];
+  const kit=[pool.find(id=>types.includes(R.ITEMS[id].t)),pool.find(id=>R.ITEMS[id].slot==='chest'&&R.ITEMS[id].a===((cls==='warrior'||cls==='archer')?3:1))];
+  for(const key of kit){c.bag.push(key);R.equip(c,key,R.ITEMS[key].slot);}
+  // Named mage ring + physical necklace reproduce the legal mixed-buff stress kit.
+  const jewelry=[pool.find(id=>R.ITEMS[id].slot==='acc'&&R.ITEMS[id].mag&&R.ITEMS[id].accessory==='ring'),pool.find(id=>R.ITEMS[id].slot==='acc'&&R.ITEMS[id].atk&&R.ITEMS[id].accessory==='amulet')];
+  jewelry.forEach((key,i)=>{c.bag.push(key);R.equip(c,key,i?'acc2':'acc1');});
   c.hp=R.maxHp(c,R.DIFF[diff].hp);c.mp=R.maxMp(c);return c;
  });
 }
