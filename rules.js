@@ -27,7 +27,7 @@ const SKILLS={
  mage:[{id:"bolt",n:"Arcane Bolt",k:"magic",p:1.8,mp:3},{id:"frost",n:"Frost Shard",k:"magic",p:1.6,mp:3},{id:"mend",n:"Mend",k:"heal",p:1.6,mp:4},{id:"storm",n:"Void Storm",k:"magic",p:1.4,mp:7,all:1},{id:"nova",n:"Star Nova",k:"magic",p:2.8,mp:9},{id:"rift",n:"Crystal Rift",k:"magic",p:2.2,mp:14,all:1}]};
 function skillSlots(level){return 1+Math.floor(Math.min(level,CAP)/3);} // one at start, one more every 3 levels
 function pointsEarned(level){return START_POINTS+LEVEL_POINTS*Math.floor(Math.min(level,CAP)/2);} // 10 more every other level
-function xpNeed(level){return level>=CAP?Infinity:Math.round(14*level*level+16*level);}
+function xpNeed(level){return level>=CAP?Infinity:Math.round(1.8*level*level+9*level);}
 function newChar(name,race,cls,alloc,skill){
  if(!allowed(race,cls))throw new Error("race/class not allowed");
  const b=RACES[race].base,s={str:b.str,sta:b.sta,man:b.man};let spent=0;
@@ -64,11 +64,20 @@ const ITEMS={
  sandals:{n:"Soft boots",slot:"boots",a:1,w:0.5,def:1},greaves:{n:"Iron boots",slot:"boots",a:3,w:3,def:2},
  ring:{n:"Moon ring",slot:"acc",w:0.1,mag:2,hp:5},amulet:{n:"Ember amulet",slot:"acc",w:0.2,atk:2,hp:5},
  j_tooth:{n:"Old tooth",slot:"junk",w:0.2,v:2},j_bone:{n:"Cracked bone",slot:"junk",w:0.5,v:3},j_scale:{n:"Dull scale",slot:"junk",w:0.3,v:6},j_horn:{n:"Chipped horn",slot:"junk",w:1,v:10},j_gem:{n:"Cloudy gem",slot:"junk",w:0.1,v:18}};
+// Stage 7 chest tiers follow zone and level, retaining base race/class equipment rules.
+const CHEST_GEAR=["sword","axe","mace","dagger","bow","staff","buckler","towershield","tome","cap","helm","robe","leather","plate","wraps","gauntlets","sandals","greaves"],CHEST_JEWELS=["ring","amulet"];
+for(let tier=1;tier<=5;tier++)for(const id of CHEST_GEAR.concat(CHEST_JEWELS)){
+ const base=ITEMS[id],it=Object.assign({},base,{n:["","Wayfarer","Verdant","Moonsteel","Runic","Crystal"][tier]+" "+base.n,tier,v:40*tier*tier});
+ for(const k of ["atk","mag","def","hp"])if(base[k])it[k]=base[k]*tier+(tier-1)*(k==="hp"?12:2);
+ ITEMS["relic"+tier+"_"+id]=it;
+}
+function treasure(zone,seed,plvl,ordinal){const r=rng(seed),tier=Math.min(5,Math.max(zone,Math.ceil(plvl/10))),kind=["equipment","gold","jewelry"][ordinal%3],pool=kind==="jewelry"?CHEST_JEWELS:CHEST_GEAR;
+ return {kind,tier,gold:kind==="gold"?Math.round((65+r()*45)*zone*zone):0,items:kind==="gold"?[]:["relic"+tier+"_"+pool[Math.floor(r()*pool.length)]]};}
 const SLOTS=["weapon","offhand","helmet","chest","gloves","boots","acc1","acc2"];
 function canEquip(c,id,slot){const it=ITEMS[id];if(!it)return false;const want=slot.startsWith("acc")?"acc":slot;if(it.slot!==want)return false;
  if(it.a&&it.a>armorCap(c))return false;
  if(it.t){const R=RACES[c.race];if(!CLASSES[c.cls].weapons.includes(it.t)&&!R.anyWeapon)return false;if(it.t==="staff"&&!CLASSES[c.cls].magic)return false;}
- if(slot==="offhand"&&c.equip.weapon==="bow")return false;
+ if(slot==="offhand"&&(ITEMS[c.equip.weapon]||{}).t==="bow")return false;
  return true;}
 function equip(c,id,slot){if(!canEquip(c,id,slot)||!c.bag.includes(id))return false;const old=c.equip[slot];c.bag.splice(c.bag.indexOf(id),1);if(old)c.bag.push(old);c.equip[slot]=id;return true;}
 function unequip(c,slot){const old=c.equip[slot];if(!old||!canCarry(c,old))return false;c.equip[slot]=null;c.bag.push(old);return true;}
@@ -80,16 +89,26 @@ const MONSTERS=[null,
  ["Minotaur","Griffin","Lizard man","Stone gargoyle","Manticore","Ogre warlord","Giant scorpion"],
  ["Basilisk","Dragon","Hydra","Wyvern","Chimera","Salamander","Shadow drake"]];
 const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_MINLVL=[0,1,8,17,27,38];
-const BOSS={n:"Iron Golem",placeholder:true};
+// Rows align with MONSTERS: role, HP/ATK/DEF multipliers, optional armor penetration.
+const ROLES=[null,
+ [["scavenger",.65,.78,.40],["gel tank",1.55,.62,1.30],["shell guard",1.05,.85,1.80],["darting hunter",.70,1.12,.55],["ambusher",.90,1.35,.80],["bulwark",1.35,.80,1.55],["spore caster",.85,1.10,.65,.45]],
+ [["raider",.95,1.02,.90],["berserker",1.25,1.28,.70],["spell striker",.65,1.20,.55,.55],["skirmisher",.80,1.05,1.15],["charger",1.30,1.35,.65],["arcane swarm",.70,1.45,.40,.35],["brute tank",1.65,.95,1.65]],
+ [["lancer",1.05,1.15,.85],["ravager",1.25,1.35,.65],["bone guard",.85,.90,1.90],["devourer",1.40,1.05,.75],["winged striker",.75,1.35,.55],["pack hunter",.90,1.45,.70],["spectral caster",.70,1.10,1.30,.65]],
+ [["breaker",1.20,1.25,.80],["diver",.95,1.40,.75],["scale guard",1.10,1.00,1.65],["stone tank",1.65,.75,2.00],["barbed ambusher",.85,1.45,.65],["warlord",1.50,1.15,1.20],["pincer guard",1.00,1.10,1.80]],
+ [["gaze caster",.90,1.10,1.10,.50],["fire devastator",1.25,1.45,1.20,.25],["many-headed tank",1.80,1.10,.90],["sky assassin",.85,1.55,.70],["hybrid striker",1.15,1.25,1.30],["flame caster",.80,1.30,.85,.60],["shadow hunter",1.00,1.40,1.00,.40]]];
+const BOSS={n:"Iron Golem",role:"crystal sentinel",hp:23000,atk:255,def:145,boss:true};
+function makeBoss(diff){const d=DIFF[diff]||DIFF.normal;return Object.assign({},BOSS,{zone:5,kind:7,lvl:50,max:BOSS.hp,atk:BOSS.atk*d.matk});}
 const DIFF={story:{hp:2,matk:0.5,name:"Story"},normal:{hp:1,matk:1,name:"Normal"},hard:{hp:1,matk:1.5,name:"Hard"}};
 function partyLevel(party){return Math.round(party.reduce((t,c)=>t+c.lvl,0)/party.length);}
 // centre factor: 0 at the edge of the maze, 1 at the centre (cell distance from centre / half size)
 function centreFactor(x,y,n){const h=(n-1)/2;return Math.max(0,1-Math.max(Math.abs(x-h),Math.abs(y-h))/h);}
 function monsterLevel(zone,plvl,cf){return Math.min(CAP+5,Math.max(ZONE_MINLVL[zone],plvl)+Math.round(3*(cf||0)));}
-function makeMonster(zone,idx,plvl,cf,diff){const L=monsterLevel(zone,plvl,cf),m=ZONE_MUL[zone],d=DIFF[diff]||DIFF.normal,nm=MONSTERS[zone][idx%7];
- const hp=Math.round((16+9*L)*m*(1+0.06*(idx%7)));return {n:nm,zone,kind:idx%7,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*10)/10,def:Math.round(L*0.7*m),boss:false};}
+function makeMonster(zone,idx,plvl,cf,diff){const L=monsterLevel(zone,plvl,cf),m=ZONE_MUL[zone],d=DIFF[diff]||DIFF.normal,k=idx%7,nm=MONSTERS[zone][k],v=ROLES[zone][k];
+ const hp=Math.round((16+9*L)*m*v[1]);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false};}
 function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 function encounter(zone,plvl,cf,diff,seed){const r=rng(seed),k=1+Math.floor(r()*3),out=[];for(let i=0;i<k;i++)out.push(makeMonster(zone,Math.floor(r()*7),plvl,cf,diff));return out;}
+// Identical seeded hallway roster, exactly 2x life and 1.5x attack (Jeremy t1846u).
+function roomEncounter(zone,plvl,cf,diff,seed){return encounter(zone,plvl,cf,diff,seed).map(m=>Object.assign(m,{hp:m.hp*2,max:m.max*2,atk:m.atk*1.5,room:true}));}
 function loot(zone,seed){const r=rng(seed^0x5bd1e995),gold=Math.round((4+r()*8)*ZONE_MUL[zone]*zone),J=["j_tooth","j_bone","j_scale","j_horn","j_gem"],junk=[];if(r()<0.6)junk.push(J[Math.min(4,Math.floor(r()*2)+zone-1)]);return {gold,junk};}
 // one hit: attacker power vs defender defense, +-15% spread
 function hit(pw,def,r){return Math.max(1,Math.round((pw-def*0.5)*(0.85+0.3*r)));}
@@ -109,11 +128,14 @@ Fight.prototype.act=function(ci,cmd,arg,targ){ // one hero action. returns text
  else if(cmd==="run"){if(this.m.some(x=>x.boss)){t="Can't run!";}else if(r()<0.6){this.over="ran";t="The party ran away";}else t="Couldn't get away";}
  this.log.push(t);this.check();return t;};
 Fight.prototype.monstersTurn=function(){if(this.over)return [];const out=[];
- for(const m of this.alive(this.m)){const tg=this.alive(this.p);if(!tg.length)break;const c=tg[Math.floor(this.r()*tg.length)],ci=this.p.indexOf(c);
-  let dmg=hit(m.atk,defense(c),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);out.push(m.n+" hits "+c.name+" for "+dmg);}
+ for(const m of this.alive(this.m)){const tg=this.alive(this.p);if(!tg.length)break;
+  // A visible wind-up precedes every third round's party-wide sweep. Defend halves it.
+  const pulse=m.boss&&this.turn%3===2,targets=pulse?tg:[tg[Math.floor(this.r()*tg.length)]];
+  for(const c of targets){const ci=this.p.indexOf(c);let dmg=hit(m.atk*(pulse?.72:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);out.push(m.n+(pulse?" sweeps ":" hits ")+c.name+" for "+dmg);}
+  if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");}
  this.guard.clear();this.turn++;this.log.push(...out);this.check();return out;};
 Fight.prototype.check=function(){if(this.over)return;if(!this.alive(this.m).length)this.over="win";else if(!this.alive(this.p).length)this.over="lose";};
-Fight.prototype.rewards=function(seed){const xp=this.m.reduce((t,m)=>t+Math.round(6+m.lvl*4*ZONE_MUL[m.zone]),0),l=loot(this.m[0].zone,seed);return {xp,gold:l.gold,junk:l.junk};};
+Fight.prototype.rewards=function(seed){const xp=this.m.reduce((t,m)=>t+Math.round((6+m.lvl*4*ZONE_MUL[m.zone])*(m.room?2:1)),0),l=loot(this.m[0].zone,seed);return {xp,gold:l.gold,junk:l.junk};};
 // simple auto play (tests): every hero attacks the first foe, or uses its first attack skill when it has mana
 function simulate(party,mons,diff,seed,maxTurns){const f=new Fight(party,mons,diff,seed);for(let t=0;t<(maxTurns||200)&&!f.over;t++){
  party.forEach((c,i)=>{if(f.over||c.hp<=0)return;const s=c.skills.map(id=>SKILLS[c.cls].find(x=>x.id===id)).find(s=>s.k!=="guard"&&s.k!=="heal"&&c.mp>=s.mp);f.act(i,s?"skill":"attack",s&&s.id,0);});f.monstersTurn();}
@@ -137,6 +159,6 @@ function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-
 function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
 const RPG={CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
- ITEMS,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,BOSS,DIFF,partyLevel,centreFactor,monsterLevel,makeMonster,rng,encounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
+ ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);

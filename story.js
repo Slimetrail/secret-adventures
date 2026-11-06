@@ -58,7 +58,7 @@ function show(){const ln=cur.L[cur.i],pf=q(".s6pf"),p=q(".s6p");box.dataset.line
 function tap(e){e.preventDefault();e.stopPropagation();if(!cur||cur.typing||cur.ending)return;if(e.target&&e.target.closest&&e.target.closest(".s6btns button"))return;adv();}
 function close(){if(box){box.className="s6d";box.dataset.scene="";}document.documentElement.classList.remove("s6open");}
 window.addEventListener("keydown",e=>{if(!cur)return;e.preventDefault();e.stopImmediatePropagation();if((e.key==="Enter"||e.key===" ")&&!cur.typing&&!cur.ending)adv();},true);
-function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.remove("on");list.forEach(([t,fn,id])=>{const x=el("button","ink s4b small",t);x.dataset.s6b=id;x.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();fn();});b.appendChild(x);});}
+function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.remove("on");list.forEach(([t,fn,id,off])=>{const x=el("button","ink s4b small",t);x.dataset.s6b=id;x.disabled=!!off;x.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();fn();});b.appendChild(x);});}
 function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close();if(sc&&sc.opt.done)sc.opt.done();}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
@@ -78,12 +78,24 @@ H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r)||s.walls[id
  if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
  s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
-function bossNote(){play("boss",D.boss,{end:()=>{btns([["‹ Open the door",()=>{finish();showEnding();},"open"],["Not yet",()=>finish(),"later"]]);}});}
+// Centre lock reuses Stage 3's existing zone-5 lever rules. It is not an 86th room.
+const FINAL_LOCK=window.PUZ.make(1,5,713507);let lockState=window.PUZ.clone(FINAL_LOCK.s);
+function bossChoices(){const s=st(),P=window.PUZ;let lock=q(".s7lock");if(lock)lock.remove();
+ if(!s.finalLock){lock=el("div","s7lock");lock.style.cssText="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap";q(".s6t").appendChild(lock);
+  lock.appendChild(el("div","","Final lock: light every lamp with the levers."));const lit=P.lamps(FINAL_LOCK.pz,lockState);
+  for(let i=0;i<FINAL_LOCK.pz.L;i++){const b=el("button","ink s4b small",(lit>>i&1?"●":"○")+" Lever "+(i+1));b.dataset.s7lever=i;b.style.cssText="min-height:44px;min-width:80px";
+   b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();lockState=P.apply(FINAL_LOCK.pz,lockState,i);if(P.solved(FINAL_LOCK.pz,lockState))s.finalLock=true;bossChoices();});lock.appendChild(b);}}
+ btns([["‹ Open the door",()=>{if(!s.finalLock)return;finish();S.rpg.startBoss();},"open",!s.finalLock],["Not yet",()=>finish(),"later"]]);}
+function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",D.boss,{end:bossChoices});}
 function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
  play("ending",E.lines,{end:()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));
-  t.appendChild(el("div","s6cnt dim","(The Iron Golem fight comes in a later stage.)"));q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";box.dataset.ending=k;
+  q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";box.dataset.ending=k;
   btns([["Back to the maze",()=>finish(),"back"]]);}});}
+// The note is one-shot; the centre door stays usable after "Not yet".
+const door=el("button","ink s4b small","‹ Centre door");door.id="s7door";door.style.cssText="display:none;position:fixed;top:64px;left:12px;z-index:12";document.body.appendChild(door);
+door.addEventListener("click",()=>{const s=st();if(!s||S.storyOpen()||S.uiOpen()||S.puzzleOpen()||S.mapOpen())return;if(s.golemDefeated)showEnding();else bossNote();});
+setInterval(()=>{const l=live(),p=S.state();door.style.display=l&&Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])<=2&&!S.storyOpen()&&!S.uiOpen()&&!S.puzzleOpen()&&!S.mapOpen()?"block":"none";},250);
 // ---------- fights: one short line at the start and one at the end, nothing in between ----------
 let fightNo=0;
 function fightLine(phase,how){const l=live();if(!l)return;const st0=document.querySelector(".s4stage");if(!st0)return;let fl=document.getElementById("s6fl");if(fl)fl.remove();
@@ -93,12 +105,13 @@ function fightLine(phase,how){const l=live();if(!l)return;const st0=document.que
  const m=who(code);fl=el("div","s6fl");fl.id="s6fl";fl.dataset.phase=phase;fl.dataset.who=code;const im=el("img","s6flp");im.src="art6/"+(SHEET[m.race]||"knight")+"-"+(phase==="start"?(code==="A"?"angry":"happy"):"happy")+".webp";im.alt="";
  fl.appendChild(im);fl.appendChild(el("span","s6fln",m.name+": "));fl.appendChild(el("span","s6flt",text));st0.appendChild(fl);
  if(phase==="start"){const bot=document.getElementById("fbot");const hide=()=>{if(fl.dataset.phase==="start")fl.remove();};if(bot)bot.addEventListener("pointerdown",hide,{once:true});setTimeout(hide,3200);}}
+H.bossWon=()=>{const s=st();if(s)s.golemDefeated=true;showEnding();};
 H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
 S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
- setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
+ finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
 .s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,#241838,#08050e 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}

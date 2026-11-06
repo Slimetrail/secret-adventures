@@ -130,7 +130,7 @@ function render(t){
 }
 // ---------- placeholder panel for a newly opened room ----------
 const DT=window.DOORTEX,panel=document.getElementById("panel");let panelOn=false,panelRoom=-1;
-const PTXT={treasure:"Treasure room (loot comes in a later stage)",monster:"Monster room (fight comes later)",story:"Story room (story comes later)"};
+const PTXT={treasure:"Treasure room — open the chest.",monster:"Monster room — a powerful foe waits.",story:"Story room — discover a wall painting."};
 function showPanel(id){panelRoom=id;panelOn=true;document.getElementById("ptxt").textContent=PTXT[M.rooms[id].k];panel.classList.add("open");}
 document.getElementById("pgo").addEventListener("pointerdown",e=>{e.preventDefault();const opened=panelRoom;if(panelRoom>=0){clearedR[panelRoom]=1;saveRooms();}panelOn=false;panelRoom=-1;panel.classList.remove("open");if(opened>=0&&window.SOTA&&SOTA.onRoomOpen)SOTA.onRoomOpen(opened);});
 // ---------- loop ----------

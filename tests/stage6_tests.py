@@ -196,13 +196,22 @@ def t_faceless_until_dad(p):
   txt=ev(pg,'JSON.stringify(STORY.wall[1].concat(STORY.wall[2],STORY.wall[3],STORY.wall[4],STORY.wall[5]))').lower()
   check('dad' not in txt and 'father' not in txt,'dad named before the dad walls')
   d=ev(pg,'JSON.stringify(STORY.wall.dad)').lower();check('dad' in d or 'father' in d,'dad walls do not show the dad');b.close()
+def unlock_centre(pg):
+  moves=ev(pg,'''(()=>{const g=SOTA.rpg.s6.finalLock();for(let mask=0;mask<(1<<g.pz.L);mask++){let s=PUZ.clone(g.s),m=[];for(let i=0;i<g.pz.L;i++)if(mask>>i&1){s=PUZ.apply(g.pz,s,i);m.push(i);}if(PUZ.solved(g.pz,s))return m;}return null;})()''')
+  check(moves is not None,'final lock is unsolvable')
+  for i in moves:ev(pg,f'document.querySelector('+json.dumps(f'[data-s7lever="{i}"]')+').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+  check(not ev(pg,'document.querySelector("[data-s6b=open]").disabled'),'solved lock still blocks the door')
 def t_boss_note_and_ending_low(p):
   b,c,pg=start(p);ev(pg,'(()=>{const c=MAZE.centre;for(const d of[[0,-1],[1,0],[0,1],[-1,0],[0,-2],[2,0],[0,2],[-2,0],[1,1],[-1,-1]]){const x=c[0]+d[0],y=c[1]+d[1];if(SOTA.roomAt(x,y)<0){SOTA.teleport(x,y,0);return}}})()')
   ev(pg,'SOTA.afterStep(-1)');check(S6(pg,'const l=s6.line();return l&&l.kind')=='boss','boss note did not play near the centre')
   txt=ev(pg,'JSON.stringify(STORY.boss)').lower();check('golem' in txt,'boss note does not name the iron golem')
   drain(pg);check(ev(pg,'document.querySelectorAll("#s6d .s6btns button").length')==2,'no door choice');ev(pg,'document.querySelector("[data-s6b=later]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
   check(not ev(pg,'SOTA.storyOpen()'),'Not yet did not close');ev(pg,'SOTA.afterStep(-1)');check(not ev(pg,'SOTA.storyOpen()'),'note replayed')
-  ev(pg,'SOTA.rpg.s6.bossNote()');drain(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');drain(pg)
+  ev(pg,'SOTA.rpg.s6.bossNote()');drain(pg);unlock_centre(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');drain(pg)
+  check(ev(pg,'SOTA.rpg.ui()')=='fight','door skipped the Iron Golem');check(ev(pg,'SOTA.rpg.fight().m[0].boss'),'not a boss fight')
+  check(not ev(pg,'SOTA.storyOpen()'),'ending played before victory');ev(pg,'SOTA.rpg.forceEnd("win")')
+  if pg.locator('#s5lvlok').count():tap(pg,'#s5lvlok')
+  tap(pg,'#fdone');drain(pg)
   check(ev(pg,'document.getElementById("s6d").dataset.ending')=='low','zero exploration did not give low ending');check(S6(pg,'return L.story.ending')=='low','ending not stored')
   t=ev(pg,'document.querySelector("#s6d").innerText');check('shatter' in ev(pg,'JSON.stringify(STORY.ending.low)').lower(),'low ending: dad does not destroy the crystal');check('0 / 85' in t and f"0 / {S6(pg,'return s6.WALL_ART_ROOMS')}" in t,f'counts missing {t}')
   ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');check(not ev(pg,'SOTA.storyOpen()'),'ending did not close');b.close()
@@ -250,8 +259,8 @@ def t_old_save_loads(p):
 # ---------- offline ----------
 def t_offline_v14(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v16");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5-09-bedside-center.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(ok[0]==['sota-s1-v16'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
+  ok=ev(pg,'(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v17");const r=[];for(const f of["story.js?v=14","story-data.js?v=14","art6/cat-happy.webp","art6/tavern-1.webp","art6/zone5-09-bedside-center.webp"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(ok[0]==['sota-s1-v17'] and all(ok[1]),f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);pg.wait_for_timeout(300)
   check(ev(pg,'SOTA.storyOpen()'),'opening offline');ev(pg,'SOTA.rpg.s6.setSpeed(0)')
   ev(pg,'SOTA.teleport(MAZE.taverns[1][0],MAZE.taverns[1][1],0)');b.close()
 def t_no_network_no_ads(p):

@@ -234,7 +234,7 @@ function doAct(cmd,arg,targ){closeBranch();const c=live.party[turnI],before=F.m.
 function endFight(){const mn=$("fmenu"),how=F.over;closeBranch();const fe=$("fen");if(fe)fe.style.display="none";
  if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+(c.skills.length<R.skillSlots(c.lvl)?" - new skill ready!":""));}else c.hp=1;});
   const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return R.ITEMS[id].n+(who?"":" (no room, left behind)");});
-  mn.appendChild(el("div","s4win","Victory!"));const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(b);
+  mn.appendChild(el("div","s4win","Victory!"));const bossWon=F.m.some(m=>m.boss);const b=tapBtn("Continue",()=>{F=null;closeUI();if(bossWon)h6("bossWon");},"s4go small");b.id="fdone";mn.appendChild(b);
   mn.appendChild(el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: "+jn.join(", "):"")));if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
  else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
   const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
@@ -280,7 +280,14 @@ function bg(g,W,H,z){const k=W+"x"+H+"z"+z;let c=BGC.get(k);if(!c){if(BGC.size>6
   rg.addColorStop(0,"rgba(255,170,80,.42)");rg.addColorStop(0.4,"rgba(255,120,40,.12)");rg.addColorStop(1,"rgba(255,120,40,0)");g.fillStyle=rg;g.fillRect(0,0,W,H);
   g.fillStyle="rgba(255,210,120,.95)";g.beginPath();g.ellipse(x,y-H*0.01,W*0.011,H*0.04*f,Math.sin(t/120+i)*0.15,0,7);g.fill();g.fillStyle="rgba(255,250,220,.9)";g.beginPath();g.ellipse(x,y,W*0.005,H*0.016,0,0,7);g.fill();});}
 function inked(g,path,fill,lw){g.fillStyle=fill;path();g.fill();g.lineWidth=lw;g.strokeStyle="#0a0610";g.stroke();}
-function drawMon(g,m,x,y,s,t){const zc=ZC[m.zone],k=m.kind,sh=g.createRadialGradient(x-s*0.2,y-s*0.3,s*0.1,x,y,s);sh.addColorStop(0,"rgb("+Math.min(255,zc[0]*1.3|0)+","+Math.min(255,zc[1]*1.3|0)+","+Math.min(255,zc[2]*1.3|0)+")");sh.addColorStop(1,"rgb("+(zc[0]*0.35|0)+","+(zc[1]*0.35|0)+","+(zc[2]*0.35|0)+")");
+function drawGolem(g,x,y,s,t){g.save();g.translate(x,y+Math.sin(t/650)*s*.015);const lw=Math.max(2,s*.04);
+ g.fillStyle="rgba(0,0,0,.5)";g.beginPath();g.ellipse(0,s*.62,s*.72,s*.14,0,0,7);g.fill();
+ const plate=(x,y,w,h)=>{const gr=g.createLinearGradient(x,y,x+w,y+h);gr.addColorStop(0,"#a2acb6");gr.addColorStop(.4,"#566174");gr.addColorStop(1,"#262b3c");inked(g,()=>{g.beginPath();g.rect(x,y,w,h);},gr,lw);g.strokeStyle="#c0c7cc";g.lineWidth=1;g.strokeRect(x+s*.035,y+s*.035,w-s*.07,h-s*.07);};
+ plate(-s*.44,-s*.55,s*.88,s*.72);plate(-s*.25,-s*.91,s*.5,s*.36);
+ for(const d of [-1,1]){plate(d*s*.52-s*.16,-s*.47,s*.32,s*.62);plate(d*s*.55-s*.2,s*.02,s*.4,s*.28);plate(d*s*.24-s*.17,s*.17,s*.34,s*.45);}
+ g.fillStyle="#b992ff";g.shadowColor="#ac75ff";g.shadowBlur=s*.16;g.fillRect(-s*.17,-s*.78,s*.12,s*.05);g.fillRect(s*.05,-s*.78,s*.12,s*.05);
+ g.beginPath();g.moveTo(0,-s*.4);g.lineTo(s*.13,-s*.2);g.lineTo(0,0);g.lineTo(-s*.13,-s*.2);g.closePath();g.fill();g.restore();}
+function drawMon(g,m,x,y,s,t){if(m.boss){drawGolem(g,x,y,s*1.05,t);return;}const zc=ZC[m.zone],k=m.kind,sh=g.createRadialGradient(x-s*0.2,y-s*0.3,s*0.1,x,y,s);sh.addColorStop(0,"rgb("+Math.min(255,zc[0]*1.3|0)+","+Math.min(255,zc[1]*1.3|0)+","+Math.min(255,zc[2]*1.3|0)+")");sh.addColorStop(1,"rgb("+(zc[0]*0.35|0)+","+(zc[1]*0.35|0)+","+(zc[2]*0.35|0)+")");
  const bob=Math.sin(t/400+k)*s*0.04,lw=Math.max(2,s*0.06);g.save();g.translate(x,y+bob);
  g.fillStyle="rgba(0,0,0,.45)";g.beginPath();g.ellipse(0,s*0.62-bob,s*0.7,s*0.12,0,0,7);g.fill();
  const tall=k%3===0,wide=k%3===1;
@@ -324,17 +331,21 @@ function loop(t){if(!F||!fcv){return;}sizeF();const t0=performance.now(),g=fctx,
  ftimes.push(performance.now()-t0);if(ftimes.length>240)ftimes.shift();raf=requestAnimationFrame(loop);}
 // ---------- hooks from the walk ----------
 function zoneAt(x,y){return C.zoneOf[y*N+x];}
-function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.x,p.y,N),pl=R.partyLevel(live.party);startFight(R.encounter(z,pl,cf,live.diff,(live.seed+fightNo*104729+p.x*65+p.y)>>>0),why);}
+function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.x,p.y,N),pl=R.partyLevel(live.party);startFight((why==="room"?R.roomEncounter:R.encounter)(z,pl,cf,live.diff,(live.seed+fightNo*104729+p.x*65+p.y)>>>0),why);}
 S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  if(R.isSavePoint(M,p.x,p.y)){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
   if(t>=0){const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
   const ok=doSave(false);if(ok&&t<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));toast(joined+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can't camp or save at "+placeName(p.x,p.y)+". Buy or build one at a tavern."));updBtn();updHere();return;}
- if(S.panelOpen())return; // first entry into a room: the room itself decides (see onRoomOpen)
+ if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  if(stepsSince<10)return;if(!roll)roll=R.rng(live.seed>>>0);const r=roll();
  if(r<(rid>=0?0.15:0.02)){stepsSince=0;fightHere("random");}};
 S.onRoomOpen=id=>{if(!live||localStorage.getItem(DEV_NOFIGHT)==="1")return;const r=M.rooms[id];
  if(r.k==="monster"){stepsSince=0;fightHere("room");}
- else if(r.k==="treasure"){const l=R.loot(r.z,(live.seed^(id*2654435761))>>>0);live.gold+=l.gold*2;const got=l.junk.concat(E.drops(r.z,(live.seed^(id*40503))>>>0)).map(j=>addLoot(j)?R.ITEMS[j].n:null).filter(Boolean);toast("Treasure: +"+l.gold*2+" gold"+(got.length?", "+got.join(", "):""));}
+ else if(r.k==="treasure"){const ordinal=M.rooms.filter(q=>q.k==="treasure").findIndex(q=>q.id===id),l=R.treasure(r.z,(live.seed^(id*2654435761))>>>0,R.partyLevel(live.party),ordinal);live.gold+=l.gold;
+  const w=page("treasure");w.appendChild(head("Treasure chest"));w.appendChild(el("div","s4lab",{equipment:"Weapons and armor",gold:"Gold",jewelry:"Enchanted jewelry"}[l.kind]));
+  if(l.gold)w.appendChild(el("div","s4note","Found "+l.gold+" gold."));
+  l.items.forEach(id=>{const it=R.ITEMS[id],who=addLoot(id);w.appendChild(el("div","s4note",it.n+" — "+[it.atk&&"ATK +"+it.atk,it.mag&&"MAG +"+it.mag,it.def&&"DEF +"+it.def,it.hp&&"HP +"+it.hp].filter(Boolean).join(", ")+(who?" (carried by "+who+")":" (bags full — sold for "+E.sellPrice(id)+" gold)")));if(!who)live.gold+=E.sellPrice(id);});
+  if(l.items.length)w.appendChild(el("div","s4note dim","Race and class limits still apply. Keep it for a companion, or sell at a tavern."));w.appendChild(tapBtn("Continue",closeUI,"s4go small"));}
  else if(r.k==="story")h6("wall",id);};
 // ================= Stage 5: economy, shops, cooking, tent =================
 const E=window.ECON;
@@ -440,7 +451,7 @@ const pb=$("partyb");function updBtn(){pb.classList.toggle("need",!live);$("s4hi
 pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())return;if(S.puzzleOpen&&S.puzzleOpen())return;if(ui)return;if(!live)creation();else partyScreen();});
 updBtn();if(!live&&localStorage.getItem(DEV_NOFIGHT)!=="1")creation();window.addEventListener("resize",()=>{if(fcv&&ui==="fight")sizeF();closeBranch();});
 // test and debug hooks (no network, no secrets)
-S.rpg={s5:{buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},live:()=>live,save:()=>save,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={s5:{buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  setLive:o=>{live=o;},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth;const box=(x,y,hw,top,bot)=>({l:(x-hw)/d,r:(x+hw)/d,t:(y-top)/d,b:(y+bot)/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const[x,y]=mpos(i,W,H);return box(x,y,s*0.8*0.75,s*1.1+4,s*0.8*0.75);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H);return box(x,y,s*0.75*0.66,s*1.0+4,s*0.75*0.72);})};}};

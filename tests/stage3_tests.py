@@ -67,7 +67,7 @@ def t_all_rooms_data(p):
 
 def t_persist_and_once(p):
   b,c=ctx(p);pg=page(c);r=next(x for x in R(pg) if x['p']==1);solve_ui(pg,r);tap(pg,'#penter');check(pg.evaluate('SOTA.panelOpen()'),'panel');
-  check(pg.inner_text('#ptxt') in('Treasure room (loot comes in a later stage)','Monster room (fight comes later)','Story room (story comes later)'),'panel text')
+  check(pg.inner_text('#ptxt') in('Treasure room — open the chest.','Monster room — a powerful foe waits.','Story room — discover a wall painting.'),'panel text')
   tap(pg,'#pgo');check(not pg.evaluate('SOTA.panelOpen()'),'panel stays');tap(pg,'[data-cmd=back]');tap(pg,'[data-cmd=fwd]');check(not pg.evaluate('SOTA.panelOpen()'),'panel shown twice')
   r2=next(x for x in R(pg) if x['p']==4);solve_ui(pg,r2);tap(pg,'#pclose')  # solved but not entered
   pg.reload();pg.wait_for_function('window.SOTA');check(pg.evaluate(f"SOTA.isSolved({r['id']})"),'solved lost on reload')
@@ -132,8 +132,8 @@ def t_difficulty(p):
 
 def t_offline3(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=(await caches.keys());const c=await caches.open(k.find(x=>x=="sota-s1-v16"));const r=[];for(const f of["puzzles.js?v=14","puzzle-ui.js?v=14","doors.js?v=14","game.js?v=14"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v16'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
+  ok=pg.evaluate('(async()=>{const k=(await caches.keys());const c=await caches.open(k.find(x=>x=="sota-s1-v17"));const r=[];for(const f of["puzzles.js?v=14","puzzle-ui.js?v=14","doors.js?v=14","game.js?v=14"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v17'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 
 def t_console_network3(p):

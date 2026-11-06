@@ -96,6 +96,7 @@ def t_difficulty(p):
   create(pg,diff='story');r=ev(pg,'(()=>{const c=SOTA.rpg.live().party[0];return [c.hp,RPG.maxHp(c,1)]})()');check(r[0]==2*r[1],f'story hp {r}');b.close()
 def t_monster_scaling(p):
   b,c=ctx(p);pg=page(c)
+  check(ev(pg,'RPG.ZONE_MUL')==[0,1,1.3,1.7,2.2,2.8],'zone multipliers flattened (role variation must not hide loss of zone scaling)')
   r=ev(pg,'[1,2,3,4,5].map(z=>RPG.makeMonster(z,0,10,0,"normal"))');hp=[m['hp'] for m in r];at=[m['atk'] for m in r]
   check(all(hp[i]<hp[i+1] and at[i]<at[i+1] for i in range(4)),f'zones not stronger {hp} {at}')
   check(all(m['lvl']>=10 for m in r),'below party level');check(ev(pg,'RPG.makeMonster(1,0,30,0,"normal").lvl')>=30,'does not follow party')
@@ -180,8 +181,8 @@ def t_ui_fit(p):
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()
 def t_offline4(p):
   b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v16");const r=[];for(const f of["rules.js?v=14","party.js?v=14","game.js?v=14","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v16'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
+  ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v17");const r=[];for(const f of["rules.js?v=14","party.js?v=14","game.js?v=14","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
+  check(all(ok[1]) and ok[0]==['sota-s1-v17'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 def t_unchanged(p):
   d=subprocess.run(['git','diff','--stat','c11ccd52511198071301d9c30bb032a4cfaed635','--','tex.js','puzzles.js','puzzle-ui.js','map.js','doors.js','maze-data.js'],cwd=ROOT,capture_output=True,text=True).stdout
