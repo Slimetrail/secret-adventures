@@ -260,16 +260,21 @@ function fitBox(im,bw,bh){if(!im)return[bw*.8,bh*.8];const k=Math.min(bw/im.natu
 function monRect(i,W,H){const n=Math.min(4,F.m.length),m=F.m[i];if(m.boss){const im=spr("boss-golem"),[w,h]=fitBox(im,W*.70,Math.min(H*.56,W*1.15));return{x:Math.max(w*.5+2,W*.27),y:H*.80,w,h};}
  const sl=SLOTS[n][i%4]||SLOTS[4][i%4],fy=H*0.6,y=fy+(H*0.985-fy)*((sl[1]-0.6)/0.4),im=spr(monKey(m)),late=(m.zone||0)>=4,big=BIG_FOE[m.n]||(late?1:0),k=big||1;let[w,h]=fitBox(im,W*sl[2]*k,Math.min(H*sl[3],W*sl[2]*1.25)*k);
  if(!big){const c=heroH(W,H)*1.1;if(h>c){w*=c/h;h=c;}}
- const x=Math.max(w*.5+2,W*sl[0]),yy=late?y-H*.15:y;return{x,y:yy,w,h};}
+ const x=Math.max(w*.5+2,W*sl[0]),yy=late?Math.max(fy+H*.07,y-H*.10):Math.min(H*.985,y+H*.015);return{x,y:yy,w,h};}
 // t1985u-t1987u: zones 1-3 regular foes is drawn at about companion height; zone 4-5 foes stay large and stand mid-screen; Dragon and Manticore a little larger than before
 const BIG_FOE={Manticore:1.2,Dragon:1.2};
 function heroH(W,H){return Math.max(30,Math.min(H*.078,W*.15));}
 function hpos(i,W,H){const fy=H*0.6;return[W*(0.735+0.06*i),fy+(H-fy)*(0.30+0.19*i)];}
 function mpos(i,W,H){const r=monRect(i,W,H);return[r.x,r.y-r.h*0.5];}
 function scl(W,H){return Math.min(W/8.5,H/3.4);}
-function drawSprite(g,im,x,y,w,h,flash){g.save();g.imageSmoothingEnabled=false;g.fillStyle="rgba(0,0,0,.42)";g.beginPath();g.ellipse(x,y-h*0.02,w*0.42,Math.max(3,h*0.05),0,0,7);g.fill();
+// t1996u: contact shadow under the sprite's real lowest pixels (cached per image), flattened on the floor
+const FOOT=new WeakMap();
+function footOf(im){if(FOOT.has(im))return FOOT.get(im);let f={c:.5,s:.84,b:1};try{const w=im.naturalWidth,h=im.naturalHeight,cv=document.createElement("canvas");cv.width=w;cv.height=h;const c=cv.getContext("2d");c.drawImage(im,0,0);const d=c.getImageData(0,0,w,h).data;let bot=-1;for(let y=h-1;y>=0&&bot<0;y--)for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>40){bot=y;break;}
+ if(bot>=0){const top=Math.max(0,bot-Math.max(2,Math.round(h*.12)));let l=w,r=-1;for(let y=top;y<=bot;y++)for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>40){if(x<l)l=x;if(x>r)r=x;}f={c:(l+r+1)/2/w,s:Math.max(.3,(r-l+1)/w),b:(bot+1)/h};}}catch(e){}FOOT.set(im,f);return f;}
+function drawSprite(g,im,x,y,w,h,flash,sy){g.save();g.imageSmoothingEnabled=false;g.fillStyle="rgba(0,0,0,.42)";g.beginPath();
+ if(sy==null)g.ellipse(x,y-h*0.02,w*0.42,Math.max(3,h*0.05),0,0,7);else{const f=footOf(im),gy=sy;g.ellipse(x-w/2+w*f.c,gy-h*(1-f.b)-1,w*f.s*0.55+2,Math.max(2,w*f.s*0.09),0,0,7);}g.fill();
  g.drawImage(im,Math.round(x-w/2),Math.round(y-h),Math.round(w),Math.round(h));if(flash){g.globalCompositeOperation="lighter";g.globalAlpha=0.5;g.drawImage(im,Math.round(x-w/2),Math.round(y-h),Math.round(w),Math.round(h));}g.restore();}
-function drawMon(g,m,i,W,H,t,flash){const r=monRect(i,W,H),im=spr(monKey(m)),bob=Math.round(Math.sin(t/(m.boss?650:420)+i)*Math.max(1,r.h*0.012));if(!im)return r;drawSprite(g,im,r.x,r.y+bob,r.w,r.h,flash);
+function drawMon(g,m,i,W,H,t,flash){const r=monRect(i,W,H),im=spr(monKey(m)),bob=Math.round(Math.sin(t/(m.boss?650:420)+i)*Math.max(1,r.h*0.012));if(!im)return r;if(m.boss)drawSprite(g,im,r.x,r.y+bob,r.w,r.h,flash);else drawSprite(g,im,r.x,r.y+bob,r.w,r.h,flash,r.y);
  if(m.boss){g.save();g.globalCompositeOperation="lighter";const p=0.5+0.5*Math.sin(t/300),cx=r.x+r.w*0.0,cy=r.y-r.h*0.72,rg=g.createRadialGradient(cx,cy,1,cx,cy,r.w*0.22);rg.addColorStop(0,"rgba(190,120,255,"+(0.35*p+0.15)+")");rg.addColorStop(1,"rgba(120,60,255,0)");g.fillStyle=rg;g.fillRect(cx-r.w*.3,cy-r.w*.3,r.w*.6,r.w*.6);g.restore();}return r;}
 function drawHero(g,c,x,y,hh,t,act){const im=spr(heroKey(c)),dead=c.hp<=0;g.save();if(dead){g.globalAlpha=0.5;g.translate(x,y);g.rotate(-1.35);g.translate(-x,-y);}
  const lunge=act?-hh*0.18:0;if(im){const w=hh*im.naturalWidth/im.naturalHeight;drawSprite(g,im,x+lunge,y,w,hh,false);}g.restore();}
