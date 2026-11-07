@@ -373,21 +373,25 @@ const seenKey=id=>"batch1-"+id;
 const badlyHurt=snapshot=>snapshot.some(c=>c.hp<=0||c.hp<=c.maxHp*.25);
 function install(S,R,H){
  const api=S.rpg.s6,oldCamp=H.camp;
+ // One registry/selector owns both original slots; later batches never wrap them.
+ const entries=TALKS.map(t=>({t,key:seenKey(t.id),gate:null}));
  function select(context,snapshot){
   const s=api.st(),l=S.rpg.live();if(!s||!l)return null;
-  const eligible=TALKS.filter(t=>t.context===context&&!s.seen[seenKey(t.id)]&&t.speakers.every(c=>api.who(c))&&
-   (!t.gate||(t.gate==="cooked"?s.lastMeal==="cooked":t.gate==="hurt"?l.party.some(c=>c.hp<R.maxHp(c,R.DIFF[l.diff].hp)):
-    t.gate==="close"?!!snapshot&&badlyHurt(snapshot):!!snapshot&&!badlyHurt(snapshot))));
-  // Conditional scenes take precedence, then retain the checked file's order.
-  return eligible.find(t=>t.gate)||eligible[0]||null;
+  const eligible=entries.filter(({t,key,gate})=>t.context===context&&!s.seen[key]&&t.speakers.every(c=>api.who(c))&&
+   (gate?gate(t,s,l,snapshot):(!t.gate||(t.gate==="cooked"?s.lastMeal==="cooked":t.gate==="hurt"?l.party.some(c=>c.hp<R.maxHp(c,R.DIFF[l.diff].hp)):
+    t.gate==="close"?!!snapshot&&badlyHurt(snapshot):!!snapshot&&!badlyHurt(snapshot)))));
+  // Conditional scenes across ALL batches first, retaining batch/file order.
+  const e=eligible.find(e=>e.t.gate)||eligible[0];return e?e.t:null;
  }
- function run(context,snapshot){const t=select(context,snapshot);if(!t)return false;
-  api.st().seen[seenKey(t.id)]=1;api.play(context,t.lines,{bg:null});return true;}
+ function run(context,snapshot,opt){const t=select(context,snapshot);if(!t)return false;
+  api.st().seen[entries.find(e=>e.t===t).key]=1;api.play(context,t.lines,opt||{bg:null});return true;}
+ const sequential={select,run,add:(talks,key,gate)=>talks.forEach(t=>entries.push({t,key:key(t.id),gate}))};
+ api.sequential=sequential;
  H.camp=k=>{if(!run("camp"))return oldCamp(k);};
  H.meal=(it,fx)=>{const s=api.st();if(s)s.lastMeal=it.slot==="use"?"ration":it.slot==="dish"&&fx&&fx.hp?"cooked":"buff";};
  // Called only by the non-boss victory Continue handler, after closeUI().
  H.fightContinue=snapshot=>run("after-fight",snapshot);
- return {select};
+ return sequential;
 }
 if(typeof module!=="undefined"&&module.exports)module.exports={TALKS,seenKey,badlyHurt,install};
 if(root.SOTA&&root.SOTA.rpg&&root.SOTA.rpg.s6)install(root.SOTA,root.RPG,root.S6H);

@@ -16,6 +16,7 @@ def setup(p):
  L.party=batchParty.filter((c,i)=>!i||roles.includes(codes[c.role]));
  L.party.forEach(c=>c.hp=RPG.maxHp(c,RPG.DIFF[L.diff].hp));
  const s=SOTA.rpg.s6.st();s.seen={opening:1};s.lastMeal=null;delete s.brunnJoin;
+ for(const id of ["C7","C8","C9","C10","C11","C12","A7","A8","A9","A10","A11","A12","T1","T2","T3","T4","T5","T6","T7","T8","T9"])s.seen["batch2-"+id]=1;
  if(only)for(const id of ["C1","C2","C3","C4","C5","C6","A1","A2","A3","A4","A5","A6"])if(id!==only)s.seen["batch1-"+id]=1;};void 0;''')
  return b,c,pg
 
@@ -97,9 +98,9 @@ def t_offline_batch(p):
   if ev(pg,'!!navigator.serviceWorker.controller'):break
   pg.wait_for_timeout(100)
  check(ev(pg,'!!navigator.serviceWorker.controller'),'service worker not ready')
- check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v20");return !!(await c.match("batch1-talks.js?v=1"))&&!!(await c.match("party.js?v=15"));})()'),'new scripts not cached')
+ check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v21");return !!(await c.match("batch1-talks.js?v=2"))&&!!(await c.match("party.js?v=16"));})()'),'new scripts not cached')
  c.set_offline(True);pg.reload();S6.create(pg);S6.drain(pg)
- ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.filter(d=>d.role!=="angry").map(d=>RPG.makeCompanion(d,1)));S6H.camp(0)')
+ ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.filter(d=>d.role!=="angry").map(d=>RPG.makeCompanion(d,1)));for(const id of ["C7","C8","C9","C10","C11","C12"])SOTA.rpg.s6.st().seen["batch2-"+id]=1;S6H.camp(0)')
  check(collect(pg)==TALKS['C1'],'offline batch unavailable');b.close()
 
 TESTS=[v for k,v in list(globals().items()) if k.startswith('t_')]

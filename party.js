@@ -427,9 +427,11 @@ function eatDish(c,id){const it=R.ITEMS[id];h6("meal",it,it.slot==="dish"?E.dish
  if(fx.hp)c.hp=Math.min(mh,c.hp+Math.round(mh*fx.hp/100));if(fx.mp)c.mp=Math.min(mm,c.mp+Math.round(mm*fx.mp/100));if(fx.str||fx.sta)c.buff={str:fx.str||0,sta:fx.sta||0,f:fx.f||1,n:d.n};}
 function eatFrom(c,k){const id=c.bag[k];c.bag.splice(k,1);gone(id);eatDish(c,id);toast(c.name+" ate "+R.ITEMS[id].n);}
 // cooking: the ingredients are always used up. Only a right mix makes a dish and teaches the recipe.
-function cookTry(ings){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings.filter(y=>y===x).length))return {err:"missing"};
+function cookTry(ings,where){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings.filter(y=>y===x).length))return {err:"missing"};
  const d=E.cook(ings);if(d&&!live.party.some(c=>R.canCarry(c,"d_"+d.id)))return {err:"heavy"};ings.forEach(x=>takeOne("i_"+x));
- if(!d)return {fail:true};giveDish("d_"+d.id);const learnt=!live.recipes[d.id];if(learnt)live.recipes[d.id]="earned";return {dish:d,learnt};}
+ if(!d)return {fail:true};giveDish("d_"+d.id);const learnt=!live.recipes[d.id];if(learnt)live.recipes[d.id]="earned";
+ const p=S.state(),t=where?where[0]==="t"?+where.slice(1):-1:tavIdx(p.x,p.y);if(t>=0)h6("craft","food",t);
+ return {dish:d,learnt};}
 // Saved per-tavern consumables: base 3 each, no timed restock. Each sold
 // part/junk/ingredient produces exactly one ration and one potion here only.
 function shopCounts(t=0){s5init();live.tavernStock=live.tavernStock||{};const q=live.tavernStock[t]=live.tavernStock[t]||{};
@@ -493,7 +495,7 @@ function cookScreen(where){s5init();const back=()=>where[0]==="t"?tavernScreen(+
  const chips=el("div","s5chips");have.forEach(s=>{const x=s.id.slice(2),n=cookSel.filter(y=>y===x).length,b=el("button","s4bi s5chip"+(n?" sel":""),R.ITEMS[s.id].n+" ×"+s.n+(n?" ("+n+")":""));b.dataset.ing=x;
   b.addEventListener("click",e=>{e.preventDefault();if(n<s.n&&cookSel.length<4)cookSel.push(x);else cookSel=cookSel.filter(y=>y!==x);cookScreen(where);});chips.appendChild(b);});
  if(!have.length)chips.appendChild(el("div","s4note dim","No ingredients. Monsters drop food, taverns sell it."));w.appendChild(chips);
- const row=el("div","s4row");const cb=tapBtn("Cook"+(cookSel.length?" ("+cookSel.map(x=>R.ITEMS["i_"+x].n).join(" + ")+")":""),()=>{const r=cookTry(cookSel);cookSel=[];
+ const row=el("div","s4row");const cb=tapBtn("Cook"+(cookSel.length?" ("+cookSel.map(x=>R.ITEMS["i_"+x].n).join(" + ")+")":""),()=>{const r=cookTry(cookSel,where);cookSel=[];
   if(r.err)toast(r.err==="heavy"?"Nobody can carry the dish":"Missing ingredients");else if(r.fail)toast("That didn't work. The ingredients are ruined.");else toast("You cooked "+r.dish.n+(r.learnt?"! Recipe added to your guide.":""));cookScreen(where);},"small");cb.id="s5cook";if(cookSel.length<2)cb.disabled=true;row.appendChild(cb);w.appendChild(row);
  const known=E.DISHES.filter(d=>live.recipes[d.id]);if(known.length){w.appendChild(el("div","s4lab","Known recipes"));known.forEach(d=>{const ok=d.ing.every(x=>haveN("i_"+x)>=d.ing.filter(y=>y===x).length),o=el("button","s4opt"+(ok?"":" off"));o.dataset.again=d.id;
   o.appendChild(el("span","s4on",d.n+" · "+d.ing.map(x=>R.ITEMS["i_"+x].n).join(", ")));o.addEventListener("click",e=>{e.preventDefault();if(!ok){toast("Missing ingredients");return;}cookSel=d.ing.slice();cookScreen(where);});w.appendChild(o);});}}

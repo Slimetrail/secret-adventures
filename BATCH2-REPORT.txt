@@ -1,0 +1,127 @@
+SECRET ADVENTURES — LOCAL UNPUBLISHED BATCH 2
+Completed: 2026-11-07 09:09 EST
+Build: stage7; cache sota-s1-v21 (sw.js VER=21)
+Parent: fae6bab4c7d46274105ea133f14bbff0a2a16ee0
+Subject: Local only: add camp, after-fight, and tavern conversation batch 2
+Commit: the commit containing this report; full identity is recorded in the external
+/workspace/secret-adventures/game-export/t2069u-batch2/REPORT.txt after commit.
+
+IMPLEMENTATION / PLAY
+batch1-talks.js retains its original 12 TALKS objects and gate values unchanged.
+It exposes one shared registry and selector; batch2-talks.js appends its 21 entries.
+Camp/after-fight have no second wrapper. Eligible extra-gated talks across BOTH
+batches precede ungated talks; batch 1 wins ties, then source/array order.
+Seen keys are batch2-C7 etc., distinct from the existing batch1 keys.
+All 74 lines match both the assembled markdown and Voice markdown exactly;
+C12 has THREE lines. A9 Sorrel's third line is exactly:
+Sloppy is accurate. The openings did not require that extra motion.
+
+Camp: one shared H.camp intercept inside successful tent save before rest heal.
+At most one sequential talk per save; missing speaker means refusal. Original
+oldCamp picker fallback remains if no sequential talk fits. No meal effects change.
+C9 inspects carried rations, not lastMeal; C12 inspects carried drinks, not food.
+
+After-fight: one shared H.fightContinue, called only after closeUI on normal won
+fight Continue, never loss/run/boss. The original A1/A4 snapshot predicates are
+unchanged. All A7-A12 are unconditional beyond fight context/present speakers.
+No direction choice or separate HP gate has been added.
+
+Tavern: wraps prior H.tavern from the sequential module only. Uses the same
+index:steps visit identity; batch2Visit tracks whether the stop is consumed.
+One eligible sequential T1-T6 replaces the opening picker pool; otherwise the
+old hook runs. An actual old-pool scene consumes that stop too. Exhausted pools
+leave a slot for T5 on successful real payment. Legacy s.visit is respected.
+H.shop wraps the existing buy/buyRecipe success hook, requires the current tile
+and visit to be that tavern and the slot unused. Gold alone is not a pay gate.
+T5 consequently cannot follow T2 or an old fallback in that same visit; it can
+play on a later visit once its opening alternatives/pool rows are exhausted.
+Existing old H.shop stay banter remains the fallback. Tavern backdrops are reused.
+
+Craft waits: separate craft-wait context, at most one unseen T7-T9 per successful
+tavern food craft. cookTry accepts optional cook-screen origin, dispatches
+h6("craft","food",t) only after success, from a tavern tile or tavern-origin UI.
+Explicit camp-origin cooking, failed/missing/heavy crafts do not dispatch.
+Cook results, consumed ingredients, recipe learning, text and effects are unchanged.
+No timed minigame. No existing armor/ore/weapon craft function was found; no new
+crafting system was invented. The hook accepts generic kinds for future callers.
+
+LEFTOVERS REQUIRED BY THE EXISTING GAME
+Searched party.js, econ.js, story.js and rules.js. There is no observable fire
+burn-down + cold state and no observable loud-tavern state. C10 and T4 are installed
+with exact wording but remain ineligible; no new flags, fake darkness/tent-wear,
+music-volume proxies or story state were introduced for those conditions.
+
+BATCH 2 TALK MANIFEST — 21 talks / 74 exact spoken lines
+Both speakers mandatory. All lines use calm. No hero, memory additions or choices.
+
+C7: Mira/Sorrel; camp; no extra gate; 3 lines
+C8: Mira/Brunn; camp; no extra gate; 4 lines
+C9: Sorrel/Brunn; camp; remaining ration item in any party bag; 4 lines
+C10: Mira/Sorrel; camp; disabled: no existing observable burned-down fire + cold state; 3 lines
+C11: Mira/Brunn; camp; no extra gate; 4 lines
+C12: Mira/Sorrel; camp; i_water, potion or ether in any party bag; 3 lines
+A7: Mira/Sorrel; after-fight; no extra gate; 3 lines
+A8: Mira/Brunn; after-fight; no extra gate; 4 lines
+A9: Sorrel/Brunn; after-fight; no extra gate; 4 lines
+A10: Mira/Sorrel; after-fight; no extra gate; 3 lines
+A11: Mira/Brunn; after-fight; no extra gate; 3 lines
+A12: Sorrel/Brunn; after-fight; no extra gate; 4 lines
+T1: Mira/Sorrel; tavern; no extra gate; 3 lines
+T2: Mira/Brunn; tavern; no extra gate; 4 lines
+T3: Sorrel/Brunn; tavern; no extra gate; 4 lines
+T4: Mira/Sorrel; tavern; disabled: no existing observable loud tavern state; 3 lines
+T5: Mira/Brunn; tavern; real successful buy/buyRecipe via H.shop, unused tavern visit slot; 4 lines
+T6: Mira/Sorrel; tavern; ration, i_water, potion, ether or slot=dish in a party bag; 3 lines
+T7: Mira/Sorrel; craft-wait; no extra gate; 3 lines
+T8: Mira/Brunn; craft-wait; no extra gate; 4 lines
+T9: Sorrel/Brunn; craft-wait; no extra gate; 4 lines
+
+INVARIANTS
+story-data.js SHA256 unchanged:
+222fb30910b1f2f1ea83ab31700c306d8f84fe9bddb7b7005897cee20aedaebc
+story.js, music.js and music files, dialogue-view.js / Sample talks, picker-pool
+text, intro/reveal/endings/letter/tavern/wall/direction locks unchanged. The entire
+party.js fight-drawing/animation block matches the parent. Batch 1 objects/gates
+match the parent semantically exactly. Source/Voice/beats and dialogue-team sheets
+were read-only. Plato was not touched. No remotes, no push, nothing published,
+no external messages or other bot contact. Protected listeners were not touched.
+Temporary browser-test server uses loopback port 18784 and is stopped after tests.
+
+FILES
+batch1-talks.js; batch2-talks.js; party.js; index.html; sw.js;
+tests/batch2_talks_test.js; tests/batch2_browser_tests.py;
+tests/batch1_browser_tests.py; tests/stage6_tests.py; tests/stage7_tests.py;
+BATCH2-REPORT.txt.
+Script query versions: party.js v16, batch1-talks.js v2, batch2-talks.js v1.
+Only edited script query versions were bumped. Existing browser tests mark the
+new relevant sequential talks seen where checking old pool behavior; current
+v20 cache assertions were updated to v21, unrelated stale v18 assertions untouched.
+
+TEST RESULTS
+PASS node tests/batch2_talks_test.js: 96/96 checks; all 21 source/Voice talks,
+74 exact lines, speaker refusals, all gates/contexts, shared priority/seen, legacy
+visit handling, no choices/memory additions, original batch1 objects and hard locks.
+PASS node tests/batch1_talks_test.js: original 12-talk regression suite.
+PASS node tests/dialogue_view_test.js: 3 existing previews unchanged.
+PASS python3 tests/batch2_browser_tests.py URL: final 6/6. Renders all 19 currently
+eligible talks exactly, verifies the two intentionally unavailable talks remain
+unseen; real saves and batch1 priority, victory Continue/loss/run/boss exclusions,
+real pay/buyRecipe (including failed pay), old fallback and per-visit deduplication,
+real successful tavern cooking and tavern-origin cooking UI, camp/failed crafts
+and missing-speaker refusal, and actual offline cached v21 batch2 playback.
+PASS python3 tests/batch1_browser_tests.py URL: final 5/5.
+PASS python3 tests/scripted_scenes_tests.py URL: 4/4 (intro, all companion lineups
+for picnic/bedside and endings, story-data lock).
+PASS python3 tests/stage7_tests.py URL: final 30/30, including v21 offline boss.
+PASS targeted Stage6 memory_unlocks, tone_dark_zone4, stay_banter: 3/3.
+Stage6 full suite: 24/25 PASS. Only failure t_offline_v14 is its pre-existing
+stale v18 cache expectation (it looks in sota-s1-v18 while actual cache is v21).
+Left untouched as requested. All remaining Stage6 tests pass, including the
+adapted camp memory/tone checks. Current v21 offline playback passes in the new,
+batch1 and Stage7 suites. The unrelated music t_flow/fight_motion stale assertions
+were not changed; those suites were not rerun for this install.
+PASS JS syntax checks, Python test compilation, git diff --check.
+Initial harness-only failures were resolved: old batch1 offline expectations now
+mark new talks seen, v20 cache assertions now expect v21, and the new offline
+wait is CSP-safe (without weakening CSP). Final new/required suites above pass.
+Test logs and source provenance hashes are alongside the external REPORT.txt.
