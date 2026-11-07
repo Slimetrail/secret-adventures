@@ -389,7 +389,7 @@ function treasurePanel(l){const found=[],pending=l.items.slice();
  }
  const itemText=id=>{const it=R.ITEMS[id];return it.n+" — "+[it.atk&&"ATK +"+it.atk,it.mag&&"MAG +"+it.mag,it.def&&"DEF +"+it.def,it.hp&&"HP +"+it.hp].filter(Boolean).join(", ");};
  function tryFit(){while(pending.length){const id=pending[0],who=addLoot(id);if(!who)break;found.push({id,who});pending.shift();}}
- function draw(){const w=page("treasure");w.appendChild(head("Treasure chest"));w.appendChild(el("div","s4lab",{equipment:"Equipment",gold:"Gold",jewelry:"Enchanted jewelry"}[l.kind]));
+ function draw(){const w=page("treasure");const scene=el("img","s4treasureScene");scene.src="art6/treasure-room.webp";scene.alt="Torchlit stone treasure chamber with a glowing, slightly open chest";w.appendChild(scene);w.appendChild(head("Treasure chest"));w.appendChild(el("div","s4lab",{equipment:"Equipment",gold:"Gold",jewelry:"Enchanted jewelry"}[l.kind]));
   if(l.forName)w.appendChild(el("div","s4note","For "+l.forName+" ("+R.CLASSES[l.forClass].name+")"));
   if(l.gold)w.appendChild(el("div","s4note","Found "+l.gold+" gold."));
   found.forEach(f=>w.appendChild(el("div","s4note",itemText(f.id)+(f.who?" (carried by "+f.who+")":" — Left it. Gone."))));
