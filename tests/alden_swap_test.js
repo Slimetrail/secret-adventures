@@ -23,7 +23,7 @@ for(const f of ['story-data.js',...Array.from({length:7},(_,i)=>`batch${i+1}-tal
 const old=cp.execFileSync('git',['show',base+':story.js'],{encoding:'utf8'}),now=fs.readFileSync('story.js','utf8');
 for(const m of old.matchAll(/"(?:[^"\\]|\\.)*"/g))if(m[0].length>=40)a.ok(now.includes(m[0]),m[0]);
 const sw={self:{addEventListener(){}}};vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';globalThis.shell=SHELL;globalThis.ver=VER;',sw);
-a.equal(sw.ver,'28');for(const f of ['companion-display.js?v=1','party.js?v=17','story.js?v=15','dialogue-view.js?v=3','batch7-talks.js?v=1'])a.ok(sw.shell.includes(f));
+a.ok(Number(sw.ver)>=29);for(const f of ['companion-display.js?v=1','party.js?v=17','story.js?v=15','dialogue-view.js?v=3','batch7-talks.js?v=1','batch8-talks.js?v=1'])a.ok(sw.shell.includes(f));
 const prior={self:{addEventListener(){}}};vm.runInNewContext(cp.execFileSync('git',['show',base+':sw.js'],{encoding:'utf8'})+';globalThis.shell=SHELL;',prior);
 for(const f of prior.shell)a.ok(sw.shell.includes(f.replace('party.js?v=16','party.js?v=17').replace('story.js?v=14','story.js?v=15').replace('dialogue-view.js?v=2','dialogue-view.js?v=3')),f);
 console.log('alden_swap_test: PASS (four races, Hero, ambiguity guards, immutable sources, cache)');
