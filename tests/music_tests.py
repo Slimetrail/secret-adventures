@@ -14,16 +14,17 @@ APPROVED={'title_intro':'1b6a67f5393233c4f37a8c97000931b45d8317feda71cf8b391db79
 'final_boss':'7f8673e416e6d549e6bd9bded072d2d14876fdc219c392e246afa95666c20c84','death':'4cb683dfe7492c42e01026f6016ef6c5f42d426670761071bc0bb2d74e92cf29',
 'decision_pulse':'b28b434acffd9a48c526818f0d56d1193f18d58fe1660beb015328221bbf02d8','sacrifice':'71866259adf691436cd2933c5a773af94bf53a22336dd3f80586dbd7ab8d8fb9',
 'partial_fix':'8d3d83e188e36ccf9cb07d0780d6e4b9c457c4162b04f222e4cd5654c07ed153','true_ending':'ab8848cd573fe1bf9e207fd445201e7043afa83ec99e9a4d90f6a0648428f1b8',
-'credits':'3916a5c97700120fd709b852352e903d5be413b30dbf70d8296671a3473009c9'}
+'credits':'3916a5c97700120fd709b852352e903d5be413b30dbf70d8296671a3473009c9',
+'maze_base':'cd0ccbec4b3c13cb52430e57d889fe651fd768b6a7f09856559242add14a74fc','maze_zone1':'cd0ccbec4b3c13cb52430e57d889fe651fd768b6a7f09856559242add14a74fc',
+'maze_zone2':'358d2b557debf563d68ec45d9dfbdcd8edd7e606236007ff3734de9969d8c131','maze_zone3':'c040d2a58301e6da69b10c2016444563e1990682dc353fdc1ee2ab760176c062',
+'maze_zone4':'fe802d19b080e9ee4237f2119925a1e9d40171c29b32816558e384d67fdd2151','maze_zone5':'3a4597725e733f3b06987a3a836c879907cc10afde3437782e3b79b7125cb394'}
 def t_files(p):
  d=os.path.join(ROOT,'music');have=sorted(os.listdir(d))
  check(have==sorted(k+'.mp3' for k in APPROVED),'music folder holds '+str(have))
  for k,h in APPROVED.items():check(hashlib.sha256(open(os.path.join(d,k+'.mp3'),'rb').read()).hexdigest()==h,'hash '+k)
- for root,_,fs in os.walk(ROOT):
-  for f in fs:check(not f.startswith('maze_'),'maze track present: '+os.path.join(root,f))
  sw=open(os.path.join(ROOT,'sw.js')).read();js=open(os.path.join(ROOT,'music.js')).read()
  for k in APPROVED:check('"music/%s.mp3"'%k in sw,'not cached offline '+k)
- check('maze_' not in sw and 'maze_' not in js,'maze cue referenced');check('"music.js?v=14"' in sw,'music.js not cached')
+ check('"music.js?v=14"' in sw,'music.js not cached')
  for bad in ['http://','https://','XMLHttpRequest','sendBeacon','adsbygoogle']:check(bad not in js,'outside URL in music.js')
 def ctx2(p,auto=True):
  b=p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'] if auto else [])
@@ -37,9 +38,9 @@ def wait(pg,cue,ms=3000):
 def t_flow(p):
  b,c=ctx2(p);errs=[];pg=page(c,errs);wait(pg,'title_intro')
  create(pg);wait(pg,'sick_father');pg.wait_for_timeout(600);check(ev(pg,'SOTA.music.playing()'),'sick father not actually playing')
- S6.drain(pg);wait(pg,None,4500)
+ S6.drain(pg);wait(pg,'maze_zone1',4500)
  tap(pg,'#partyb');wait(pg,'menu');ev(pg,'SOTA.rpg.s5.campScreen(0)');wait(pg,'camping');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');wait(pg,'tavern')
- S6.drain(pg);wait(pg,'tavern');ev(pg,'document.querySelector("#s4 .s4back").click()');wait(pg,None,4500)
+ S6.drain(pg);wait(pg,'tavern');ev(pg,'document.querySelector("#s4 .s4back").click()');wait(pg,'maze_zone1',4500)
  check(not errs,'browser errors '+str(errs[:3]));b.close()
 def fight_case(p,boss,how,first,then):
  b,c=ctx2(p);pg=page(c);create(pg);S6.drain(pg)
@@ -50,13 +51,13 @@ def fight_case(p,boss,how,first,then):
   ev(pg,'(()=>{const a=document.querySelector("audio[data-cue=%s]");return 0})()'%first)
   wait(pg,then,30000)
  b.close()
-def t_fight_win(p):fight_case(p,False,'win','victory',None)
+def t_fight_win(p):fight_case(p,False,'win','victory','maze_zone1')
 def t_boss_win_lose(p):
  fight_case(p,True,'win','victory',None);fight_case(p,True,'lose','death','decision_pulse')
 def t_lose(p):fight_case(p,False,'lose','death','decision_pulse')
 def t_wall_and_note(p):
  b,c=ctx2(p);pg=page(c);create(pg);S6.drain(pg)
- rid=ev(pg,'SOTA.rpg.s6.artRooms()[0]');ev(pg,'S6H.wall(%d)'%rid);wait(pg,'art_room');S6.drain(pg);wait(pg,None,4000)
+ rid=ev(pg,'SOTA.rpg.s6.artRooms()[0]');ev(pg,'S6H.wall(%d)'%rid);wait(pg,'art_room');S6.drain(pg);wait(pg,'maze_zone1',4000)
  ev(pg,'SOTA.rpg.s6.bossNote()');wait(pg,'menu');b.close()
 def t_endings(p):
  for k,cue in [('low','sacrifice'),('mid','partial_fix'),('high','true_ending')]:
@@ -66,7 +67,13 @@ def t_endings(p):
   ev(pg,'(()=>{const s=SOTA.rpg.s6.st(),K=SOTA.rpg.s6.LETTER_KEYS;s.walls={};if("%s"!=="low"){s.walls[K.crack]=1;}if("%s"==="high"){K.z4.forEach(r=>s.walls[r]=1);s.walls[K.picnic]=1;s.walls[K.wizard]=1;}})()'%(k,k))
   ev(pg,'SOTA.rpg.s6.showEnding()');check(ev(pg,'SOTA.rpg.live().story.ending')==k,'ending key');
   if ev(pg,'!!SOTA.rpg.s6.line()&&!document.querySelector("#s6d .s6title")'):wait(pg,cue)
-  S6.drain(pg);wait(pg,'credits');tap(pg,'[data-s6b=back]');wait(pg,None,4000);b.close()
+  S6.drain(pg);wait(pg,'credits');tap(pg,'[data-s6b=back]');wait(pg,'maze_zone1',4000);b.close()
+def t_zone_loops(p):
+ b,c=ctx2(p);pg=page(c);create(pg);S6.drain(pg);wait(pg,'maze_zone1',4500)
+ for z in [2,3,4,5]:
+  xy=ev(pg,'(()=>{const c=SOTA.core,N=SOTA.N;for(let i=0;i<N*N;i++)if(+c.zoneOf[i]==%d&&c.mask[i])return [i%%N,(i/N)|0];})()'%z)
+  ev(pg,'SOTA.teleport(%d,%d,0)'%tuple(xy));wait(pg,'maze_zone%d'%z,4000)
+ b.close()
 def t_gesture_retry(p):
  b,c=ctx2(p,auto=False);pg=page(c);pg.wait_for_timeout(500);wait(pg,'title_intro')
  pg.touchscreen.tap(200,400);pg.wait_for_timeout(800);check(ev(pg,'SOTA.music.playing()'),'title music did not start after a tap');b.close()
