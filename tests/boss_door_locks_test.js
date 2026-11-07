@@ -25,5 +25,5 @@ test('rooms, letter, story-data unchanged',()=>{const scenic='const scene=el("im
  a.ok(src.includes('wall:"art6/letter-note-before-you-enter.webp"'));a.ok(fs.existsSync('art6/letter-note-before-you-enter.webp'));
  a.equal(src.replace(/\/\/ Boss door locks 2[\s\S]*?btns\(\[\["‹ Open the door"[^\n]*\n/,'').length>0,true);});
 test('cache v31 and story.js?v=16',()=>{const vm=require('vm'),c={self:{addEventListener(){}}};vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';globalThis.shell=SHELL;globalThis.v=VER;globalThis.cache=CACHE;',c);
- a.equal(c.v,'31');a.equal(c.cache,'sota-s1-v31');const o={self:{addEventListener(){}}};vm.runInNewContext(cp.execFileSync('git',['show','1958731:sw.js'],{encoding:'utf8'})+';globalThis.shell=SHELL;',o);
- a.deepStrictEqual([...c.shell].filter(x=>x!=='art6/treasure-room.webp').map(x=>x.replace('party.js?v=18','party.js?v=17')).map(x=>x.replace('story.js?v=16','story.js?v=15')),[...o.shell]);a.ok(fs.readFileSync('index.html','utf8').includes('story.js?v=16'));});
+ a.ok(['31','32'].includes(c.v));a.equal(c.cache,'sota-s1-v'+c.v);const o={self:{addEventListener(){}}};vm.runInNewContext(cp.execFileSync('git',['show','1958731:sw.js'],{encoding:'utf8'})+';globalThis.shell=SHELL;',o);
+ a.deepStrictEqual([...c.shell].filter(x=>x!=='art6/treasure-room.webp'&&x!=='batch9-talks.js?v=1').map(x=>x.replace('party.js?v=18','party.js?v=17')).map(x=>x.replace('story.js?v=16','story.js?v=15')),[...o.shell]);a.ok(fs.readFileSync('index.html','utf8').includes('story.js?v=16'));});

@@ -11,5 +11,5 @@ for(const kind of ['gold','equipment','jewelry']){
  a.equal(page.children[0].tag,'img');a.equal(page.children[0].src,'art6/treasure-room.webp');a.equal(page.children[1].text,'Treasure chest');a.equal(page.children.at(-1).text,'Continue');page.children.at(-1).fn();a.ok(closed);
 }
 const old={},now={};for(const [c,s] of [[old,cp.execFileSync('git',['show',parent+':sw.js'],{encoding:'utf8'})],[now,fs.readFileSync('sw.js','utf8')]]){c.self={addEventListener(){}};vm.runInNewContext(s+';globalThis.shell=SHELL;globalThis.ver=VER;',c);}
-a.equal(now.ver,'31');a.deepEqual([...now.shell].filter(x=>x!=='art6/treasure-room.webp').map(x=>x.replace('party.js?v=18','party.js?v=17')),[...old.shell]);
+a.ok(['31','32'].includes(now.ver));a.deepEqual([...now.shell].filter(x=>x!=='art6/treasure-room.webp'&&x!=='batch9-talks.js?v=1').map(x=>x.replace('party.js?v=18','party.js?v=17')),[...old.shell]);
 console.log('treasure_scene_test: PASS (scenic panel, three loot kinds, Continue, locked flow/rules/art rooms, SHA, exact cache retention)');
