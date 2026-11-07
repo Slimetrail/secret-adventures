@@ -257,8 +257,12 @@ function heroKey(c){const r=c.race==="human"||!c.race?"human":c.race,k="p-"+r+"-
 // layout: feet point + fit box (fractions of the canvas) per pack size; Iron Golem fills most of the left half
 const SLOTS={1:[[.3,.86,.56,.40]],2:[[.2,.70,.40,.30],[.43,.93,.42,.30]],3:[[.17,.66,.33,.24],[.45,.78,.34,.24],[.22,.95,.34,.24]],4:[[.16,.66,.30,.20],[.45,.74,.30,.20],[.19,.88,.30,.20],[.47,.97,.30,.20]]};
 function fitBox(im,bw,bh){if(!im)return[bw*.8,bh*.8];const k=Math.min(bw/im.naturalWidth,bh/im.naturalHeight);return[im.naturalWidth*k,im.naturalHeight*k];}
-function monRect(i,W,H){const n=Math.min(4,F.m.length),m=F.m[i];if(m.boss){const im=spr("boss-golem"),[w,h]=fitBox(im,W*.62,Math.min(H*.5,W*1.0));return{x:W*.31,y:H*.955,w,h};}
- const sl=SLOTS[n][i%4]||SLOTS[4][i%4],fy=H*0.6,x=W*sl[0],y=fy+(H*0.985-fy)*((sl[1]-0.6)/0.4),im=spr(monKey(m)),[w,h]=fitBox(im,W*sl[2],Math.min(H*sl[3],W*sl[2]*1.25));return{x,y,w,h};}
+function monRect(i,W,H){const n=Math.min(4,F.m.length),m=F.m[i];if(m.boss){const im=spr("boss-golem"),[w,h]=fitBox(im,W*.70,Math.min(H*.56,W*1.15));return{x:Math.max(w*.5+2,W*.27),y:H*.80,w,h};}
+ const sl=SLOTS[n][i%4]||SLOTS[4][i%4],fy=H*0.6,y=fy+(H*0.985-fy)*((sl[1]-0.6)/0.4),im=spr(monKey(m)),late=(m.zone||0)>=4,big=BIG_FOE[m.n]||(late?1:0),k=big||1;let[w,h]=fitBox(im,W*sl[2]*k,Math.min(H*sl[3],W*sl[2]*1.25)*k);
+ if(!big){const c=heroH(W,H)*1.1;if(h>c){w*=c/h;h=c;}}
+ const x=Math.max(w*.5+2,W*sl[0]),yy=late?y-H*.15:y;return{x,y:yy,w,h};}
+// t1985u-t1987u: zones 1-3 regular foes is drawn at about companion height; zone 4-5 foes stay large and stand mid-screen; Dragon and Manticore a little larger than before
+const BIG_FOE={Manticore:1.2,Dragon:1.2};
 function heroH(W,H){return Math.max(30,Math.min(H*.078,W*.15));}
 function hpos(i,W,H){const fy=H*0.6;return[W*(0.735+0.06*i),fy+(H-fy)*(0.30+0.19*i)];}
 function mpos(i,W,H){const r=monRect(i,W,H);return[r.x,r.y-r.h*0.5];}
