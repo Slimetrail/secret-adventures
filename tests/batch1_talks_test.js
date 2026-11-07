@@ -28,7 +28,8 @@ for(const hp of [0,1,25,25.01,100]){const f=fixture(["Q","S"]),snap=[{hp,maxHp:1
 {const f=fixture();f.state.lastMeal="cooked";f.H.camp();assert.strictEqual(f.calls.length,1);assert.deepStrictEqual(f.calls[0].lines,TALKS.find(t=>t.id==="C4").lines);assert.ok(!f.calls[0].opt.end);f.H.camp();assert.equal(f.calls.length,2);assert.notEqual(f.calls[0].lines,f.calls[1].lines);}
 assert.equal(crypto.createHash("sha256").update(fs.readFileSync("story-data.js")).digest("hex"),"222fb30910b1f2f1ea83ab31700c306d8f84fe9bddb7b7005897cee20aedaebc");
 const diff=cp.execFileSync("git",["diff","a3943a8ef9e97e60bf145c580ccbaa5ca915d23e","--name-only"],{encoding:"utf8"}).split("\n");
-for(const locked of ["music.js","dialogue-view.js","story-data.js"])assert.ok(!diff.includes(locked),locked);
+for(const locked of ["music.js","story-data.js"])assert.ok(!diff.includes(locked),locked);
+// t2076u explicitly unlocks preview compositing; wording is checked by dialogue_view_test.
 const party=fs.readFileSync("party.js","utf8"),before=cp.execFileSync("git",["show","a3943a8:party.js"],{encoding:"utf8"});
 const motion=s=>s.slice(s.indexOf("// ---- fight drawing"),s.indexOf("// ---------- hooks from the walk"));assert.equal(motion(party),motion(before));
 console.log("batch1_talks_test: 12 exact talks, speaker/scene gates, priority, no memory/buttons, locked files and fight motion: PASS");

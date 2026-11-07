@@ -384,7 +384,8 @@ function install(S,R,H){
   const e=eligible.find(e=>e.t.gate)||eligible[0];return e?e.t:null;
  }
  function run(context,snapshot,opt){const t=select(context,snapshot);if(!t)return false;
-  api.st().seen[entries.find(e=>e.t===t).key]=1;api.play(context,t.lines,opt||{bg:null});return true;}
+  api.st().seen[entries.find(e=>e.t===t).key]=1;const visual=root.DialogueArt;const options=opt||{bg:null};
+  api.play(context,t.lines,visual?visual.sceneOptions(t,options):options);return true;}
  const sequential={select,run,add:(talks,key,gate)=>talks.forEach(t=>entries.push({t,key:key(t.id),gate}))};
  api.sequential=sequential;
  H.camp=k=>{if(!run("camp"))return oldCamp(k);};

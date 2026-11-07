@@ -30,12 +30,13 @@ var ov=document.createElement("div");ov.id="dv";ov.innerHTML='<div id="dvbox"></
 var b=document.createElement("button");b.id="dvbtn";b.textContent="Sample talks";b.onclick=function(e){e.stopPropagation();picker()};document.body.appendChild(b);
 var box=ov.querySelector("#dvbox");
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
-function close(){ov.classList.remove("open");if(/sample-talk/.test(location.hash))history.replaceState(null,"",location.pathname+location.search)}
-function picker(){ov.classList.add("open");
+function close(){if(window.DialogueArt)window.DialogueArt.clear(ov);ov.classList.remove("open");if(/sample-talk/.test(location.hash))history.replaceState(null,"",location.pathname+location.search)}
+function picker(){if(window.DialogueArt)window.DialogueArt.clear(ov);ov.classList.add("open");
 box.innerHTML='<div id="dvpick"><h3>Sample talks</h3>'+ORDER.map(function(k){return '<button data-k="'+k+'">'+TALKS[k].title+'</button>'}).join("")+'<button data-k="x" style="background:#6b5233">Close</button></div>';
 box.querySelectorAll("button").forEach(function(x){x.onclick=function(e){e.stopPropagation();var k=x.getAttribute("data-k");k==="x"?close():play(k)}})}
 function play(k){var t=TALKS[k];if(!t)return picker();var sp=[];t.lines.forEach(function(l){if(sp.indexOf(l[0])<0)sp.push(l[0])});sp=sp.slice(0,2);var i=0;ov.classList.add("open");
 function draw(){var l=t.lines[i],last=i===t.lines.length-1;
+if(window.DialogueArt)window.DialogueArt.render(ov,k,i,l[1]);
 box.innerHTML='<div id="dvt">'+esc(t.title)+'</div><div id="dvsp">'+sp.map(function(n){return '<div class="dvn'+(n===l[0]?' on':'')+'">'+esc(n)+'</div>'}).join("")+'</div><div id="dvwho">'+esc(l[0])+'</div><div id="dvl">\u201C'+esc(l[1])+'\u201D</div><div id="dvc">'+(i+1)+' / '+t.lines.length+'</div><div id="dvctl">'+(last?'<button id="dvback">Sample talks</button><button id="dvx">Close</button>':'<button id="dvgo">Continue</button>')+'</div>';
 var g=box.querySelector("#dvgo");if(g)g.onclick=function(e){e.stopPropagation();i++;draw()};
 var bk=box.querySelector("#dvback");if(bk)bk.onclick=function(e){e.stopPropagation();picker()};
