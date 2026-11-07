@@ -86,7 +86,7 @@ function bossChoices(){const s=st(),P=window.PUZ;let lock=q(".s7lock");if(lock)l
   for(let i=0;i<FINAL_LOCK.pz.L;i++){const b=el("button","ink s4b small",(lit>>i&1?"●":"○")+" Lever "+(i+1));b.dataset.s7lever=i;b.style.cssText="min-height:44px;min-width:80px";
    b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();lockState=P.apply(FINAL_LOCK.pz,lockState,i);if(P.solved(FINAL_LOCK.pz,lockState))s.finalLock=true;bossChoices();});lock.appendChild(b);}}
  btns([["‹ Open the door",()=>{if(!s.finalLock)return;finish();S.rpg.startBoss();},"open",!s.finalLock],["Not yet",()=>finish(),"later"]]);}
-function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",D.boss,{end:bossChoices});}
+function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",D.boss,{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
 function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
  play("ending",E.lines,{end:()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));

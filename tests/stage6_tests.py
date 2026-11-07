@@ -204,6 +204,8 @@ def unlock_centre(pg):
 def t_boss_note_and_ending_low(p):
   b,c,pg=start(p);ev(pg,'(()=>{const c=MAZE.centre;for(const d of[[0,-1],[1,0],[0,1],[-1,0],[0,-2],[2,0],[0,2],[-2,0],[1,1],[-1,-1]]){const x=c[0]+d[0],y=c[1]+d[1];if(SOTA.roomAt(x,y)<0){SOTA.teleport(x,y,0);return}}})()')
   ev(pg,'SOTA.afterStep(-1)');check(S6(pg,'const l=s6.line();return l&&l.kind')=='boss','boss note did not play near the centre')
+  li=ev(pg,'(()=>{const i=document.querySelector("img.s6wall");if(!i)return null;const r=i.getBoundingClientRect();return [i.getAttribute("src")||"",r.width>0&&r.height>0&&getComputedStyle(i).display!="none"]})()');check(li and li[0].split('?')[0].endswith('art6/letter-note-before-you-enter.webp') and li[1],f'letter art not shown {li}')
+  check('"art6/letter-note-before-you-enter.webp"' in open(os.path.join(ROOT,'sw.js')).read(),'letter art not cached in sw.js')
   txt=ev(pg,'JSON.stringify(STORY.boss)').lower();check('golem' in txt,'boss note does not name the iron golem')
   drain(pg);check(ev(pg,'document.querySelectorAll("#s6d .s6btns button").length')==2,'no door choice');ev(pg,'document.querySelector("[data-s6b=later]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
   check(not ev(pg,'SOTA.storyOpen()'),'Not yet did not close');ev(pg,'SOTA.afterStep(-1)');check(not ev(pg,'SOTA.storyOpen()'),'note replayed')
