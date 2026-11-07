@@ -67,7 +67,7 @@ function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(s
 const H={};
 H.plan=()=>{const s=st();return s?s.plan:null;};
 H.created=()=>{const s=st();if(!s)return;s.seen.opening=1;play("opening",D.opening,{bg:null});};
-H.joined=(c,t)=>{const s=st();if(!s)return;s.seen["join"+t]=1;play("join",D.join[t]||[],{bg:tavBg(t)});};
+H.joined=(c,t)=>{const s=st();if(!s)return;if(t===3&&!s.brunnJoin)s.brunnJoin=s.walls[LETTER_KEYS.crack]?"save":"died";s.seen["join"+t]=1;play("join",D.join[t]||[],{bg:tavBg(t)});};
 H.tavern=t=>{const s=st(),l=live();if(!s)return;const vk=t+":"+l.steps;if(s.visit===vk)return;s.visit=vk;s.shopN=0;
  const sc=seenFirst(D.tavern[t]||[],s);if(sc){s.seen[sc.id]=1;play("tavern",withMem(sc.lines),{bg:tavBg(t)});}};
 H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN%3)return;const sc=seenFirst(D.stay[dark()?"dark":"fun"],s);
@@ -86,7 +86,32 @@ function bossChoices(){const s=st(),P=window.PUZ;let lock=q(".s7lock");if(lock)l
   for(let i=0;i<FINAL_LOCK.pz.L;i++){const b=el("button","ink s4b small",(lit>>i&1?"●":"○")+" Lever "+(i+1));b.dataset.s7lever=i;b.style.cssText="min-height:44px;min-width:80px";
    b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();lockState=P.apply(FINAL_LOCK.pz,lockState,i);if(P.solved(FINAL_LOCK.pz,lockState))s.finalLock=true;bossChoices();});lock.appendChild(b);}}
  btns([["‹ Open the door",()=>{if(!s.finalLock)return;finish();S.rpg.startBoss();},"open",!s.finalLock],["Not yet",()=>finish(),"later"]]);}
-function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",D.boss,{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
+// ---------- letter (Note before you enter) companion reactions: /workspace/dialogue-team/pool-letter.md rows 1-13, main Line text ----------
+const LETTER_POOL={
+ warning:{N:"This is a warning. That thing guarding the crystal will not stand down.",
+  Q:"That's a lot to read right before we walk in. I'm still going if you are.",
+  S:"Treat this as instruction. Something is leaking, and the guard has a single command.",
+  A:{died:"It doesn't know why it stands there. My team died to that. To an order."}},
+ half:{N:"Someone tried to stop what broke. This is how little it helped.",
+  Q:"I'm glad we read it, and I hate what it asks.",
+  S:"This is a record of a failed sealing. The writer remained after the others fled, then made a guardian when the work would not close.",
+  A:{save:"What's leaking still has to be stopped. We end this.",died:"My team walked into that order. That's what took them."}},
+ apology:{N:"This was meant for you. He is telling you what he left in that room.",
+  Q:"That's your dad. He tried, and it still cost him. I'm right here, okay?",
+  S:"The later pieces and this note are the same account. Your father stayed when the others ran, and this is what that choice left behind.",
+  A:{save:"Your father built that golem. We're ending what he left. That's not on you."}}};
+// key rooms by ROOM_ART file name
+const artRoom=n=>+Object.keys(ROOM_ART).find(k=>ROOM_ART[k][1]===n);
+const LETTER_KEYS={crack:artRoom("zone3-05-crystal-cracked-smoke"),z4:Object.keys(ROOM_ART).filter(k=>/^zone4-0[1-7]-/.test(ROOM_ART[k][1])).map(Number),
+ picnic:artRoom("zone5-08-picnic-farthest"),wizard:artRoom("zone5-07-shop-glowing-stones"),council:artRoom("zone5-05-figure-before-council")};
+function letterReading(){const s=st();if(!s)return "warning";const w=s.walls,K=LETTER_KEYS,crack=!!w[K.crack],z4=K.z4.filter(r=>w[r]).length;
+ if(crack&&z4*2>K.z4.length&&w[K.picnic]&&(w[K.wizard]||w[K.council]))return "apology";
+ if(crack||z4>0)return "half";return "warning";}
+function brunnVer(){const s=st();if(!s)return "died";if(s.brunnJoin)return s.brunnJoin;return s.walls[LETTER_KEYS.crack]?"save":"died";} // old-save fallback
+function letterLines(){const r=letterReading(),P=LETTER_POOL[r],out=[];const v=r==="warning"?"died":r==="apology"?"save":brunnVer();
+ if(who("Q"))out.push(["Q","calm",P.Q]);if(who("S"))out.push(["S","calm",P.S]);if(who("A")&&P.A[v])out.push(["A","angry",P.A[v]]);
+ return out.length?out:[["N","calm",P.N]];}
+function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",letterLines(),{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
 function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
  play("ending",E.lines,{end:()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));
@@ -110,7 +135,7 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={play,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={play,letterReading,letterLines,brunnVer,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
