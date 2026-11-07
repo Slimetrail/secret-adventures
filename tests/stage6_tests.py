@@ -205,7 +205,23 @@ def unlock_centre(pg):
   moves=ev(pg,'''(()=>{const g=SOTA.rpg.s6.finalLock();for(let mask=0;mask<(1<<g.pz.L);mask++){let s=PUZ.clone(g.s),m=[];for(let i=0;i<g.pz.L;i++)if(mask>>i&1){s=PUZ.apply(g.pz,s,i);m.push(i);}if(PUZ.solved(g.pz,s))return m;}return null;})()''')
   check(moves is not None,'final lock is unsolvable')
   for i in moves:ev(pg,f'document.querySelector('+json.dumps(f'[data-s7lever="{i}"]')+').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
-  check(not ev(pg,'document.querySelector("[data-s6b=open]").disabled'),'solved lock still blocks the door')
+  check(ev(pg,'SOTA.rpg.live().story.finalLock')==True,'lever lock not stored');check(ev(pg,'document.querySelector("[data-s6b=open]").disabled'),'door opened after only the lever')
+  check(ev(pg,'SOTA.rpg.s6.finalLock2().pz.t')==4 and ev(pg,'!!document.querySelector("[data-s7lock=\'2\']")'),'second lock (sliding tiles) not shown')
+  tiles=ev(pg,'''(()=>{const g=SOTA.rpg.s6.finalLock2(),n=g.pz.n;const h=a=>{let d=0;a.forEach((v,p)=>{if(v){const t=v-1;d+=Math.abs(t%n-p%n)+Math.abs(((t/n)|0)-((p/n)|0));}});return d;};
+   let path=[];const dfs=(a,g0,lim,prev)=>{const f=g0+h(a);if(f>lim)return f;if(PUZ.solved({t:4,n},{a}))return true;let mn=1e9;const b=a.indexOf(0);
+    for(const p of PUZ.tileNb(n,b)){if(p===prev)continue;const na=a.slice();na[b]=na[p];na[p]=0;path.push(p);const r=dfs(na,g0+1,lim,b);if(r===true)return true;path.pop();mn=Math.min(mn,r);}return mn;};
+   let lim=h(g.s.a);for(let k=0;k<60;k++){const r=dfs(g.s.a,0,lim,-1);if(r===true)return path;lim=r;}return null;})()''')
+  check(tiles is not None,'second lock is unsolvable')
+  for p in tiles:ev(pg,'document.querySelector('+json.dumps(f'[data-s7tile="{p}"]')+').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+  check(ev(pg,'SOTA.rpg.live().story.finalLock2')==True,'sliding-tiles lock not stored');check(ev(pg,'document.querySelector("[data-s6b=open]").disabled'),'door opened before the third lock')
+  check(ev(pg,'SOTA.rpg.s6.finalLock3().pz.t')==3 and ev(pg,'!!document.querySelector("[data-s7lock=\'3\']")'),'third lock (moving blocks) not shown')
+  blks=ev(pg,'(()=>{const g=SOTA.rpg.s6.finalLock3();return PUZ.bfsBlocks(g.pz,g.s,300000);})()')
+  check(blks is not None,'third lock is unsolvable')
+  for i,d in blks:
+    ev(pg,'document.querySelector('+json.dumps(f'[data-s7blk="{i}"]')+').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+    ev(pg,'document.querySelector('+json.dumps(f'[data-s7dir="{d}"]')+').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+  check(ev(pg,'SOTA.rpg.live().story.finalLock3')==True,'moving-blocks lock not stored')
+  check(not ev(pg,'document.querySelector("[data-s6b=open]").disabled'),'solved locks still block the door')
 def t_boss_note_and_ending_low(p):
   b,c,pg=start(p);ev(pg,'(()=>{const c=MAZE.centre;for(const d of[[0,-1],[1,0],[0,1],[-1,0],[0,-2],[2,0],[0,2],[-2,0],[1,1],[-1,-1]]){const x=c[0]+d[0],y=c[1]+d[1];if(SOTA.roomAt(x,y)<0){SOTA.teleport(x,y,0);return}}})()')
   ev(pg,'SOTA.afterStep(-1)');check(S6(pg,'const l=s6.line();return l&&l.kind')=='boss','boss note did not play near the centre')

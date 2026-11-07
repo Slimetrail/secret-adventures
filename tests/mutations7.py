@@ -24,7 +24,7 @@ MUT=[
  ('door skips boss fight','story.js','finish();S.rpg.startBoss();','finish();showEnding();','t_door_flow'),
  ('jewelry has no zone buffs','rules.js','"n":"Crystal ring","slot":"acc","accessory":"ring","atk":18,"hp":73','"n":"Crystal ring","slot":"acc","accessory":"ring","atk":2,"hp":5','t_named_jewelry'),
  ('new outside URL','rules.js','const CAP=50,','const OUTSIDE="https://example.invalid/";const CAP=50,','t_copy_cache_noads'),
- ('door bypasses final puzzle','story.js','"open",!s.finalLock','"open",false','t_door_flow'),
+ ('door bypasses final puzzle','story.js','"open",!(s.finalLock&&s.finalLock2&&s.finalLock3)','"open",false','t_door_flow'),
  ('wrong companion tavern','rules.js','{tavern:1,role:"scholar"','{tavern:2,role:"scholar"','t_locked_content'),
  ('lost guardian thought','story-data.js','Something big is guarding the middle.','Nothing is guarding the middle.','t_locked_content'),
  ('infinite XP grind','rules.js','Math.round(1.8*level*level+9*level)','Math.round(14*level*level+16*level)','t_xp_budget'),

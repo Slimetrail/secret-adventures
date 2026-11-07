@@ -209,12 +209,30 @@ H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 // Centre lock reuses Stage 3's existing zone-5 lever rules. It is not an 86th room.
 const FINAL_LOCK=window.PUZ.make(1,5,713507);let lockState=window.PUZ.clone(FINAL_LOCK.s);
+// Boss door locks 2 and 3 reuse existing Stage 3 types at zone 5 (no new type, no room, no markSolved).
+// Fixed seeds: 731117 (sliding tiles) and 731119 (moving blocks); both differ from 713507 and from every room seed (id+1)*9973+17*z.
+const FINAL_LOCK2=window.PUZ.make(4,5,731117),FINAL_LOCK3=window.PUZ.make(3,5,731119);let lockState2=window.PUZ.clone(FINAL_LOCK2.s),lockState3=window.PUZ.clone(FINAL_LOCK3.s),lockSel3=0;
 function bossChoices(){const s=st(),P=window.PUZ;let lock=q(".s7lock");if(lock)lock.remove();
- if(!s.finalLock){lock=el("div","s7lock");lock.style.cssText="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap";q(".s6t").appendChild(lock);
+ const box=()=>{lock=el("div","s7lock");lock.style.cssText="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap";q(".s6t").appendChild(lock);return lock;};
+ const tap=(b,f)=>b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();f();bossChoices();});
+ if(!s.finalLock){box();
   lock.appendChild(el("div","","Final lock: light every lamp with the levers."));const lit=P.lamps(FINAL_LOCK.pz,lockState);
   for(let i=0;i<FINAL_LOCK.pz.L;i++){const b=el("button","ink s4b small",(lit>>i&1?"●":"○")+" Lever "+(i+1));b.dataset.s7lever=i;b.style.cssText="min-height:44px;min-width:80px";
    b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();lockState=P.apply(FINAL_LOCK.pz,lockState,i);if(P.solved(FINAL_LOCK.pz,lockState))s.finalLock=true;bossChoices();});lock.appendChild(b);}}
- btns([["‹ Open the door",()=>{if(!s.finalLock)return;finish();S.rpg.startBoss();},"open",!s.finalLock],["Not yet",()=>finish(),"later"]]);}
+ else if(!s.finalLock2){box();const pz=FINAL_LOCK2.pz,n=pz.n,c=44;
+  lock.appendChild(el("div","","Second lock: sliding tiles. Slide the tiles into order, 1 first, gap last."));
+  const g=el("div","pgrid");g.dataset.s7lock="2";g.style.cssText=`width:${n*c}px;height:${n*c}px;background:#8f6db555;flex-basis:100%;max-width:${n*c}px`;
+  lockState2.a.forEach((v,p)=>{if(!v)return;const b=el("button","ptile",String(v));b.dataset.s7tile=p;b.style.cssText=`left:${p%n*c+2}px;top:${((p/n)|0)*c+2}px;width:${c-4}px;height:${c-4}px;font-size:${Math.round(c*.42)}px`;
+   tap(b,()=>{lockState2=P.apply(pz,lockState2,p);if(P.solved(pz,lockState2))s.finalLock2=true;});g.appendChild(b);});lock.appendChild(g);}
+ else if(!s.finalLock3){box();const pz=FINAL_LOCK3.pz,n=pz.n,c=40,W=n*c;
+  lock.appendChild(el("div","","Third lock: moving blocks. Slide the blocks so the gold block leaves on the right."));
+  const g=el("div","pgrid pblocks");g.dataset.s7lock="3";g.style.cssText=`width:${W}px;height:${W}px;background-size:${c}px ${c}px;background-color:#8f6db533`;
+  pz.blk.forEach((bk,i)=>{const[x,y]=lockState3.q[i];const b=el("button","pblk"+(i===0?" key":"")+(lockSel3===i?" sel":""),"");b.dataset.s7blk=i;b.setAttribute("aria-label","Block "+i);
+   b.style.cssText=`left:${x*c+1}px;top:${y*c+1}px;width:${(bk.h?bk.len*c:c)-2}px;height:${(bk.h?c:bk.len*c)-2}px`;tap(b,()=>{lockSel3=i;});g.appendChild(b);});
+  const ex=el("div","pexit");ex.style.cssText=`left:${W}px;top:${pz.r*c}px;height:${c}px;width:${Math.round(c*.3)}px`;g.appendChild(ex);lock.appendChild(g);
+  const vert=!pz.blk[lockSel3].h;[[-1,vert?"▲":"◀","Move back"],[1,vert?"▼":"▶","Move on"]].forEach(([d,lab,al])=>{const b=el("button","ink s4b small",lab);b.dataset.s7dir=d;b.setAttribute("aria-label",al);b.style.cssText="min-height:44px;min-width:60px";
+   tap(b,()=>{lockState3=P.apply(pz,lockState3,[lockSel3,d]);if(P.solved(pz,lockState3))s.finalLock3=true;});lock.appendChild(b);});}
+ btns([["‹ Open the door",()=>{if(!(s.finalLock&&s.finalLock2&&s.finalLock3))return;finish();S.rpg.startBoss();},"open",!(s.finalLock&&s.finalLock2&&s.finalLock3)],["Not yet",()=>finish(),"later"]]);}
 // ---------- letter (Note before you enter) companion reactions: /workspace/dialogue-team/pool-letter.md rows 1-13, main Line text ----------
 const LETTER_POOL={
  warning:{N:"This is a warning. That thing guarding the crystal will not stand down.",
@@ -240,7 +258,7 @@ function brunnVer(){const s=st();if(!s)return "died";if(s.brunnJoin)return s.bru
 function letterLines(){const r=letterReading(),P=LETTER_POOL[r],out=[];const v=r==="warning"?"died":r==="apology"?"save":brunnVer();
  if(who("Q"))out.push(["Q","calm",P.Q]);if(who("S"))out.push(["S","calm",P.S]);if(who("A")&&P.A[v])out.push(["A","angry",P.A[v]]);
  return out.length?out:[["N","calm",P.N]];}
-function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",letterLines(),{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
+function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);if(!s.finalLock2&&window.PUZ.solved(FINAL_LOCK2.pz,lockState2))lockState2=window.PUZ.clone(FINAL_LOCK2.s);if(!s.finalLock3&&window.PUZ.solved(FINAL_LOCK3.pz,lockState3)){lockState3=window.PUZ.clone(FINAL_LOCK3.s);lockSel3=0;}play("boss",letterLines(),{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
 function showEnding(){const s=st();if(!s)return;const k=endingFor(),E=D.ending[k];s.ending=k;
  const title=()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));
@@ -272,7 +290,7 @@ H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
 S.rpg.s6={play,letterReading,letterLines,brunnVer,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
- finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
+ finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),finalLock2:()=>({pz:window.PUZ.clone(FINAL_LOCK2.pz),s:window.PUZ.clone(lockState2)}),finalLock3:()=>({pz:window.PUZ.clone(FINAL_LOCK3.pz),s:window.PUZ.clone(lockState3),sel:lockSel3}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
 .s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,#241838,#08050e 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}
