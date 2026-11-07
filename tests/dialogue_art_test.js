@@ -16,7 +16,7 @@ for(const l of data){
 a.equal(variants.length,3);a.equal(assets.size,134);
 for(const t of B1.TALKS)a.equal(art.sceneOptions(t,{test:true}).bg,'art-dialogue/'+t.id+'/backdrop.webp');
 for(const batch of [require('../batch2-talks.js'),require('../batch3-talks.js')])for(const t of batch.TALKS){const opt={bg:null};a.strictEqual(art.sceneOptions(t,opt),opt);a.equal(art.frame(t.id,0),undefined);}
-const sw={self:{addEventListener(){}},Request(){}};vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';globalThis.shell=SHELL;globalThis.version=VER;',sw);a.equal(sw.version,'24');for(const p of assets)a.ok(sw.shell.includes('art-dialogue/'+p));
+const sw={self:{addEventListener(){}},Request(){}};vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';globalThis.shell=SHELL;globalThis.version=VER;',sw);a.equal(sw.version,'25');for(const p of assets)a.ok(sw.shell.includes('art-dialogue/'+p));
 for(const p of ['dialogue-art.js?v=1','dialogue-art-data.js?v=1','batch1-talks.js?v=3','dialogue-view.js?v=2'])a.ok(sw.shell.includes(p));
 const parent='12ad96c7df683fb344c3a01910587637803d2688';const old=f=>cp.execFileSync('git',['show',parent+':'+f],{encoding:'utf8'});
 for(const f of ['story.js','story-data.js','music.js','party.js','batch2-talks.js','batch3-talks.js'])a.equal(fs.readFileSync(f,'utf8'),old(f),f);
