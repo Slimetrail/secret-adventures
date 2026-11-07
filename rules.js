@@ -514,11 +514,11 @@ Fight.prototype.act=function(ci,cmd,arg,targ){ // one hero action. returns text
  else if(cmd==="defend"){this.guard.add(ci);t=c.name+" defends";}
  else if(cmd==="run"){if(this.m.some(x=>x.boss)){t="Can't run!";}else if(r()<0.6){this.over="ran";t="The party ran away";}else t="Couldn't get away";}
  this.log.push(t);this.check();return t;};
-Fight.prototype.monstersTurn=function(){if(this.over)return [];const out=[];
+Fight.prototype.monstersTurn=function(){this.motionHits=[];if(this.over)return [];const out=[];
  for(const m of this.alive(this.m)){const tg=this.alive(this.p);if(!tg.length)break;
   // A visible wind-up precedes every third round's party-wide sweep. Defend halves it.
   const pulse=m.boss&&this.turn%3===2,targets=pulse?tg:[tg[Math.floor(this.r()*tg.length)]];
-  for(const c of targets){const ci=this.p.indexOf(c);let dmg=hit(m.atk*(pulse?.72:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);out.push(m.n+(pulse?" sweeps ":" hits ")+c.name+" for "+dmg);}
+  for(const c of targets){const ci=this.p.indexOf(c);let dmg=hit(m.atk*(pulse?.72:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);this.motionHits.push({i:this.m.indexOf(m),hero:ci,pulse,dmg});out.push(m.n+(pulse?" sweeps ":" hits ")+c.name+" for "+dmg);}
   if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");}
  this.guard.clear();this.turn++;this.log.push(...out);this.check();return out;};
 Fight.prototype.check=function(){if(this.over)return;if(!this.alive(this.m).length)this.over="win";else if(!this.alive(this.p).length)this.over="lose";};
