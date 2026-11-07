@@ -6,7 +6,8 @@ const R=window.RPG,S=window.SOTA,M=window.MAZE,C=S.core,N=M.n;
 const SAVE="sota.party",DEV_NOFIGHT="sota.dev.nofight";
 // Stage 6 story hooks: story.js fills window.S6H; off in maze-only test mode (dev.nofight)
 function h6(k,a,b){try{const H=window.S6H;if(!H||!H[k]||localStorage.getItem(DEV_NOFIGHT)==="1"||localStorage.getItem("sota.dev.nostory")==="1")return undefined;return H[k](a,b);}catch(e){console.error(e);return undefined;}}
-const $=id=>document.getElementById(id),el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
+const displayText=t=>window.CompanionDisplay?window.CompanionDisplay.rewrite(t,live):t;
+const $=id=>document.getElementById(id),el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=displayText(txt);return e;};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function tapBtn(label,fn,cls){const b=el("button","ink s4b"+(cls?" "+cls:""),label);b.addEventListener("click",e=>{e.preventDefault();fn();});return b;}
 // ---------- state ----------
@@ -28,7 +29,7 @@ function doSave(start){const p=S.state();if(!start&&!R.isSavePoint(M,p.x,p.y))re
 // death: everything goes back to the last save
 function restore(){live=clone(save);const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
  S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
-function toast(t){const d=$("s4toast");d.textContent=t;d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
+function toast(t){const d=$("s4toast");d.textContent=displayText(t);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 // ---------- screens ----------
 const ov=$("s4");function openUI(kind){ui=kind;document.documentElement.classList.add("s4open");ov.className="open "+kind;ov.dataset.kind=kind;closeBranch();}
 function closeUI(){ui=null;document.documentElement.classList.remove("s4open");ov.className="";ov.dataset.kind="";ov.dataset.result="";ov.innerHTML="";closeBranch();updBtn();}
@@ -99,7 +100,7 @@ function slideTree(items,level){if(level===0){closeBranch();br=el("div","s4br sl
  const cols=[...sl.querySelectorAll(".s4bcol")],need=()=>cols.filter(c=>c.style.display!=="none").reduce((s,c)=>s+c.offsetWidth+8,-8);for(const c of cols){if(need()<=sl.clientWidth||c===col)break;c.style.display="none";}
  return col;}
 // ---- character creation ----
-const cc={name:"",race:"human",cls:"warrior",add:{str:0,sta:0,man:0},skill:null,diff:"normal",warned:false,err:""};
+const cc={name:"Hero",race:"human",cls:"warrior",add:{str:0,sta:0,man:0},skill:null,diff:"normal",warned:false,err:""};
 function ccSpent(){const b=R.RACES[cc.race].base;return ["str","sta","man"].reduce((t,k)=>t+R.spendCost(b[k],b[k]+cc.add[k]),0);}
 function ccChange(f){return ()=>{f();cc.warned=false;cc.err="";creation();};}
 function creation(){const w=page("create");w.classList.add("cc");w.appendChild(head("Make your hero"));
@@ -213,7 +214,7 @@ function startFight(mons,why){F=new R.Fight(live.party,mons,live.diff,(live.seed
  const bot=el("div","s4fbot");bot.id="fbot";const en=el("div","s4enemies");en.id="fen";bot.appendChild(en);const pr=el("div","s4party");pr.id="fparty";bot.appendChild(pr);const mn=el("div","s4menu");mn.id="fmenu";bot.appendChild(mn);w.appendChild(bot);
  ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();h6("fightStart");cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
 function sizeF(){const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(fcv.clientWidth*d),h=Math.round(fcv.clientHeight*d);if(w&&h&&(fcv.width!==w||fcv.height!==h)){fcv.width=w;fcv.height=h;}}
-function say(t){const l=$("flog");if(l)l.textContent=t;}
+function say(t){const l=$("flog");if(l)l.textContent=displayText(t);}
 function nextAlive(){while(turnI<live.party.length&&live.party[turnI].hp<=0)turnI++;}
 function targets(cmd,arg){return F.m.map((m,i)=>m.hp>0?{t:m.n+" · "+m.hp,fn:()=>doAct(cmd,arg,i),d:{tgt:i}}:null).filter(Boolean);}
 function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const sk=c.skills.map(id=>R.SKILLS[c.cls].find(x=>x.id===id));

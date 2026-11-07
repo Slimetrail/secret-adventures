@@ -29,7 +29,7 @@ var st=document.createElement("style");st.textContent=css;document.head.appendCh
 var ov=document.createElement("div");ov.id="dv";ov.innerHTML='<div id="dvbox"></div>';document.body.appendChild(ov);
 var b=document.createElement("button");b.id="dvbtn";b.textContent="Sample talks";b.onclick=function(e){e.stopPropagation();picker()};document.body.appendChild(b);
 var box=ov.querySelector("#dvbox");
-function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function esc(s){s=window.CompanionDisplay?window.CompanionDisplay.rewrite(s):s;return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
 function close(){if(window.DialogueArt)window.DialogueArt.clear(ov);ov.classList.remove("open");if(/sample-talk/.test(location.hash))history.replaceState(null,"",location.pathname+location.search)}
 function picker(){if(window.DialogueArt)window.DialogueArt.clear(ov);ov.classList.add("open");
 box.innerHTML='<div id="dvpick"><h3>Sample talks</h3>'+ORDER.map(function(k){return '<button data-k="'+k+'">'+TALKS[k].title+'</button>'}).join("")+'<button data-k="x" style="background:#6b5233">Close</button></div>';

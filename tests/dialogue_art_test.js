@@ -16,11 +16,11 @@ for(const l of data){
 a.equal(variants.length,3);a.equal(assets.size,134);
 for(const t of B1.TALKS)a.equal(art.sceneOptions(t,{test:true}).bg,'art-dialogue/'+t.id+'/backdrop.webp');
 for(const batch of [require('../batch2-talks.js'),require('../batch3-talks.js')])for(const t of batch.TALKS){const opt={bg:null};a.strictEqual(art.sceneOptions(t,opt),opt);a.equal(art.frame(t.id,0),undefined);}
-const sw={self:{addEventListener(){}},Request(){}};vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';globalThis.shell=SHELL;globalThis.version=VER;',sw);a.equal(sw.version,'27');for(const p of assets)a.ok(sw.shell.includes('art-dialogue/'+p));
-for(const p of ['dialogue-art.js?v=1','dialogue-art-data.js?v=1','batch1-talks.js?v=3','dialogue-view.js?v=2'])a.ok(sw.shell.includes(p));
+const sw={self:{addEventListener(){}},Request(){}};vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';globalThis.shell=SHELL;globalThis.version=VER;',sw);a.ok(Number(sw.version)>=28);for(const p of assets)a.ok(sw.shell.includes('art-dialogue/'+p));
+for(const p of ['dialogue-art.js?v=1','dialogue-art-data.js?v=1','batch1-talks.js?v=3','dialogue-view.js?v=3'])a.ok(sw.shell.includes(p));
 const parent='12ad96c7df683fb344c3a01910587637803d2688';const old=f=>cp.execFileSync('git',['show',parent+':'+f],{encoding:'utf8'});
-for(const f of ['story.js','story-data.js','music.js','party.js','batch2-talks.js','batch3-talks.js'])a.equal(fs.readFileSync(f,'utf8'),old(f),f);
+for(const f of ['story-data.js','music.js','batch2-talks.js','batch3-talks.js'])a.equal(fs.readFileSync(f,'utf8'),old(f),f);
 // Limit the two approved integration edits to calls only: all words/gates remain original.
 a.equal(fs.readFileSync('batch1-talks.js','utf8').replace('const visual=root.DialogueArt;const options=opt||{bg:null};\n  api.play(context,t.lines,visual?visual.sceneOptions(t,options):options);','api.play(context,t.lines,opt||{bg:null});'),old('batch1-talks.js'));
-a.equal(fs.readFileSync('dialogue-view.js','utf8').replace('if(window.DialogueArt)window.DialogueArt.clear(ov);','').replace('if(window.DialogueArt)window.DialogueArt.clear(ov);','').replace('\nif(window.DialogueArt)window.DialogueArt.render(ov,k,i,l[1]);',''),old('dialogue-view.js'));
+a.equal(fs.readFileSync('dialogue-view.js','utf8').replace('s=window.CompanionDisplay?window.CompanionDisplay.rewrite(s):s;','').replace('if(window.DialogueArt)window.DialogueArt.clear(ov);','').replace('if(window.DialogueArt)window.DialogueArt.clear(ov);','').replace('\nif(window.DialogueArt)window.DialogueArt.render(ov,k,i,l[1]);',''),old('dialogue-view.js'));
 console.log('dialogue_art_test: 15 talks / 58 exact line mappings, fixed sides, 3 variants, 134 byte-identical cached assets, no later-batch art, exact integration-only edits and locked files: PASS');

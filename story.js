@@ -25,9 +25,9 @@ function st(){const l=live();if(!l||!l.party||!l.party.length)return null;let s=
  if(!Array.isArray(s.plan))s.plan=R.planParty(l.party[0],(l.seed|0)>>>0);if(s.revealed==null)s.revealed=false;if(s.ending===undefined)s.ending=null;return s;}
 function who(code){const l=live();if(!l)return null;if(code==="H")return l.party[0];if(!ROLE[code])return null;
  return l.party.find(c=>c.role===ROLE[code])||(l.party[IDX[code]]&&!l.party[IDX[code]].role?l.party[IDX[code]]:null);}
-function fill(t){return t.replace(/\{([HQSA])\}/g,(_,c)=>{const m=who(c);return m?m.name:"friend";});}
+function fill(t){const out=t.replace(/\{([HQSA])\}/g,(_,c)=>{const m=who(c);return m?m.name:"friend";});return window.CompanionDisplay?window.CompanionDisplay.rewrite(out,live()):out;}
 function resolve(lines){return lines.filter(([w])=>w==="N"||w==="D"||who(w)).map(([w,e,t])=>{const m=w==="N"||w==="D"?null:who(w);
- return {w,e:e||"calm",t:fill(t),name:w==="N"?"":w==="D"?"Dad":m.name,art:m?(SHEET[m.race]||"knight"):null};});}
+ return {w,e:e||"calm",t:fill(t),name:w==="N"?"":w==="D"?"Dad":(window.CompanionDisplay?window.CompanionDisplay.displayName(m,live()):m.name),art:m?(SHEET[m.race]||"knight"):null};});}
 function zoneNow(){try{return S.state().zone||1;}catch(e){return 1;}}
 const dark=()=>zoneNow()>=4;
 function explored(){const s=st();return (S.rooms?S.rooms().solved.length:0)+(s?Object.keys(s.walls).length:0);}
@@ -264,7 +264,7 @@ function fightLine(phase,how){const l=live();if(!l)return;const st0=document.que
  if(phase==="end"&&how==="ran"){code=cs[0]||"H";text=D.fight.ran;}else if(phase==="end"&&how!=="win")return;
  else{if(!cs.length)return;code=cs[(fightNo+(phase==="end"?1:0))%cs.length];const pool=D.fight[phase][code][tone];text=pool[fightNo%pool.length];}
  const m=who(code);fl=el("div","s6fl");fl.id="s6fl";fl.dataset.phase=phase;fl.dataset.who=code;const im=el("img","s6flp");im.src="art6/"+(SHEET[m.race]||"knight")+"-"+(phase==="start"?(code==="A"?"angry":"happy"):"happy")+".webp";im.alt="";
- fl.appendChild(im);fl.appendChild(el("span","s6fln",m.name+": "));fl.appendChild(el("span","s6flt",text));st0.appendChild(fl);
+ fl.appendChild(im);fl.appendChild(el("span","s6fln",(window.CompanionDisplay?window.CompanionDisplay.displayName(m,live()):m.name)+": "));fl.appendChild(el("span","s6flt",fill(text)));st0.appendChild(fl);
  if(phase==="start"){const bot=document.getElementById("fbot");const hide=()=>{if(fl.dataset.phase==="start")fl.remove();};if(bot)bot.addEventListener("pointerdown",hide,{once:true});setTimeout(hide,3200);}}
 H.bossWon=()=>{const s=st();if(s)s.golemDefeated=true;showEnding();};
 H.fightStart=()=>{fightNo++;fightLine("start");};
