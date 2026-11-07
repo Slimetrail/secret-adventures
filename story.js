@@ -197,10 +197,13 @@ H.tavern=t=>{const s=st(),l=live();if(!s)return;const vk=t+":"+l.steps;if(s.visi
 H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN%3)return;const sc=seenFirst(D.stay[dark()?"dark":"fun"],s);
  if(sc){s.seen[sc.id]=1;play("stay",sc.lines,{bg:tavBg(+s.visit.split(":")[0])});}};
 H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fun"],s);if(sc){s.seen[sc.id]=1;play("camp",withMem(sc.lines),{bg:null});}};
-H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r)||s.walls[id])return;
+function partyCodes(){return ["Q","S","A"].filter(c=>who(c)).join("");}
+H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!s.wallHeard||typeof s.wallHeard!=="object")s.wallHeard={};
+ const pc=partyCodes(),first=!s.walls[id];if(!first&&s.wallHeard[id]==null){s.wallHeard[id]=pc;return;} // old save: assume heard with current party
+ if(!first&&![...pc].some(c=>!s.wallHeard[id].includes(c)))return;
  const pi=pieceFor(id);if(pi<0)return;let lines=id===LETTER_KEYS.picnic?picnicLines():id===84?bedsideLines():PIECES[pi].slice();
  if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
- s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;
+ s.walls[id]=1;s.wallHeard[id]=[...new Set(s.wallHeard[id]||"")].concat([...pc]).filter((c,i,a)=>a.indexOf(c)===i).join("");if(!Array.isArray(s.order))s.order=[];if(first)s.order.push(id);s.lastPiece=pi;
  if(id===LETTER_KEYS.picnic)s.revealed=true;
  play("wall",pi>=DAD_FROM?lines:withMem(lines),{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};

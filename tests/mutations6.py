@@ -13,7 +13,7 @@ MUT=[
  ("plans ignore race rules","rules.js","if(pre.every((c,i)=>allowed(races[i],c)))ok.push(pre);","ok.push(pre);","t_class_balance_all"),
  ("KO not woken after a win","party.js","else c.hp=1;});","});","t_ko_revive_reload"),
  ("salts used on awake member","rules.js",'if(k<0||!tg||tg.hp>0)return "";','if(k<0||!tg)return "";',"t_ko_revive_reload"),
- ("wall counted twice","story.js",'||s.walls[id])return;',")return;","t_wall_counts"),
+ ("wall counted twice","story.js",'if(!first&&![...pc].some(c=>!s.wallHeard[id].includes(c)))return;',"if(false)return;","t_wall_counts"),
  ("boss note replays","story.js","if(!s||s.seen.boss)return;","if(!s)return;","t_boss_note_and_ending_low"),
  ("high ending too strict","story.js",'f>=0.9?"high"','f>=0.95?"high"',"t_ending_thresholds"),
  ("memory unlocks too fast","story.js","Math.floor(explored()/MEM_STEP)","Math.floor(explored()/4)","t_memory_unlocks"),
