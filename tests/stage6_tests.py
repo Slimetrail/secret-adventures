@@ -90,14 +90,14 @@ def t_fight_lines(p):
   pg.wait_for_timeout(300);check(ev(pg,'!!(SOTA.rpg.fight()&&SOTA.rpg.fight().over)') or ev(pg,'document.querySelectorAll("#s6fl").length')==0,'line during fight');check(not ev(pg,'SOTA.storyOpen()'),'box during fight')
   if not ev(pg,'!!SOTA.rpg.fight().over'):ev(pg,'SOTA.rpg.forceEnd("win")')
   pg.wait_for_timeout(100);check(ev(pg,'(document.getElementById("s6fl")||{dataset:{}}).dataset.phase')=='end','no end line on win')
-  check(ev(pg,'document.querySelectorAll("#s6fl").length')==1,'more than one end line');tap(pg,'#fdone')
+  check(ev(pg,'document.querySelectorAll("#s6fl").length')==1,'more than one end line');tap(pg,'#fdone');drain(pg)
   ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.forceEnd("ran")');pg.wait_for_timeout(100);check(ev(pg,'document.getElementById("s6fl").dataset.phase')=='end','no ran line');tap(pg,'#fdone');b.close()
 def t_fight_solo_quiet(p):
   b,c,pg=start(p);ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');check(ev(pg,'document.querySelectorAll("#s6fl").length')==0,'solo hero got a banter line (hero speaks only rarely)');ev(pg,'SOTA.rpg.forceEnd("win")');check(ev(pg,'document.querySelectorAll("#s6fl").length')==0,'solo end line');b.close()
 def t_ko_revive_reload(p):
   b,c,pg=fight_with_party(p)
   # knocked out on a win: back at 1 hp, never removed
-  ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.live().party[1].hp=0');ev(pg,'SOTA.rpg.forceEnd("win")');tap(pg,'#fdone')
+  ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');ev(pg,'SOTA.rpg.live().party[1].hp=0');ev(pg,'SOTA.rpg.forceEnd("win")');tap(pg,'#fdone');drain(pg)
   check(ev(pg,'SOTA.rpg.live().party.length')==3,'companion removed');check(ev(pg,'SOTA.rpg.live().party[1].hp')==1,'KO companion not woken after win')
   # smelling salts wake a knocked out member in a fight, and do nothing to an awake one
   r=ev(pg,'''(()=>{const L=SOTA.rpg.live(),P=JSON.parse(JSON.stringify(L.party));P[0].bag.push("salts","salts");P[2].hp=0;const F=new RPG.Fight(P,[RPG.makeMonster(1,0,1,0,"normal")],"normal",5);
@@ -234,13 +234,13 @@ def t_memory_unlocks(p):
   b,c,pg=fight_with_party(p);check(S6(pg,'return s6.memUnlocked("Q")')==0,'memory unlocked with no exploring')
   ev(pg,'(()=>{const C=SOTA.core;for(let i=0;i<8;i++)C.solvedR[i]=1})()');check(S6(pg,'return s6.memUnlocked("Q")')==1,'8 explored should unlock 1')
   cp=ev(pg,'MAZE.camps[1]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');ev(pg,'(c=>{for(const d of[[0,1],[1,0],[0,-1],[-1,0]])if(SOTA.canMove(c[0]+d[0],c[1]+d[1],0)||true){}})(arguments)') if False else None
-  S6(pg,'s6.H.camp(1);return 1');s=drain(pg);mem=S6(pg,'return L.story.told');check(sum(mem.values())==1,f'memory not told at camp {mem}')
-  S6(pg,'L.story.seen={opening:1};s6.H.camp(1);return 1');drain(pg);t2=S6(pg,'return L.story.told');check(all(v<=1 for v in t2.values()),f'memory told twice for same count {t2}')
-  S6(pg,'L.story.seen={opening:1};s6.H.camp(1);return 1');drain(pg);S6(pg,'L.story.seen={opening:1};s6.H.camp(1);return 1');drain(pg);t3=S6(pg,'return L.story.told');check(all(v<=1 for v in t3.values()) and sum(t3.values())==2,f'memory beyond unlock count {t3}')
+  S6(pg,'Object.assign(L.story.seen,{"batch1-C1":1,"batch1-C4":1,"batch1-C6":1});s6.H.camp(1);return 1');s=drain(pg);mem=S6(pg,'return L.story.told');check(sum(mem.values())==1,f'memory not told at camp {mem}')
+  S6(pg,'L.story.seen={opening:1,"batch1-C1":1,"batch1-C4":1,"batch1-C6":1};s6.H.camp(1);return 1');drain(pg);t2=S6(pg,'return L.story.told');check(all(v<=1 for v in t2.values()),f'memory told twice for same count {t2}')
+  S6(pg,'L.story.seen={opening:1,"batch1-C1":1,"batch1-C4":1,"batch1-C6":1};s6.H.camp(1);return 1');drain(pg);S6(pg,'L.story.seen={opening:1,"batch1-C1":1,"batch1-C4":1,"batch1-C6":1};s6.H.camp(1);return 1');drain(pg);t3=S6(pg,'return L.story.told');check(all(v<=1 for v in t3.values()) and sum(t3.values())==2,f'memory beyond unlock count {t3}')
   ev(pg,'(()=>{const C=SOTA.core;for(let i=0;i<85;i++)C.solvedR[i]=1})()');check(S6(pg,'return s6.memUnlocked("Q")')==S6(pg,'return STORY.memory.Q.length'),'memory not capped');b.close()
 def t_tone_dark_zone4(p):
   b,c,pg=fight_with_party(p);ids=lambda k:ev(pg,f'STORY.camp.{k}.map(s=>s.id)')
-  ev(pg,'SOTA.teleport(56,56,0)');check(ev(pg,'SOTA.state().zone')==4,'not zone 4');S6(pg,'s6.H.camp(0);return 1');seen=S6(pg,'return Object.keys(L.story.seen)');drain(pg)
+  S6(pg,'Object.assign(L.story.seen,{"batch1-C1":1,"batch1-C4":1,"batch1-C6":1});return 1');ev(pg,'SOTA.teleport(56,56,0)');check(ev(pg,'SOTA.state().zone')==4,'not zone 4');S6(pg,'s6.H.camp(0);return 1');seen=S6(pg,'return Object.keys(L.story.seen)');drain(pg)
   check(any(i in seen for i in ids('dark')),'zone 4 camp not dark');check(not any(i in seen for i in ids('fun')),'zone 4 camp used funny pool');b.close()
 def t_stay_banter(p):
   b,c,pg=fight_with_party(p);ev(pg,'SOTA.rpg.live().gold=999');ev(pg,'SOTA.rpg.s5.tavernScreen(1)');k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='tavern',f'no tavern banter ({k})');drain(pg)

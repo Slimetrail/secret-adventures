@@ -269,7 +269,7 @@ def t_boss_defeat_restore(p):
  check(ev(pg,'SOTA.rpg.fight().over')=='lose','boss defeat broken');tap(pg,'#fdone');check(ev(pg,'SOTA.rpg.live().gold')==gold,'boss defeat kept progress');check(not ev(pg,'SOTA.storyOpen()'),'boss loss played ending');b.close()
 def t_offline_boss(p):
  b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&navigator.serviceWorker.controller')
- check(ev(pg,'caches.keys()')==['sota-s1-v19'],'offline cache not v19');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);S6.drain(pg)
+ check(ev(pg,'caches.keys()')==['sota-s1-v20'],'offline cache not v20');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.s6.bossNote()');S6.drain(pg);S6.unlock_centre(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
  check(ev(pg,'SOTA.rpg.fight().m[0].n')=='Iron Golem','Golem unavailable offline');ev(pg,'SOTA.rpg.forceEnd("win")')
  if pg.locator('#s5lvlok').count():tap(pg,'#s5lvlok')
@@ -281,7 +281,7 @@ def t_content_layout(p):
   check(all(x[0]>=0 and x[1]>=0 and x[2]<=w and x[3]<=h and x[4]>=44 for x in r),'final lock buttons clipped '+str(r));b.close()
 def t_copy_cache_noads(p):
  b,pg=setup(p);s=source(pg,'game.js');ptxt=re.search(r'const PTXT=.*?;',s).group(0);check('later stage' not in ptxt and 'comes later' not in ptxt,'unfinished room copy')
- check('VER="19"' in source(pg,'sw.js'),'wrong offline cache')
+ check('VER="20"' in source(pg,'sw.js'),'wrong offline cache')
  for name in ['rules.js','party.js','story.js','story-data.js','game.js','econ.js','sw.js','boot.js','index.html']:
   text=source(pg,name)
   for bad in ['http://','https://','XMLHttpRequest','sendBeacon','adsbygoogle','googletag','google-analytics']:check(bad not in text,'outside URL or ad code in '+name)
