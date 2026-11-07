@@ -60,9 +60,9 @@ def t_later_batches_unchanged(p):
 
 def t_offline_v23(p):
  b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html');pg.wait_for_function('()=>!!navigator.serviceWorker.controller',timeout=90000)
- check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v23");return (await c.keys()).length})()')==281,'incomplete cache')
+ check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return (await c.keys()).length})()')==282,'incomplete cache')
  assets=sorted({'art-dialogue/'+f for l in DATA for f in [*l['portraits'].values(),l['backdrop']]})
- check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v23");return (await Promise.all('+json.dumps(assets)+'.map(p=>c.match(p)))).every(Boolean)})()'),'missing cached dialogue art')
+ check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return (await Promise.all('+json.dumps(assets)+'.map(p=>c.match(p)))).every(Boolean)})()'),'missing cached dialogue art')
  c.set_offline(True);pg.reload();pg.wait_for_function('()=>window.SampleTalks&&window.DialogueArt')
  for id,line in [('closecall',3),('C5',4),('A6',4)]:
   for l in [x for x in DATA if x['talkId']==id]:

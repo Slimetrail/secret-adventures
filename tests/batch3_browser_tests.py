@@ -106,7 +106,7 @@ def t_offline_v22(p):
   if ev(pg,'!!navigator.serviceWorker.controller'):break
   pg.wait_for_timeout(100)
  check(ev(pg,'!!navigator.serviceWorker.controller'),'service worker not ready')
- check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v22");return !!(await c.match("batch3-talks.js?v=1"));})()'),'batch3 not cached')
+ check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return !!(await c.match("batch3-talks.js?v=1"));})()'),'batch3 not cached')
  c.set_offline(True);pg.reload();S6.create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.map(d=>RPG.makeCompanion(d,1)));const s=SOTA.rpg.s6.st();for(const id of ["C1","C2","C3","C4","C5","C6"])s.seen["batch1-"+id]=1;for(const id of ["C7","C8","C9","C10","C11","C12"])s.seen["batch2-"+id]=1;SOTA.rpg.live().party.forEach(c=>c.bag=[]);S6H.camp(0)')
  check(B1.collect(pg)==TALKS['C14'],'offline batch3 missing');b.close()

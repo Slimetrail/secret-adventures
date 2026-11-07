@@ -269,7 +269,7 @@ def t_boss_defeat_restore(p):
  check(ev(pg,'SOTA.rpg.fight().over')=='lose','boss defeat broken');tap(pg,'#fdone');check(ev(pg,'SOTA.rpg.live().gold')==gold,'boss defeat kept progress');check(not ev(pg,'SOTA.storyOpen()'),'boss loss played ending');b.close()
 def t_offline_boss(p):
  b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&navigator.serviceWorker.controller')
- check(ev(pg,'caches.keys()')==['sota-s1-v22'],'offline cache not v22');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);S6.drain(pg)
+ check(ev(pg,'caches.keys()')==['sota-s1-v24'],'offline cache not v22');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.s6.bossNote()');S6.drain(pg);S6.unlock_centre(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
  check(ev(pg,'SOTA.rpg.fight().m[0].n')=='Iron Golem','Golem unavailable offline');ev(pg,'SOTA.rpg.forceEnd("win")')
  if pg.locator('#s5lvlok').count():tap(pg,'#s5lvlok')
