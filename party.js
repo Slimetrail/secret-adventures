@@ -390,9 +390,13 @@ function eatFrom(c,k){const id=c.bag[k];c.bag.splice(k,1);gone(id);eatDish(c,id)
 function cookTry(ings){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings.filter(y=>y===x).length))return {err:"missing"};
  const d=E.cook(ings);if(d&&!live.party.some(c=>R.canCarry(c,"d_"+d.id)))return {err:"heavy"};ings.forEach(x=>takeOne("i_"+x));
  if(!d)return {fail:true};giveDish("d_"+d.id);const learnt=!live.recipes[d.id];if(learnt)live.recipes[d.id]="earned";return {dish:d,learnt};}
-function buy(id){const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
+// Saved per-tavern consumables: base 3 each, no timed restock. Each sold
+// part/junk/ingredient produces exactly one ration and one potion here only.
+function shopCounts(t=0){s5init();live.tavernStock=live.tavernStock||{};const q=live.tavernStock[t]=live.tavernStock[t]||{};
+ ["ration","potion","ether","salts"].concat(E.stock(t).ing).forEach(id=>{if(q[id]==null)q[id]=3;});return q;}
+function buy(id,t=0){const q=shopCounts(t);if(q[id]===0){toast("Out of stock");return false;}const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;if(q[id]!=null)q[id]--;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
 function buyRecipe(did){const d=E.dish(did),p=E.RECIPE_PRICE[d.tier];if(live.recipes[did]){toast("You already know it");return false;}if(live.gold<p){toast("Not enough gold");return false;}live.gold-=p;live.recipes[did]="bought";toast("Recipe bought: "+d.n);h6("shop");return true;}
-function sell(ci,k){const c=live.party[ci],id=c.bag[k];if(id==null)return 0;const v=E.sellPrice(id);c.bag.splice(k,1);gone(id);if(id==="tent"&&!hasTent())live.tentWear=0;live.gold+=v;toast("Sold "+R.ITEMS[id].n+" +"+v+" gold");return v;}
+function sell(ci,k,t=0){const c=live.party[ci],id=c.bag[k];if(id==null)return 0;const v=E.sellPrice(id);c.bag.splice(k,1);gone(id);if(id==="tent"&&!hasTent())live.tentWear=0;live.gold+=v;if(["part","junk","ing"].includes(R.ITEMS[id].slot)){const q=shopCounts(t);q.ration++;q.potion++;}toast("Sold "+R.ITEMS[id].n+" +"+v+" gold");return v;}
 // tent build: parts + a crafter fee. The fee is paid in gold, or with spare parts/junk at their sell value (gold covers the rest)
 function tentNeed(){return Object.entries(E.TENT.parts).map(([id,n])=>({id,n,have:haveN(id)}));}
 function spareJunk(){const need=E.TENT.parts,out=[];live.party.forEach(c=>c.bag.forEach(id=>{const it=R.ITEMS[id];if(it&&(it.slot==="junk"||it.slot==="part"))out.push(id);}));
@@ -426,7 +430,7 @@ function buyScreen(t){s5init();const w=page("buy");w.appendChild(head("Buy",()=>
  sideTabs(w,[["‹ Recipes",null,()=>shopList(t,"recipes"),"recipes"],["‹ Food",null,()=>shopList(t,"food"),"food"],["‹ Craft",null,()=>shopList(t,"craft"),"craft"]]);}
 function shopRow(w,label,data,fn,off){const o=el("button","s4opt s5row"+(off?" off":""));for(const k in data)o.dataset[k]=data[k];o.appendChild(el("span","s4on",label));o.addEventListener("click",e=>{e.preventDefault();fn();});w.appendChild(o);return o;}
 function shopList(t,kind){s5init();const st=E.stock(t),w=page("shop-"+kind);w.dataset.list=kind;w.appendChild(head({recipes:"Recipes",food:"Food",craft:"Craft"}[kind],()=>buyScreen(t)));goldLine(w);
- const item=id=>shopRow(w,R.ITEMS[id].n+" · "+E.price(id)+"g",{buy:id},()=>{buy(id);shopList(t,kind);},live.gold<E.price(id));
+ const q=shopCounts(t),item=id=>shopRow(w,R.ITEMS[id].n+" · "+E.price(id)+"g"+(q[id]!=null?" · Stock "+q[id]:""),{buy:id},()=>{buy(id,t);shopList(t,kind);},live.gold<E.price(id)||q[id]===0);
  if(kind==="recipes"){const l=E.recipesFor(t).filter(id=>!live.recipes[id]);if(!l.length)w.appendChild(el("div","s4note dim","You know all the recipes sold here."));
   l.forEach(id=>{const d=E.dish(id);shopRow(w,d.n+" · "+E.RECIPE_PRICE[d.tier]+"g",{recipe:id},()=>{buyRecipe(id);shopList(t,kind);},live.gold<E.RECIPE_PRICE[d.tier]);});}
  else if(kind==="food"){["ration","potion","ether","salts"].concat(st.ing).forEach(item);}
@@ -436,7 +440,7 @@ function shopList(t,kind){s5init();const st=E.stock(t),w=page("shop-"+kind);w.da
   w.appendChild(el("div","s4note dim","Dead warriors' gear is cheap but worse than new."));}}
 // Sell: lists only what the party carries (bags of every member), sold at the normal sell rules
 function sellScreen(t){s5init();const w=page("sell");w.appendChild(head("Sell",()=>tavernScreen(t)));goldLine(w);let any=0;
- live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;w.appendChild(el("div","s4lab",c.name));s.forEach(x=>{any++;shopRow(w,R.ITEMS[x.id].n+(x.n>1?" ×"+x.n:"")+" · "+E.sellPrice(x.id)+"g",{sell:x.id,who:ci},()=>{sell(ci,c.bag.lastIndexOf(x.id));sellScreen(t);});});});
+ live.party.forEach((c,ci)=>{const s=E.stacks(c.bag);if(!s.length)return;w.appendChild(el("div","s4lab",c.name));s.forEach(x=>{any++;shopRow(w,R.ITEMS[x.id].n+(x.n>1?" ×"+x.n:"")+" · "+E.sellPrice(x.id)+"g",{sell:x.id,who:ci},()=>{sell(ci,c.bag.lastIndexOf(x.id),t);sellScreen(t);});});});
  if(!any)w.appendChild(el("div","s4note dim","The party carries nothing to sell."));w.appendChild(el("div","s4note dim","Parts and junk sell for their worth; other things for half."));}
 function campScreen(k){s5init();const w=page("camp");w.appendChild(head("Camp "+(k+1),closeUI));goldLine(w);
  w.appendChild(el("div","s4note",hasTent()?"Tent pitched. Nights left on this tent: "+(E.TENT.nights-live.tentWear)+" (tents: "+haveN("tent")+")":"No tent - you can't camp or save here. Buy or build one at a tavern."));
@@ -473,7 +477,7 @@ const pb=$("partyb");function updBtn(){pb.classList.toggle("need",!live);$("s4hi
 pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())return;if(S.puzzleOpen&&S.puzzleOpen())return;if(ui)return;if(!live)creation();else partyScreen();});
 updBtn();if(!live&&localStorage.getItem(DEV_NOFIGHT)!=="1")creation();window.addEventListener("resize",()=>{if(fcv&&ui==="fight")sizeF();closeBranch();});
 // test and debug hooks (no network, no secrets)
-S.rpg={s5:{buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={s5:{shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  setLive:o=>{live=o;},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth;const box=(x,y,hw,top,bot)=>({l:(x-hw)/d,r:(x+hw)/d,t:(y-top)/d,b:(y+bot)/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const[x,y]=mpos(i,W,H);return box(x,y,s*0.8*0.75,s*1.1+4,s*0.8*0.75);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H);return box(x,y,s*0.75*0.66,s*1.0+4,s*0.75*0.72);})};}};

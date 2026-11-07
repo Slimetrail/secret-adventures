@@ -31,7 +31,7 @@ function resolve(lines){return lines.filter(([w])=>w==="N"||w==="D"||who(w)).map
 function zoneNow(){try{return S.state().zone||1;}catch(e){return 1;}}
 const dark=()=>zoneNow()>=4;
 function explored(){const s=st();return (S.rooms?S.rooms().solved.length:0)+(s?Object.keys(s.walls).length:0);}
-function endingFor(n){const f=n/(TOTAL_P+TOTAL_W);return f>=0.9?"high":f>=0.5?"mid":"low";}
+function endingFor(){return {warning:"low",half:"mid",apology:"high"}[letterReading()];}
 function memUnlocked(code){return Math.min(D.memory[code].length,Math.floor(explored()/MEM_STEP));}
 function memLine(){const s=st();if(!s)return null;for(const c of["Q","S","A"]){if(!who(c))continue;const n=s.told[c]|0;if(n<memUnlocked(c)){s.told[c]=n+1;return [c,"calm",D.memory[c][n]];}}return null;}
 function withMem(lines){const m=memLine();return m?lines.concat([["N","calm","(A memory, shared by the fire.)"],m]):lines;}
@@ -112,7 +112,7 @@ function letterLines(){const r=letterReading(),P=LETTER_POOL[r],out=[];const v=r
  if(who("Q"))out.push(["Q","calm",P.Q]);if(who("S"))out.push(["S","calm",P.S]);if(who("A")&&P.A[v])out.push(["A","angry",P.A[v]]);
  return out.length?out:[["N","calm",P.N]];}
 function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",letterLines(),{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
-function showEnding(){const s=st();if(!s)return;const n=explored(),k=endingFor(n),E=D.ending[k];s.ending=k;
+function showEnding(){const s=st();if(!s)return;const k=endingFor(),E=D.ending[k];s.ending=k;
  play("ending",E.lines,{end:()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));
   q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";box.dataset.ending=k;

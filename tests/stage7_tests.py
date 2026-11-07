@@ -256,6 +256,14 @@ def t_letter_readings(p):
  check('scratched' not in ev(pg,'document.querySelector("#s6d").innerText'),'old iron door wording played');S6.drain(pg)
  check(ev(pg,'document.querySelectorAll("#s6d .s6btns button").length')==2,'door choices missing')
  src=open(os.path.join(ROOT,'story.js')).read();check('Turn back, or end it' not in src,'parchment wording typed into dialog');b.close()
+def t_brunn_join_snapshot(p):
+ b,c,pg=S6.start(p)
+ for found,want in [(True,"save"),(False,"died")]:
+  ev(pg,f'(()=>{{const s=SOTA.rpg.s6.st();delete s.brunnJoin;s.walls={{}};if({str(found).lower()})s.walls[36]=1;SOTA.rpg.s6.H.joined(RPG.makeCompanion(RPG.COMPANIONS[2],1),3)}})()')
+  check(ev(pg,'SOTA.rpg.s6.st().brunnJoin')==want,f'join hook did not snapshot {want}');S6.drain(pg)
+  ev(pg,'SOTA.rpg.s6.st().walls[36]=1')
+  check(ev(pg,'SOTA.rpg.s6.brunnVer()')==want,'later crack changed join version')
+ b.close()
 def t_boss_defeat_restore(p):
  b,c,pg=S6.start(p);gold=ev(pg,'SOTA.rpg.save().gold');ev(pg,'SOTA.rpg.live().gold+=123;SOTA.rpg.live().story.finalLock=true;SOTA.rpg.startBoss();SOTA.rpg.live().party.forEach(c=>c.hp=1);SOTA.rpg.act("defend")')
  check(ev(pg,'SOTA.rpg.fight().over')=='lose','boss defeat broken');tap(pg,'#fdone');check(ev(pg,'SOTA.rpg.live().gold')==gold,'boss defeat kept progress');check(not ev(pg,'SOTA.storyOpen()'),'boss loss played ending');b.close()

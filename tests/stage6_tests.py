@@ -218,10 +218,11 @@ def t_boss_note_and_ending_low(p):
   t=ev(pg,'document.querySelector("#s6d").innerText');check('shatter' in ev(pg,'JSON.stringify(STORY.ending.low)').lower(),'low ending: dad does not destroy the crystal');check('0 / 85' in t and f"0 / {S6(pg,'return s6.WALL_ART_ROOMS')}" in t,f'counts missing {t}')
   ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))');check(not ev(pg,'SOTA.storyOpen()'),'ending did not close');b.close()
 def t_ending_thresholds(p):
-  b,c,pg=start(p);tot=113
-  r=S6(pg,'return [0,56,57,101,102,113].map(n=>s6.endingFor(n))');check(r==['low','low','mid','mid','high','high'],f'thresholds {r}')
-  for k,(sol,wl) in {'mid':(50,20),'high':(85,25)}.items():
-    ev(pg,f'(()=>{{const C=SOTA.core;for(let i=0;i<{sol};i++)C.solvedR[i]=1;const s=SOTA.rpg.s6.st();s.walls={{}};MAZE.rooms.filter(r=>r.k==="story").slice(0,{wl}).forEach(r=>s.walls[r.id]=1)}})()')
+  b,c,pg=start(p)
+  cases=[([],"warning","low"),([80,62,83],"warning","low"),([36],"half","mid"),([37],"half","mid"),([36,37,46,38,80,62],"half","mid"),([36,37,46,38,50,80],"half","mid"),([36,37,46,38,50,80,62],"apology","high"),([36,37,46,38,50,80,83],"apology","high")]
+  for ids,reading,k in cases:
+    ev(pg,f'(()=>{{const s=SOTA.rpg.s6.st();s.walls={{}};{json.dumps(ids)}.forEach(i=>s.walls[i]=1);for(let i=0;i<85;i++)SOTA.core.solvedR[i]=1}})()')
+    check(S6(pg,'return [s6.letterReading(),s6.endingFor()]')==[reading,k],f'key gates {ids}')
     ev(pg,'SOTA.rpg.s6.showEnding()');drain(pg);check(ev(pg,'document.getElementById("s6d").dataset.ending')==k,f'{k} ending not chosen');ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
   E=ev(pg,'JSON.stringify(STORY.ending)').lower();check('dies' in ev(pg,'JSON.stringify(STORY.ending.mid)').lower() or 'gone' in ev(pg,'JSON.stringify(STORY.ending.mid)').lower(),'mid: dad does not die');b.close()
 def t_memory_unlocks(p):
