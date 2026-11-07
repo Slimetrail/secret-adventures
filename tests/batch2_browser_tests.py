@@ -95,13 +95,13 @@ def t_craft_real_paths_and_presence(p):
   ev(pg,'reset2('+json.dumps(id)+')');trigger(pg,id);B1.collect(pg);check(not ev(pg,'SOTA.rpg.s6.st().seen["batch2-'+id+'"]'),'unobservable gate fabricated')
  b.close()
 
-def t_offline_v21(p):
+def t_offline_v22(p):
  b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html')
  for _ in range(100):
   if ev(pg,'!!navigator.serviceWorker.controller'):break
   pg.wait_for_timeout(100)
  check(ev(pg,'!!navigator.serviceWorker.controller'),'service worker not ready')
- check(ev(pg,'(async()=>{const keys=await caches.keys(),c=await caches.open("sota-s1-v21");return keys.includes("sota-s1-v21")&&!!(await c.match("batch2-talks.js?v=1"))&&!!(await c.match("batch1-talks.js?v=2"))&&!!(await c.match("party.js?v=16"));})()'),'v21 scripts not cached')
+ check(ev(pg,'(async()=>{const keys=await caches.keys(),c=await caches.open("sota-s1-v22");return keys.includes("sota-s1-v22")&&!!(await c.match("batch2-talks.js?v=1"))&&!!(await c.match("batch1-talks.js?v=2"))&&!!(await c.match("party.js?v=16"));})()'),'v22 scripts not cached')
  c.set_offline(True);pg.reload();S6.create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.map(d=>RPG.makeCompanion(d,1)));for(const id of ["C1","C2","C3","C4","C5","C6"])SOTA.rpg.s6.st().seen["batch1-"+id]=1;SOTA.rpg.live().party.forEach(c=>c.bag=[]);S6H.camp(0)')
  check(B1.collect(pg)==TALKS['C7'],'offline batch2 missing');b.close()
