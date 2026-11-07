@@ -11,7 +11,7 @@ const WALL_ART_ROOMS=28;
 const WALLS=WALL_ART_ROOMS>=M.rooms.length?M.rooms.slice():M.rooms.filter(r=>r.k==="story"),TOTAL_P=M.rooms.length,TOTAL_W=WALL_ART_ROOMS,MEM_STEP=8;
 // Each story room has ONE fixed piece (Jeremy 2026-11-06, t1822u-t1830u): its own painting and its own thoughts.
 // Find the room or miss that piece; how many walls were found before does not matter.
-// Pieces: zone 1..5 scenes in order, then the two Dad pieces last (the figure is faceless until those). The very last is Dad and his note.
+// Pieces: zone 1..5 scenes in order, then the legacy Dad data last. Playback below overrides picnic/bedside only.
 const PIECES=[1,2,3,4,5].reduce((a,z)=>a.concat(D.wall[z]),[]).concat(D.wall.dad),DAD_FROM=PIECES.length-2;
 // room id -> [piece index, art6 file]. Order by maze PATH distance (BFS): z1 from the entrance (rat, slime, spider nearest tavern 1),
 // z2/z3/z4 from tavern 1/2/3, z5 pieces 1-7 from tavern 4, picnic = farthest from tavern 4, bedside = nearest the centre.
@@ -60,13 +60,137 @@ function close(){if(box){box.className="s6d";box.dataset.scene="";}document.docu
 window.addEventListener("keydown",e=>{if(!cur)return;e.preventDefault();e.stopImmediatePropagation();if((e.key==="Enter"||e.key===" ")&&!cur.typing&&!cur.ending)adv();},true);
 function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.remove("on");list.forEach(([t,fn,id,off])=>{const x=el("button","ink s4b small",t);x.dataset.s6b=id;x.disabled=!!off;x.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();fn();});b.appendChild(x);});}
 function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close();if(sc&&sc.opt.done)sc.opt.done();}
+// Local scripted scenes: Dialogue Lead's checked intro / reveal-and-endings sheets.
+// Sequential pairs only; the locked STORY data and all picker pools remain untouched.
+const INTRO_LINES=[
+ ["D","calm","You can stop hovering. Everything will be alright."],
+ ["H","shock","You keep saying that. You're not alright."],
+ ["D","calm","I've had worse days. I deserve this."],
+ ["H","shock","Don't say that. You didn't do anything to deserve getting sick."],
+ ["D","calm","Let it go. It isn't something you need to understand."],
+ ["H","calm","What I understand is you need help. The maze is the fastest way to get the money, and whatever they need to make you well."],
+ ["D","angry","No. You're not going in there."],
+ ["H","calm","I have to. Waiting here won't save you."],
+ ["D","calm","People don't come home from that place. I won't lose you to it."],
+ ["H","calm","I'll come back. I promise. I'm going to save you."],
+ ["D","calm","I keep seeing a crystal when I close my eyes. That's just the fever. Everything will be alright if you stay. Please."],
+ ["H","calm","I'm sorry. I'm going into the maze."]
+];
+const SCRIPTED_PAIRS={
+ "R1":[
+  ["H","calm","That's my dad."],
+  ["Q","calm","Hey. Are you okay?"],
+  ["H","calm","I thought I was saving him. That was the whole reason I came. He broke everything. I don't know if I'm a hero or just a son chasing a ghost."],
+  ["Q","calm","Hey. Look at me. I've got you."]
+ ],
+ "R1-alt":[
+  ["H","calm","That's my dad."],
+  ["S","calm","An ordinary man does not leave a mark this far in. Your father had power."],
+  ["H","calm","I thought I was saving him. That was the whole reason I came. He broke everything. I don't know if I'm a hero or just a son chasing a ghost."],
+  ["S","calm","The record does not become smaller because you know the hand. We should keep moving toward the center."]
+ ],
+ "R1-alt2":[
+  ["H","calm","That's my dad."],
+  ["A","calm","Your father did this. All of it."],
+  ["H","calm","I thought I was saving him. That was the whole reason I came. He broke everything. I don't know if I'm a hero or just a son chasing a ghost."],
+  ["A","calm","I don't blame you for him. Don't ask me to be kind about it. We finish this and we save what's left."]
+ ],
+ "R2":[
+  ["S","calm","Work that reaches a room this deep does not belong to an ordinary man. He had power."],
+  ["H","calm","I wanted him to just be my dad. Sick, and waiting."],
+  ["S","calm","The later marks were already more deliberate. He knew what he was doing by then."]
+ ],
+ "R3":[
+  ["A","calm","We still have work. I'm not lingering over him."],
+  ["H","calm","I'm not asking you to."],
+  ["A","calm","I don't blame you for him. Don't ask me to be kind about it. We finish this and we save what's left."]
+ ],
+ "D2":[
+  ["Q","calm","He isn't getting up. Come on... please."],
+  ["S","calm","He will not. And I cannot tell if the crystal held."],
+  ["Q","calm","Then we don't even know if any of this closed."]
+ ],
+ "D2-alt":[
+  ["Q","calm","He isn't getting up. Come on... please."],
+  ["A","calm","My team died to that thing. Now he did too. And I still don't know if it mattered."]
+ ],
+ "D2-alt2":[
+  ["S","calm","I cannot tell if the crystal held. We do not know if any of this closed."],
+  ["A","calm","My team died to that thing. Now he did too. Nobody finished it. I still don't know if it mattered."]
+ ],
+ "D3":[
+  ["A","calm","My team died to that thing. Now he did too. And I still don't know if it mattered."],
+  ["Q","calm","I'm sorry. About them, and about him."]
+ ],
+ "C1":[
+  ["H","calm","We're alive. But look at it. It's still bleeding."],
+  ["Q","calm","Hey. We're okay. That's something, right? Even if it isn't all the way better."],
+  ["H","calm","I wanted to bring home enough to save my dad. I don't know if this is enough."],
+  ["Q","calm","You're alive. The crystal isn't whole. That's what we have."]
+ ],
+ "C2":[
+  ["S","calm","It is not whole. Someone tried to close what broke. This slow leak is what they left."],
+  ["H","calm","Then this is what we get. A crack that still bleeds."],
+  ["S","calm","It is slower now. I do not have the rest of why."]
+ ],
+ "C3a":[
+  ["A","calm","It's still leaking. We didn't end it."],
+  ["H","calm","We stopped it getting worse."],
+  ["A","calm","It's still bleeding. That's as far as it goes."]
+ ],
+ "C3b":[
+  ["A","calm","My team died for this. For a crack that didn't even close."],
+  ["H","calm","I'm sorry."],
+  ["A","calm","Sorry doesn't stand them back up. Neither did we."]
+ ],
+ "F1":[
+  ["H","calm","It's whole. I came here to save him. We ended what he left instead."],
+  ["Q","calm","You did it. Breathe for a second. That's enough for right now."],
+  ["H","calm","I thought saving him was who I was."],
+  ["Q","calm","You're still you. We'll take the next step when you can."]
+ ],
+ "F2":[
+  ["S","calm","The crystal is intact. Everyone else fled the failed rite. He did not. When sealing the break proved beyond him, he made a golem instead."],
+  ["H","calm","Then the price started once he was the only one left."],
+  ["S","calm","And now it is closed."]
+ ],
+ "F3":[
+  ["A","calm","He made that thing with his own hands. We brought it down."],
+  ["H","calm","I can know that and still feel like I owe for it."],
+  ["A","calm","His debt stays with him. You don't owe it. Don't ask me to thank him either. The world gets to keep running. That's the job."]
+ ]
+};
+function picnicLines(){const P=SCRIPTED_PAIRS;let out;
+ if(who("Q"))out=P.R1.slice();else if(who("S"))out=P["R1-alt"].slice();else if(who("A"))out=P["R1-alt2"].slice();
+ else return [P.R1[0],P.R1[2]];
+ if(who("Q")&&who("S"))out=out.concat(P.R2);
+ if(who("A")&&(who("Q")||who("S")))out=out.concat(P.R3);
+ return out;}
+function bedsideLines(){const out=[["H","calm","This one is about more than the maze."]];
+ if(who("Q"))out.push(["Q","calm","Okay. Stay with this one. It matters."]);
+ else if(who("S"))out.push(["S","calm","The subject has changed. This is no longer only the maze."]);
+ else if(who("A"))out.push(["A","calm","This is more than the maze."]);
+ return out;}
+function endingLines(k){const P=SCRIPTED_PAIRS,Q=!!who("Q"),S=!!who("S"),A=!!who("A");let out=[];
+ if(k==="low"){
+  if(Q&&S){out=P.D2.slice();if(A)out=out.concat(P.D3);}
+  else if(Q&&A)out=P["D2-alt"].slice();else if(S&&A)out=P["D2-alt2"].slice();
+  else if(Q)out=[P.D2[0]];else if(S)out=[P["D2-alt2"][0]];else if(A)out=[P["D2-alt"][1]];
+ }else if(k==="mid"){
+  if(Q)out=out.concat(P.C1);if(S)out=out.concat(P.C2);
+  if(A)out=out.concat(P[brunnVer()==="save"?"C3a":"C3b"]);
+ }else{
+  out=Q?P.F1.slice():[P.F1[0]];
+  if(S)out=out.concat(P.F2);if(A&&brunnVer()==="save")out=out.concat(P.F3);
+ }
+ return out;}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
 function wallArt(id){return "art6/"+ROOM_ART[id][1]+".webp";}
 function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(sc.need))&&(!sc.after||s.revealed));}
 const H={};
 H.plan=()=>{const s=st();return s?s.plan:null;};
-H.created=()=>{const s=st();if(!s)return;s.seen.opening=1;play("opening",D.opening,{bg:null});};
+H.created=()=>{const s=st();if(!s)return;s.seen.opening=1;play("opening",INTRO_LINES,{bg:null});};
 H.joined=(c,t)=>{const s=st();if(!s)return;if(t===3&&!s.brunnJoin)s.brunnJoin=s.walls[LETTER_KEYS.crack]?"save":"died";s.seen["join"+t]=1;play("join",D.join[t]||[],{bg:tavBg(t)});};
 H.tavern=t=>{const s=st(),l=live();if(!s)return;const vk=t+":"+l.steps;if(s.visit===vk)return;s.visit=vk;s.shopN=0;
  const sc=seenFirst(D.tavern[t]||[],s);if(sc){s.seen[sc.id]=1;play("tavern",withMem(sc.lines),{bg:tavBg(t)});}};
@@ -74,9 +198,11 @@ H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN
  if(sc){s.seen[sc.id]=1;play("stay",sc.lines,{bg:tavBg(+s.visit.split(":")[0])});}};
 H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fun"],s);if(sc){s.seen[sc.id]=1;play("camp",withMem(sc.lines),{bg:null});}};
 H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r)||s.walls[id])return;
- const pi=pieceFor(id);if(pi<0)return;let lines=PIECES[pi].slice();if(pi>=DAD_FROM)s.revealed=true;
+ const pi=pieceFor(id);if(pi<0)return;let lines=id===LETTER_KEYS.picnic?picnicLines():id===84?bedsideLines():PIECES[pi].slice();
  if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
- s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;play("wall",withMem(lines),{wall:wallArt(id)});};
+ s.walls[id]=1;if(!Array.isArray(s.order))s.order=[];s.order.push(id);s.lastPiece=pi;
+ if(id===LETTER_KEYS.picnic)s.revealed=true;
+ play("wall",pi>=DAD_FROM?lines:withMem(lines),{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 // Centre lock reuses Stage 3's existing zone-5 lever rules. It is not an 86th room.
 const FINAL_LOCK=window.PUZ.make(1,5,713507);let lockState=window.PUZ.clone(FINAL_LOCK.s);
@@ -113,10 +239,17 @@ function letterLines(){const r=letterReading(),P=LETTER_POOL[r],out=[];const v=r
  return out.length?out:[["N","calm",P.N]];}
 function bossNote(){const s=st();if(!s)return;if(!s.finalLock&&window.PUZ.solved(FINAL_LOCK.pz,lockState))lockState=window.PUZ.clone(FINAL_LOCK.s);play("boss",letterLines(),{wall:"art6/letter-note-before-you-enter.webp",end:bossChoices});}
 function showEnding(){const s=st();if(!s)return;const k=endingFor(),E=D.ending[k];s.ending=k;
- play("ending",E.lines,{end:()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
+ const title=()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));
   q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";box.dataset.ending=k;
-  btns([["Back to the maze",()=>finish(),"back"]]);}});}
+  btns([["Back to the maze",()=>finish(),"back"]]);};
+ const lines=endingLines(k);
+ if(lines.length)play("ending",lines,{end:title});
+ // A solo death has no speech. play([]) calls done, not end; open a title-only scene without a dummy line.
+ else play("ending",[],{done:()=>{build();cur={kind:"ending",L:[],opt:{end:title},i:-1,typing:false,ending:true};
+  box.className="s6d on";box.dataset.scene="ending";box.dataset.line="";box.dataset.who="";box.dataset.emo="";
+  q(".s6bg").style.backgroundImage="none";q(".s6wall").removeAttribute("src");q(".s6wall").style.display="none";
+  document.documentElement.classList.add("s6open");title();}});}
 // The note is one-shot; the centre door stays usable after "Not yet".
 const door=el("button","ink s4b small","‹ Centre door");door.id="s7door";door.style.cssText="display:none;position:fixed;top:64px;left:12px;z-index:12";document.body.appendChild(door);
 door.addEventListener("click",()=>{const s=st();if(!s||S.storyOpen()||S.uiOpen()||S.puzzleOpen()||S.mapOpen())return;if(s.golemDefeated)showEnding();else bossNote();});

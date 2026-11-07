@@ -113,6 +113,10 @@ def first_line(pg):
   """text of the first line of the wall scene now open"""
   return ev(pg,'SOTA.rpg.s6.line()&&SOTA.rpg.s6.line().i===0?document.querySelector("#s6d .s6t").dataset.full||null:null')
 def piece_text(pg,k):return ev(pg,f'(()=>{{const P=[1,2,3,4,5].reduce((a,z)=>a.concat(STORY.wall[z]),[]).concat(STORY.wall.dad);return P[{k}][0][2]}})()')
+def played_wall_first(pg,i):
+  if i==80:return "That's my dad."
+  if i==84:return "This one is about more than the maze."
+  return piece_text(pg,ev(pg,f'SOTA.rpg.s6.pieceFor({i})'))
 def open_wall(pg,i):
   ev(pg,f'SOTA.onRoomOpen({i})');k=S6(pg,'const l=s6.line();return l&&l.kind');check(k=='wall',f'no wall scene for room {i}')
   ev(pg,'SOTA.rpg.s6.setSpeed(0)');[pg.wait_for_timeout(20) for _ in range(200) if S6(pg,'const l=s6.line();return l.i===0&&l.typing')]
@@ -120,7 +124,7 @@ def open_wall(pg,i):
 def run_walls(pg,order):
   W=ev(pg,'SOTA.rpg.s6.artRooms()');n=ev(pg,'SOTA.rpg.s6.WALL_ART_ROOMS');P=ev(pg,'SOTA.rpg.s6.PIECES()');got=[]
   for k,i in enumerate(order):
-    t,art=open_wall(pg,i);want=piece_text(pg,ev(pg,f'SOTA.rpg.s6.pieceFor({i})'));check(t==want,f'room {i} ({k+1}th found) shows wrong piece: {t[:50]!r} want {want[:50]!r}')
+    t,art=open_wall(pg,i);want=played_wall_first(pg,i);check(t==want,f'room {i} ({k+1}th found) shows wrong piece: {t[:50]!r} want {want[:50]!r}')
     z=ev(pg,f'MAZE.rooms[{i}].z');f=ev(pg,f'SOTA.rpg.s6.roomArt()[{i}][1]');check(art==f'art6/{f}.webp' and f.startswith(f'zone{z}-'),f'room {i} in zone {z} uses art {art} want {f}')
     check(S6(pg,'return Object.keys(L.story.walls).length')==k+1,'count wrong');got.append(t)
   return got
@@ -135,17 +139,18 @@ def t_wall_counts(p):
   for i,f in WANT.items():check(RA[str(i)][1]==f,f'room {i} has {RA[str(i)][1]} want {f}')
   check(RA['84'][0]==N-1 and RA['80'][0]==N-2,'dad pieces not on picnic/bedside rooms')
   order=sorted(S6(pg,'return s6.artRooms()'),key=lambda i:RA[str(i)][0]);got=run_walls(pg,order)
-  for i,g in enumerate(got):check(g==piece_text(pg,i),f'room with piece #{i+1} did not show it')
-  check(S6(pg,'return L.story.revealed'),'dad not revealed by the last pieces');check('dad' in got[-1].lower() and 'for my child' in json.dumps(S6(pg,'return STORY.wall.dad[1]')).lower(),f'last piece is not Dad and his note: {got[-1][:80]}')
+  for i,g in zip(order,got):check(g==played_wall_first(pg,i),f'room {i} did not show its assigned scene')
+  check(S6(pg,'return L.story.revealed'),'dad not revealed by the last pieces');check(got[-2]=="That's my dad." and not re.search(r'\b(dad|father)\b',got[-1],re.I),'picnic/bedside playback gates');check('for my child' in json.dumps(S6(pg,'return STORY.wall.dad[1]')).lower(),'locked bedside data changed')
   check(S6(pg,'return L.story.order.length')==N,'discovery order not kept')
   ev(pg,f'SOTA.onRoomOpen({order[0]})');check(not ev(pg,'SOTA.storyOpen()'),'same wall counted twice');check(S6(pg,'return Object.keys(L.story.walls).length')==N,'recount')
   b.close()
 def t_wall_order_independent(p):
   b,c,pg=fight_with_party(p);order=S6(pg,'return s6.artRooms()')[::-1]  # zone 5 rooms first, zone 1 last
   """each room shows its OWN piece however many walls came before; a skipped room's piece is missed, not inherited"""
-  got=run_walls(pg,order[:3]);check('who would make' not in got[0].lower(),'1st room found (zone 5) got the zone-1 piece by count')
-  check(got[0]==piece_text(pg,S6(pg,f'return s6.pieceFor({order[0]})')),'1st room found did not show its own piece')
-  check(S6(pg,'return L.story.revealed'),'bedside (dad) room found first did not reveal dad')
+  check(order[0]==84,'expected bedside first');t,_=open_wall(pg,84)
+  check(t==played_wall_first(pg,84),'bedside did not show hint');check(not S6(pg,'return L.story.revealed'),'bedside-first revealed dad')
+  t,_=open_wall(pg,80);check(t=="That's my dad." and S6(pg,'return L.story.revealed'),'picnic did not reveal dad')
+  open_wall(pg,next(i for i in order if i not in (84,80)))
   t,art=open_wall(pg,5);check(t==piece_text(pg,1) and 'zone1-02-slime' in art,'slime room after 3 walls did not show the slime piece')
   check(t!=piece_text(pg,3),'later room inherited a skipped piece');t,_=open_wall(pg,4);check('who would make' in t.lower(),'rat room found last did not get the rat piece')
   b.close()
