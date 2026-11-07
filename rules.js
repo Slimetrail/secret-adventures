@@ -473,7 +473,8 @@ const ROLES=[null,
  [["lancer",1.05,1.15,.85],["ravager",1.25,1.35,.65],["bone guard",.85,.90,1.90],["devourer",1.40,1.05,.75],["winged striker",.75,1.35,.55],["pack hunter",.90,1.45,.70],["spectral caster",.70,1.10,1.30,.65]],
  [["breaker",1.20,1.25,.80],["diver",.95,1.40,.75],["scale guard",1.10,1.00,1.65],["stone tank",1.65,.75,2.00],["barbed ambusher",.85,1.45,.65],["warlord",1.50,1.15,1.20],["pincer guard",1.00,1.10,1.80]],
  [["gaze caster",.90,1.10,1.10,.50],["fire devastator",1.25,1.45,1.20,.25],["many-headed tank",1.80,1.10,.90],["sky assassin",.85,1.55,.70],["hybrid striker",1.15,1.25,1.30],["flame caster",.80,1.30,.85,.60],["shadow hunter",1.00,1.40,1.00,.40]]];
-const BOSS={n:"Iron Golem",role:"crystal sentinel",hp:23000,atk:255,def:145,boss:true};
+// Jeremy t1968u: toughest fight. Near-max level-50 party wins with ease; a not-maxed party needs Defend on the wind-up, heals and focus. (was hp 23000, atk 255, def 145)
+const BOSS={n:"Iron Golem",role:"crystal sentinel",hp:15000,atk:230,def:600,boss:true};
 function makeBoss(diff){const d=DIFF[diff]||DIFF.normal;return Object.assign({},BOSS,{zone:5,kind:7,lvl:50,max:BOSS.hp,atk:BOSS.atk*d.matk});}
 const DIFF={story:{hp:2,matk:0.5,name:"Story"},normal:{hp:1,matk:1,name:"Normal"},hard:{hp:1,matk:1.5,name:"Hard"}};
 function partyLevel(party){return Math.round(party.reduce((t,c)=>t+c.lvl,0)/party.length);}
@@ -483,7 +484,15 @@ function monsterLevel(zone,plvl,cf){return Math.min(CAP+5,Math.max(ZONE_MINLVL[z
 function makeMonster(zone,idx,plvl,cf,diff){const L=monsterLevel(zone,plvl,cf),m=ZONE_MUL[zone],d=DIFF[diff]||DIFF.normal,k=idx%7,nm=MONSTERS[zone][k],v=ROLES[zone][k];
  const hp=Math.round((16+9*L)*m*v[1]);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false};}
 function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
-function encounter(zone,plvl,cf,diff,seed){const r=rng(seed),k=1+Math.floor(r()*3),out=[];for(let i=0;i<k;i++)out.push(makeMonster(zone,Math.floor(r()*7),plvl,cf,diff));return out;}
+function encounter(zone,plvl,cf,diff,seed,party){const r=rng(seed),k=1+Math.floor(r()*3),out=[];for(let i=0;i<k;i++)out.push(makeMonster(zone,Math.floor(r()*7),plvl,cf,diff));
+ // Jeremy t1965u/t1966u: hallway foes that are weak next to the party's current stats may come as a pack of up to four.
+ // Size is chosen from how fast the party would beat them and how hard they hit; it is not always four. Rooms/boss never pass a party.
+ if(Array.isArray(party)&&party.length&&k<4){const alive=party.filter(c=>c.hp>0);if(alive.length){
+  const dmgOn=m=>alive.reduce((t,c)=>t+Math.max(1,power(c)-m.def*0.5),0),avgHp=alive.reduce((t,c)=>t+maxHp(c,(DIFF[diff]||DIFF.normal).hp),0)/alive.length,avgDef=alive.reduce((t,c)=>t+defense(c),0)/alive.length;
+  const cost=m=>m.hp/dmgOn(m)+Math.max(1,m.atk-avgDef*0.5)/avgHp*4,weak=m=>cost(m)<=1.2;
+  if(out.every(weak)){const r2=rng((seed^0x2c1b3c6d)>>>0);let budget=0.8+r2()*3.4,used=out.reduce((t,m)=>t+cost(m),0);
+   while(out.length<4){const m=makeMonster(zone,Math.floor(r2()*7),plvl,cf,diff);if(!weak(m)||used+cost(m)>budget)break;used+=cost(m);out.push(m);}}}}
+ return out;}
 // Jeremy t1850u: one derived-seed room roll; keep the hallway roster RNG untouched.
 function roomEncounter(zone,plvl,cf,diff,seed){const profile=Math.floor(rng((seed^0x72f34a15)>>>0)()*3),hpMul=profile===1?1:2,atkMul=profile===0?1:1.5;
  return encounter(zone,plvl,cf,diff,seed).map(m=>Object.assign(m,{hp:m.hp*hpMul,max:m.max*hpMul,atk:m.atk*atkMul,room:true,roomProfile:profile}));}
