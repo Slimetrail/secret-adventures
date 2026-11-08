@@ -465,7 +465,7 @@ const MONSTERS=[null,
  ["Centaur","Werewolf","Skeleton","Ghoul","Harpy","Dire wolf","Wraith"],
  ["Minotaur","Griffin","Lizard man","Stone gargoyle","Manticore","Ogre warlord","Giant scorpion"],
  ["Basilisk","Dragon","Hydra","Wyvern","Chimera","Salamander","Shadow drake"]];
-const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_MINLVL=[0,1,8,17,27,38];
+const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_MINLVL=[0,1,10,20,30,40],ZONE_MAXLVL=[0,10,20,30,40,50];
 // Rows align with MONSTERS: role, HP/ATK/DEF multipliers, optional armor penetration.
 const ROLES=[null,
  [["scavenger",.65,.78,.40],["gel tank",1.55,.62,1.30],["shell guard",1.05,.85,1.80],["darting hunter",.70,1.12,.55],["ambusher",.90,1.35,.80],["bulwark",1.35,.80,1.55],["spore caster",.85,1.10,.65,.45]],
@@ -480,7 +480,7 @@ const DIFF={story:{hp:2,matk:0.5,name:"Story"},normal:{hp:1,matk:1,name:"Normal"
 function partyLevel(party){return Math.round(party.reduce((t,c)=>t+c.lvl,0)/party.length);}
 // centre factor: 0 at the edge of the maze, 1 at the centre (cell distance from centre / half size)
 function centreFactor(x,y,n){const h=(n-1)/2;return Math.max(0,1-Math.max(Math.abs(x-h),Math.abs(y-h))/h);}
-function monsterLevel(zone,plvl,cf){return Math.min(CAP+5,Math.max(ZONE_MINLVL[zone],plvl)+Math.round(3*(cf||0)));}
+function monsterLevel(zone,plvl,cf){return Math.min(ZONE_MAXLVL[zone],Math.max(ZONE_MINLVL[zone],plvl)+Math.round(3*(cf||0)));}
 function makeMonster(zone,idx,plvl,cf,diff){const L=monsterLevel(zone,plvl,cf),m=ZONE_MUL[zone],d=DIFF[diff]||DIFF.normal,k=idx%7,nm=MONSTERS[zone][k],v=ROLES[zone][k];
  const hp=Math.round((16+9*L)*m*v[1]);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false};}
 function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
@@ -522,8 +522,8 @@ Fight.prototype.monstersTurn=function(){this.motionHits=[];if(this.over)return [
   if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");}
  this.guard.clear();this.turn++;this.log.push(...out);this.check();return out;};
 Fight.prototype.check=function(){if(this.over)return;if(!this.alive(this.m).length)this.over="win";else if(!this.alive(this.p).length)this.over="lose";};
-// Jeremy t2217u/t2218u: compare against the creature's zone, never its scaled combat level.
-function overlevelExpMul(plvl,zone){return Math.pow(0.5,Math.max(0,plvl-ZONE_MINLVL[zone]));}
+// Jeremy t2219u: zone bands cap combat scaling; XP shrinks only past the zone's ten-level mark.
+function overlevelExpMul(plvl,zone){return Math.pow(0.5,Math.max(0,plvl-ZONE_MAXLVL[zone]));}
 Fight.prototype.rewards=function(seed){const plvl=partyLevel(this.p),xp=this.m.reduce((t,m)=>t+Math.round((6+m.lvl*4*ZONE_MUL[m.zone])*(m.room?2:1))*overlevelExpMul(plvl,m.zone),0),l=loot(this.m[0].zone,seed);return {xp,gold:l.gold,junk:l.junk};};
 // simple auto play (tests): every hero attacks the first foe, or uses its first attack skill when it has mana
 function simulate(party,mons,diff,seed,maxTurns){const f=new Fight(party,mons,diff,seed);for(let t=0;t<(maxTurns||200)&&!f.over;t++){
@@ -548,6 +548,6 @@ function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-
 function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
 const RPG={CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
- ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
+ ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);

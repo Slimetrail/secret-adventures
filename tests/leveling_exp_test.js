@@ -35,8 +35,8 @@ for (const zone of [1, 2]) {
   assert.equal(R.overlevelExpMul(level - 1, zone), 1);
   if (level > 1) assert.equal(reward(zone, level - 1).xp, baseXp(m));
  });
- test(`zone ${zone} XP already shrinks at +1 and falls again at +2`, () => {
-  const level = R.ZONE_MINLVL[zone];
+ test(`zone ${zone} XP already shrinks at mark +1 and falls again at mark +2`, () => {
+  const level = R.ZONE_MAXLVL[zone];
   assert.equal(R.overlevelExpMul(level + 1, zone), 0.5);
   assert.equal(R.overlevelExpMul(level + 2, zone), 0.25);
   assert.ok(reward(zone, level).xp > reward(zone, level + 1).xp);
@@ -46,7 +46,7 @@ for (const zone of [1, 2]) {
 
 test("each further overlevel step decreases the multiplier through cap", () => {
  for (let zone = 1; zone <= 5; zone++) {
-  for (let level = R.ZONE_MINLVL[zone]; level < R.CAP; level++) {
+  for (let level = R.ZONE_MAXLVL[zone]; level < R.CAP; level++) {
    assert.ok(R.overlevelExpMul(level + 1, zone) < R.overlevelExpMul(level, zone));
    assert.ok(R.overlevelExpMul(level + 1, zone) > 0);
   }
@@ -55,29 +55,30 @@ test("each further overlevel step decreases the multiplier through cap", () => {
 
 test("level 20 grinding zone 1 gives a very small positive remainder", () => {
  assert.ok(reward(1, 20).xp > 0);
- assert.ok(reward(1, 20).xp < reward(1, 1).xp / 1000);
+ assert.ok(reward(1, 20).xp < reward(1, 1).xp / 100);
+ assert.ok(reward(1, 20).xp < reward(1, 10).xp / 1000);
 });
 
-test("scaled-up monster level does not erase the zone penalty", () => {
+test("high party level caps combat level but still shrinks XP past zone mark", () => {
  const m = R.makeMonster(1, 0, 20, 0, "normal");
- assert.equal(m.lvl, 20); // Combat scaling is unchanged.
+ assert.equal(m.lvl, 10); // Zone-1 combat level stops at its mark.
  const xp = new R.Fight([{lvl: 20}], [m], "normal", 7).rewards(7).xp;
- assert.equal(xp, baseXp(m) * 0.5 ** 19);
+ assert.equal(xp, baseXp(m) * 0.5 ** 10);
  assert.ok(xp < baseXp(m) / 1000);
 });
 
 test("mixed-zone rewards shrink per monster, retaining room bonus and loot", () => {
- const mons = [R.makeMonster(1, 0, 8, 0, "normal"), R.makeMonster(2, 0, 8, 0, "normal")];
+ const mons = [R.makeMonster(1, 0, 11, 0, "normal"), R.makeMonster(2, 0, 11, 0, "normal")];
  mons[1].room = true;
- const actual = new R.Fight([{lvl: 8}], mons, "normal", 7).rewards(7);
- assert.deepEqual(actual, {xp: baseXp(mons[0]) * 0.5 ** 7 + baseXp(mons[1]), ...R.loot(1, 7)});
+ const actual = new R.Fight([{lvl: 11}], mons, "normal", 7).rewards(7);
+ assert.deepEqual(actual, {xp: baseXp(mons[0]) * 0.5 + baseXp(mons[1]), ...R.loot(1, 7)});
 });
 
 test("party level uses the rounded average, including fallen members", () => {
- const mons = [R.makeMonster(1, 0, 3, 0, "normal")];
- const party = [{lvl: 1, hp: 0}, {lvl: 4, hp: 10}];
- assert.equal(R.partyLevel(party), 3);
- assert.equal(new R.Fight(party, mons, "normal", 7).rewards(7).xp, baseXp(mons[0]) / 4);
+ const mons = [R.makeMonster(1, 0, 11, 0, "normal")];
+ const party = [{lvl: 10, hp: 0}, {lvl: 11, hp: 10}];
+ assert.equal(R.partyLevel(party), 11);
+ assert.equal(new R.Fight(party, mons, "normal", 7).rewards(7).xp, baseXp(mons[0]) / 2);
 });
 
 test("fractional remainder can be accumulated by gainXp", () => {
@@ -86,4 +87,51 @@ test("fractional remainder can be accumulated by gainXp", () => {
  const xp = reward(1, 20).xp;
  R.gainXp(c, xp, 1);
  assert.equal(c.xp, xp);
+});
+
+
+test("zone floors and ten-level marks are exported", () => {
+ assert.deepEqual(R.ZONE_MINLVL, [0, 1, 10, 20, 30, 40]);
+ assert.deepEqual(R.ZONE_MAXLVL, [0, 10, 20, 30, 40, 50]);
+});
+
+test("cf=0 monsters match every party level within each zone band", () => {
+ for (let zone = 1; zone <= 5; zone++) {
+  for (let level = R.ZONE_MINLVL[zone]; level <= R.ZONE_MAXLVL[zone]; level++) {
+   assert.equal(R.monsterLevel(zone, level, 0), level);
+   assert.equal(R.overlevelExpMul(level, zone), 1);
+  }
+ }
+});
+
+test("later-zone monsters do not scale down to an underleveled party", () => {
+ for (let zone = 2; zone <= 5; zone++) assert.equal(R.monsterLevel(zone, 3, 0), R.ZONE_MINLVL[zone]);
+ const m = R.makeMonster(2, 0, 3, 0, "normal");
+ assert.equal(m.lvl, 10);
+ assert.equal(reward(2, 3).xp, baseXp(m));
+ assert.equal(reward(2, 3).xp, reward(2, 10).xp);
+});
+
+test("monsters never scale past the zone mark, including above party cap", () => {
+ for (let zone = 1; zone <= 5; zone++) {
+  for (const level of [R.ZONE_MAXLVL[zone] + 1, 50, 60]) {
+   assert.equal(R.monsterLevel(zone, level, 0), R.ZONE_MAXLVL[zone]);
+   assert.equal(R.monsterLevel(zone, level, 1), R.ZONE_MAXLVL[zone]);
+  }
+ }
+ assert.equal(R.monsterLevel(1, 20, 0), 10);
+});
+
+test("centre pressure stays inside each zone band", () => {
+ for (let zone = 1; zone <= 5; zone++) {
+  for (let level = 1; level <= 55; level++) {
+   for (const cf of [0, 0.5, 1]) {
+    const actual = R.monsterLevel(zone, level, cf);
+    assert.ok(actual >= R.ZONE_MINLVL[zone]);
+    assert.ok(actual <= R.ZONE_MAXLVL[zone]);
+   }
+  }
+ }
+ assert.equal(R.monsterLevel(1, 4, 1), 7);
+ assert.equal(R.monsterLevel(1, 9, 1), 10);
 });
