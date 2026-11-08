@@ -150,11 +150,12 @@ function wear(){const s=s6();if(!s)return 1;const old=s.seen.join3?4:s.seen.join
 let jb=null,jTab=null,jBeast=null,jOpenSec=false;
 function openJournal(tab){const l=S.rpg.live();if(!l)return;if(tab&&tab!=="beasts")jBeast=null;if(!jb){jb=el("div","ijour");jb.id="ijour";document.body.appendChild(jb);}
  if(tab){jTab=tab;jOpenSec=true;}
- const w=wear(),bk="journal/book-zone"+w+".webp";jb.dataset.wear=w;jb.dataset.artReady=has(bk)?"1":"0";jb.dataset.open=jOpenSec?"1":"0";jb.style.setProperty("--book",has(bk)?'url("'+A(bk)+'")':"none");
+ const w=wear(),bk="journal/book-"+(jOpenSec?"open-zone":"zone")+w+".webp";jb.dataset.wear=w;jb.dataset.artReady=has(bk)?"1":"0";jb.dataset.open=jOpenSec?"1":"0";jb.style.setProperty("--book",has(bk)?'url("'+A(bk)+'")':"none");
  jb.innerHTML="";const book=el("div","ijbook ijwear"+w+(jOpenSec?" ijopen":""));const tabs=el("div","ijtabs");
- TABS.forEach(([k,n])=>{const t=el("button","ijtab"+(jOpenSec&&k===jTab?" sel":""),n);t.type="button";t.dataset.tab=k;const ta="journal/tab-"+(k==="art"?"found-art":k)+".webp";if(has(ta)){t.classList.add("art");t.style.backgroundImage='url("'+A(ta)+'")';}t.addEventListener("click",e=>{e.preventDefault();if(k==="beasts")jBeast=null;openJournal(k);});tabs.appendChild(t);});
+ // Pixel boxes in the 1024x1536 artwork: x=780, y=334+i*122, w=208, h=108.
+ TABS.forEach(([k,n],i)=>{const t=el("button","ijtab"+(jOpenSec&&k===jTab?" sel":""),n);t.type="button";t.dataset.tab=k;t.title=n;t.style.left=(780/1024*100)+"%";t.style.top=((334+i*122)/1536*100)+"%";t.style.width=(208/1024*100)+"%";t.style.height=(108/1536*100)+"%";t.addEventListener("click",e=>{e.preventDefault();if(k==="beasts")jBeast=null;openJournal(k);});tabs.appendChild(t);});
  book.appendChild(tabs);
- if(jOpenSec){const pg=el("div","ijpage");pg.dataset.tab=jTab;if(has("journal/page.webp"))pg.style.backgroundImage='url("'+A("journal/page.webp")+'")';page(pg,l);book.appendChild(pg);}
+ if(jOpenSec){const pg=el("div","ijpage");pg.dataset.tab=jTab;page(pg,l);book.appendChild(pg);}
  const x=el("button","ink s4b small ijclose","Close");x.type="button";x.addEventListener("click",e=>{e.preventDefault();closeJournal();});
  jb.append(x,book,appCtl("journal"));jb.classList.add("on");document.documentElement.classList.add("ijour-open");}
 function closeJournal(){jBeast=null;jTab=null;jOpenSec=false;if(jb){jb.classList.remove("on");jb.innerHTML="";}document.documentElement.classList.remove("ijour-open");}
@@ -219,13 +220,13 @@ html.ititle-open #dvbtn{visibility:hidden}
 .ia-active .s6pf{display:none!important}.ia-active .s6bg,.ia-active .s6wall{visibility:hidden!important}.ia-active .s6box{z-index:3;left:5%;right:5%;bottom:5%}
 .icred{margin-top:10px;text-align:center;font:15px Georgia,serif;color:#efe0b8}.icred-h{font:700 16px Georgia,serif;color:#ffe3a0}.icred-t{font:700 18px Georgia,serif;margin:4px 0}
 #s6d[data-end-mood=vibrant] .s6t{border-color:#7fe0ff}#s6d[data-end-mood=cracked] .s6t{border-color:#c04a6a}#s6d[data-end-mood=damaged] .s6t{border-color:#6a5a70}
-.ijour{display:none;position:fixed;inset:0;z-index:96;background:rgba(8,5,14,.9);overflow-y:auto;touch-action:pan-y;padding:calc(10px + env(safe-area-inset-top)) 84px 16px 10px;box-sizing:border-box;font:16px Georgia,serif;color:#2b1a0e}
+.ijour{display:none;position:fixed;inset:0;z-index:96;background:rgba(8,5,14,.9);overflow-y:auto;touch-action:pan-y;padding:calc(10px + env(safe-area-inset-top)) 10px 16px 10px;box-sizing:border-box;font:16px Georgia,serif;color:#2b1a0e}
 .ijour.on{display:block}.ijclose{position:sticky;top:0;float:left;z-index:2}
-.ijbook{position:relative;margin:12px auto 8px;max-width:540px;min-height:min(70vh,560px);padding:16px 14px 18px 42px;border-radius:8px 14px 14px 8px;background-color:#6b3f22;background-image:var(--book),linear-gradient(90deg,#3b2112 0 30px,#7a4a28 30px);background-size:100% 100%;box-shadow:0 8px 30px #000}
+.ijbook{position:relative;margin:12px auto 8px;width:100%;max-width:540px;aspect-ratio:2/3;padding:0;background:var(--book) center/100% 100% no-repeat}
 .ijbook.ijwear2{filter:saturate(.92)}.ijbook.ijwear3{filter:saturate(.85) contrast(1.05)}.ijbook.ijwear4{filter:saturate(.78) contrast(1.08)}.ijbook.ijwear5{filter:saturate(.7) contrast(1.12)}
 .ijour[data-art-ready="1"] .ijbook{filter:none}
-.ijtabs{display:flex;flex-direction:column;position:absolute;top:16px;right:0;transform:translateX(78%);gap:6px;margin:0;z-index:3;align-items:stretch}.ijtab{min-height:36px;padding:0 10px;border:2px solid #2b1a0e;border-radius:0 8px 8px 0;background:#d9c08a;color:#2b1a0e;font:700 13px Georgia,serif}.ijtab.art{background-color:transparent;background-size:contain;background-repeat:no-repeat;background-position:center;border:0;color:transparent;min-width:88px;min-height:40px}.ijtab.sel{background:#f3e6c0;transform:translateX(8px)}
-.ijpage{min-height:50vh;padding:12px 14px;background:#efe2bd center/cover;border-radius:4px;box-shadow:inset 0 0 18px rgba(90,55,20,.45)}.ijpage h3{margin:0 0 8px;font:700 20px Georgia,serif}
+.ijtabs{position:absolute;inset:0;z-index:3;pointer-events:none}.ijtab{position:absolute;pointer-events:auto;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:transparent;font:inherit;cursor:pointer}.ijtab.sel{background:rgba(255,226,150,.14);box-shadow:inset 0 0 0 1px rgba(93,56,18,.35)}.ijtab:focus-visible{outline:2px solid #6c3b12;outline-offset:-3px}
+.ijpage{position:absolute;left:20.2%;top:18%;width:52.3%;height:61%;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:6px;background:transparent;border:0;color:#2b1a0e}.ijpage h3{margin:0 0 8px;font:700 20px Georgia,serif}
 .ijl{margin:4px 0;line-height:1.3}.ijart{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.ijfig{margin:0;padding:6px;border:1px dashed #8a6a3a}.ijfig img{width:100%;display:block}.ijnote{min-height:1.2em}
 .ijhw{font-family:"Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE",cursive;white-space:pre-line;color:#2a2350;transform:rotate(-.6deg);line-height:1.35}
 .ijentry{margin:0 0 16px;font-size:16px}.ijentry:nth-child(even){transform:rotate(.5deg)}.ijnote{font-size:13px;margin-top:4px}

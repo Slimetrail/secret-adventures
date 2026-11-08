@@ -36,7 +36,7 @@ test("journal merges Inventory and Equipment and puts Beasts in the freed slot",
  a.equal(fs.existsSync(path.join(root,"art-intro/journal/tab-beasts.webp")),false);
  a.match(intro,/t==="beasts"/);
  a.match(intro,/No beasts found yet\./);
- a.match(intro,/journal\/tab-"\+\(k==="art"\?"found-art":k\)\+"\.webp/);
+ a.doesNotMatch(intro,/journal\/tab-/);a.match(intro,/t\.style\.left=\(780\/1024\*100\)/);
  a.equal(intro.includes('t==="equipment"'),false);
 });
 

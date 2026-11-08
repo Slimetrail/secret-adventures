@@ -74,13 +74,13 @@ test("unlocked hallway view uses the open wooden door with a black opening",()=>
  a.match(game,/\(\(solvedR\[door\]&&DT\.open&&DT\.open\[z\]\)\|\|DT\[z\]\)/);
 });
 
-test("pins moved and no occupancy or journal images were rewritten",()=>{
+test("pins moved and only approved book art changed; occupancy and monster sketches stay",()=>{
  const html=read("index.html"),sw=read("sw.js");
- a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);
+ a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);
  for(const src of [html,sw]){
   a.ok(src.includes("game.js?v=20"));a.ok(src.includes("doors.js?v=15"));a.ok(src.includes("puzzle-ui.js?v=16"));
   a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("doors.js?v=14"));a.ok(!src.includes("puzzle-ui.js?v=15"));
  }
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});
- a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
+ a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)),"Only approved journal book art may change");
 });

@@ -94,8 +94,8 @@ test("resetRun/new game clear all bindings together with existing maze reset",()
 test("portrait parchment layout and text-only slot art remain intact",()=>{
  a.match(html,/#slots\{[^}]*grid-template-columns:repeat\(2,52px\)/);a.match(html,/@media \(min-aspect-ratio:1\/1\)\{#slots\{grid-template-columns:repeat\(4,56px\)/);
  a.match(html,/font:10px\/1.15 Georgia,serif/);a.doesNotMatch(party.slice(party.indexOf('// ---- Maze item shortcuts'),party.indexOf('// ---- portraits:')),/\.webp|\.png|createElement\("img"/);
- const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
+ const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)),"Only approved journal book art may change");
 });
-test("index and service-worker pins match game 20, party 25, VER 68",()=>{
- const sw=read("sw.js");a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);for(const src of [html,sw]){a.ok(src.includes("game.js?v=20"));a.ok(src.includes("party.js?v=25"));a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("party.js?v=24"));}
+test("index and service-worker pins match game 20, party 25, VER 70",()=>{
+ const sw=read("sw.js");a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);for(const src of [html,sw]){a.ok(src.includes("game.js?v=20"));a.ok(src.includes("party.js?v=25"));a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("party.js?v=24"));}
 });

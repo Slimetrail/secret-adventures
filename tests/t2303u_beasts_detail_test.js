@@ -102,8 +102,8 @@ test("source keeps the journal open and does not rewrite sketch files",()=>{
  a.doesNotMatch(intro,/Back to Beasts/);
  a.doesNotMatch(intro.slice(intro.indexOf('t==="beasts"'),intro.indexOf('t==="recipes"')),/closeJournal\(\)/);
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});
- a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
+ a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)),"Only approved journal book art may change");
  const html=read("index.html"),sw=read("sw.js");
- a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);
- for(const src of [html,sw]){a.ok(src.includes("intro.js?v=13"));a.ok(!src.includes("intro.js?v=12"));}
+ a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);
+ for(const src of [html,sw]){a.ok(src.includes("intro.js?v=14"));a.ok(!src.includes("intro.js?v=13"));}
 });

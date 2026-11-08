@@ -1,0 +1,30 @@
+{
+  "labels": [
+    "Inventory",
+    "Beasts",
+    "Map",
+    "Found art",
+    "Journal",
+    "Recipes",
+    "Settings"
+  ],
+  "tab_box": {
+    "x": 780,
+    "y": 334,
+    "width": 208,
+    "height": 108,
+    "step": 122
+  },
+  "sha256": {
+    "art-intro/journal/book-open-zone1.webp": "6b525a2e2511420fb8a8be1ccd58052748d89e0b0584fd1e0f9121c70ee71c49",
+    "art-intro/journal/book-open-zone2.webp": "0b3d8b44e629ec9bab5121bca42ee38040cdea3732e1fd5ee614b945dab6b643",
+    "art-intro/journal/book-open-zone3.webp": "d024c8c48f56da29fe9c6b8a67b305fab3d3777cd9d31279a46cdd673ad9e5ad",
+    "art-intro/journal/book-open-zone4.webp": "834acdc7eea3602875c96d2673f2c3dcfc0836cb61cbdc3ab4295eaecf01f038",
+    "art-intro/journal/book-open-zone5.webp": "b6f6109b9fb2523da70c41758ddd215a44ed3e8f24283cc6b3433e2fcdf723df",
+    "art-intro/journal/book-zone1.webp": "5f8d8d93ca0cec1b56cb713f1599bf11eec3b255454d33f939060f0e0ad4dff7",
+    "art-intro/journal/book-zone2.webp": "c3bbbe4e4f4e57ea424fec8d65aed352b683b6e4f124be85b0a96ca38dca8f5a",
+    "art-intro/journal/book-zone3.webp": "834e50ecce68b38e45a8d2912fbcbea9923639b55ca8463beffb771a6b08509b",
+    "art-intro/journal/book-zone4.webp": "4239e304b56a1cdce6363a20bc6c7ba816d5a19180a075b2d4db07f5790275b5",
+    "art-intro/journal/book-zone5.webp": "705740a8a1d9e6c32f672ffe8c751508e5a1fd58be20db7023eecebc823a5c5b"
+  }
+}

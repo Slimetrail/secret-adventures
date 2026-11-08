@@ -43,10 +43,13 @@ test("t2310u journal uses side tabs and a cover-first open",()=>{
  a.match(journal,/function closeJournal\(\)\{jBeast=null;jTab=null;jOpenSec=false;/);
  a.match(intro,/const TABS=\[\["inventory","Inventory"\],\["beasts","Beasts"\],\["map","Map"\],\["art","Found art"\],\["journal","Journal"\],\["recipes","Recipes"\],\["settings","Settings"\]\];/);
  a.doesNotMatch(intro.slice(intro.indexOf("const TABS="),intro.indexOf("function wear(")),/equipment/i);
- a.match(css,/\.ijtabs\{display:flex;flex-direction:column;position:absolute;top:16px;right:0;transform:translateX\(78%\)/);
- a.doesNotMatch(css,/\.ijtabs\{display:flex;flex-wrap:wrap/);
- a.match(css,/\.ijbook\{position:relative;margin:12px auto 8px;max-width:540px;min-height:min\(70vh,560px\)/);
- a.match(css,/\.ijour\{[^}]*padding:calc\(10px \+ env\(safe-area-inset-top\)\) 84px 16px 10px/);
+ a.match(css,/\.ijtabs\{position:absolute;inset:0;z-index:3;pointer-events:none/);
+ a.match(css,/\.ijtab\{position:absolute;pointer-events:auto;[^}]*background:transparent;color:transparent/);
+ a.doesNotMatch(intro,/translateX\(78%\)|journal\/tab-|\.ijtab\.art/);
+ a.match(css,/\.ijbook\{[^}]*aspect-ratio:2\/3;[^}]*background:var\(--book\)/);
+ a.match(css,/\.ijour\{[^}]*padding:calc\(10px \+ env\(safe-area-inset-top\)\) 10px 16px 10px/);
+ a.match(journal,/bk="journal\/book-"\+\(jOpenSec\?"open-zone":"zone"\)/);
+ a.match(css,/\.ijpage\{position:absolute;left:20\.2%;top:18%;width:52\.3%;height:61%;[^}]*overflow-y:auto/);
  a.match(intro,/function beastNote\(/);
  a.match(intro,/dataset\.setting=/);
  a.doesNotMatch(intro.slice(intro.indexOf('t==="beasts"'),intro.indexOf('t==="recipes"')),/Back to Beasts/);
@@ -75,32 +78,37 @@ function harness(){
  const h=R.newChar("Test Hero","human","warrior",{str:0,sta:0,man:0},R.SKILLS.warrior[0].id);
  r.setLive({v:1,party:[JSON.parse(JSON.stringify(h))],diff:"normal",gold:200,steps:0,seed:1,fresh:{},recipes:{},tentWear:0});
  function click(e){a.ok(e,"missing button");for(const f of e.events.click||[])f({preventDefault(){},stopPropagation(){}});}
- vm.runInContext(read("intro.js"),c);
+ vm.runInContext(read("intro-art-data.js"),c);vm.runInContext(read("intro.js"),c);
  return {i:S.intro,document,click};
 }
 test("opening the journal with no tab shows the cover; a side tab opens that section",()=>{
  const h=harness();h.i.openJournal();
  const jb=h.document.getElementById("ijour");
- a.equal(jb.dataset.open,"0");a.equal(jb.querySelectorAll(".ijpage").length,0);
+ a.equal(jb.dataset.open,"0");a.equal(jb.querySelectorAll(".ijpage").length,0);a.match(jb.style["--book"],/book-zone1\.webp/);
  const tabs=jb.querySelectorAll(".ijtab");
  a.deepEqual(tabs.map(t=>t.dataset.tab),["inventory","beasts","map","art","journal","recipes","settings"]);
+ for(let i=0;i<tabs.length;i++){
+  a.equal(tabs[i].style.left,(780/1024*100)+"%");a.equal(tabs[i].style.top,((334+i*122)/1536*100)+"%");
+  a.equal(tabs[i].style.width,(208/1024*100)+"%");a.equal(tabs[i].style.height,(108/1536*100)+"%");
+  a.equal(tabs[i].style.backgroundImage,undefined);a.ok(!tabs[i].classList.contains("art"));
+ }
  a.equal(jb.querySelector(".ijtab.sel"),null);
  a.ok(!jb.querySelector(".ijbook").classList.contains("ijopen"));
  h.click(tabs.find(t=>t.dataset.tab==="inventory"));
- a.equal(jb.dataset.open,"1");a.equal(jb.querySelector(".ijpage").dataset.tab,"inventory");
+ a.equal(jb.dataset.open,"1");a.equal(jb.querySelector(".ijpage").dataset.tab,"inventory");a.match(jb.style["--book"],/book-open-zone1\.webp/);
  a.ok(jb.querySelector(".ijbook").classList.contains("ijopen"));
  a.ok(jb.querySelectorAll(".ijtab").find(t=>t.dataset.tab==="inventory").classList.contains("sel"));
  a.ok(jb.querySelector(".ijpage").querySelectorAll("button").some(b=>/Open backpack|Open equipment/.test(b.textContent)));
  h.i.closeJournal();h.i.openJournal();
- a.equal(jb.dataset.open,"0");a.equal(jb.querySelectorAll(".ijpage").length,0);
+ a.equal(jb.dataset.open,"0");a.equal(jb.querySelectorAll(".ijpage").length,0);a.match(jb.style["--book"],/book-zone1\.webp/);
  h.i.openJournal("settings");
  a.equal(jb.querySelectorAll("[data-setting]").length,3);
  a.equal(jb.querySelector(".ijpage").dataset.tab,"settings");
 });
-test("pins are intro.js?v=13, story.js?v=23, and VER 69; door and party pins stay",()=>{
- a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);
+test("pins are intro.js?v=14, story.js?v=23, and VER 70; door and party pins stay",()=>{
+ a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);
  for(const src of [html,sw]){
-  a.ok(src.includes("intro.js?v=13"));a.ok(!src.includes("intro.js?v=12"));
+  a.ok(src.includes("intro.js?v=14"));a.ok(!src.includes("intro.js?v=13"));
   a.ok(src.includes("story.js?v=23"));a.ok(!src.includes("story.js?v=22"));
   a.ok(src.includes("game.js?v=20"));a.ok(src.includes("doors.js?v=15"));
   a.ok(src.includes("puzzle-ui.js?v=16"));a.ok(src.includes("party.js?v=25"));
@@ -110,8 +118,29 @@ test("occupancy, sick-dad, and journal-monster files were not rewritten",()=>{
  a.equal(sha("art6/camp/camp-eating-human.webp"),"4b040f7d0130e0e4bf1e674448c8b7b8f40df443c8bb117aa0e5f552060b407e");
  a.equal(sha("art-intro/sickdad/sickdad-cat.webp"),"30932b97843dbf94b568b11d306372fcbe54ae863a03f040c96186daa5ab61ca");
  const changed=execFileSync("git",["-C",root,"diff","--name-only","HEAD"],{encoding:"utf8"});
- a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
+ const changedImages=changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n));
+ a.ok(changedImages.every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)),changedImages.join("\n"));
  const mon=path.join(root,"art-intro/journal/monsters");
  const names=fs.readdirSync(mon).filter(n=>n.endsWith(".webp")).sort();
  a.equal(names.length,14);
+ for(const n of names){const f="art-intro/journal/monsters/"+n;const old=execFileSync("git",["-C",root,"show","HEAD:"+f]);a.equal(sha(f),crypto.createHash("sha256").update(old).digest("hex"));}
+ a.equal(sha("story.js"),"5981c80a87bd7a402ff718ffc6d31f649479d8ad36ab90441d7c3c156a967893");
+});
+
+test("t2317u/t2318u painted book art is locked to seven labels and five matching open variants",()=>{
+ const manifest=JSON.parse(read("tests/t2317u_book_art_manifest.json"));
+ a.deepEqual(manifest.labels,["Inventory","Beasts","Map","Found art","Journal","Recipes","Settings"]);
+ a.equal(Object.keys(manifest.sha256).length,10);
+ for(const [file,hash] of Object.entries(manifest.sha256))a.equal(sha(file),hash,file);
+ const art=read("intro-art-data.js");
+ for(let w=1;w<=5;w++){
+  a.ok(art.includes('"journal/book-open-zone'+w+'.webp"'));
+  a.ok(sw.includes('"art-intro/journal/book-open-zone'+w+'.webp"'));
+ }
+ for(const src of [html,sw])a.ok(src.includes("intro-art-data.js?v=4"));
+ const builder=read("tools/t2317u_journal_books.py");
+ a.match(builder,/LABELS = \["Inventory", "Beasts", "Map", "Found art", "Journal", "Recipes", "Settings"\]/);
+ a.doesNotMatch(builder,/Equipment|t2171u/);
+ a.match(intro,/window\.StoryJournalGenerator\.caption\(fact\)/);
+ a.doesNotMatch(intro,/Back to Beasts/);
 });
