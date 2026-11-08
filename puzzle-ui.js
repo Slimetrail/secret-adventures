@@ -4,8 +4,9 @@
 "use strict";
 const S=window.SOTA,P=window.PUZ,M=window.MAZE;
 const el=document.getElementById("puz"),board=document.getElementById("pboard"),info=document.getElementById("pinfo"),stat=document.getElementById("pstat"),ttl=document.getElementById("ptitle"),enter=document.getElementById("penter");
-const INS=["Turn the mirrors so the light reaches the gem.","Pull levers until every lamp is lit.","Pick the right answer.","Slide the blocks so the gold block leaves on the right.","Slide the tiles into order, 1 first, gap last."];
-const INS_CODE="Find the code. \u25CF = right number, right place. \u25CB = right number, wrong place.";
+const INS=["Turn the mirrors so the light reaches the gem.","Pull levers until every lamp is lit.","Connect the matching pipe outlets.","Slide the blocks so the gold block leaves on the right.","Slide the tiles into order, 1 first, gap last."];
+const INS_PIPES="Tap a tile to turn it. Join each numbered pipe’s two outlets with no leaks.";
+const INS_SUDOKU="Tap an empty square, then a number. Each row, column, and bold box needs every number once.";
 const ZC=[null,"#c9a24a","#7f9a55","#6c8fb5","#b8636a","#8f6db5"];
 let cur=null,openFlag=false;const kept=new Map(),gens=new Map();const ft=[];
 // parchment background, drawn once
@@ -36,12 +37,15 @@ function render(){const t0=performance.now();const {pz,s}=cur,done=P.solved(pz,s
   h+=`<div class="prow">`;for(let i=0;i<L;i++){const on=lit>>i&1;h+=`<div class="plamp ${on?"on":""}" data-lamp="${i}" style="width:${c}px;height:${c}px"><svg viewBox="0 0 40 40" width="100%" height="100%"><path d="M14 8 L26 8 L29 30 L11 30 Z" fill="${on?"#ffd860":"#6b5a44"}" stroke="#2b1a0e" stroke-width="2.5"/><path d="M12 33 L28 33 M20 3 L20 8" stroke="#2b1a0e" stroke-width="3"/></svg></div>`;}
   h+=`</div><div class="prow">`;for(let i=0;i<L;i++){const up=s.p[i];h+=btn("plever",`data-mv="${i}" aria-label="Lever ${i+1}"`,`<svg viewBox="0 0 40 60" width="70%" height="80%"><rect x="8" y="44" width="24" height="10" fill="#5a3418" stroke="#2b1a0e" stroke-width="2.5"/><path d="M20 46 L${up?30:10} 12" stroke="#2b1a0e" stroke-width="5" stroke-linecap="round"/><circle cx="${up?30:10}" cy="12" r="6" fill="#b8402a" stroke="#2b1a0e" stroke-width="2.5"/></svg>`,`width:${c}px;height:${Math.round(c*1.4)}px`);}
   h+=`</div>`;}
- else if(pz.t===2&&pz.mode==="riddle"){const q=pz.q[Math.min(s.step,pz.q.length-1)];
-  h+=`<div class="pq">${done?"":`<div class="pstep">Riddle ${s.step+1} of ${pz.q.length}</div>`}${done?"":q.text}</div><div class="popts">`;
-  if(!done)q.opts.forEach((o,i)=>{h+=btn("popt",`data-mv="${i}"`,o);});h+=`</div>`;}
- else if(pz.t===2){h+=`<div class="pclues">`;pz.clues.forEach(cl=>{h+=`<div class="pclue">${cl.g.map(d=>`<span class="pdig">${d}</span>`).join("")}<span class="pfb">${"\u25CF".repeat(cl.a)}${"\u25CB".repeat(cl.b)}${cl.a+cl.b?"":"\u2014"}</span></div>`;});
-  h+=`</div><div class="pentry">`;for(let i=0;i<pz.len;i++)h+=`<span class="pdig big">${s.e[i]||(done?"":"")}</span>`;h+=`</div><div class="pkeys">`;
-  for(let d=1;d<=pz.digits;d++)h+=btn("pkey "+(s.e.includes(d)?"used":""),`data-mv="${d}"`,d);h+=btn("pkey",`data-mv="clr" aria-label="Clear"`,"\u232B")+`</div>`;}
+ else if(pz.t===2&&pz.mode==='pipes'){const n=pz.n,c=Math.max(32,Math.min(52,Math.floor(Math.min(layout().aw,layout().ah)/(n+1)))),pad=Math.round(c*.5),W=n*c+2*pad,colors=['#276b97','#a2372e','#3b7336','#745195','#8a5b10'];
+  for(let i=0;i<s.a.length;i++){const color=colors[pz.pipe[i]],mask=s.a[i];let paths='';[[c/2,0],[c,c/2],[c/2,c],[0,c/2]].forEach(([x,y],d)=>{if(mask&(1<<d))paths+=`M${c/2} ${c/2} L${x} ${y} `;});
+   h+=btn('ppipe',`data-mv="${i}" aria-label="Turn pipe ${pz.pipe[i]+1}, row ${(i/n|0)+1}, column ${i%n+1}"`,`<svg viewBox="0 0 ${c} ${c}" width="100%" height="100%"><path d="${paths}" fill="none" stroke="${color}" stroke-width="${c*.18}"/><circle cx="${c/2}" cy="${c/2}" r="${c*.21}" fill="#f3e2b5"/><text x="${c/2}" y="${c*.62}" text-anchor="middle" font-size="${c*.32}" fill="${color}">${pz.pipe[i]+1}</text></svg>`,`left:${pad+i%n*c}px;top:${pad+(i/n|0)*c}px;width:${c}px;height:${c}px`);}
+  let ports='';pz.ends.forEach((pair,p)=>pair.forEach(([i,d])=>{const [dx,dy]=[[0,-1],[1,0],[0,1],[-1,0]][d],x=pad+(i%n+.5)*c+dx*c*.7,y=pad+((i/n|0)+.5)*c+dy*c*.7;ports+=`<circle cx="${x}" cy="${y}" r="${c*.21}" fill="${colors[p]}"/><text x="${x}" y="${y+c*.115}" font-size="${c*.3}" text-anchor="middle" fill="white">${p+1}</text>`;}));
+  h=`<div class="pgrid" style="width:${W}px;height:${W}px;background:${ZC[pz.zone]}22">${h}${svg(W,W,ports)}</div>`;}
+ else if(pz.t===2&&pz.mode==='sudoku'){const n=pz.n,c=Math.max(30,Math.min(44,Math.floor(Math.min(layout().aw-8,layout().ah-116)/n))),W=c*n;
+  for(let i=0;i<s.a.length;i++){const x=i%n,y=i/n|0,fixed=!!pz.given[i];h+=btn('pscell'+(fixed?' given':'')+(i===sudokuCell?' selected':'')+(i===sudokuCell&&s.wrong?' conflict':''),`data-cell="${i}" ${fixed?'disabled':''} aria-label="Row ${y+1}, column ${x+1}${fixed?', given':''}${s.a[i]?', '+s.a[i]:', empty'}"`,s.a[i]||'',`left:${x*c}px;top:${y*c}px;width:${c}px;height:${c}px;font-size:${Math.round(c*.52)}px;border-left-width:${x%pz.bw===0?3:1}px;border-top-width:${y%pz.bh===0?3:1}px`);}
+  h=`<div class="pgrid psudoku" role="group" aria-label="${n} by ${n} Sudoku" style="width:${W}px;height:${W}px">${h}</div><div class="pskeys">`;
+  for(let v=1;v<=n;v++)h+=btn('pskey',`data-value="${v}" aria-label="Enter ${v}"`,v);h+=btn('pskey',`data-value="0" aria-label="Erase cell"`,'⌫')+'</div>';}
  else if(pz.t===3){const n=pz.n,c=Math.max(46,cellSize(n,1.3)),W=n*c;let b="";
   pz.blk.forEach((bk,i)=>{const[x,y]=s.q[i],w=bk.h?bk.len*c:c,hh=bk.h?c:bk.len*c;b+=btn("pblk"+(i===0?" key":"")+(sel===i?" sel":""),`data-blk="${i}" aria-label="Block ${i}"`,"",`left:${x*c+1}px;top:${y*c+1}px;width:${w-2}px;height:${hh-2}px`);});
   const ex=`<div class="pexit" style="left:${W}px;top:${pz.r*c}px;height:${c}px;width:${Math.round(c*.3)}px"></div>`;
@@ -51,24 +55,38 @@ function render(){const t0=performance.now();const {pz,s}=cur,done=P.solved(pz,s
   h=`<div class="pgrid" style="width:${W}px;height:${W}px;background:${ZC[pz.zone]}55">${h}</div>`;}
  board.innerHTML=h;board.classList.toggle("done",done);el.classList.toggle("solved",done);
  stat.textContent=done?"Solved! The door is open.":(s.wrong?"Not right. Try again.":"");stat.classList.toggle("bad",!!s.wrong&&!done);
- enter.style.display=done?"block":"none";el.dataset.solved=done?"1":"0";el.dataset.type=pz.t;el.dataset.room=cur.id;
+ enter.style.display=done?"block":"none";el.dataset.solved=done?"1":"0";el.dataset.type=pz.t;el.dataset.mode=pz.mode||"";el.classList.toggle("content2",pz.t===2);el.dataset.room=cur.id;
  ft.push(performance.now()-t0);if(ft.length>200)ft.shift();}
-let sel=-1;
+let sel=-1,sudokuCell=-1;
 function move(mv){if(!cur||P.solved(cur.pz,cur.s))return;cur.s=P.apply(cur.pz,cur.s,mv);kept.set(cur.id,cur.s);if(P.solved(cur.pz,cur.s))S.markSolved(cur.id);render();}
 board.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b||!cur)return;e.preventDefault();
+ if(b.dataset.cell!==undefined){if(!cur.pz.given[+b.dataset.cell])sudokuCell=+b.dataset.cell;render();return;}
+ if(b.dataset.value!==undefined){if(sudokuCell>=0)move([sudokuCell,+b.dataset.value]);return;}
  if(b.dataset.blk!==undefined){sel=+b.dataset.blk;render();return;}
  if(b.dataset.dir!==undefined){if(sel>=0)move([sel,+b.dataset.dir]);return;}
  if(b.dataset.mv!==undefined){const v=b.dataset.mv;move(v==="clr"?"clr":+v);}});
-function open(id,cmd){const g=gen(id);cur={id,cmd,pz:g.pz,s:kept.get(id)||P.clone(g.s),start:g.s};sel=cur.pz.t===3?0:-1;openFlag=true;el.classList.add("open");
- ttl.textContent=P.NAMES[cur.pz.t]+" \u00B7 Zone "+cur.pz.zone;info.textContent=cur.pz.t===2&&cur.pz.mode==="code"?INS_CODE:INS[cur.pz.t];render();}
+function open(id,cmd){const g=gen(id);cur={id,cmd,pz:g.pz,s:kept.get(id)||P.clone(g.s),start:g.s};sel=cur.pz.t===3?0:-1;sudokuCell=-1;openFlag=true;el.classList.add("open");
+ ttl.textContent=(cur.pz.t===2?(cur.pz.mode==="pipes"?"Pipe connections":"Sudoku"):P.NAMES[cur.pz.t])+" \u00B7 Zone "+cur.pz.zone;info.textContent=cur.pz.t===2?(cur.pz.mode==="pipes"?INS_PIPES:INS_SUDOKU):INS[cur.pz.t];render();}
 function close(){openFlag=false;el.classList.remove("open");cur=null;}
 const tap=(id,f)=>{const b=document.getElementById(id);b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();f();});};
 tap("pclose",close);
-tap("preset",()=>{if(cur&&!P.solved(cur.pz,cur.s)){cur.s=P.clone(cur.start);kept.delete(cur.id);sel=cur.pz.t===3?0:-1;render();}});
+tap("preset",()=>{if(cur&&!P.solved(cur.pz,cur.s)){cur.s=P.clone(cur.start);kept.delete(cur.id);sel=cur.pz.t===3?0:-1;sudokuCell=-1;render();}});
 tap("penter",()=>{if(!cur)return;const c=cur.cmd;close();if(c)S.act(c);});
 window.addEventListener("keydown",e=>{if(!openFlag)return;if(e.key==="Escape"){e.preventDefault();close();}
- else if(cur&&cur.pz.t===2&&cur.pz.mode==="code"&&/^[1-9]$/.test(e.key)){move(+e.key);}else if(cur&&cur.pz.t===3&&sel>=0&&/^Arrow/.test(e.key)){e.preventDefault();e.stopPropagation();move([sel,/Left|Up/.test(e.key)?-1:1]);}},true);
+ else if(cur&&cur.pz.t===2&&cur.pz.mode==="sudoku"&&sudokuCell>=0&&(/^[1-9]$/.test(e.key)||["Backspace","Delete"].includes(e.key))){e.preventDefault();e.stopPropagation();move([sudokuCell,/^[1-9]$/.test(e.key)?+e.key:0]);}else if(cur&&cur.pz.t===3&&sel>=0&&/^Arrow/.test(e.key)){e.preventDefault();e.stopPropagation();move([sel,/Left|Up/.test(e.key)?-1:1]);}},true);
 window.addEventListener("resize",()=>{if(openFlag)render();});
+const css=document.createElement("style");css.textContent=`
+#puz.content2{overflow:auto;touch-action:pan-y}
+.ppipe,.pscell{position:absolute;box-sizing:border-box;border-radius:2px}
+.pscell{font-weight:400;background:#f4e7c8;box-shadow:none}
+.pscell.given{font-weight:700;background:#dfcea8;color:#34281e;opacity:1}
+.pscell.selected{background:#c4dcf0;outline:3px solid #276b97;outline-offset:-4px;z-index:1}
+.pscell.conflict{color:#a12119;background:#f0c5b7}
+.pskeys{display:grid;grid-template-columns:repeat(5,44px);gap:5px;margin-top:5px}
+.pskey{width:44px;height:44px;font-size:22px;border-radius:6px}
+#puz.land.content2 #pboard{flex-direction:row;align-items:center;gap:8px}
+#puz.land.content2 .pskeys{grid-template-columns:repeat(2,44px)}
+`;document.head.appendChild(css);
 S.puzzleOpen=()=>openFlag;S.openPuzzle=open;
 S.puzzle={open:id=>open(id,null),close,state:()=>cur?{id:cur.id,type:cur.pz.t,solved:P.solved(cur.pz,cur.s)}:null,frameTimes:()=>ft.slice(),renderOnce:()=>{const t=performance.now();render();return performance.now()-t;}};
 })();

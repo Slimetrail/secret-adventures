@@ -11,18 +11,16 @@ function idaTiles(pz,s0){const n=pz.n,N2=n*n;const a=s0.a.slice();const man=()=>
 function solve(pz,s){
  if(pz.t===0){const m=pz.mir.length;for(let k=0;k<(1<<m);k++){const o=pz.mir.map((_,i)=>(k>>i)&1);if(P.trace(pz,{o}).exit===pz.tgt){const mv=[];o.forEach((v,i)=>{if(v!==s.o[i])mv.push(i);});return mv;}}return null;}
  if(pz.t===1){for(let k=0;k<(1<<pz.L);k++){let v=P.lamps(pz,s);for(let i=0;i<pz.L;i++)if(k>>i&1)v^=pz.eff[i];if(v===pz.full){const mv=[];for(let i=0;i<pz.L;i++)if(k>>i&1)mv.push(i);return mv;}}return null;}
- if(pz.t===2){if(pz.mode==="riddle"){// try options in order; a wrong one restarts, so search each step by replay
-   const mv=[];for(let st=0;st<pz.q.length;st++){let found=-1;for(let o=0;o<4;o++){let t=s;for(const x of mv)t=P.apply(pz,t,x);t=P.apply(pz,t,o);if(t.step===st+1){found=o;break;}}if(found<0)return null;mv.push(found);}return mv;}
-  const fit=P.codesFitting(pz);if(fit.length!==1)return null;return fit[0];}
+ if(pz.t===2)return pz.mode==="pipes"?P.solvePipes(pz,s):pz.mode==="sudoku"?P.solveSudoku(pz,s):null;
  if(pz.t===3)return P.bfsBlocks(pz,s,200000);
  if(pz.t===4)return idaTiles(pz,s);}
 function check(room){const g=P.forRoom(room),g2=P.forRoom(room);const det=JSON.stringify(g)===JSON.stringify(g2);
  const mv=solve(g.pz,g.s);let s=g.s;if(mv)for(const m of mv)s=P.apply(g.pz,s,m);
- return{id:room.id,zone:room.z,type:room.p,det,startSolved:P.solved(g.pz,g.s),found:!!mv,replayOk:!!mv&&P.solved(g.pz,s),moves:mv?mv.length:-1,mv};}
+ return{id:room.id,zone:room.z,type:room.p,mode:g.pz.mode||null,det,startSolved:P.solved(g.pz,g.s),found:!!mv,replayOk:!!mv&&P.solved(g.pz,s),moves:mv?mv.length:-1,mv};}
 module.exports={solve,check,M};
 if(require.main===module){
  if(process.argv[2]==="moves"){const r=check(M.rooms[+process.argv[3]]);console.log(JSON.stringify(r.mv));process.exit(0);}
  let bad=0;const rows=[];for(const room of M.rooms){const r=check(room);if(!r.det||r.startSolved||!r.found||!r.replayOk){bad++;console.log("PROBLEM",JSON.stringify(Object.assign({},r,{mv:undefined})));}rows.push(r);}
- const by={};rows.forEach(r=>{const k=r.zone+"/"+P.NAMES[r.type];(by[k]=by[k]||[]).push(r.moves);});
- for(const k of Object.keys(by).sort())console.log(k.padEnd(22),"rooms",by[k].length,"solution moves",by[k].join(","));
+ const by={};rows.forEach(r=>{const k=r.zone+"/"+(r.mode||P.NAMES[r.type]);(by[k]=by[k]||[]).push(r.moves);});
+ for(const k of Object.keys(by).sort())console.log(k.padEnd(22),"rooms",by[k].length,"verified");
  console.log(bad?`FAILED ${bad}`:`ALL ${rows.length} ROOMS SOLVABLE (found by search, replayed in game logic, start not solved, same puzzle every time)`);process.exit(bad?1:0);}
