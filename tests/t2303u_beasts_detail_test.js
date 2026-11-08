@@ -102,6 +102,6 @@ test("source keeps the journal open and does not rewrite sketch files",()=>{
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});
  a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
  const html=read("index.html"),sw=read("sw.js");
- a.match(sw,/^const VER="67",CACHE="sota-s1-v"\+VER/);
+ a.match(sw,/^const VER="68",CACHE="sota-s1-v"\+VER/);
  for(const src of [html,sw]){a.ok(src.includes("intro.js?v=12"));a.ok(!src.includes("intro.js?v=11"));}
 });

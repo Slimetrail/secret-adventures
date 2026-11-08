@@ -109,8 +109,10 @@ test("walking into a room door bumps; clicking or useFacingDoor opens or enters 
  a.deepEqual(e.counts(),{steps:0,after:0,puzzles:1});
  e.s.core.solvedR[room.id]=1;
  a.equal(e.s.useFacingDoor(),true);
- a.deepEqual([e.s.state().x,e.s.state().y],[room.c[0],room.c[1]]);
- a.equal(e.counts().after,1);
+ a.deepEqual([e.s.state().x,e.s.state().y],[hall.x,hall.y]);
+ a.ok(e.s.rooms().cleared.includes(room.id));
+ a.equal(e.s.panelOpen(),false);
+ a.equal(e.counts().after,0);
  e.s.teleport(hall.x,hall.y,hall.f);
  const mid=e.s.state();
  e.s.act("fwd");

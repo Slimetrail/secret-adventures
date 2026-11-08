@@ -25,9 +25,9 @@ function parseShell(sw){
   }
   return parts.flat();
 }
-test("SHELL has unique URLs, one music.js?v=18, and VER 67",()=>{
+test("SHELL has unique URLs, one music.js?v=18, and VER 68",()=>{
   const sw=read("sw.js");
-  a.match(sw,/^const VER="67"/);
+  a.match(sw,/^const VER="68"/);
   const shell=parseShell(sw);
   a.equal(shell.length, new Set(shell).size);
   a.equal(shell.filter(x=>x==="music.js?v=18").length,1);

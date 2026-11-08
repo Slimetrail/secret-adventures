@@ -121,16 +121,16 @@ function render(t){
   const ddx=Math.abs(1/rx),ddy=Math.abs(1/ry);let sx,sy,sdx,sdy,side=0,pz=bzone[my*G+mx];
   if(rx<0){sx=-1;sdx=(px-mx)*ddx;}else{sx=1;sdx=(mx+1-px)*ddx;}
   if(ry<0){sy=-1;sdy=(py-my)*ddy;}else{sy=1;sdy=(my+1-py)*ddy;}
-  let guard=0,door=-1,through=-1;
+  let guard=0,door=-1;
   while(guard++<400){if(sdx<sdy){sdx+=ddx;mx+=sx;side=0;}else{sdy+=ddy;my+=sy;side=1;}
-   if(mx<0||my<0||mx>=G||my>=G)break;const bi=my*G+mx;if(solid[bi])break;const dr=doorRoom[bi];if(dr>=0&&!solvedR[dr]){door=dr;break;}if(dr>=0&&solvedR[dr]&&through<0)through=dr;pz=bzone[bi];}
+   if(mx<0||my<0||mx>=G||my>=G)break;const bi=my*G+mx;if(solid[bi])break;const dr=doorRoom[bi];if(dr>=0){door=dr;break;}pz=bzone[bi];}
   const perp=side===0?sdx-ddx:sdy-ddy;
   let u=side===0?py+perp*ry:px+perp*rx;u-=Math.floor(u);if((side===0&&rx>0)||(side===1&&ry<0))u=1-u;
   const hsh=((mx*73856093)^(my*19349663)^(side*83492791)^((side===0?sx:sy)>0?0x5bd1e995:0))>>>0;
-  const z=door>=0?M.rooms[door].z:pz,tex=door>=0?DT[z]:TX.walls[z][hsh%TX.V],flip=(hsh>>>8)&1,voff=(hsh>>>9)&31;
+  const z=door>=0?M.rooms[door].z:pz,tex=door>=0?((solvedR[door]&&DT.open&&DT.open[z])||DT[z]):TX.walls[z][hsh%TX.V],flip=(hsh>>>8)&1,voff=(hsh>>>9)&31;
   let tu=((flip?1-u:u)*TS)|0;if(tu>=TS)tu=TS-1;
   const lh=foc/perp,top=h2-lh/2,bot=h2+lh/2;const y0=Math.max(0,Math.ceil(top)),y1=Math.min(H,Math.ceil(bot));
-  colTop[x]=y0;colBot[x]=y1;ensurePick(W);pickCol[x]=door>=0?door:through;pickY0[x]=y0;pickY1[x]=y1;
+  colTop[x]=y0;colBot[x]=y1;ensurePick(W);pickCol[x]=door;pickY0[x]=y0;pickY1[x]=y1;
   const L=light(perp)*(side?0.82:1),fogk=1-Math.exp(-perp*fd),ik=u<0.03||u>0.97?0.25:(u<0.06||u>0.94?0.6:1);
   const tn=ZA[z].tint,gl=ZA[z].glow;
   for(let y=y0;y<y1;y++){const v=(y-top)/lh;let tv=((v*TS)|0)+voff;tv&=TS-1;const ti=(tv*TS+tu)*4;
@@ -181,10 +181,12 @@ document.querySelectorAll("[data-cmd]").forEach(b=>{b.addEventListener("pointerd
 document.getElementById("dbg").addEventListener("pointerdown",e=>{e.preventDefault();hudOn=!hudOn;try{localStorage.setItem(HUD_KEY,hudOn?"1":"0");}catch(e){}updHud();});
 window.addEventListener("keydown",e=>{const k={ArrowUp:"fwd",w:"fwd",ArrowDown:"back",s:"back",ArrowLeft:"left",a:"left",ArrowRight:"right",d:"right"}[e.key];if(k){e.preventDefault();act(k);}});
 function dirToRoom(rid){const rc=M.rooms[rid]&&M.rooms[rid].c;if(!rc)return -1;for(let i=0;i<4;i++)if(st.x+DIRS[i][0]===rc[0]&&st.y+DIRS[i][1]===rc[1]&&canMove(st.x,st.y,i))return i;return -1;}
+function playRoom(rid){if(!(rid>=0)||!M.rooms[rid])return false;if(!solvedR[rid])solvedR[rid]=1;
+ if(!clearedR[rid]){clearedR[rid]=1;saveRooms();if(window.SOTA&&SOTA.onRoomOpen)SOTA.onRoomOpen(rid);}else saveRooms();return true;}
 function enterDoor(rid){if(blocked()||!(rid>=0)||!M.rooms[rid])return false;const d=dirToRoom(rid);if(d<0)return false;const nx=st.x+DIRS[d][0],ny=st.y+DIRS[d][1];
  if(!contentCap.allowsStep(st.x,st.y,nx,ny)){bump=performance.now();contentCapToast();updHud();return false;}
  if(locked(rid)){bump=performance.now();if(window.SOTA&&SOTA.openPuzzle)SOTA.openPuzzle(rid,"fwd");updHud();return true;}
- st.x=nx;st.y=ny;stepped();save();startAnim(150);if(!clearedR[rid])showPanel(rid);if(window.SOTA&&SOTA.afterStep)SOTA.afterStep(rid);updHud();return true;}
+ playRoom(rid);updHud();return true;}
 function useFacingDoor(){if(blocked()||!canMove(st.x,st.y,st.f))return false;const rid=roomAt[(st.y+DIRS[st.f][1])*N+st.x+DIRS[st.f][0]];return rid>=0&&enterDoor(rid);}
 function onViewPointer(e){if(blocked()||e.button)return;const r=cv.getBoundingClientRect();if(!r.width||!r.height)return;const x=Math.floor((e.clientX-r.left)/r.width*W),y=Math.floor((e.clientY-r.top)/r.height*H);
  if(x<0||y<0||x>=W||y>=H||x>=pickCol.length)return;const rid=pickCol[x];if(!(rid>=0)||y<pickY0[x]||y>=pickY1[x])return;e.preventDefault();enterDoor(rid);}

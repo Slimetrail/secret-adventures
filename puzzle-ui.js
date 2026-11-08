@@ -58,7 +58,7 @@ function render(){const t0=performance.now();const {pz,s}=cur,done=P.solved(pz,s
  enter.style.display=done?"block":"none";el.dataset.solved=done?"1":"0";el.dataset.type=pz.t;el.dataset.mode=pz.mode||"";el.classList.toggle("content2",pz.t===2);el.dataset.room=cur.id;
  ft.push(performance.now()-t0);if(ft.length>200)ft.shift();}
 let sel=-1,sudokuCell=-1;
-function move(mv){if(!cur||P.solved(cur.pz,cur.s))return;cur.s=P.apply(cur.pz,cur.s,mv);kept.set(cur.id,cur.s);if(P.solved(cur.pz,cur.s))S.markSolved(cur.id);render();}
+function move(mv){if(!cur||P.solved(cur.pz,cur.s))return;cur.s=P.apply(cur.pz,cur.s,mv);kept.set(cur.id,cur.s);if(P.solved(cur.pz,cur.s)){S.markSolved(cur.id);const id=cur.id;close();if(S.enterDoor)S.enterDoor(id);return;}render();}
 board.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b||!cur)return;e.preventDefault();
  if(b.dataset.cell!==undefined){if(!cur.pz.given[+b.dataset.cell])sudokuCell=+b.dataset.cell;render();return;}
  if(b.dataset.value!==undefined){if(sudokuCell>=0)move([sudokuCell,+b.dataset.value]);return;}
@@ -71,7 +71,7 @@ function close(){openFlag=false;el.classList.remove("open");cur=null;}
 const tap=(id,f)=>{const b=document.getElementById(id);b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();f();});};
 tap("pclose",close);
 tap("preset",()=>{if(cur&&!P.solved(cur.pz,cur.s)){cur.s=P.clone(cur.start);kept.delete(cur.id);sel=cur.pz.t===3?0:-1;sudokuCell=-1;render();}});
-tap("penter",()=>{if(!cur)return;const c=cur.cmd;close();if(c)S.act(c);});
+tap("penter",()=>{if(!cur)return;const id=cur.id;close();if(S.enterDoor)S.enterDoor(id);});
 window.addEventListener("keydown",e=>{if(!openFlag)return;if(e.key==="Escape"){e.preventDefault();close();}
  else if(cur&&cur.pz.t===2&&cur.pz.mode==="sudoku"&&sudokuCell>=0&&(/^[1-9]$/.test(e.key)||["Backspace","Delete"].includes(e.key))){e.preventDefault();e.stopPropagation();move([sudokuCell,/^[1-9]$/.test(e.key)?+e.key:0]);}else if(cur&&cur.pz.t===3&&sel>=0&&/^Arrow/.test(e.key)){e.preventDefault();e.stopPropagation();move([sel,/Left|Up/.test(e.key)?-1:1]);}},true);
 window.addEventListener("resize",()=>{if(openFlag)render();});

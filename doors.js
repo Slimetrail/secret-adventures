@@ -3,7 +3,7 @@
 "use strict";
 const S=window.TEX.S,ZC=[null,[150,112,60],[92,108,62],[70,92,124],[128,52,50],[96,62,128]],SEAL=[null,[255,200,90],[150,255,140],[140,210,255],[255,120,80],[220,140,255]];
 function h(x,y){let v=(x*374761393+y*668265263)>>>0;v=Math.imul(v^(v>>>13),1274126177)>>>0;return(v>>>8)/16777216;}
-const out=[null];
+const out=[null],open=[null];
 for(let z=1;z<=5;z++){const d=new Uint8ClampedArray(S*S*4),c=ZC[z],g=SEAL[z];
  for(let y=0;y<S;y++)for(let x=0;x<S;x++){const u=x/S,v=y/S,i=(y*S+x)*4;
   const pl=Math.floor(u*5),pu=u*5-pl,grain=0.82+0.18*Math.sin((v*40+pl*7)+Math.sin(v*9+pl)*2)+0.12*(h(x,y)-.5);
@@ -17,6 +17,10 @@ for(let z=1;z<=5;z++){const d=new Uint8ClampedArray(S*S*4),c=ZC[z],g=SEAL[z];
    if(ring||core||rune){r=g[0];gg=g[1];b=g[2];e=ring?230:(core?255:200);}else{r*=0.5;gg*=0.5;b*=0.5;}}
   else if(rr<0.19){const f=(0.19-rr)/0.04;r+=g[0]*f*0.35;gg+=g[1]*f*0.35;b+=g[2]*f*0.35;e=40*f;}
   d[i]=r;d[i+1]=gg;d[i+2]=b;d[i+3]=e;}
- out.push(d);}
-window.DOORTEX=out;
+ out.push(d);
+ const o=new Uint8ClampedArray(S*S*4);
+ for(let y=0;y<S;y++)for(let x=0;x<S;x++){const u=x/S,v=y/S,i=(y*S+x)*4,frame=u<0.06||u>0.94||v<0.05,leaf=u>0.78&&u<=0.94&&v>0.05;
+  if(frame||leaf){o[i]=d[i];o[i+1]=d[i+1];o[i+2]=d[i+2];o[i+3]=0;}else{o[i]=o[i+1]=o[i+2]=o[i+3]=0;}}
+ open.push(o);}
+window.DOORTEX=out;window.DOORTEX.open=open;
 })();
