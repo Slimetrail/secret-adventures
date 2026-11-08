@@ -522,7 +522,9 @@ Fight.prototype.monstersTurn=function(){this.motionHits=[];if(this.over)return [
   if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");}
  this.guard.clear();this.turn++;this.log.push(...out);this.check();return out;};
 Fight.prototype.check=function(){if(this.over)return;if(!this.alive(this.m).length)this.over="win";else if(!this.alive(this.p).length)this.over="lose";};
-Fight.prototype.rewards=function(seed){const xp=this.m.reduce((t,m)=>t+Math.round((6+m.lvl*4*ZONE_MUL[m.zone])*(m.room?2:1)),0),l=loot(this.m[0].zone,seed);return {xp,gold:l.gold,junk:l.junk};};
+// Jeremy t2217u/t2218u: compare against the creature's zone, never its scaled combat level.
+function overlevelExpMul(plvl,zone){return Math.pow(0.5,Math.max(0,plvl-ZONE_MINLVL[zone]));}
+Fight.prototype.rewards=function(seed){const plvl=partyLevel(this.p),xp=this.m.reduce((t,m)=>t+Math.round((6+m.lvl*4*ZONE_MUL[m.zone])*(m.room?2:1))*overlevelExpMul(plvl,m.zone),0),l=loot(this.m[0].zone,seed);return {xp,gold:l.gold,junk:l.junk};};
 // simple auto play (tests): every hero attacks the first foe, or uses its first attack skill when it has mana
 function simulate(party,mons,diff,seed,maxTurns){const f=new Fight(party,mons,diff,seed);for(let t=0;t<(maxTurns||200)&&!f.over;t++){
  party.forEach((c,i)=>{if(f.over||c.hp<=0)return;const s=c.skills.map(id=>SKILLS[c.cls].find(x=>x.id===id)).find(s=>s.k!=="guard"&&s.k!=="heal"&&c.mp>=s.mp);f.act(i,s?"skill":"attack",s&&s.id,0);});f.monstersTurn();}
@@ -546,6 +548,6 @@ function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-
 function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
 const RPG={CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
- ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
+ ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);
