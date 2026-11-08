@@ -21,6 +21,7 @@ function drawCell(i){if(drawn[i])return;drawn[i]=1;drawnCount++;const x=i%N,y=(i
  if(!(m&1))wall(px,py,px+L,py,y*N+x);if(!(m&4))wall(px,py+L,px+L,py+L,(y+1)*N+x);
  if(!(m&8))wall(px,py,px,py+L,100000+y*N+x);if(!(m&2))wall(px+L,py,px+L,py+L,100000+y*N+x+1);}
 function sync(){const v=C.visited;for(let i=0;i<N*N;i++)if(v[i]&&!drawn[i])drawCell(i);}
+function resetDrawn(){drawn.fill(0);drawnCount=0;lc.clearRect(0,0,lay.width,lay.height);}
 // ---- parchment background (cached per screen size) ----
 let bg=null,BW=0,BH=0,dpr=1;
 function makeBg(){dpr=Math.min(2,window.devicePixelRatio||1);BW=Math.round(innerWidth*dpr);BH=Math.round(innerHeight*dpr);cv.width=BW;cv.height=BH;
@@ -111,6 +112,6 @@ cv.addEventListener("pointermove",e=>{const p=pts.get(e.pointerId);if(!p)return;
 const up=e=>{pts.delete(e.pointerId);pinch=0;};cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
 window.addEventListener("resize",()=>{if(open){makeBg();req();}else bg=null;});
 window.addEventListener("keydown",e=>{if(e.key==="m"||e.key==="M"||(open&&e.key==="Escape")){e.preventDefault();setOpen(!open);}});
-S.mapOpen=()=>open;S.onStep=()=>{if(open)req();};
-S.map={marker:()=>Object.assign({},mk),bboxScreen:()=>{const b=bbox(),z=view.z,ox=innerWidth/2-view.cx*z,oy=innerHeight/2-view.cy*z;return{l:ox+b.x0*z,t:oy+b.y0*z,r:ox+b.x1*z,b:oy+b.y1*z,z,cap:FIT_CAP};},area,open:()=>setOpen(true),close:()=>setOpen(false),view:()=>Object.assign({},view),pan:(dx,dy)=>{view.cx+=dx;view.cy+=dy;clamp();draw();},drawOnce:()=>{const t=performance.now();draw();return performance.now()-t;},frameTimes:()=>ft.slice()};
+S.mapOpen=()=>open;S.onStep=()=>{if(open)req();};S.resetMapLayer=resetDrawn;
+S.map={resetDrawn,marker:()=>Object.assign({},mk),bboxScreen:()=>{const b=bbox(),z=view.z,ox=innerWidth/2-view.cx*z,oy=innerHeight/2-view.cy*z;return{l:ox+b.x0*z,t:oy+b.y0*z,r:ox+b.x1*z,b:oy+b.y1*z,z,cap:FIT_CAP};},area,open:()=>setOpen(true),close:()=>setOpen(false),view:()=>Object.assign({},view),pan:(dx,dy)=>{view.cx+=dx;view.cy+=dy;clamp();draw();},drawOnce:()=>{const t=performance.now();draw();return performance.now()-t;},frameTimes:()=>ft.slice()};
 })();

@@ -53,6 +53,23 @@ function enc(){let h="";for(let i=0;i<N*N;i+=4){let v=0;for(let k=0;k<4;k++)if(i
  let m="";for(let i=1;i<trail.length;i++){const a=trail[i-1],b=trail[i],dx=b%N-a%N,dy=((b/N)|0)-((a/N)|0);m+=DIRS.findIndex(d=>d[0]===dx&&d[1]===dy);}
  return {v:h,t:{s:trail[0],m}};}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(Object.assign({x:st.x,y:st.y,f:st.f},enc())));}catch(e){}}
+function mazeSnap(){return Object.assign({x:st.x,y:st.y,f:st.f},enc());}
+function poseAt(x,y,f){st.x=x;st.y=y;st.f=f;vis.x=x;vis.y=y;vis.a=f*Math.PI/2;anim.on=false;const z=ZA[zoneOf[y*N+x]].fog;fogNow[0]=z[0];fogNow[1]=z[1];fogNow[2]=z[2];}
+function applyMaze(snap){
+  if(snap&&typeof snap==="object"&&snap.x>=0&&snap.x<N&&snap.y>=0&&snap.y<N&&snap.f>=0&&snap.f<4&&(snap.x|0)===snap.x&&(snap.y|0)===snap.y&&(snap.f|0)===snap.f){
+    poseAt(snap.x,snap.y,snap.f);
+    try{if(typeof snap.v!=="string"||snap.v.length!==Math.ceil(N*N/4)||!/^[0-9a-f]+$/.test(snap.v)||typeof snap.t!=="object"||!snap.t)throw 0;
+     const tv=new Uint8Array(N*N);let c=0;for(let i=0;i<N*N;i++){if((parseInt(snap.v[i>>2],16)>>(i&3))&1){tv[i]=1;c++;}}
+     const s0=snap.t.s,ms=snap.t.m;if(!(s0>=0&&s0<N*N&&(s0|0)===s0)||typeof ms!=="string"||ms.length>TRAIL_CAP||!/^[0-3]*$/.test(ms))throw 0;
+     let x=s0%N,y=(s0/N)|0;const tr=[s0];for(const ch of ms){const d=+ch;if(!canMove(x,y,d))throw 0;x+=DIRS[d][0];y+=DIRS[d][1];tr.push(y*N+x);}
+     if(x!==st.x||y!==st.y)throw 0;for(const i of tr)if(!tv[i])throw 0;
+     visited.set(tv);visCount=c;trail=tr;visit(st.y*N+st.x);}
+    catch(e){visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);}
+  }else{poseAt(M.entrance[0],M.entrance[1],0);visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);}
+  save();updHud();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
+function resetRun(){poseAt(M.entrance[0],M.entrance[1],0);visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);
+ solvedR.fill(0);clearedR.fill(0);try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(ROOM_KEY);}catch(e){}
+ save();saveRooms();updHud();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
 function stepped(){const i=st.y*N+st.x;visit(i);trail.push(i);if(trail.length>TRAIL_CAP+1)trail.splice(0,trail.length-TRAIL_CAP-1);if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
 // item boxes: 4 free slots, empty for now; later stages fill them
 const ITEM_KEY="sota.items";let items=[null,null,null,null];
@@ -71,12 +88,14 @@ function act(cmd){if(blocked())return; // logical state changes at once; the ani
  if(cmd==="fwd"||cmd==="back"){const d=cmd==="fwd"?st.f:(st.f+2)%4;
   if(canMove(st.x,st.y,d)){const ti=(st.y+DIRS[d][1])*N+st.x+DIRS[d][0],rid=roomAt[ti];
    if(!contentCap.allowsStep(st.x,st.y,st.x+DIRS[d][0],st.y+DIRS[d][1])){bump=performance.now();contentCapToast();updHud();return;}
-   if(locked(rid)){bump=performance.now();if(window.SOTA&&SOTA.openPuzzle)SOTA.openPuzzle(rid,cmd);updHud();return;}
+   if(rid>=0){bump=performance.now();updHud();return;}
    st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);if(rid>=0&&!clearedR[rid])showPanel(rid);if(window.SOTA&&SOTA.afterStep)SOTA.afterStep(rid);}else bump=performance.now();}
  else if(cmd==="left"){st.f=(st.f+3)%4;save();startAnim(160);}
  else if(cmd==="right"){st.f=(st.f+1)%4;save();startAnim(160);}
  updHud();}
 let bump=0;
+let pickCol=new Int16Array(1),pickY0=new Int32Array(1),pickY1=new Int32Array(1);
+function ensurePick(w){if(pickCol.length<w){pickCol=new Int16Array(w);pickY0=new Int32Array(w);pickY1=new Int32Array(w);}}
 // ---------- renderer ----------
 const cv=document.getElementById("view"),ctx=cv.getContext("2d",{alpha:false});
 let W=0,H=0,img=null,buf=null,zbuf=null;
@@ -98,16 +117,16 @@ function render(t){
   const ddx=Math.abs(1/rx),ddy=Math.abs(1/ry);let sx,sy,sdx,sdy,side=0,pz=bzone[my*G+mx];
   if(rx<0){sx=-1;sdx=(px-mx)*ddx;}else{sx=1;sdx=(mx+1-px)*ddx;}
   if(ry<0){sy=-1;sdy=(py-my)*ddy;}else{sy=1;sdy=(my+1-py)*ddy;}
-  let guard=0,door=-1;
+  let guard=0,door=-1,through=-1;
   while(guard++<400){if(sdx<sdy){sdx+=ddx;mx+=sx;side=0;}else{sdy+=ddy;my+=sy;side=1;}
-   if(mx<0||my<0||mx>=G||my>=G)break;const bi=my*G+mx;if(solid[bi])break;const dr=doorRoom[bi];if(dr>=0&&!solvedR[dr]){door=dr;break;}pz=bzone[bi];}
+   if(mx<0||my<0||mx>=G||my>=G)break;const bi=my*G+mx;if(solid[bi])break;const dr=doorRoom[bi];if(dr>=0&&!solvedR[dr]){door=dr;break;}if(dr>=0&&solvedR[dr]&&through<0)through=dr;pz=bzone[bi];}
   const perp=side===0?sdx-ddx:sdy-ddy;
   let u=side===0?py+perp*ry:px+perp*rx;u-=Math.floor(u);if((side===0&&rx>0)||(side===1&&ry<0))u=1-u;
   const hsh=((mx*73856093)^(my*19349663)^(side*83492791)^((side===0?sx:sy)>0?0x5bd1e995:0))>>>0;
   const z=door>=0?M.rooms[door].z:pz,tex=door>=0?DT[z]:TX.walls[z][hsh%TX.V],flip=(hsh>>>8)&1,voff=(hsh>>>9)&31;
   let tu=((flip?1-u:u)*TS)|0;if(tu>=TS)tu=TS-1;
   const lh=foc/perp,top=h2-lh/2,bot=h2+lh/2;const y0=Math.max(0,Math.ceil(top)),y1=Math.min(H,Math.ceil(bot));
-  colTop[x]=y0;colBot[x]=y1;
+  colTop[x]=y0;colBot[x]=y1;ensurePick(W);pickCol[x]=door>=0?door:through;pickY0[x]=y0;pickY1[x]=y1;
   const L=light(perp)*(side?0.82:1),fogk=1-Math.exp(-perp*fd),ik=u<0.03||u>0.97?0.25:(u<0.06||u>0.94?0.6:1);
   const tn=ZA[z].tint,gl=ZA[z].glow;
   for(let y=y0;y<y1;y++){const v=(y-top)/lh;let tv=((v*TS)|0)+voff;tv&=TS-1;const ti=(tv*TS+tu)*4;
@@ -156,8 +175,17 @@ document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",
 document.querySelectorAll("[data-cmd]").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();act(b.dataset.cmd);});b.addEventListener("contextmenu",e=>e.preventDefault());});
 document.getElementById("dbg").addEventListener("pointerdown",e=>{e.preventDefault();hudOn=!hudOn;try{localStorage.setItem(HUD_KEY,hudOn?"1":"0");}catch(e){}updHud();});
 window.addEventListener("keydown",e=>{const k={ArrowUp:"fwd",w:"fwd",ArrowDown:"back",s:"back",ArrowLeft:"left",a:"left",ArrowRight:"right",d:"right"}[e.key];if(k){e.preventDefault();act(k);}});
+function dirToRoom(rid){const rc=M.rooms[rid]&&M.rooms[rid].c;if(!rc)return -1;for(let i=0;i<4;i++)if(st.x+DIRS[i][0]===rc[0]&&st.y+DIRS[i][1]===rc[1]&&canMove(st.x,st.y,i))return i;return -1;}
+function enterDoor(rid){if(blocked()||!(rid>=0)||!M.rooms[rid])return false;const d=dirToRoom(rid);if(d<0)return false;const nx=st.x+DIRS[d][0],ny=st.y+DIRS[d][1];
+ if(!contentCap.allowsStep(st.x,st.y,nx,ny)){bump=performance.now();contentCapToast();updHud();return false;}
+ if(locked(rid)){bump=performance.now();if(window.SOTA&&SOTA.openPuzzle)SOTA.openPuzzle(rid,"fwd");updHud();return true;}
+ st.x=nx;st.y=ny;stepped();save();startAnim(150);if(!clearedR[rid])showPanel(rid);if(window.SOTA&&SOTA.afterStep)SOTA.afterStep(rid);updHud();return true;}
+function useFacingDoor(){if(blocked()||!canMove(st.x,st.y,st.f))return false;const rid=roomAt[(st.y+DIRS[st.f][1])*N+st.x+DIRS[st.f][0]];return rid>=0&&enterDoor(rid);}
+function onViewPointer(e){if(blocked()||e.button)return;const r=cv.getBoundingClientRect();if(!r.width||!r.height)return;const x=Math.floor((e.clientX-r.left)/r.width*W),y=Math.floor((e.clientY-r.top)/r.height*H);
+ if(x<0||y<0||x>=W||y>=H||x>=pickCol.length)return;const rid=pickCol[x];if(!(rid>=0)||y<pickY0[x]||y>=pickY1[x])return;e.preventDefault();enterDoor(rid);}
+cv.addEventListener("pointerup",onViewPointer);
 // test/debug hooks (read-only views + direct commands)
-window.SOTA={contentCap,state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,
+window.SOTA={contentCap,state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,resetRun,mazeSnap,applyMaze,enterDoor,useFacingDoor,
  frameTimes:()=>ft.slice(),setAnim:v=>{animOn=!!v;},animating:()=>anim.on,renderOnce:()=>{const t0=performance.now();render(performance.now());return performance.now()-t0;},
  items:()=>items.slice(),rooms:()=>({solved:[...solvedR.keys()].filter(i=>solvedR[i]),cleared:[...clearedR.keys()].filter(i=>clearedR[i])}),
  roomAt:(x,y)=>roomAt[y*N+x],isSolved:i=>!!solvedR[i],panelOpen:()=>panelOn,

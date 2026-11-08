@@ -36,15 +36,18 @@ def tap_moves(pg,t,mv):
   for m in mv:
     if t==3:tap(pg,f'#pboard [data-blk="{m[0]}"]');tap(pg,f'#pboard [data-dir="{m[1]}"]')
     else:tap(pg,f'#pboard [data-mv="{m}"]')
+def open_door(pg):
+  check(pg.evaluate('SOTA.useFacingDoor()'),'door click did nothing')
 def solve_ui(pg,r):
-  approach(pg,r);tap(pg,'[data-cmd=fwd]');check(pg.evaluate('SOTA.puzzleOpen()'),'puzzle did not open');check(pg.evaluate('SOTA.puzzle.state().id')==r['id'],'wrong room')
+  approach(pg,r);open_door(pg);check(pg.evaluate('SOTA.puzzleOpen()'),'puzzle did not open');check(pg.evaluate('SOTA.puzzle.state().id')==r['id'],'wrong room')
   check(pg.evaluate('SOTA.puzzle.state().solved')==False,'already solved at start')
   tap_moves(pg,r['p'],moves(r['id']));check(pg.evaluate('SOTA.puzzle.state().solved'),f"room {r['id']} not solved by touch");check(pg.evaluate('SOTA.isSolved(%d)'%r['id']),'not saved')
 def board(pg):return pg.inner_html('#pboard')
 
 def t_locked_blocks(p):
   b,c=ctx(p);pg=page(c);r=R(pg)[5];a=approach(pg,r);tap(pg,'[data-cmd=fwd]');s=pg.evaluate('SOTA.state()')
-  check((s['x'],s['y'])==a,'walked into a locked room');check(pg.evaluate('SOTA.puzzleOpen()'),'no puzzle');check(pg.get_by_text(re.compile('.')).count()>0,'')
+  check((s['x'],s['y'])==a,'walked into a locked room');check(not pg.evaluate('SOTA.puzzleOpen()'),'walking opened the puzzle')
+  open_door(pg);s=pg.evaluate('SOTA.state()');check((s['x'],s['y'])==a,'clicked door walked in');check(pg.evaluate('SOTA.puzzleOpen()'),'no puzzle');check(pg.get_by_text(re.compile('.')).count()>0,'')
   for k in['fwd','left','right','back']:pg.evaluate(f'SOTA.act("{k}")')
   check(pg.evaluate('SOTA.state()')['f']==s['f'] and (pg.evaluate('SOTA.state()')['x'],pg.evaluate('SOTA.state()')['y'])==a,'moved while puzzle open')
   tap(pg,'#pclose');check(not pg.evaluate('SOTA.puzzleOpen()'),'close failed');check(not pg.evaluate(f"SOTA.isSolved({r['id']})"),'closing solved it')
@@ -68,10 +71,10 @@ def t_all_rooms_data(p):
 def t_persist_and_once(p):
   b,c=ctx(p);pg=page(c);r=next(x for x in R(pg) if x['p']==1);solve_ui(pg,r);tap(pg,'#penter');check(pg.evaluate('SOTA.panelOpen()'),'panel');
   check(pg.inner_text('#ptxt') in('Treasure room — open the chest.','Monster room — a powerful foe waits.','Story room — discover a wall painting.'),'panel text')
-  tap(pg,'#pgo');check(not pg.evaluate('SOTA.panelOpen()'),'panel stays');tap(pg,'[data-cmd=back]');tap(pg,'[data-cmd=fwd]');check(not pg.evaluate('SOTA.panelOpen()'),'panel shown twice')
+  tap(pg,'#pgo');check(not pg.evaluate('SOTA.panelOpen()'),'panel stays');tap(pg,'[data-cmd=back]');open_door(pg);check(not pg.evaluate('SOTA.panelOpen()'),'panel shown twice')
   r2=next(x for x in R(pg) if x['p']==4);solve_ui(pg,r2);tap(pg,'#pclose')  # solved but not entered
   pg.reload();pg.wait_for_function('window.SOTA');check(pg.evaluate(f"SOTA.isSolved({r['id']})"),'solved lost on reload')
-  check(pg.evaluate(f"SOTA.isSolved({r2['id']})"),'solved-not-entered lost on reload');approach(pg,r);tap(pg,'[data-cmd=fwd]')
+  check(pg.evaluate(f"SOTA.isSolved({r2['id']})"),'solved-not-entered lost on reload');approach(pg,r);open_door(pg)
   s=pg.evaluate('SOTA.state()');check([s['x'],s['y']]==r['c'] and not pg.evaluate('SOTA.puzzleOpen()'),'solved room relocked');check(not pg.evaluate('SOTA.panelOpen()'),'panel after reload')
   # 3D draws the open doorway for a solved room and the sealed door for a locked one (checked by pixel glow in shots/mutations)
   b.close()
@@ -87,8 +90,8 @@ def t_old_and_corrupt(p):
 def t_leave_reset(p):
   b,c=ctx(p);pg=page(c)
   for t in range(5):
-    r=next(x for x in R(pg) if x['p']==t and x['z']>=3);approach(pg,r);tap(pg,'[data-cmd=fwd]');h0=board(pg);m=moves(r['id'])[0]
-    tap_moves(pg,t,[m]);h1=board(pg);check(h1!=h0,f'type {t} move did nothing');tap(pg,'#pclose');approach(pg,r);tap(pg,'[data-cmd=fwd]')
+    r=next(x for x in R(pg) if x['p']==t and x['z']>=3);approach(pg,r);open_door(pg);h0=board(pg);m=moves(r['id'])[0]
+    tap_moves(pg,t,[m]);h1=board(pg);check(h1!=h0,f'type {t} move did nothing');tap(pg,'#pclose');approach(pg,r);open_door(pg)
     check(board(pg)==h1,f'type {t} state lost on leave');check(not pg.evaluate('SOTA.puzzle.state().solved'),'solved after one move')
     tap(pg,'#preset');check(board(pg)==h0 or t==3 and re.sub(r' sel','',board(pg))==re.sub(r' sel','',h0),f'type {t} reset failed');pg.keyboard.press('Escape');check(not pg.evaluate('SOTA.puzzleOpen()'),'Esc')
   pg.reload();pg.wait_for_function('window.SOTA');r=R(pg)[0];pg.evaluate(f"SOTA.puzzle.open({r['id']})");h=board(pg);pg.reload();pg.wait_for_function('window.SOTA');pg.evaluate(f"SOTA.puzzle.open({r['id']})");check(board(pg)==h,'puzzle differs after reload');b.close()
@@ -116,7 +119,7 @@ def t_ui_fit(p):
 def t_map_solved(p):
   b,c=ctx(p);pg=page(c);rs=R(pg);a=next(x for x in rs if x['z']==1 and x['p']==0);bb_=next(x for x in rs if x['z']==1 and x['id']!=a['id'])
   pg.evaluate('SOTA.map.open()');md=pg.evaluate('Object.assign({},document.getElementById("map").dataset)');check(md.get('solved')=='0','solved before any')
-  pg.evaluate('SOTA.map.close()');solve_ui(pg,a);tap(pg,'#penter');tap(pg,'#pgo');approach(pg,bb_);tap(pg,'[data-cmd=fwd]');tap(pg,'#pclose')
+  pg.evaluate('SOTA.map.close()');solve_ui(pg,a);tap(pg,'#penter');tap(pg,'#pgo');approach(pg,bb_);open_door(pg);tap(pg,'#pclose')
   # second room: only look at it from next door (not entered) -> not visited -> not drawn; visit cell? rooms are visited only by entering; mark visited via teleport-in after solve check
   pg.evaluate('SOTA.map.open()');md=pg.evaluate('Object.assign({},document.getElementById("map").dataset)');check(md['solved']=='1' and md['locked']=='0',f'map {md}')
   pg.evaluate('SOTA.map.close()');pg.evaluate('r=>SOTA.teleport(r[0],r[1],0)',bb_['c']);pg.evaluate('SOTA.map.open()');md=pg.evaluate('Object.assign({},document.getElementById("map").dataset)')

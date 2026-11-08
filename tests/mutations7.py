@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parent.parent;PY=sys.executable
 MUT=[
  ('renamed monster','rules.js','"Rat","Slime"','"Mouse","Slime"','t_roster'),
  ('HP-only reskins','rules.js','atk:Math.round((5+2.1*L)*m*d.matk*v[2]*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0','atk:10,def:10,pierce:0','t_roster'),
- ('crowded hallways','party.js','rid>=0?0.15:0.02','rid>=0?0.15:0.30','t_scaling_and_hallway'),
+ ('crowded hallways','party.js','rid>=0?0.25:0.06','rid>=0?0.25:0.30','t_scaling_and_hallway'),
  ('room life not doubled','rules.js','hpMul=profile===1?1:2','hpMul=1','t_room_multipliers'),
  ('rooms always both buffs','rules.js','hpMul=profile===1?1:2,atkMul=profile===0?1:1.5','hpMul=2,atkMul=1.5','t_room_multipliers'),
  ('rooms flattened to hallway','rules.js','hpMul=profile===1?1:2,atkMul=profile===0?1:1.5','hpMul=1,atkMul=1','t_room_multipliers'),

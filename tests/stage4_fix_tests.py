@@ -200,7 +200,7 @@ def t_fight_branch(p):
     hp=ev(pg,'SOTA.rpg.fight().m[1].hp');ttap(pg,'#s4br [data-tgt="1"]');check(ev(pg,'SOTA.rpg.fight().m[1].hp')<hp,'attack did no damage')
     check(not ev(pg,'!!document.getElementById("s4br")'),'branch stayed open');check(ev(pg,'SOTA.rpg.turn()')==1,'turn did not pass')
     check(ev(pg,'document.querySelector("#fparty .s4pr.now [data-hero]").dataset.hero')=='1','turn marker did not move')
-    ttap(pg,'#fparty [data-hero="1"]');ttap(pg,'#s4br [data-cmd4=spells]');check(ev(pg,'document.querySelectorAll("#s4br .s4bcol[data-lv=\'1\'] [data-sk]").length')>=1,'skill sub-branch empty')
+    ttap(pg,'#fparty [data-hero="1"]');ttap(pg,'#s4br [data-cmd4=skill]');check(ev(pg,'document.querySelectorAll("#s4br .s4bcol[data-lv=\'1\'] [data-sk]").length')>=1,'skill sub-branch empty')
     # tapping outside closes it
     ev(pg,'(()=>{const b=document.getElementById("s4br");b.dispatchEvent(new MouseEvent("click",{bubbles:true}))})()');check(not ev(pg,'!!document.getElementById("s4br")'),'tap outside did not close');b.close()
 def t_branch_flip(p):
@@ -301,9 +301,9 @@ def t_fight_v4_tree(p):
     tabs=ev(pg,RECTS,'#fparty .s4nl');check(all(not(c0[0]<r[2] and c0[2]>r[0] and c0[1]<r[3] and c0[3]>r[1]) for r in tabs),'tree covers the name tabs')
     arr=ev(pg,'[...document.querySelectorAll("#s4br .s4bi.more")].map(e=>getComputedStyle(e,"::before").content+"|"+getComputedStyle(e,"::after").content)')
     check(len(arr)==3 and all(a.startswith('"‹') and a.endswith('|none') for a in arr),f'next-level arrows not on the left: {arr}')
-    check(ev(pg,'[...document.querySelectorAll("#s4br .s4bcol[data-lv=\'0\'] .s4bi")].map(e=>e.textContent)')==['Defend','Attack','Spells','Items','Run'],'level 0 items')
-    ttap(pg,'#s4br [data-cmd4=spells]');c0b=ev(pg,RECTS,'#s4br .s4bcol[data-lv="0"]');c1=ev(pg,RECTS,'#s4br .s4bcol[data-lv="1"]')[0]
-    sp=ev(pg,RECTS,'#s4br [data-cmd4=spells]')[0]
+    check(ev(pg,'[...document.querySelectorAll("#s4br .s4bcol[data-lv=\'0\'] .s4bi")].map(e=>e.textContent)')==['Defend','Attack','Skill','Items','Run'],'level 0 items')
+    ttap(pg,'#s4br [data-cmd4=skill]');c0b=ev(pg,RECTS,'#s4br .s4bcol[data-lv="0"]');c1=ev(pg,RECTS,'#s4br .s4bcol[data-lv="1"]')[0]
+    sp=ev(pg,RECTS,'#s4br [data-cmd4=skill]')[0]
     check(c1[2]<=(c0b[0][0] if c0b else at[0]),'level 1 not left of level 0');check(abs(c1[1]-(sp[1] if c0b else at[1]))<=2,f'level 1 not beside the choice that opened it {c1} {sp}')
     check(bool(c0b) or w<380,'level 0 hidden on a wide phone')
     check(ev(pg,'!!document.querySelector("#s4br .s4bcol[data-lv=\'1\'] [data-back]")'),'no Back button')

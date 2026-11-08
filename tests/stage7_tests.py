@@ -32,7 +32,7 @@ def t_scaling_and_hallway(p):
   means=ev(pg,'[1,2,3,4,5].map(z=>{const a=Array.from({length:7},(_,i)=>RPG.makeMonster(z,i,40,0,"normal"));return [a.reduce((s,m)=>s+m.hp,0)/7,a.reduce((s,m)=>s+m.atk,0)/7]})')
   check(all(means[i][0]<means[i+1][0] and means[i][1]<means[i+1][1] for i in range(4)),'zone scaling lost')
   check(ev(pg,f'RPG.makeMonster(3,{k},30,1,"normal").hp>RPG.makeMonster(3,{k},30,0,"normal").hp'),'centre scaling lost')
- s=source(pg,'party.js');check('rid>=0?0.15:0.02' in s,'hallway no longer about 2%');check('if(stepsSince<10)return;' in s,'no cooldown')
+ s=source(pg,'party.js');check('rid>=0?0.25:0.06' in s,'hallway no longer about 6%');check('if(stepsSince<10)return;' in s,'no cooldown')
  check('if(R.isSavePoint(M,p.x,p.y))' in s and s.index('if(R.isSavePoint(M,p.x,p.y))')<s.index('if(stepsSince<10)return;'),'camp/tavern fights')
  check(ev(pg,'["story","normal","hard"].map(d=>[RPG.DIFF[d].hp,RPG.DIFF[d].matk])')==[[2,.5],[1,1],[1,1.5]],'difficulty changed');b.close()
 def t_room_multipliers(p):

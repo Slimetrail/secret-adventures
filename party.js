@@ -31,7 +31,7 @@ function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>
  if(!start&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!hasTent())return false;if(!same){live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
  // Camp scene gates observe arrival injuries; seen flags enter this save. Saving never rests.
  if(!start&&tavIdx(p.x,p.y)<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));
- live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();const next=clone(live);
+ live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];const next=clone(live);
  try{localStorage.setItem(SLOT+slot,JSON.stringify(next));localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(next));}catch(e){toast("Could not save. Storage may be full.");return false;}
  activeSlot=slot;save=next;return true;}
 function loadSlot(slot){const o=saveSlots()[slot];if(!o)return false;
@@ -42,8 +42,8 @@ function savePicker(mode,done,cancel){const w=page("save-picker");w.appendChild(
   if(mode==="load"){if(loadSlot(i)&&done)done();}else if(doSave(false,i)&&done)done();},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
 
 // death: everything goes back to the last save
-function restore(){if(!save)return false;campVisit=null;live=clone(save);const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
- S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
+function restore(){if(!save)return false;campVisit=null;live=clone(save);if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
+ if(S.applyMaze)S.applyMaze(save.maze||{x:save.at.x,y:save.at.y,f:save.at.f});else S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
 function toast(t){const d=$("s4toast");d.textContent=displayText(t);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 // ---------- screens ----------
 const ov=$("s4");function openUI(kind){ui=kind;document.documentElement.classList.add("s4open");ov.className="open "+kind;ov.dataset.kind=kind;document.documentElement.classList.remove("s5shop-open");closeBranch();}
@@ -144,7 +144,7 @@ function ccConfirm(){const nmEl=$("ccname");if(nmEl)cc.name=nmEl.value;const lef
  if(left>0&&!cc.warned){cc.warned=true;cc.err="You still have "+left+" stat point"+(left>1?"s":"")+" left. Spend them, or tap Confirm anyway.";creation();return;}
  const h=R.newChar(cc.name.trim(),cc.race,cc.cls,cc.add,cc.skill);
  const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{if(id==="leather"&&!R.canEquip(h,id,"chest"))id="robe";h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","ether");
- live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0};live.party[0].hp=R.maxHp(h,hpMul());doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");h6("created");}
+ live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0,beasts:[]};live.party[0].hp=R.maxHp(h,hpMul());if(S.resetRun)S.resetRun();doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");h6("created");}
 // ---- party screen: portrait + panel cards; tap anywhere on a card for the character sheet ----
 function gearText(c){const n=s=>c.equip[s]&&R.ITEMS[c.equip[s]].n;const a=[n("weapon"),n("offhand")].filter(Boolean),b=[n("helmet"),n("chest"),n("gloves"),n("boots"),n("acc1"),n("acc2")].filter(Boolean);return [a.join(", ")||"No weapon",b.join(", ")||"No armor"];}
 function partyScreen(){const w=page("party");w.appendChild(head("Party",closeUI));
@@ -224,7 +224,7 @@ function bagScreen(i){sheetSel=null;charScreen(i);}
 function addLoot(id){for(const c of live.party)if(R.canCarry(c,id)){c.bag.push(id);return c.name;}return null;}
 // ---------- fights ----------
 let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0,motionEnd=0;
-function startFight(mons,why){F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;{const q=S.state&&S.state();F.bgv=q?((q.x*7+q.y*13+(why==="room"?3:0))%6+6)%6:fightNo%6;}FIGHT_ART.forEach(u=>spr(u.slice(11,-4)));turnI=0;nextAlive();fx=[];motionEnd=0;openUI("fight");ov.innerHTML="";ov.dataset.result="";
+function startFight(mons,why){if(live){if(!Array.isArray(live.beasts))live.beasts=[];(mons||[]).forEach(m=>{const file=MON_FILE[m.n];if(file&&/^z[12]-/.test(file)&&!live.beasts.includes(file))live.beasts.push(file);});}F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;{const q=S.state&&S.state();F.bgv=q?((q.x*7+q.y*13+(why==="room"?3:0))%6+6)%6:fightNo%6;}FIGHT_ART.forEach(u=>spr(u.slice(11,-4)));turnI=0;nextAlive();fx=[];motionEnd=0;openUI("fight");ov.innerHTML="";ov.dataset.result="";
  const w=el("div","s4fight");const top=el("div","s4stage");fcv=el("canvas");fcv.id="fcv";top.appendChild(fcv);const log=el("div","s4log","");log.id="flog";top.appendChild(log);w.appendChild(top);
  const bot=el("div","s4fbot");bot.id="fbot";const en=el("div","s4enemies");en.id="fen";bot.appendChild(en);const pr=el("div","s4party");pr.id="fparty";bot.appendChild(pr);const mn=el("div","s4menu");mn.id="fmenu";bot.appendChild(mn);w.appendChild(bot);
  ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();h6("fightStart");cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
@@ -232,12 +232,14 @@ function sizeF(){const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(fcv
 function say(t){const l=$("flog");if(l)l.textContent=displayText(t);}
 function nextAlive(){while(turnI<live.party.length&&live.party[turnI].hp<=0)turnI++;}
 function targets(cmd,arg){return F.m.map((m,i)=>m.hp>0?{t:m.n+" · "+m.hp,fn:()=>doAct(cmd,arg,i),d:{tgt:i}}:null).filter(Boolean);}
-function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const sk=c.skills.map(id=>R.SKILLS[c.cls].find(x=>x.id===id));
+function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const sk=c.skills.map(id=>R.SKILLS[c.cls].find(x=>x.id===id)).filter(Boolean);
  const skItem=s=>({t:s.n+" "+s.mp+"MP",off:c.mp<s.mp,d:{sk:s.id},...((s.k==="phys"||s.k==="magic")&&!s.all?{kids:()=>targets("skill",s.id)}:{fn:()=>doAct("skill",s.id,0)})});
- const items=[{t:"Defend",d:{cmd4:"defend"},fn:()=>doAct("defend",null,0)},{t:"Attack",d:{cmd4:"attack"},kids:()=>targets("attack")},
-  {t:"Spells",d:{cmd4:"spells"},off:!sk.length,kids:()=>sk.map(skItem)},
-  {t:"Items",d:{cmd4:"item"},kids:()=>[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use").map(id=>R.ITEMS[id].revive?{t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,d:{item:id},kids:()=>{const ko=live.party.map((m,j)=>m.hp<=0?{t:"Wake "+m.name,fn:()=>doAct("item",id,j),d:{revive:j}}:null).filter(Boolean);return ko.length?ko:[{t:"Nobody is knocked out",off:true}];}}:({t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,fn:()=>doAct("item",id,turnI),d:{item:id}}))},
-  {t:"Run",d:{cmd4:"run"},fn:()=>doAct("run",null,0)}];return slideTree(items,0);}
+ const phys=sk.filter(s=>s.k==="phys"||s.k==="guard"),mag=sk.filter(s=>s.k==="magic"||s.k==="heal");
+ const items=[{t:"Defend",d:{cmd4:"defend"},fn:()=>doAct("defend",null,0)},{t:"Attack",d:{cmd4:"attack"},kids:()=>targets("attack")}];
+ if(phys.length)items.push({t:"Skill",d:{cmd4:"skill"},kids:()=>phys.map(skItem)});
+ if(mag.length)items.push({t:"Spells",d:{cmd4:"spells"},kids:()=>mag.map(skItem)});
+ items.push({t:"Items",d:{cmd4:"item"},kids:()=>[...new Set(c.bag)].filter(id=>R.ITEMS[id].slot==="use").map(id=>R.ITEMS[id].revive?{t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,d:{item:id},kids:()=>{const ko=live.party.map((m,j)=>m.hp<=0?{t:"Wake "+m.name,fn:()=>doAct("item",id,j),d:{revive:j}}:null).filter(Boolean);return ko.length?ko:[{t:"Nobody is knocked out",off:true}];}}:({t:R.ITEMS[id].n+" x"+c.bag.filter(x=>x===id).length,fn:()=>doAct("item",id,turnI),d:{item:id}}))},
+  {t:"Run",d:{cmd4:"run"},fn:()=>doAct("run",null,0)});return slideTree(items,0);}
 let rotTop=0;
 // fight v4: tabs stack in turn order; the member whose turn it is is the top tab, the one who just acted goes to the bottom
 function turnOrder(){const n=live.party.length;if(F&&!F.over&&live.party[turnI]&&live.party[turnI].hp>0)rotTop=turnI;rotTop=Math.min(rotTop,n-1);return [...Array(n).keys()].map(k=>(rotTop+k)%n);}
@@ -394,7 +396,7 @@ S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h
   const ok=doSave(false);toast(joined+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can't camp or save at "+placeName(p.x,p.y)+". Buy or build one at a tavern."));updBtn();updHere();return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  if(stepsSince<10)return;if(!roll)roll=R.rng(live.seed>>>0);const r=roll();
- if(r<(rid>=0?0.15:0.02)){stepsSince=0;fightHere("random");}};
+ if(r<(rid>=0?0.25:0.06)){stepsSince=0;fightHere("random");}};
 // Chest items wait for an explicit choice when bags are full. No stash, ground pile or sale.
 function treasurePanel(l){const found=[],pending=l.items.slice();
  // The door opens on pointerdown: its trailing click must not drop/leave an item below it.

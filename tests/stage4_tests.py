@@ -185,7 +185,7 @@ def t_ui_fit(p):
       check(ev(pg,'document.getElementById("s4").scrollWidth<=innerWidth'),f'{tag} wider than screen')
     innerW=w;chk('create');tap(pg,'[data-race=human]');pg.fill('#ccname','Fit');tap(pg,'[data-skill=cleave]');tap(pg,'#ccgo');tap(pg,'#ccgo')
     ev(pg,'SOTA.rpg.live().party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1),RPG.makeCompanion(RPG.COMPANIONS[2],1))')
-    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>RPG.makeMonster(1,i,1,0,"normal")))');chk('fight');tap(pg,'[data-cmd4=spells]');chk('skills')
+    ev(pg,'SOTA.rpg.startFight([0,1,2].map(i=>RPG.makeMonster(1,i,1,0,"normal")))');chk('fight');tap(pg,'[data-cmd4=skill]');chk('skills')
     check(ev(pg,'(()=>{const m=document.getElementById("fmenu").getBoundingClientRect();return m.bottom<=innerHeight+1})()'),'menu off screen')
     ev(pg,'SOTA.rpg.forceEnd("ran")');tap(pg,'#fdone');tap(pg,'#partyb');chk('party');tap(pg,'[data-equip="0"]');tap(pg,'[data-slot=weapon]');chk('equip');tap(pg,'.s4back');tap(pg,'[data-bag="0"]');chk('bag')
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()

@@ -140,7 +140,7 @@ function applyMood(b){const sc=b.dataset.scene,i=+b.dataset.line;let text=null;t
  if(text==null){if(b.dataset.moodLine!==String(i)){delete b.dataset.moodPair;}return;}const r=moodFor(sc,i,text);
  b.dataset.moodLine=i;if(r){b.dataset.moodPair=r.pair;b.dataset.moodIndex=r.i;b.dataset.moodFace=r.m.face;b.dataset.moodListen=r.m.listen[1];}else{delete b.dataset.moodPair;delete b.dataset.moodFace;delete b.dataset.moodListen;}}
 // ---------- journal: worn book and settings ----------
-const TABS=[["inventory","Inventory"],["equipment","Equipment"],["map","Map"],["art","Found art"],["journal","Journal"],["recipes","Recipes"],["settings","Settings"]];
+const TABS=[["inventory","Inventory"],["beasts","Beasts"],["map","Map"],["art","Found art"],["journal","Journal"],["recipes","Recipes"],["settings","Settings"]];
 function wear(){const s=s6();if(!s)return 1;const old=s.seen.join3?4:s.seen.join1?3:1;return Math.max(s.journalWear||1,old);}
 let jb=null,jTab="inventory";
 function openJournal(tab){const l=S.rpg.live();if(!l)return;if(!jb){jb=el("div","ijour");jb.id="ijour";document.body.appendChild(jb);}
@@ -157,16 +157,18 @@ const JOURNAL_MONSTERS={"cap:1":[["Rat","z1-rat"],["Slime","z1-slime"],["Big bug
 function monsterSketches(entry,kind,key){if(kind!=="monster-drawings")return;const g=el("div","ijart ijmonsters");
  (JOURNAL_MONSTERS[key]||[]).forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.appendChild(im);g.appendChild(f);});if(g.children.length)entry.appendChild(g);}
 function page(pg,l){const t=jTab,E=window.ECON;
- if(t==="inventory"){pg.appendChild(el("h3",null,"Inventory"));l.party.forEach((c,i)=>{pg.appendChild(el("div","ijl",c.name+": "+(c.bag.length?c.bag.map(itemName).join(", "):"(empty)")));});
-  pg.appendChild(el("div","ijl","Gold: "+l.gold));pg.appendChild(go("Open backpack",()=>{closeJournal();S.rpg.bagScreen(0);}));}
- else if(t==="equipment"){pg.appendChild(el("h3",null,"Equipment"));l.party.forEach((c,i)=>{const eq=c.equip||{};const v=Object.keys(eq).filter(k=>eq[k]).map(k=>k+": "+itemName(eq[k]));pg.appendChild(el("div","ijl",c.name+" — "+(v.join(" · ")||"nothing equipped")));});
-  pg.appendChild(go("Open equipment",()=>{closeJournal();S.rpg.equipScreen(0);}));}
+ if(t==="inventory"){pg.appendChild(el("h3",null,"Inventory"));l.party.forEach((c,i)=>{pg.appendChild(el("div","ijl",c.name+": "+(c.bag.length?c.bag.map(itemName).join(", "):"(empty)")));
+  const eq=c.equip||{};const v=Object.keys(eq).filter(k=>eq[k]).map(k=>k+": "+itemName(eq[k]));pg.appendChild(el("div","ijl",c.name+" — "+(v.join(" · ")||"nothing equipped")));});
+  pg.appendChild(el("div","ijl","Gold: "+l.gold));pg.appendChild(go("Open backpack",()=>{closeJournal();S.rpg.bagScreen(0);}));pg.appendChild(go("Open equipment",()=>{closeJournal();S.rpg.equipScreen(0);}));}
  else if(t==="map"){pg.appendChild(el("h3",null,"Map"));pg.appendChild(go("Open the map",()=>{closeJournal();S.rpg.closeUI();const b=$("mapb");if(b)b.click();}));}
  else if(t==="art"){pg.appendChild(el("h3",null,"Found art"));let s=null;try{s=S.rpg.s6.st();}catch(e){}const ra=S.rpg.s6.roomArt(),ids=s?(s.order||Object.keys(s.walls)).filter(id=>ra[id]):[];
   if(!ids.length)pg.appendChild(el("div","ijl dim","No wall art found yet."));const g=el("div","ijart");
   ids.forEach(id=>{const f=el("figure","ijfig");f.dataset.room=id;const im=el("img");im.alt="";im.src="art6/"+ra[id][1]+".webp";const n=el("figcaption","ijnote ijhw",wallNote(ra[id][1]));f.append(im,n);g.appendChild(f);});
   if(s&&s.seen&&s.seen.boss){const v=letterVar(),f=el("figure","ijfig");f.dataset.room="letter";f.dataset.variant=v;const im=el("img");im.alt="";im.src="art6/letter-note-before-you-enter.webp";f.append(im,el("figcaption","ijnote ijhw",TX.wall["letter-note-before-you-enter#"+v]||""));g.appendChild(f);}pg.appendChild(g);}
  else if(t==="journal"){pg.appendChild(el("h3",null,"Journal"));const h=el("div","ijhand");const es=keyMoments();if(!es.length)h.appendChild(el("div","ijl dim","(nothing written yet)"));es.forEach(([k,t,kind,key])=>{const e=el("div","ijentry ijhw",t);e.dataset.entry=k;monsterSketches(e,kind,key);h.appendChild(e);});pg.appendChild(h);}
+ else if(t==="beasts"){pg.appendChild(el("h3",null,"Beasts"));const found=new Set(l.beasts||[]);const all=[].concat(JOURNAL_MONSTERS["cap:1"],JOURNAL_MONSTERS["cap:2"]).filter(([,file])=>found.has(file));
+  if(!all.length)pg.appendChild(el("div","ijl dim","No beasts found yet."));const g=el("div","ijart ijmonsters");
+  all.forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.dataset.beast=file;f.appendChild(im);g.appendChild(f);});if(g.children.length)pg.appendChild(g);}
  else if(t==="recipes"){pg.appendChild(el("h3",null,"Recipes"));const k=E?E.DISHES.filter(d=>l.recipes&&l.recipes[d.id]):[];pg.appendChild(el("div","ijl",k.length+" of "+(E?E.DISHES.length:20)+" recipes known"));
   k.forEach(d=>pg.appendChild(el("div","ijl","• "+d.n)));pg.appendChild(go("Open cooking guide",()=>{closeJournal();S.rpg.s5.cookbook();}));}
  else if(t==="settings"){pg.appendChild(el("h3",null,"Settings"));pg.appendChild(el("div","ijl","Sound / volume"));
