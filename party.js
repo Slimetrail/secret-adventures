@@ -300,7 +300,7 @@ function drawMon(g,m,i,W,H,t,flash){const q=monPose(i,W,H,t),{r,dx,dy,rot,sx,sy}
 function drawHero(g,c,x,y,hh,t,act,i){const im=spr(heroKey(c)),dead=c.hp<=0,hit=fx.find(e=>e.k==="enemy"&&e.hero===i&&t>=e.t0&&t<e.t0+e.dur),p=hit?(t-hit.t0)/hit.dur:0,impact=hit&&p>.38&&p<.8;
  const action=fx.find(e=>e.hero===i&&e.k!=="enemy"&&t>=e.t0&&t<e.t0+e.dur);g.save();if(dead&&!hit){g.globalAlpha=0.5;g.translate(x,y);g.rotate(-1.35);g.translate(-x,-y);}
  const lunge=action?-hh*.3*Math.sin((t-action.t0)/action.dur*Math.PI):act?-hh*.18:0;
- if(!dead&&!F.over){x+=Math.sin(t/570+i)*hh*.025;y+=Math.sin(t/430+i)*hh*.018;}if(impact)x+=hh*.13*Math.sin(p*25);
+ if(!dead&&F&&!F.over){x+=Math.sin(t/570+i)*hh*.025;y+=Math.sin(t/430+i)*hh*.018;}if(impact)x+=hh*.13*Math.sin(p*25);
  if(im){const w=hh*im.naturalWidth/im.naturalHeight;drawSprite(g,im,x+lunge,y,w,hh,impact);}g.restore();}
 // Different silhouettes and contact marks: single slash, crushing double arc, orbiting spell rings.
 function motionMarks(g,e,W,H,t){const p=(t-e.t0)/e.dur;if(p<0||p>1)return;const r=monRect(e.i,W,H),s=scl(W,H);g.save();g.globalAlpha=Math.sin(p*Math.PI);g.lineWidth=Math.max(2,s*.045);
@@ -375,7 +375,7 @@ function zoneAt(x,y){return C.zoneOf[y*N+x];}
 function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.x,p.y,N),pl=R.partyLevel(live.party);startFight((why==="room"?R.roomEncounter:R.encounter)(z,pl,cf,live.diff,(live.seed+fightNo*104729+p.x*65+p.y)>>>0,live.party),why);}
 S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  if(R.isSavePoint(M,p.x,p.y)){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
-  if(t>=0){const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
+  if(t>=0){h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
   const ok=doSave(false);toast(joined+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can't camp or save at "+placeName(p.x,p.y)+". Buy or build one at a tavern."));updBtn();updHere();return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  if(stepsSince<10)return;if(!roll)roll=R.rng(live.seed>>>0);const r=roll();
@@ -437,7 +437,7 @@ function cookTry(ings,where){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings
 // part/junk/ingredient produces exactly one ration and one potion here only.
 function shopCounts(t=0){s5init();live.tavernStock=live.tavernStock||{};const q=live.tavernStock[t]=live.tavernStock[t]||{};
  ["ration","potion","ether","salts"].concat(E.stock(t).ing).forEach(id=>{if(q[id]==null)q[id]=3;});return q;}
-function buy(id,t=0){h6("owner",t,"SERVE");const q=shopCounts(t);if(q[id]===0){toast("Out of stock");return false;}const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;if(q[id]!=null)q[id]--;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
+function buy(id,t=0){const q=shopCounts(t);if(q[id]===0){toast("Out of stock");return false;}const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;if(q[id]!=null)q[id]--;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
 function buyRecipe(did){const d=E.dish(did),p=E.RECIPE_PRICE[d.tier];if(live.recipes[did]){toast("You already know it");return false;}if(live.gold<p){toast("Not enough gold");return false;}live.gold-=p;live.recipes[did]="bought";toast("Recipe bought: "+d.n);h6("shop");return true;}
 function sell(ci,k,t=0){const c=live.party[ci],id=c.bag[k];if(id==null)return 0;const v=E.sellPrice(id);c.bag.splice(k,1);gone(id);if(id==="tent"&&!hasTent())live.tentWear=0;live.gold+=v;if(["part","junk","ing"].includes(R.ITEMS[id].slot)){const q=shopCounts(t);q.ration++;q.potion++;}toast("Sold "+R.ITEMS[id].n+" +"+v+" gold");return v;}
 // tent build: parts + a crafter fee. The fee is paid in gold, or with spare parts/junk at their sell value (gold covers the rest)
@@ -466,7 +466,7 @@ function keeperArt(i){const cv=document.createElement("canvas");cv.width=cv.heig
 function stackList(ci,fn,filter){const c=live.party[ci];return E.stacks(c.bag).filter(s=>!filter||filter(s.id)).map(s=>({t:R.ITEMS[s.id].n+(s.n>1?" ×"+s.n:"")+" · "+E.sellPrice(s.id)+"g",d:{sell:s.id},fn:()=>fn(ci,c.bag.lastIndexOf(s.id))}));}
 function tavernScreen(t){s5init();h6("ownerVisit",t);h6("tavern",t);const kp=E.KEEPERS[t],w=page("tavern");w.appendChild(head("Tavern "+(t+1),()=>{closeUI();h6("owner",t,Math.random()<.5?"BYE":"BYE2");}));
  const card=el("div","s5kc");card.appendChild(keeperArt(t));const tx=el("div","");tx.appendChild(el("b","",kp.name));tx.appendChild(el("div","s4sub",kp.tag+" · shopkeeper"));tx.appendChild(el("div","s4sub","Taverns always save. Rest is free."));card.appendChild(tx);w.appendChild(card);
- goldLine(w);sideTabs(w,[["Buy",null,()=>buyScreen(t),"buy"],["Sell",null,()=>sellScreen(t),"sell"],["Cook",null,()=>cookScreen("t"+t),"cook"],["Cooking guide",null,()=>cookbook(()=>tavernScreen(t)),"guide"],["Party",null,partyScreen,"party"]]);
+ goldLine(w);sideTabs(w,[["Ask keeper",null,()=>h6("owner",t,"SERVE"),"keeper"],["Buy",null,()=>buyScreen(t),"buy"],["Sell",null,()=>sellScreen(t),"sell"],["Cook",null,()=>cookScreen("t"+t),"cook"],["Cooking guide",null,()=>cookbook(()=>tavernScreen(t)),"guide"],["Party",null,partyScreen,"party"]]);
  w.querySelectorAll(".s5tab").forEach(b=>{if(b.dataset.tab==="buy"||b.dataset.tab==="sell")b.textContent="‹ "+b.textContent;});}
 // Buy: its own screen with three options. Each option opens a screen with only those items. Back goes up one screen.
 function buyScreen(t){s5init();h6("owner",t,Math.random()<.5?"STOCK":"STOCK2");const w=page("buy");w.appendChild(head("Buy",()=>tavernScreen(t)));goldLine(w);

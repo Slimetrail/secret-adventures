@@ -17,6 +17,7 @@ closecall:{title:"After a close call",lines:[
 ["Mira","I am sitting. That's what fine looks like."]]}};
 var ORDER=["painting","tavern","closecall"];
 if(typeof module!=="undefined"){module.exports={TALKS:TALKS,ORDER:ORDER};return;}
+if(!window.SOTA_DEV_DIALOGUE)return; // explicit developer opt-in; no sample control in playable builds
 var css="#dvbtn{position:fixed;right:8px;top:8px;z-index:9000;padding:6px 10px;border:2px solid #2b1a0e;border-radius:9px 12px 8px 11px;background:radial-gradient(circle at 40% 35%,#efe0b8,#cdb07a);color:#2b1a0e;font:700 13px Georgia,serif;opacity:.85}"+
 "#dv{display:none;position:fixed;inset:0;z-index:9500;background:rgba(10,6,20,.72);font-family:Georgia,serif}#dv.open{display:block}"+
 "#dvbox{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);width:min(440px,92vw);padding:14px 16px 16px;border:3px solid #2b1a0e;border-radius:10px 14px 9px 12px;background:radial-gradient(circle at 40% 35%,#efe0b8,#cdb07a);color:#2b1a0e;box-shadow:0 6px 30px rgba(0,0,0,.6)}"+

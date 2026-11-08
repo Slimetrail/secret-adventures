@@ -34,11 +34,12 @@ function want(){
  const k=storyKind();
  if(k){if(k==="opening")return ["sick_father",1500,800];
   if(k==="camp")return ["camping",2500,2500]; // full fade into warmth
-  if(k==="tavern"||k==="stay"||k==="join")return ["tavern",600,0];
-  if(k==="wall")return ["art_room",now&&now.startsWith("maze_")?120:600,0]; // early cut into clusters
+  if(k==="tavern"||k==="stay"||k==="join"||k==="keeper")return ["tavern",600,0];
+  if(k==="wall"||k==="art-room"||k==="wall-art")return ["art_room",now&&now.startsWith("maze_")?120:600,0]; // early cut into clusters
   if(k==="boss")return ["menu",150,600];                                    // the note before you enter = journal reading
   if(k==="ending"){const box=document.getElementById("s6d");if(box&&box.querySelector(".s6title"))return ["credits",2000,1500];
    let e=null;try{e=S.rpg.s6.st().ending;}catch(x){}return [ENDING[e]||"true_ending",1200,1200];}}
+ if(S.intro&&S.intro.journalOpen())return ["menu",150,600];
  if(ui==="create")return ["title_intro",1500,1500];
  if(ui==="tavern"||ui==="buy"||ui==="sell"||ui==="tent")return ["tavern",600,0];
  if(ui==="camp")return ["camping",2500,2500];

@@ -92,7 +92,7 @@ function partyCodes(){return ["Q","S","A"].filter(c=>who(c)).join("");}
 H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!s.wallHeard||typeof s.wallHeard!=="object")s.wallHeard={};
  const pc=partyCodes(),first=!s.walls[id];if(!first&&s.wallHeard[id]==null){s.wallHeard[id]=pc;return;} // old save: assume heard with current party
  if(!first&&![...pc].some(c=>!s.wallHeard[id].includes(c)))return;
- const pi=pieceFor(id);if(pi<0)return;const added=window.PackageRooms?window.PackageRooms.lines(id,pc,s,ROOM_ART,who,brunnVer):[];let lines=id===LETTER_KEYS.picnic?picnicLines():id===84?bedsideLines():PIECES[pi].slice();
+ const pi=pieceFor(id);if(pi<0)return;const added=window.PackageRooms?window.PackageRooms.lines(id,pc,s,ROOM_ART,who,brunnVer):[];let lines=id===LETTER_KEYS.picnic?(first?picnicLines():[]):id===84?(first?bedsideLines():[]):PIECES[pi].slice();
  if(!window.PackageRooms&&r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
  s.walls[id]=1;s.wallHeard[id]=[...new Set(s.wallHeard[id]||"")].concat([...pc]).filter((c,i,a)=>a.indexOf(c)===i).join("");if(!Array.isArray(s.order))s.order=[];if(first)s.order.push(id);s.lastPiece=pi;
  if(id===LETTER_KEYS.picnic)s.revealed=true;

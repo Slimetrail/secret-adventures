@@ -30,6 +30,7 @@ H.fightContinue=snapshot=>{const s=state();if(!s)return false;if(!Number.isInteg
  if(api.sequential.run('after-fight',snapshot,null,true))return true;return pool('post-combat',{phase:'after'});};
 // Start uses the checked short pool. The existing portrait overlay renderer reads D.fight.
 for(const c of ['Q','S','A'])for(const tone of ['fun','dark']){const rows=pools['post-combat'].filter(r=>code[r.speaker]===c&&r.condition.startsWith('Fight start'));if(rows.length)root.STORY.fight.start[c][tone]=rows.map(r=>r.text);}
+H.reachedTavern=t=>{const s=state();if(s)s.journalWear=Math.max(s.journalWear||1,t>=2?4:t>=1?3:1);};
 const owners=root.PACKAGE_STORY.owners;
 H.owner=(t,job)=>{const s=state();if(!s||t<0||t>3)return;const row=owners.find(r=>r.id==='TO'+(t+1)+'-'+job);if(row)api.play('keeper',[['K'+(t+1),row.mood,row.text]],{bg:'art6/tavern-'+(t+1)+'.webp'});};
 H.ownerVisit=t=>{const s=state();if(!s||t<0||t>3)return;s.ownerVisits=s.ownerVisits||{};const key=t+':'+live().steps;if(s.ownerVisitKey===key)return;s.ownerVisitKey=key;if(!s.ownerVisits[t]){H.owner(t,'GREET');H.owner(t,'GREET2');}else H.owner(t,'BACK');s.ownerVisits[t]=true;};
