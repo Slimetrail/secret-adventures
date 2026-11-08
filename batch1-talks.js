@@ -375,15 +375,15 @@ function install(S,R,H){
  const api=S.rpg.s6,oldCamp=H.camp;
  // One registry/selector owns both original slots; later batches never wrap them.
  const entries=TALKS.map(t=>({t,key:seenKey(t.id),gate:null}));
- function select(context,snapshot){
+ function select(context,snapshot,repeat){
   const s=api.st(),l=S.rpg.live();if(!s||!l)return null;
-  const eligible=entries.filter(({t,key,gate})=>t.context===context&&!s.seen[key]&&t.speakers.every(c=>api.who(c))&&
+  const eligible=entries.filter(({t,key,gate})=>t.context===context&&(repeat||!s.seen[key])&&t.speakers.every(c=>api.who(c))&&
    (gate?gate(t,s,l,snapshot):(!t.gate||(t.gate==="cooked"?s.lastMeal==="cooked":t.gate==="hurt"?l.party.some(c=>c.hp<R.maxHp(c,R.DIFF[l.diff].hp)):
     t.gate==="close"?!!snapshot&&badlyHurt(snapshot):!!snapshot&&!badlyHurt(snapshot)))));
   // Conditional scenes across ALL batches first, retaining batch/file order.
-  const e=eligible.find(e=>e.t.gate)||eligible[0];return e?e.t:null;
+  const e=repeat?eligible[Math.floor(Math.random()*eligible.length)]:eligible.find(e=>e.t.gate)||eligible[0];return e?e.t:null;
  }
- function run(context,snapshot,opt){const t=select(context,snapshot);if(!t)return false;
+ function run(context,snapshot,opt,repeat){const t=select(context,snapshot,repeat);if(!t)return false;
   api.st().seen[entries.find(e=>e.t===t).key]=1;const visual=root.DialogueArt;const options=opt||{bg:null};
   api.play(context,t.lines,visual?visual.sceneOptions(t,options):options);return true;}
  const sequential={select,run,add:(talks,key,gate)=>talks.forEach(t=>entries.push({t,key:key(t.id),gate}))};

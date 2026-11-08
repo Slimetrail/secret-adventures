@@ -26,8 +26,8 @@ function st(){const l=live();if(!l||!l.party||!l.party.length)return null;let s=
 function who(code){const l=live();if(!l)return null;if(code==="H")return l.party[0];if(!ROLE[code])return null;
  return l.party.find(c=>c.role===ROLE[code])||(l.party[IDX[code]]&&!l.party[IDX[code]].role?l.party[IDX[code]]:null);}
 function fill(t){const out=t.replace(/\{([HQSA])\}/g,(_,c)=>{const m=who(c);return m?m.name:"friend";});return window.CompanionDisplay?window.CompanionDisplay.rewrite(out,live()):out;}
-function resolve(lines){return lines.filter(([w])=>w==="N"||w==="D"||who(w)).map(([w,e,t])=>{const m=w==="N"||w==="D"?null:who(w);
- return {w,e:e||"calm",t:fill(t),name:w==="N"?"":w==="D"?"Dad":(window.CompanionDisplay?window.CompanionDisplay.displayName(m,live()):m.name),art:m?(SHEET[m.race]||"knight"):null};});}
+function resolve(lines){return lines.filter(([w])=>w==="N"||w==="D"||/^K[1-4]$/.test(w)||who(w)).map(([w,e,t])=>{const m=w==="N"||w==="D"||/^K[1-4]$/.test(w)?null:who(w);
+ return {w,e:e||"calm",t:fill(t),name:/^K[1-4]$/.test(w)?["Brannoc","Wynn","Sylvaine","Miso"][+w[1]-1]:w==="N"?"":w==="D"?"Dad":(window.CompanionDisplay?window.CompanionDisplay.displayName(m,live()):m.name),art:m?(SHEET[m.race]||"knight"):null};});}
 function zoneNow(){try{return S.state().zone||1;}catch(e){return 1;}}
 const dark=()=>zoneNow()>=4;
 function explored(){const s=st();return (S.rooms?S.rooms().solved.length:0)+(s?Object.keys(s.walls).length:0);}
@@ -62,128 +62,19 @@ function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.r
 function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close();if(sc&&sc.opt.done)sc.opt.done();}
 // Local scripted scenes: Dialogue Lead's checked intro / reveal-and-endings sheets.
 // Sequential pairs only; the locked STORY data and all picker pools remain untouched.
-const INTRO_LINES=[
- ["D","calm","You can stop hovering. Everything will be alright."],
- ["H","shock","You keep saying that. You're not alright."],
- ["D","calm","I've had worse days. I deserve this."],
- ["H","shock","Don't say that. You didn't do anything to deserve getting sick."],
- ["D","calm","Let it go. It isn't something you need to understand."],
- ["H","calm","What I understand is you need help. The maze is the fastest way to get the money, and whatever they need to make you well."],
- ["D","angry","No. You're not going in there."],
- ["H","calm","I have to. Waiting here won't save you."],
- ["D","calm","People don't come home from that place. I won't lose you to it."],
- ["H","calm","I'll come back. I promise. I'm going to save you."],
- ["D","calm","I keep seeing a crystal when I close my eyes. That's just the fever. Everything will be alright if you stay. Please."],
- ["H","calm","I'm sorry. I'm going into the maze."]
-];
-const SCRIPTED_PAIRS={
- "R1":[
-  ["H","calm","That's my dad."],
-  ["Q","calm","Hey. Are you okay?"],
-  ["H","calm","I thought I was saving him. That was the whole reason I came. He broke everything. I don't know if I'm a hero or just a son chasing a ghost."],
-  ["Q","calm","Hey. Look at me. I've got you."]
- ],
- "R1-alt":[
-  ["H","calm","That's my dad."],
-  ["S","calm","An ordinary man does not leave a mark this far in. Your father had power."],
-  ["H","calm","I thought I was saving him. That was the whole reason I came. He broke everything. I don't know if I'm a hero or just a son chasing a ghost."],
-  ["S","calm","The record does not become smaller because you know the hand. We should keep moving toward the center."]
- ],
- "R1-alt2":[
-  ["H","calm","That's my dad."],
-  ["A","calm","Your father did this. All of it."],
-  ["H","calm","I thought I was saving him. That was the whole reason I came. He broke everything. I don't know if I'm a hero or just a son chasing a ghost."],
-  ["A","calm","I don't blame you for him. Don't ask me to be kind about it. We finish this and we save what's left."]
- ],
- "R2":[
-  ["S","calm","Work that reaches a room this deep does not belong to an ordinary man. He had power."],
-  ["H","calm","I wanted him to just be my dad. Sick, and waiting."],
-  ["S","calm","The later marks were already more deliberate. He knew what he was doing by then."]
- ],
- "R3":[
-  ["A","calm","We still have work. I'm not lingering over him."],
-  ["H","calm","I'm not asking you to."],
-  ["A","calm","I don't blame you for him. Don't ask me to be kind about it. We finish this and we save what's left."]
- ],
- "D2":[
-  ["Q","calm","He isn't getting up. Come on... please."],
-  ["S","calm","He will not. And I cannot tell if the crystal held."],
-  ["Q","calm","Then we don't even know if any of this closed."]
- ],
- "D2-alt":[
-  ["Q","calm","He isn't getting up. Come on... please."],
-  ["A","calm","My team died to that thing. Now he did too. And I still don't know if it mattered."]
- ],
- "D2-alt2":[
-  ["S","calm","I cannot tell if the crystal held. We do not know if any of this closed."],
-  ["A","calm","My team died to that thing. Now he did too. Nobody finished it. I still don't know if it mattered."]
- ],
- "D3":[
-  ["A","calm","My team died to that thing. Now he did too. And I still don't know if it mattered."],
-  ["Q","calm","I'm sorry. About them, and about him."]
- ],
- "C1":[
-  ["H","calm","We're alive. But look at it. It's still bleeding."],
-  ["Q","calm","Hey. We're okay. That's something, right? Even if it isn't all the way better."],
-  ["H","calm","I wanted to bring home enough to save my dad. I don't know if this is enough."],
-  ["Q","calm","You're alive. The crystal isn't whole. That's what we have."]
- ],
- "C2":[
-  ["S","calm","It is not whole. Someone tried to close what broke. This slow leak is what they left."],
-  ["H","calm","Then this is what we get. A crack that still bleeds."],
-  ["S","calm","It is slower now. I do not have the rest of why."]
- ],
- "C3a":[
-  ["A","calm","It's still leaking. We didn't end it."],
-  ["H","calm","We stopped it getting worse."],
-  ["A","calm","It's still bleeding. That's as far as it goes."]
- ],
- "C3b":[
-  ["A","calm","My team died for this. For a crack that didn't even close."],
-  ["H","calm","I'm sorry."],
-  ["A","calm","Sorry doesn't stand them back up. Neither did we."]
- ],
- "F1":[
-  ["H","calm","It's whole. I came here to save him. We ended what he left instead."],
-  ["Q","calm","You did it. Breathe for a second. That's enough for right now."],
-  ["H","calm","I thought saving him was who I was."],
-  ["Q","calm","You're still you. We'll take the next step when you can."]
- ],
- "F2":[
-  ["S","calm","The crystal is intact. Everyone else fled the failed rite. He did not. When sealing the break proved beyond him, he made a golem instead."],
-  ["H","calm","Then the price started once he was the only one left."],
-  ["S","calm","And now it is closed."]
- ],
- "F3":[
-  ["A","calm","He made that thing with his own hands. We brought it down."],
-  ["H","calm","I can know that and still feel like I owe for it."],
-  ["A","calm","His debt stays with him. You don't owe it. Don't ask me to thank him either. The world gets to keep running. That's the job."]
- ]
-};
-function picnicLines(){const P=SCRIPTED_PAIRS;let out;
- if(who("Q"))out=P.R1.slice();else if(who("S"))out=P["R1-alt"].slice();else if(who("A"))out=P["R1-alt2"].slice();
- else return [P.R1[0],P.R1[2]];
- if(who("Q")&&who("S"))out=out.concat(P.R2);
- if(who("A")&&(who("Q")||who("S")))out=out.concat(P.R3);
- return out;}
-function bedsideLines(){const out=[["H","calm","This one is about more than the maze."]];
- if(who("Q"))out.push(["Q","calm","Okay. Stay with this one. It matters."]);
- else if(who("S"))out.push(["S","calm","The subject has changed. This is no longer only the maze."]);
- else if(who("A"))out.push(["A","calm","This is more than the maze."]);
- return out;}
-function endingLines(k){const P=SCRIPTED_PAIRS,Q=!!who("Q"),S=!!who("S"),A=!!who("A");let out=[];
- if(k==="low"){
-  if(Q&&S){out=P.D2.slice();if(A)out=out.concat(P.D3);}
-  else if(Q&&A)out=P["D2-alt"].slice();else if(S&&A)out=P["D2-alt2"].slice();
-  else if(Q)out=[P.D2[0]];else if(S)out=[P["D2-alt2"][0]];else if(A)out=[P["D2-alt"][1]];
- }else if(k==="mid"){
-  if(Q)out=out.concat(P.C1);if(S)out=out.concat(P.C2);
-  if(A)out=out.concat(P[brunnVer()==="save"?"C3a":"C3b"]);
- }else{
-  out=Q?P.F1.slice():[P.F1[0]];
-  if(S)out=out.concat(P.F2);if(A&&brunnVer()==="save")out=out.concat(P.F3);
- }
- return out;}
+const REWRITE=window.PACKAGE_STORY.rewrite;
+function pair(key,tags){const rows=REWRITE[key]||[],out=[];for(const n of [...new Set(rows.map(r=>r.n))]){const choices=rows.filter(r=>r.n===n);const hit=choices.find(r=>r.tag&&(tags||[]).includes(r.tag))||choices.find(r=>!r.tag)||choices[0];out.push(hit.line);}return out;}
+const INTRO_LINES=pair("intro");
+function picnicLines(){const s=st(),first=!s.walls[84],tags=first?["picnic-first"]:["bedside-already-found"],Q=!!who("Q"),Sch=!!who("S"),A=!!who("A");let out=[];
+ if(Q)out=pair("R1",first&&!Sch?["picnic-first AND Sorrel missing"]:[]);else if(Sch)out=pair("R1-alt",tags);else if(A)out=pair("R1-alt2",tags);else out=[pair("R1")[0],pair("R1")[2]];
+ if(Q&&Sch)out=out.concat(pair("R2",tags));if(A&&(Q||Sch))out=out.concat(pair("R3"));
+ if(first)s.picnicFirstMotive=true;return out;}
+function bedsideLines(){if(st().revealed)return [];let out=who("Q")?pair("B1"):who("S")?pair("B1-alt"):who("A")?pair("B1-alt2"):[pair("B1")[0],pair("B1")[2]];
+ if(who("Q")&&who("S"))out=out.concat(pair("B2"));if(who("A")&&(who("Q")||who("S")))out=out.concat(pair("B3"));return out;}
+function endingLines(k){const s=st(),Q=!!who("Q"),Sch=!!who("S"),A=!!who("A"),w=s.walls,K=LETTER_KEYS;let out=[];
+ if(k==="low"){if(Q&&Sch){out=pair("D2");if(A)out=out.concat(pair("D3"));}else if(Q&&A)out=pair("D2-alt");else if(Sch&&A)out=pair("D2-alt2");else if(Q)out=[pair("D2")[0]];else if(Sch)out=[pair("D2-alt2")[0]];else if(A)out=[pair("D2-alt")[1]];}
+ else if(k==="mid"){if(Q)out=out.concat(pair("C1",s.revealed?["picnic naming already happened"]:[]));if(Sch)out=out.concat(pair("C2",w[K.wizard]?["wizard found"]:w[K.council]?["council found"]:["default"]));if(A){if(!Q&&!Sch)out.push(["H","calm","We're alive. It's still bleeding."]);out=out.concat(pair(brunnVer()==="save"?"C3a":"C3b"));}}
+ else{const f=pair("F1",s.picnicFirstMotive?["picnic-first save-his-wife already played"]:[]);out=Q?f:[f[0]];if(Sch)out=out.concat(pair("F2",[w[K.wizard]?(w[K.council]?"council and wizard both found":"wizard found, council not found"):"council found, wizard not found"]));if(A&&brunnVer()==="save")out=out.concat(pair("F3"));}return out;}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
 function wallArt(id){return "art6/"+ROOM_ART[id][1]+".webp";}
@@ -201,11 +92,11 @@ function partyCodes(){return ["Q","S","A"].filter(c=>who(c)).join("");}
 H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!s.wallHeard||typeof s.wallHeard!=="object")s.wallHeard={};
  const pc=partyCodes(),first=!s.walls[id];if(!first&&s.wallHeard[id]==null){s.wallHeard[id]=pc;return;} // old save: assume heard with current party
  if(!first&&![...pc].some(c=>!s.wallHeard[id].includes(c)))return;
- const pi=pieceFor(id);if(pi<0)return;let lines=id===LETTER_KEYS.picnic?picnicLines():id===84?bedsideLines():PIECES[pi].slice();
- if(r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
+ const pi=pieceFor(id);if(pi<0)return;const added=window.PackageRooms?window.PackageRooms.lines(id,pc,s,ROOM_ART,who,brunnVer):[];let lines=id===LETTER_KEYS.picnic?picnicLines():id===84?bedsideLines():PIECES[pi].slice();
+ if(!window.PackageRooms&&r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
  s.walls[id]=1;s.wallHeard[id]=[...new Set(s.wallHeard[id]||"")].concat([...pc]).filter((c,i,a)=>a.indexOf(c)===i).join("");if(!Array.isArray(s.order))s.order=[];if(first)s.order.push(id);s.lastPiece=pi;
  if(id===LETTER_KEYS.picnic)s.revealed=true;
- play("wall",pi>=DAD_FROM?lines:withMem(lines),{wall:wallArt(id)});};
+ play("wall",pi>=DAD_FROM?lines:withMem(lines),{wall:wallArt(id)});if(window.PackageDialogue&&S.rpg.s6.packageDialogue)S.rpg.s6.packageDialogue.pool("wall-art",{zone:r.z,id},{wall:wallArt(id)});if(added.length)play("art-room",added,{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 // Centre lock reuses Stage 3's existing zone-5 lever rules. It is not an 86th room.
 const FINAL_LOCK=window.PUZ.make(1,5,713507);let lockState=window.PUZ.clone(FINAL_LOCK.s);
@@ -290,7 +181,7 @@ H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
 S.rpg.s6={play,letterReading,letterLines,brunnVer,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
- finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),finalLock2:()=>({pz:window.PUZ.clone(FINAL_LOCK2.pz),s:window.PUZ.clone(lockState2)}),finalLock3:()=>({pz:window.PUZ.clone(FINAL_LOCK3.pz),s:window.PUZ.clone(lockState3),sel:lockSel3}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H};
+ finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),finalLock2:()=>({pz:window.PUZ.clone(FINAL_LOCK2.pz),s:window.PUZ.clone(lockState2)}),finalLock3:()=>({pz:window.PUZ.clone(FINAL_LOCK3.pz),s:window.PUZ.clone(lockState3),sel:lockSel3}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H,pair,picnicLines,bedsideLines,endingLines};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
 .s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,#241838,#08050e 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}

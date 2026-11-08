@@ -437,7 +437,7 @@ function cookTry(ings,where){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings
 // part/junk/ingredient produces exactly one ration and one potion here only.
 function shopCounts(t=0){s5init();live.tavernStock=live.tavernStock||{};const q=live.tavernStock[t]=live.tavernStock[t]||{};
  ["ration","potion","ether","salts"].concat(E.stock(t).ing).forEach(id=>{if(q[id]==null)q[id]=3;});return q;}
-function buy(id,t=0){const q=shopCounts(t);if(q[id]===0){toast("Out of stock");return false;}const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;if(q[id]!=null)q[id]--;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
+function buy(id,t=0){h6("owner",t,"SERVE");const q=shopCounts(t);if(q[id]===0){toast("Out of stock");return false;}const p=E.price(id);if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;if(q[id]!=null)q[id]--;toast("Bought "+R.ITEMS[id].n+" ("+who+")");h6("shop");return true;}
 function buyRecipe(did){const d=E.dish(did),p=E.RECIPE_PRICE[d.tier];if(live.recipes[did]){toast("You already know it");return false;}if(live.gold<p){toast("Not enough gold");return false;}live.gold-=p;live.recipes[did]="bought";toast("Recipe bought: "+d.n);h6("shop");return true;}
 function sell(ci,k,t=0){const c=live.party[ci],id=c.bag[k];if(id==null)return 0;const v=E.sellPrice(id);c.bag.splice(k,1);gone(id);if(id==="tent"&&!hasTent())live.tentWear=0;live.gold+=v;if(["part","junk","ing"].includes(R.ITEMS[id].slot)){const q=shopCounts(t);q.ration++;q.potion++;}toast("Sold "+R.ITEMS[id].n+" +"+v+" gold");return v;}
 // tent build: parts + a crafter fee. The fee is paid in gold, or with spare parts/junk at their sell value (gold covers the rest)
@@ -464,12 +464,12 @@ function keeperArt(i){const cv=document.createElement("canvas");cv.width=cv.heig
  if(i===0){g.beginPath();g.moveTo(28,52);g.quadraticCurveTo(48,96,68,52);g.fill();}
  g.fillStyle="#0a0610";g.fillRect(39,44,4,4);g.fillRect(53,44,4,4);g.strokeStyle="#0a0610";g.lineWidth=3;g.strokeRect(1.5,1.5,93,93);return cv;}
 function stackList(ci,fn,filter){const c=live.party[ci];return E.stacks(c.bag).filter(s=>!filter||filter(s.id)).map(s=>({t:R.ITEMS[s.id].n+(s.n>1?" ×"+s.n:"")+" · "+E.sellPrice(s.id)+"g",d:{sell:s.id},fn:()=>fn(ci,c.bag.lastIndexOf(s.id))}));}
-function tavernScreen(t){s5init();h6("tavern",t);const kp=E.KEEPERS[t],w=page("tavern");w.appendChild(head("Tavern "+(t+1),closeUI));
+function tavernScreen(t){s5init();h6("ownerVisit",t);h6("tavern",t);const kp=E.KEEPERS[t],w=page("tavern");w.appendChild(head("Tavern "+(t+1),()=>{closeUI();h6("owner",t,Math.random()<.5?"BYE":"BYE2");}));
  const card=el("div","s5kc");card.appendChild(keeperArt(t));const tx=el("div","");tx.appendChild(el("b","",kp.name));tx.appendChild(el("div","s4sub",kp.tag+" · shopkeeper"));tx.appendChild(el("div","s4sub","Taverns always save. Rest is free."));card.appendChild(tx);w.appendChild(card);
  goldLine(w);sideTabs(w,[["Buy",null,()=>buyScreen(t),"buy"],["Sell",null,()=>sellScreen(t),"sell"],["Cook",null,()=>cookScreen("t"+t),"cook"],["Cooking guide",null,()=>cookbook(()=>tavernScreen(t)),"guide"],["Party",null,partyScreen,"party"]]);
  w.querySelectorAll(".s5tab").forEach(b=>{if(b.dataset.tab==="buy"||b.dataset.tab==="sell")b.textContent="‹ "+b.textContent;});}
 // Buy: its own screen with three options. Each option opens a screen with only those items. Back goes up one screen.
-function buyScreen(t){s5init();const w=page("buy");w.appendChild(head("Buy",()=>tavernScreen(t)));goldLine(w);
+function buyScreen(t){s5init();h6("owner",t,Math.random()<.5?"STOCK":"STOCK2");const w=page("buy");w.appendChild(head("Buy",()=>tavernScreen(t)));goldLine(w);
  sideTabs(w,[["‹ Recipes",null,()=>shopList(t,"recipes"),"recipes"],["‹ Food",null,()=>shopList(t,"food"),"food"],["‹ Craft",null,()=>shopList(t,"craft"),"craft"]]);}
 function shopRow(w,label,data,fn,off){const o=el("button","s4opt s5row"+(off?" off":""));for(const k in data)o.dataset[k]=data[k];o.appendChild(el("span","s4on",label));o.addEventListener("click",e=>{e.preventDefault();fn();});w.appendChild(o);return o;}
 function shopList(t,kind){s5init();const st=E.stock(t),w=page("shop-"+kind);w.dataset.list=kind;w.appendChild(head({recipes:"Recipes",food:"Food",craft:"Craft"}[kind],()=>buyScreen(t)));goldLine(w);

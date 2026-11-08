@@ -2,19 +2,7 @@
    Lines: [who, emotion, text]. who: H hero, Q quirky (Mira), S scholar (Sorrel), A angry (Brunn), D dad, N narration/note.
    emotion: calm, happy, angry, shock. {H} {Q} {S} {A} are replaced by names. Lines for someone not in the party are skipped. */
 window.STORY={
-opening:[
- ["N","calm","A small house at the edge of the great maze. Your dad hasn't left his bed in weeks."],
- ["D","calm","Don't look at me like that, {H}. It's only a cough."],
- ["H","calm","The healer says it's getting worse. Her medicine costs more than we have."],
- ["D","calm","Then it gets worse. Some things a man earns. I... I suppose I deserve this one."],
- ["H","shock","Deserve it? Nobody deserves this."],
- ["H","angry","People find gold in the maze. I'm going in. I'm gonna save you."],
- ["D","angry","No. You will NOT go into that maze. Promise me."],
- ["D","calm","Everything will be alright. The crystal has held this long. It will hold a while yet."],
- ["H","shock","...The crystal?"],
- ["D","calm","Old man talk. Get some sleep."],
- ["N","calm","That night, {H} packs a bag and slips out the door. The maze mouth is cold and dark."],
- ["H","calm","Sorry, Dad. I'll be back with enough gold for every healer in town."]],
+opening:[],
 join:{
  0:[["N","calm","A loud crash. Someone has fallen off the bar."],
   ["Q","happy","Ta-daa! I meant to do that."],
@@ -90,24 +78,12 @@ wall:{
  3:[[["H","calm","Something's different about this one. It feels... careful."],["S","shock","...This wasn't here the last time. Or I didn't see it."],["S","calm","Someone determined made this. It has something to do with the center."],["Q","calm","Ugh. He's doing the serious voice again."]],[["H","calm","It feels like an apology. Is that weird?"],["S","calm","Not weird. This person had time to think. And regret."],["Q","happy","Maybe it's an art student who got really, really lost."]],[["H","calm","Those things look like what we've been fighting."],["S","calm","Then something let them out. Or something in."],["H","calm","Is that what's making the monsters?"],["S","calm","That is my guess. I hate that it's a good guess."]],[["H","calm","He wasn't trying to break it, was he?"],["S","shock","No. He was trying to change it."],["Q","calm","Why would anyone do that? ...Can I try?"],["H","calm","No."]],[["H","calm","I feel like it's watching me."],["S","calm","I will be writing about this for a very long time."],["Q","calm","Sorrel. Sorrel, blink. You're scaring me."]]],
  4:[[["H","calm","This one feels wrong. Heavy."],["A","angry","Man, whoever this was, he was a real jerk. He put our whole world in danger."],["S","calm","Rushed, but look at it. Whoever made this was running out of time. I'm taking notes."],["Q","calm","...They look happy. Before. Look at them."]],[["H","calm","It went wrong. Didn't it."],["A","angry","Of course it went wrong. Somebody always thinks they're clever."],["H","calm","Let's keep going. Quietly."]],[["H","calm","He's protecting them. I think."],["S","calm","Or protecting it from them."],["A","calm","Doesn't matter. The mess is still his."]],[["H","calm","Half of them wanted one thing. Half wanted the other."],["S","calm","A real debate. Some wanted to use it. Some wanted it left alone."],["Q","calm","And somebody didn't listen."]],[["H","shock","Something big is guarding the middle."],["A","shock","That thing is HUGE."],["S","calm","A guardian. Built to keep everyone out."]],[["H","calm","Is he carrying... a baby?"],["Q","calm","Someone touched this part a lot."],["S","calm","Like they missed someone."]],[["H","calm","...Huh. That looks like somewhere I know."],["Q","calm","{H}? You okay?"],["H","calm","Yeah. Just... homesick, I guess."]]],
  5:[[["H","calm","Someone had all the time in the world for this one."],["S","shock","This is a masterpiece. Down here. Where no one would ever see it."],["A","calm","Unless someone was meant to."]],[["H","calm","It looks the way it's supposed to be. Whole."],["Q","happy","It's so pretty when it's not broken!"],["S","calm","This is what it was supposed to be."]],[["H","calm","He came back. Again and again."],["S","calm","To finish the story. For someone."],["A","calm","Weird hobby."]],[["H","calm","Fewer of them this time."],["A","calm","They gave up on him. Or he gave up on them."],["S","calm","Either way, he kept going alone."]],[["H","calm","Even that giant thing listened to him."],["S","calm","It obeys him. The guardian was his."],["A","angry","Great. So the guy built the thing we have to punch."]],[["H","calm","That one gets to me. I don't even know why."],["Q","calm","Me too. And nothing gets to me."],["H","shock","..."]],[["H","calm","...That's us. Isn't it?"],["S","calm","Or someone like us."],["Q","happy","We look heroic! I look the best."],["A","calm","Focus."]]],
- dad:[[["H","shock","...This is my dad."],["A","angry","Your father? Your FATHER put us all into this mess?"],["S","shock","Your dad must have been a powerful person. More powerful than anyone I ever traveled with."],["Q","calm","{H}... are you okay with this?"],["H","calm","I came down here to save him. I thought he was just... sick."]],[["H","shock","Dad. He was here. He fought them. He wanted to fix it."],["H","calm","\"For my child, if you ever come. They said leave it. I said fix it. I'm sorry I made it worse. Be braver than me.\""],["H","calm","That's his handwriting. That's why he said he deserved it."],["A","angry","I don't blame you, kid. But I'm not going to be nice about him. Let's finish this and fix his mess."],["S","calm","He left a trail. Every wall was a message. Every wall was for you."],["Q","calm","Then let's go finish what he started. Together. Right?"],["H","calm","...Right. Together."]]]},
+ dad:[[],[]]},
 boss:[["N","calm","A great iron door. Words are scratched into it, in the same hand as the walls."],
  ["N","calm","THE IRON GOLEM GUARDS THE CRYSTAL. IT DOES NOT SLEEP. IT DOES NOT STOP. IT WAS BUILT TO KEEP EVERYONE OUT."],
  ["N","calm","IF YOU HAVE COME THIS FAR, YOU ALREADY KNOW WHY."],
  ["A","angry","Good. I've been wanting to punch something made of iron."],["S","calm","We are not ready. We will never be ready. Let's go."],["Q","calm","Hold hands? No? Okay. Just me then."]],
-ending:{
- low:{title:"The Shattered Crystal",lines:[["N","calm","Past the golem, the crystal hums in the dark, cracked and flickering."],["N","calm","A tired figure steps out of the shadows. It's Dad. He followed you all the way down."],
-  ["D","calm","{H}. You came anyway. Of course you did."],["D","calm","I don't understand it anymore. I can't fix what I don't understand. So I'll end it."],
-  ["N","calm","He raises his staff and shatters the crystal. The monsters fade. So does the old magic, and the light it gave the world."],
-  ["H","calm","Dad... we could have fixed it. If we'd known more."],["N","calm","The maze falls silent. The world is safe, but smaller. Some stories were left unread on the walls."]]},
- mid:{title:"The Price of Repair",lines:[["N","calm","Past the golem, the crystal hums in the dark, cracked and flickering."],["N","calm","Dad steps out of the shadows. He followed you all the way down."],
-  ["D","calm","You read the walls. Enough of them. Then you know what has to be done."],["D","calm","I broke it. I'll mend it. Whatever it takes."],
-  ["N","calm","He pours everything he has left into the crystal. The cracks close. The light comes back."],
-  ["H","shock","Dad, no! Not like this!"],["D","calm","Be braver than me, {H}. You already are."],["N","calm","The crystal shines whole. Dad is gone. The world is saved, and the walls remember him."]]},
- high:{title:"Home Again",lines:[["N","calm","Past the golem, the crystal hums in the dark, cracked and flickering."],["N","calm","Dad steps out of the shadows. He followed you all the way down."],
-  ["D","shock","You found them. Every message. Every wall."],["H","calm","We know what happened, Dad. And we know how to fix it. Together."],
-  ["N","calm","With everything the walls taught you, you and Dad repair the crystal side by side. The cracks close gently."],
-  ["D","happy","I said everything would be alright. For once I wasn't lying."],["N","calm","The crystal shines whole. Dad is well. Everyone walks home, and the tavern throws the loudest party anyone can remember."]]}},
+ending:{low:{title:"The Unfinished Seal",lines:[]},mid:{title:"The Remaining Crack",lines:[]},high:{title:"The Restored Crystal",lines:[]}},
 // one short line at the start and the end of a fight, nothing in between
 fight:{start:{Q:{fun:["Let's go, let's go, let's go!","Ooh, ugly one!"],dark:["Stay close, everyone."]},S:{fun:["Statistically, this goes badly.","Aim for the soft bits."],dark:["Careful. They're stronger here."]},A:{fun:["Finally, something to hit!"],dark:["Get out of my way!","Let's end this."]}},
  end:{Q:{fun:["We did it! High five! Anyone?","Easy peasy!"],dark:["Everyone okay? Everyone?"]},S:{fun:["Huh. We survived. Noted."],dark:["Breathe. Then keep moving."]},A:{fun:["Yeah! Let's go kill another one!"],dark:["Next."]}},
