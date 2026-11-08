@@ -22,7 +22,7 @@ H.camp=k=>{if(api.sequential.select('camp'))return oldCamp(k);return pool('camp'
 H.tavern=t=>{const s=state(),l=live();if(!s||!l)return;const key=t+':'+l.steps;if(s.packageTavernVisit===key)return;s.packageTavernVisit=key;
  if(api.sequential.select('tavern'))return oldTavern(t);s.visit=key;s.shopN=0;pool('tavern',{t},{bg:'art6/tavern-'+(t+1)+'.webp'});};
 H.craft=(kind,t)=>{if(!['food','armor','ore','weapons'].includes(kind)||!Number.isInteger(t)||t<0)return;if(api.sequential.select('craft-wait'))return oldCraft(kind,t);return pool('tavern',{craft:true,t},{bg:'art6/tavern-'+(t+1)+'.webp'});};
-H.joined=(c,t)=>{const s=state();if(!s)return;if(t!==3)return oldJoined(c,t);s.brunnJoin=s.walls[api.LETTER_KEYS.crack]?'save':'died';s.seen['join'+t]=1;
+H.joined=(c,t)=>{const s=state();if(!s)return;if(t!==3)return oldJoined(c,t);if(!s.brunnJoin)s.brunnJoin=api.brunnJoinVersion();s.seen['join'+t]=1;
  const ids=s.brunnJoin==='save'?['82','84']:['83','85'];const lines=ids.map(id=>pools.tavern.find(r=>r.id===id)).filter(present).map(r=>[code[r.speaker],'calm',r.text]);api.play('join',lines,{bg:'art6/tavern-4.webp'});};
 // Fight-end overlays are silent; one post-victory slot is due every 5..10 wins, persisted in save.
 H.fightEnd=()=>{};

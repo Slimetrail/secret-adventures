@@ -3,7 +3,7 @@
    Text only (no sound). Banter can't be skipped or fast-forwarded: a tap only moves on once the line has fully appeared.
    Offline: all art is in art6/. No network, no ads. */
 (function(){"use strict";
-const S=window.SOTA,R=window.RPG,M=window.MAZE,D=window.STORY;if(!S||!R||!M||!D)return;
+const S=window.SOTA,R=window.RPG,M=window.MAZE,D=window.STORY,G=window.StoryGates;if(!S||!R||!M||!D)return;
 const live=()=>S.rpg&&S.rpg.live&&S.rpg.live();
 const SHEET={human:"knight",elf:"elf",dwarf:"dwarf",cat:"cat"},ROLE={Q:"quirky",S:"scholar",A:"angry"},IDX={Q:1,S:2,A:3};
 // Wall-art rooms. OPEN QUESTION for Jeremy: do monster/treasure rooms carry art too? Then set WALL_ART_ROOMS=85 (= every room).
@@ -22,7 +22,7 @@ let speed=24; // ms per letter
 // ---------- story state (kept inside the save) ----------
 function st(){const l=live();if(!l||!l.party||!l.party.length)return null;let s=l.story;
  if(!s||typeof s!=="object")s=l.story={v:1};["seen","walls","told"].forEach(k=>{if(!s[k]||typeof s[k]!=="object")s[k]={};});
- if(!Array.isArray(s.plan))s.plan=R.planParty(l.party[0],(l.seed|0)>>>0);if(s.revealed==null)s.revealed=false;if(s.ending===undefined)s.ending=null;return s;}
+ if(!Array.isArray(s.plan))s.plan=R.planParty(l.party[0],(l.seed|0)>>>0);Object.assign(s,G.naming(s.walls,ROOM_ART));delete s.picnicFirstMotive;if(s.ending===undefined)s.ending=null;return s;}
 function who(code){const l=live();if(!l)return null;if(code==="H")return l.party[0];if(!ROLE[code])return null;
  return l.party.find(c=>c.role===ROLE[code])||(l.party[IDX[code]]&&!l.party[IDX[code]].role?l.party[IDX[code]]:null);}
 function fill(t){const out=t.replace(/\{([HQSA])\}/g,(_,c)=>{const m=who(c);return m?m.name:"friend";});return window.CompanionDisplay?window.CompanionDisplay.rewrite(out,live()):out;}
@@ -46,7 +46,7 @@ function play(kind,lines,opt){const L=resolve(lines||[]);opt=opt||{};if(!L.lengt
 function nextScene(){const sc=queue.shift();if(!sc){close();return;}build();cur={kind:sc.kind,L:sc.L,opt:sc.opt,i:-1,typing:false};
  box.className="s6d on"+(sc.opt.bg?" hasbg":"")+(sc.opt.wall?" haswall":"");box.dataset.scene=sc.kind;
  q(".s6bg").style.backgroundImage=sc.opt.bg?'url("'+sc.opt.bg+'")':"none";const w=q(".s6wall");if(sc.opt.wall){w.src=sc.opt.wall;w.style.display="block";}else{w.removeAttribute("src");w.style.display="none";}
- q(".s6btns").innerHTML="";document.documentElement.classList.add("s6open");adv();}
+ q(".s6btns").innerHTML="";document.documentElement.classList.add("s6open");if(sc.opt.visualOnly){cur.ending=true;cur.typing=false;q(".s6name").textContent="";q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";q(".s6t").textContent="";btns([["Back to the maze",()=>finish(),"back"]]);}else adv();}
 function adv(){if(!cur)return;cur.i++;if(cur.i>=cur.L.length){const sc=cur;cur=null;if(sc.opt.end){cur=sc;cur.i=sc.L.length-1;cur.ending=true;sc.opt.end();return;}
   if(queue.length)nextScene();else close();if(sc.opt.done)sc.opt.done();return;}show();}
 function show(){const ln=cur.L[cur.i],pf=q(".s6pf"),p=q(".s6p");box.dataset.line=cur.i;box.dataset.who=ln.w;box.dataset.emo=ln.e;
@@ -65,24 +65,22 @@ function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close()
 const REWRITE=window.PACKAGE_STORY.rewrite;
 function pair(key,tags){const rows=REWRITE[key]||[],out=[];for(const n of [...new Set(rows.map(r=>r.n))]){const choices=rows.filter(r=>r.n===n);const hit=choices.find(r=>r.tag&&(tags||[]).includes(r.tag))||choices.find(r=>!r.tag)||choices[0];out.push(hit.line);}return out;}
 const INTRO_LINES=pair("intro");
-function picnicLines(){const s=st(),first=!s.walls[84],tags=first?["picnic-first"]:["bedside-already-found"],Q=!!who("Q"),Sch=!!who("S"),A=!!who("A");let out=[];
- if(Q)out=pair("R1",first&&!Sch?["picnic-first AND Sorrel missing"]:[]);else if(Sch)out=pair("R1-alt",tags);else if(A)out=pair("R1-alt2",tags);else out=[pair("R1")[0],pair("R1")[2]];
- if(Q&&Sch)out=out.concat(pair("R2",tags));if(A&&(Q||Sch))out=out.concat(pair("R3"));
- if(first)s.picnicFirstMotive=true;return out;}
-function bedsideLines(){if(st().revealed)return [];let out=who("Q")?pair("B1"):who("S")?pair("B1-alt"):who("A")?pair("B1-alt2"):[pair("B1")[0],pair("B1")[2]];
- if(who("Q")&&who("S"))out=out.concat(pair("B2"));if(who("A")&&(who("Q")||who("S")))out=out.concat(pair("B3"));return out;}
+// t2191u HOLD: R1/R1-alt/R1-alt2/R2/R3 and B1/B1-alt/B1-alt2/B2/B3 await approved recasts.
+function picnicLines(){return [];}
+function bedsideLines(){return [];}
 function endingLines(k){const s=st(),Q=!!who("Q"),Sch=!!who("S"),A=!!who("A"),w=s.walls,K=LETTER_KEYS;let out=[];
  if(k==="low"){if(Q&&Sch){out=pair("D2");if(A)out=out.concat(pair("D3"));}else if(Q&&A)out=pair("D2-alt");else if(Sch&&A)out=pair("D2-alt2");else if(Q)out=[pair("D2")[0]];else if(Sch)out=[pair("D2-alt2")[0]];else if(A)out=[pair("D2-alt")[1]];}
  else if(k==="mid"){if(Q)out=out.concat(pair("C1",s.revealed?["picnic naming already happened"]:[]));if(Sch)out=out.concat(pair("C2",w[K.wizard]?["wizard found"]:w[K.council]?["council found"]:["default"]));if(A){if(!Q&&!Sch)out.push(["H","calm","We're alive. It's still bleeding."]);out=out.concat(pair(brunnVer()==="save"?"C3a":"C3b"));}}
- else{const f=pair("F1",s.picnicFirstMotive?["picnic-first save-his-wife already played"]:[]);out=Q?f:[f[0]];if(Sch)out=out.concat(pair("F2",[w[K.wizard]?(w[K.council]?"council and wizard both found":"wizard found, council not found"):"council found, wizard not found"]));if(A&&brunnVer()==="save")out=out.concat(pair("F3"));}return out;}
+ else{const f=pair("F1");out=Q?f:[f[0]];if(Sch)out=out.concat(pair("F2",[w[K.wizard]?(w[K.council]?"council and wizard both found":"wizard found, council not found"):"council found, wizard not found"]));if(A&&brunnVer()==="save")out=out.concat(pair("F3"));}return out;}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
 function wallArt(id){return "art6/"+ROOM_ART[id][1]+".webp";}
+function showArtOnly(id){queue.push({kind:"wall",L:[],opt:{wall:wallArt(id),visualOnly:true}});if(!cur)nextScene();}
 function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(sc.need))&&(!sc.after||s.revealed));}
 const H={};
 H.plan=()=>{const s=st();return s?s.plan:null;};
 H.created=()=>{const s=st();if(!s)return;s.seen.opening=1;play("opening",INTRO_LINES,{bg:null});};
-H.joined=(c,t)=>{const s=st();if(!s)return;if(t===3&&!s.brunnJoin)s.brunnJoin=s.walls[LETTER_KEYS.crack]?"save":"died";s.seen["join"+t]=1;play("join",D.join[t]||[],{bg:tavBg(t)});};
+H.joined=(c,t)=>{const s=st();if(!s)return;if(t===3&&!s.brunnJoin)s.brunnJoin=G.brunnAtJoin(s.walls,ROOM_ART);s.seen["join"+t]=1;play("join",D.join[t]||[],{bg:tavBg(t)});};
 H.tavern=t=>{const s=st(),l=live();if(!s)return;const vk=t+":"+l.steps;if(s.visit===vk)return;s.visit=vk;s.shopN=0;
  const sc=seenFirst(D.tavern[t]||[],s);if(sc){s.seen[sc.id]=1;play("tavern",withMem(sc.lines),{bg:tavBg(t)});}};
 H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN%3)return;const sc=seenFirst(D.stay[dark()?"dark":"fun"],s);
@@ -95,7 +93,8 @@ H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!
  const pi=pieceFor(id);if(pi<0)return;const added=window.PackageRooms?window.PackageRooms.lines(id,pc,s,ROOM_ART,who,brunnVer):[];let lines=id===LETTER_KEYS.picnic?(first?picnicLines():[]):id===84?(first?bedsideLines():[]):PIECES[pi].slice();
  if(!window.PackageRooms&&r.z!==3&&who("S")&&pi<DAD_FROM)lines.push(["S","calm",r.z<3?"(Sorrel sulks and scribbles notes.) Hm. Not my zone.":"(Sorrel is lost in study and doesn't hear anyone for a while.)"]);
  s.walls[id]=1;s.wallHeard[id]=[...new Set(s.wallHeard[id]||"")].concat([...pc]).filter((c,i,a)=>a.indexOf(c)===i).join("");if(!Array.isArray(s.order))s.order=[];if(first)s.order.push(id);s.lastPiece=pi;
- if(id===LETTER_KEYS.picnic)s.revealed=true;
+ Object.assign(s,G.naming(s.walls,ROOM_ART));
+ if(G.namingHeld(id,ROOM_ART)){showArtOnly(id);return;}
  play("wall",pi>=DAD_FROM?lines:withMem(lines),{wall:wallArt(id)});if(window.PackageDialogue&&S.rpg.s6.packageDialogue)S.rpg.s6.packageDialogue.pool("wall-art",{zone:r.z,id},{wall:wallArt(id)});if(added.length)play("art-room",added,{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
 // Centre lock reuses Stage 3's existing zone-5 lever rules. It is not an 86th room.
@@ -142,10 +141,9 @@ const LETTER_POOL={
 const artRoom=n=>+Object.keys(ROOM_ART).find(k=>ROOM_ART[k][1]===n);
 const LETTER_KEYS={crack:artRoom("zone3-05-crystal-cracked-smoke"),z4:Object.keys(ROOM_ART).filter(k=>/^zone4-0[1-7]-/.test(ROOM_ART[k][1])).map(Number),
  picnic:artRoom("zone5-08-picnic-farthest"),wizard:artRoom("zone5-07-shop-glowing-stones"),council:artRoom("zone5-05-figure-before-council")};
-function letterReading(){const s=st();if(!s)return "warning";const w=s.walls,K=LETTER_KEYS,crack=!!w[K.crack],z4=K.z4.filter(r=>w[r]).length;
- if(crack&&z4*2>K.z4.length&&w[K.picnic]&&(w[K.wizard]||w[K.council]))return "apology";
- if(crack||z4>0)return "half";return "warning";}
-function brunnVer(){const s=st();if(!s)return "died";if(s.brunnJoin)return s.brunnJoin;return s.walls[LETTER_KEYS.crack]?"save":"died";} // old-save fallback
+function letterReading(){const s=st();return s?G.reading(s.walls,ROOM_ART):"warning";}
+function brunnJoinVersion(){const s=st();return s?G.brunnAtJoin(s.walls,ROOM_ART):"died";}
+function brunnVer(){const s=st();if(!s)return "died";if(s.brunnJoin)return s.brunnJoin;const version=brunnJoinVersion();if(who("A"))s.brunnJoin=version;return version;}
 function letterLines(){const r=letterReading(),P=LETTER_POOL[r],out=[];const v=r==="warning"?"died":r==="apology"?"save":brunnVer();
  if(who("Q"))out.push(["Q","calm",P.Q]);if(who("S"))out.push(["S","calm",P.S]);if(who("A")&&P.A[v])out.push(["A","angry",P.A[v]]);
  return out.length?out:[["N","calm",P.N]];}
@@ -180,7 +178,7 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={play,letterReading,letterLines,brunnVer,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={play,letterReading,letterLines,brunnVer,brunnJoinVersion,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),finalLock2:()=>({pz:window.PUZ.clone(FINAL_LOCK2.pz),s:window.PUZ.clone(lockState2)}),finalLock3:()=>({pz:window.PUZ.clone(FINAL_LOCK3.pz),s:window.PUZ.clone(lockState3),sel:lockSel3}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H,pair,picnicLines,bedsideLines,endingLines};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
