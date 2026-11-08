@@ -32,9 +32,14 @@ function collectFacts(live,story,ctx){live=live||{};story=story||{};ctx=ctx||{};
   artRoomsRemembered:walls,monstersObserved:(ctx.monsters||[]).map(m=>({id:m.id,strength:m.strength||null,weakness:m.weakness||null}))};}
 function generateEveryday(facts){if(!rule)return [];const out=rule.render(facts)||[];
  return out.filter(p=>p&&typeof p.text==='string'&&p.text.trim()&&FACT_KINDS.indexOf(p.kind)>=0).map(p=>({kind:p.kind,text:p.text,generated:true}));}
-// Order lock: record which of picnic/bedside was seen first (observed at camp). Same-camp tie => not bedside-before-picnic.
-function noteOrder(js,story){const w=(story&&story.walls)||{};js.order=js.order||[];
- const p=!!w[PICNIC_ROOM],b=!!w[BEDSIDE_ROOM];
+// Order lock: use the existing wall-find list (story.order room ids, pushed in H.wall on first find).
+// Unknown history (both walls set, no find list) does not invent hate.
+function noteOrder(js,story){js.order=js.order||[];
+ const found=Array.isArray(story&&story.order)?story.order:[];
+ for(let i=0;i<found.length;i++){const id=+found[i];
+  if(id===PICNIC_ROOM&&js.order.indexOf('picnic')<0)js.order.push('picnic');
+  if(id===BEDSIDE_ROOM&&js.order.indexOf('bedside')<0)js.order.push('bedside');}
+ const w=(story&&story.walls)||{},p=!!w[PICNIC_ROOM],b=!!w[BEDSIDE_ROOM];
  if(p&&b&&js.order.length===0){js.order.push('picnic','bedside');js.tie=true;}
  if(p&&js.order.indexOf('picnic')<0)js.order.push('picnic');if(b&&js.order.indexOf('bedside')<0)js.order.push('bedside');}
 function dadPagesDue(js){const o=js.order||[],pi=o.indexOf('picnic'),bi=o.indexOf('bedside'),due=[];
