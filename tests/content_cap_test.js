@@ -14,27 +14,35 @@ function engine(x,y,f=0){
  let steps=0,after=0,puzzles=0;c.SOTA=c.window.SOTA;Object.assign(c.SOTA,{onStep(){steps++;},afterStep(){after++;},openPuzzle(){puzzles++;}});
  return {s:c.SOTA,el,counts:()=>({steps,after,puzzles}),storage};
 }
-test("tavern 3 and exactly the zone-4 start tile are open",()=>{a.equal(cap.isOpen(51,14),true);a.equal(+M.zone[15*M.n+51],4);a.equal(cap.isOpen(51,15),true);});
-test("deeper zone 4, room 39, tavern 4 and every zone-5 cell are closed",()=>{
- for(const c of [[50,15],[51,16],[47,15],[47,48]])a.equal(cap.isOpen(...c),false);
+test("tavern 2 and exactly the zone-3 start tile (19,24) are open",()=>{
+ a.deepEqual(Array.from(M.taverns[1]),[18,24]);a.equal(+M.zone[24*M.n+18],2);a.equal(cap.isOpen(18,24),true);
+ a.equal(+M.zone[24*M.n+19],3);a.equal(M.rooms.some(r=>r.c[0]===19&&r.c[1]===24),false);a.equal(cap.isOpen(19,24),true);
+ const m=parseInt(M.mask[24*M.n+19],16);a.equal(m&1,1);a.equal(m&8,8);a.equal(m&2,0);a.equal(m&4,0);
+});
+test("(19,24) is the only zone-3 cell with a walkable edge into zones 1-2",()=>{
+ const found=[];for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)if(+M.zone[y*M.n+x]===3)for(let d=0;d<4;d++)if(parseInt(M.mask[y*M.n+x],16)&(1<<d)){const nx=x+dirs[d][0],ny=y+dirs[d][1];if(+M.zone[ny*M.n+nx]<=2)found.push([x,y]);}
+ a.deepEqual(found,[[19,24]]);
+});
+test("deeper zone 3, tavern 3, (51,15), room 39, tavern 4 and every zone-5 cell are closed",()=>{
+ a.equal(+M.zone[23*M.n+19],3);
+ for(const c of [[19,23],[51,14],[51,15],[47,15],[47,48]])a.equal(cap.isOpen(...c),false);
  const r=M.rooms.find(r=>r.id===39);a.deepEqual(Array.from(r.c),[47,15]);a.equal(r.k,"monster");
  let count=0;for(let i=0;i<M.n*M.n;i++)if(+M.zone[i]===5){count++;a.equal(cap.isOpen(i%M.n,Math.floor(i/M.n)),false);}a.ok(count>0);
 });
-test("all actual zone-1/2/3 taverns and rooms remain open",()=>{
- // There are four taverns total, but only three in zones 1-3; the fourth is capped.
- a.equal(M.taverns.length,4);let taverns=0;for(const c of M.taverns)if(+M.zone[c[1]*M.n+c[0]]<=3){taverns++;a.equal(cap.isOpen(...c),true);}a.equal(taverns,3);
- for(const z of [1,2,3]){const rooms=M.rooms.filter(r=>r.z===z);a.ok(rooms.length);for(const r of rooms)a.equal(cap.isOpen(...r.c),true);}
+test("all actual zone-1/2 taverns and rooms remain open",()=>{
+ a.equal(M.taverns.length,4);let taverns=0;for(const c of M.taverns)if(+M.zone[c[1]*M.n+c[0]]<=2){taverns++;a.equal(cap.isOpen(...c),true);}a.equal(taverns,2);
+ for(const z of [1,2]){const rooms=M.rooms.filter(r=>r.z===z);a.ok(rooms.length);for(const r of rooms)a.equal(cap.isOpen(...r.c),true);}
 });
-test("all cells obey only zones 1-3 plus (51,15), not the other boundary tiles",()=>{
- for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)a.equal(cap.isOpen(x,y),(+M.zone[y*M.n+x]<=3)||(x===51&&y===15));
+test("all cells obey only zones 1-2 plus (19,24)",()=>{
+ for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)a.equal(cap.isOpen(x,y),(+M.zone[y*M.n+x]<=2)||(x===19&&y===24));
 });
-test("a later data-only cap opens zone 4 including tavern 4, not zone 5",()=>{
- const next=API.create(M.n,M.zone,{maxZone:4,extraCells:[]});
- for(let i=0;i<M.n*M.n;i++)a.equal(next.isOpen(i%M.n,Math.floor(i/M.n)),+M.zone[i]<=4);
- a.equal(next.isOpen(47,48),true);
+test("a later data-only cap opens zone 3 including tavern 3, not zone 4/5",()=>{
+ const next=API.create(M.n,M.zone,{maxZone:3,extraCells:[]});
+ for(let i=0;i<M.n*M.n;i++)a.equal(next.isOpen(i%M.n,Math.floor(i/M.n)),+M.zone[i]<=3);
+ a.equal(next.isOpen(51,14),true);a.equal(next.isOpen(51,15),false);a.equal(next.isOpen(47,48),false);
 });
-test("live movement reaches the start tile and can return to tavern 3",()=>{
- const e=engine(51,14,2);e.s.act("fwd");a.equal(e.s.state().x,51);a.equal(e.s.state().y,15);e.s.act("back");a.equal(e.s.state().y,14);a.equal(e.counts().steps,2);
+test("live movement steps tavern 2 east to (19,24) and back",()=>{
+ const e=engine(18,24,1);e.s.act("fwd");a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);e.s.act("back");a.equal(e.s.state().x,18);a.equal(e.s.state().y,24);a.equal(e.counts().steps,2);
 });
 test("every physical open-to-closed edge refuses forward and backward before puzzles, rooms, visits or saves",()=>{
  let edges=0;
@@ -43,15 +51,15 @@ test("every physical open-to-closed edge refuses forward and backward before puz
   for(const cmd of ["fwd","back"]){const e=engine(x,y,cmd==="fwd"?d:(d+2)%4),before=e.s.state(),stored=e.storage.get("sota.stage1.save");
    e.s.act(cmd);a.deepEqual(e.s.state(),before);a.deepEqual(e.counts(),{steps:0,after:0,puzzles:0});a.equal(e.s.panelOpen(),false);a.equal(e.s.isVisited(nx,ny),false);a.equal(e.s.visitedCount(),1);a.equal(e.storage.get("sota.stage1.save"),stored);a.equal(e.el("s4toast").textContent,"More of the maze opens after you check for an update.");
   }
- }a.ok(edges>0);
+ }a.equal(edges,1);
 });
 test("old closed-cell save can walk back into slice without teleporting, then cannot reenter",()=>{
- // The actual west/east corridor alongside the start tile.
- a.ok(parseInt(M.mask[15*M.n+50],16)&2);
- const e=engine(50,15,1);a.equal(e.s.state().x,50);e.s.act("fwd");a.equal(e.s.state().x,51);e.s.act("back");a.equal(e.s.state().x,51);
- a.equal(cap.allowsStep(47,48,48,48),true); // Deep old saves are not trapped by the cap.
+ a.ok(parseInt(M.mask[23*M.n+19],16)&4);
+ const e=engine(19,23,2);a.equal(e.s.state().y,23);e.s.act("fwd");a.equal(e.s.state().y,24);e.s.act("back");a.equal(e.s.state().y,24);
+ a.equal(cap.allowsStep(47,48,48,48),true);
 });
 test("new script loads before engine and is cached with matching engine version",()=>{
  const html=read("index.html"),c={self:{addEventListener(){}}};vm.runInNewContext(read("sw.js")+";globalThis.shell=SHELL;globalThis.version=VER;",c);
- a.ok(html.indexOf('src="content-cap.js?v=1"')<html.indexOf('src="game.js?v=15"'));a.ok(c.shell.includes("content-cap.js?v=1"));a.ok(c.shell.includes("game.js?v=15"));a.equal(c.version,"49");
+ a.ok(html.indexOf('src="content-cap.js?v=2"')<html.indexOf('src="game.js?v=15"'));a.ok(c.shell.includes("content-cap.js?v=2"));a.ok(c.shell.includes("game.js?v=15"));a.equal(c.version,"50");
+ a.ok(/script-src 'self'/.test(html));
 });
