@@ -45,7 +45,7 @@ test("four race paintings are listed in both offline manifests and versions agre
  for(const file of ["intro.js","intro-art-data.js"]){const pin=fs.readFileSync("index.html","utf8").match(new RegExp(file.replaceAll(".","\\.")+"\\?v=\\d+"))[0];a.ok(ctx.shell.includes(pin));}
 });
 test("spoken story, existing opening and content cap stay byte-identical; no steal dialogue written",()=>{
- const locks={"package-story-data.js": "6e8b2da31662bff47e193956cc78e6f3f8070247d1ee051d5d1be2a5f9a82598", "story.js": "d82e13ef11a4e9f563078b3c4932355beffa7be821820e1bd2f9d4cba4ad1f62", "story-data.js": "2e66b4232f24d5eab486c7b27a8440401c07c429ffda5b6d7932a197acacf000", "t2103u-text.js": "900a7db214e9b090490a6a5934723a1665f5238622a5ea529ccba925f670ada8", "content-cap.js": "2001c6a0f801cc4ace8c724dcffe0441c1bd9ccac38af9b3a692f856caefd8e4"};
+ const locks={"package-story-data.js": "6e8b2da31662bff47e193956cc78e6f3f8070247d1ee051d5d1be2a5f9a82598", "story.js": "5981c80a87bd7a402ff718ffc6d31f649479d8ad36ab90441d7c3c156a967893", "story-data.js": "2e66b4232f24d5eab486c7b27a8440401c07c429ffda5b6d7932a197acacf000", "t2103u-text.js": "900a7db214e9b090490a6a5934723a1665f5238622a5ea529ccba925f670ada8", "content-cap.js": "2001c6a0f801cc4ace8c724dcffe0441c1bd9ccac38af9b3a692f856caefd8e4"};
  for(const [f,hash] of Object.entries(locks))a.equal(crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex"),hash,f);
  a.doesNotMatch(source,/play\(["'](?:steal|opening)["']/);
 });

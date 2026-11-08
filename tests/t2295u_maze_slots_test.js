@@ -97,5 +97,5 @@ test("portrait parchment layout and text-only slot art remain intact",()=>{
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
 });
 test("index and service-worker pins match game 20, party 25, VER 68",()=>{
- const sw=read("sw.js");a.match(sw,/^const VER="68",CACHE="sota-s1-v"\+VER/);for(const src of [html,sw]){a.ok(src.includes("game.js?v=20"));a.ok(src.includes("party.js?v=25"));a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("party.js?v=24"));}
+ const sw=read("sw.js");a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);for(const src of [html,sw]){a.ok(src.includes("game.js?v=20"));a.ok(src.includes("party.js?v=25"));a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("party.js?v=24"));}
 });

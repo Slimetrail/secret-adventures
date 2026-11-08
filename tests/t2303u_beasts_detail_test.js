@@ -83,10 +83,11 @@ test("detail stays on found beasts and ignores zone 3+ facts",()=>{
  a.equal(all(z3.lastPage,"img").some(i=>/z3-/.test(i.src)),false);
 });
 
-test("Back to Beasts returns to the found-beast grid without closing the journal",()=>{
+test("t2312u has no Back to Beasts button; the Beasts tab returns to the found-beast grid",()=>{
  const ctx=load({beasts:["z1-rat","z1-toad"]},"z1-rat");
- const back=all(ctx.lastPage,"button").find(b=>b.textContent==="Back to Beasts");
- a.ok(back);back.click();
+ a.equal(all(ctx.lastPage,"button").some(b=>/Back to Beasts/i.test(b.textContent)),false);
+ a.ok(all(ctx.lastPage,"div").some(n=>n.dataset.beastDetail==="z1-rat"));
+ vm.runInContext('jBeast=null;openJournal("beasts");',ctx);
  a.equal(ctx.closed,0);
  a.equal(ctx.jBeast,null);
  a.deepEqual(all(ctx.lastPage,"figure").map(f=>f.dataset.beast),["z1-rat","z1-toad"]);
@@ -96,12 +97,13 @@ test("Back to Beasts returns to the found-beast grid without closing the journal
 test("source keeps the journal open and does not rewrite sketch files",()=>{
  const intro=read("intro.js");
  a.match(intro,/jBeast=file;openJournal\("beasts"\)/);
- a.match(intro,/jBeast=null;openJournal\("beasts"\)/);
- a.match(intro,/go\("Back to Beasts"/);
+ a.match(intro,/if\(k==="beasts"\)jBeast=null;openJournal\(k\)/);
+ a.doesNotMatch(intro,/go\("Back to Beasts"/);
+ a.doesNotMatch(intro,/Back to Beasts/);
  a.doesNotMatch(intro.slice(intro.indexOf('t==="beasts"'),intro.indexOf('t==="recipes"')),/closeJournal\(\)/);
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});
  a.doesNotMatch(changed,/\.(png|webp|jpe?g|svg|gif)$/m);
  const html=read("index.html"),sw=read("sw.js");
- a.match(sw,/^const VER="68",CACHE="sota-s1-v"\+VER/);
- for(const src of [html,sw]){a.ok(src.includes("intro.js?v=12"));a.ok(!src.includes("intro.js?v=11"));}
+ a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);
+ for(const src of [html,sw]){a.ok(src.includes("intro.js?v=13"));a.ok(!src.includes("intro.js?v=12"));}
 });

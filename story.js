@@ -67,6 +67,7 @@ function close(){if(box){box.className="s6d";box.dataset.scene="";}document.docu
 window.addEventListener("keydown",e=>{if(!cur)return;e.preventDefault();e.stopImmediatePropagation();if((e.key==="Enter"||e.key===" ")&&!cur.typing&&!cur.ending)adv();},true);
 function btns(list){const b=q(".s6btns");b.innerHTML="";q(".s6more").classList.remove("on");list.forEach(([t,fn,id,off])=>{const x=el("button","ink s4b small",t);x.dataset.s6b=id;x.disabled=!!off;x.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();fn();});b.appendChild(x);});}
 function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close();if(sc&&sc.opt.done)sc.opt.done();}
+function skipOpening(){if(!cur||cur.kind!=="opening")return false;if(cur.tm)clearTimeout(cur.tm);finish();return true;}
 // Local scripted scenes: Dialogue Lead's checked intro / reveal-and-endings sheets.
 // Sequential pairs only; the locked STORY data and all picker pools remain untouched.
 const REWRITE=window.PACKAGE_STORY.rewrite;
@@ -204,7 +205,7 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={talkPresent,play,letterReading,letterLines,brunnVer,brunnJoinVersion,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={talkPresent,play,skipOpening,letterReading,letterLines,brunnVer,brunnJoinVersion,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),finalLock2:()=>({pz:window.PUZ.clone(FINAL_LOCK2.pz),s:window.PUZ.clone(lockState2)}),finalLock3:()=>({pz:window.PUZ.clone(FINAL_LOCK3.pz),s:window.PUZ.clone(lockState3),sel:lockSel3}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H,pair,picnicLines,bedsideLines,endingLines};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`

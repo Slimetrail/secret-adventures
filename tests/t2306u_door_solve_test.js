@@ -76,7 +76,7 @@ test("unlocked hallway view uses the open wooden door with a black opening",()=>
 
 test("pins moved and no occupancy or journal images were rewritten",()=>{
  const html=read("index.html"),sw=read("sw.js");
- a.match(sw,/^const VER="68",CACHE="sota-s1-v"\+VER/);
+ a.match(sw,/^const VER="69",CACHE="sota-s1-v"\+VER/);
  for(const src of [html,sw]){
   a.ok(src.includes("game.js?v=20"));a.ok(src.includes("doors.js?v=15"));a.ok(src.includes("puzzle-ui.js?v=16"));
   a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("doors.js?v=14"));a.ok(!src.includes("puzzle-ui.js?v=15"));
