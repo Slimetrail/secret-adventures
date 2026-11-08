@@ -142,18 +142,19 @@ function applyMood(b){const sc=b.dataset.scene,i=+b.dataset.line;let text=null;t
 // ---------- journal: worn book and settings ----------
 const TABS=[["inventory","Inventory"],["beasts","Beasts"],["map","Map"],["art","Found art"],["journal","Journal"],["recipes","Recipes"],["settings","Settings"]];
 function wear(){const s=s6();if(!s)return 1;const old=s.seen.join3?4:s.seen.join1?3:1;return Math.max(s.journalWear||1,old);}
-let jb=null,jTab="inventory";
-function openJournal(tab){const l=S.rpg.live();if(!l)return;if(!jb){jb=el("div","ijour");jb.id="ijour";document.body.appendChild(jb);}
+let jb=null,jTab="inventory",jBeast=null;
+function openJournal(tab){const l=S.rpg.live();if(!l)return;if(tab&&tab!=="beasts")jBeast=null;if(!jb){jb=el("div","ijour");jb.id="ijour";document.body.appendChild(jb);}
  jTab=tab||jTab;const w=wear(),bk="journal/book-zone"+w+".webp";jb.dataset.wear=w;jb.dataset.artReady=has(bk)?"1":"0";jb.style.setProperty("--book",has(bk)?'url("'+A(bk)+'")':"none");
  jb.innerHTML="";const book=el("div","ijbook ijwear"+w);const tabs=el("div","ijtabs");
- TABS.forEach(([k,n])=>{const t=el("button","ijtab"+(k===jTab?" sel":""),n);t.type="button";t.dataset.tab=k;const ta="journal/tab-"+(k==="art"?"found-art":k)+".webp";if(has(ta)){t.classList.add("art");t.style.backgroundImage='url("'+A(ta)+'")';}t.addEventListener("click",e=>{e.preventDefault();openJournal(k);});tabs.appendChild(t);});
+ TABS.forEach(([k,n])=>{const t=el("button","ijtab"+(k===jTab?" sel":""),n);t.type="button";t.dataset.tab=k;const ta="journal/tab-"+(k==="art"?"found-art":k)+".webp";if(has(ta)){t.classList.add("art");t.style.backgroundImage='url("'+A(ta)+'")';}t.addEventListener("click",e=>{e.preventDefault();if(k==="beasts")jBeast=null;openJournal(k);});tabs.appendChild(t);});
  const pg=el("div","ijpage");pg.dataset.tab=jTab;if(has("journal/page.webp"))pg.style.backgroundImage='url("'+A("journal/page.webp")+'")';
  page(pg,l);const x=el("button","ink s4b small ijclose","Close");x.type="button";x.addEventListener("click",e=>{e.preventDefault();closeJournal();});
  book.append(tabs,pg);jb.append(x,book,appCtl("journal"));jb.classList.add("on");document.documentElement.classList.add("ijour-open");}
-function closeJournal(){if(jb){jb.classList.remove("on");jb.innerHTML="";}document.documentElement.classList.remove("ijour-open");}
+function closeJournal(){jBeast=null;if(jb){jb.classList.remove("on");jb.innerHTML="";}document.documentElement.classList.remove("ijour-open");}
 function itemName(id){return R.ITEMS[id]?R.ITEMS[id].n:id;}
 // Approved zone 1/2 pencil sketches only; later generated pages remain text-only.
 const JOURNAL_MONSTERS={"cap:1":[["Rat","z1-rat"],["Slime","z1-slime"],["Big bug","z1-bigbug"],["Cave bat","z1-bat"],["Giant spider","z1-spider"],["Mud toad","z1-toad"],["Fungus creeper","z1-fungus"]],"cap:2":[["Goblin","z2-goblin"],["Orc","z2-orc"],["Fairy","z2-fairy"],["Kobold","z2-kobold"],["Wild boar","z2-boar"],["Pixie swarm","z2-pixies"],["Hobgoblin brute","z2-hobgoblin"]]};
+function beastNote(name){const G=window.StoryJournalGenerator,f=G&&G.MONSTER_FACTS;if(!f)return null;return (f[1]||[]).concat(f[2]||[]).find(m=>m[0]===name)||null;}
 function monsterSketches(entry,kind,key){if(kind!=="monster-drawings")return;const g=el("div","ijart ijmonsters");
  (JOURNAL_MONSTERS[key]||[]).forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.appendChild(im);g.appendChild(f);});if(g.children.length)entry.appendChild(g);}
 function page(pg,l){const t=jTab,E=window.ECON;
@@ -167,8 +168,13 @@ function page(pg,l){const t=jTab,E=window.ECON;
   if(s&&s.seen&&s.seen.boss){const v=letterVar(),f=el("figure","ijfig");f.dataset.room="letter";f.dataset.variant=v;const im=el("img");im.alt="";im.src="art6/letter-note-before-you-enter.webp";f.append(im,el("figcaption","ijnote ijhw",TX.wall["letter-note-before-you-enter#"+v]||""));g.appendChild(f);}pg.appendChild(g);}
  else if(t==="journal"){pg.appendChild(el("h3",null,"Journal"));const h=el("div","ijhand");const es=keyMoments();if(!es.length)h.appendChild(el("div","ijl dim","(nothing written yet)"));es.forEach(([k,t,kind,key])=>{const e=el("div","ijentry ijhw",t);e.dataset.entry=k;monsterSketches(e,kind,key);h.appendChild(e);});pg.appendChild(h);}
  else if(t==="beasts"){pg.appendChild(el("h3",null,"Beasts"));const found=new Set(l.beasts||[]);const all=[].concat(JOURNAL_MONSTERS["cap:1"],JOURNAL_MONSTERS["cap:2"]).filter(([,file])=>found.has(file));
-  if(!all.length)pg.appendChild(el("div","ijl dim","No beasts found yet."));const g=el("div","ijart ijmonsters");
-  all.forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.dataset.beast=file;f.appendChild(im);g.appendChild(f);});if(g.children.length)pg.appendChild(g);}
+  const pick=(typeof jBeast==="string"&&found.has(jBeast))?all.find(([,file])=>file===jBeast):null,fact=pick&&beastNote(pick[0]);
+  if(pick&&fact){const path="journal/monsters/"+pick[1]+".webp",box=el("div","ijbeast");box.dataset.beastDetail=pick[1];
+   if(has(path)){const f=el("figure","ijfig ijbeast-lg"),im=el("img");im.alt=pick[0];im.src=A(path);f.appendChild(im);box.appendChild(f);}
+   box.appendChild(el("div","ijl ijhw",fact[0]));box.appendChild(el("div","ijl ijhw",window.StoryJournalGenerator.caption(fact)));
+   box.appendChild(go("Back to Beasts",()=>{jBeast=null;openJournal("beasts");}));pg.appendChild(box);}
+  else {if(!all.length)pg.appendChild(el("div","ijl dim","No beasts found yet."));const g=el("div","ijart ijmonsters");
+  all.forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.dataset.beast=file;f.appendChild(im);if(f.addEventListener)f.addEventListener("click",e=>{e.preventDefault();jBeast=file;openJournal("beasts");});g.appendChild(f);});if(g.children.length)pg.appendChild(g);}}
  else if(t==="recipes"){pg.appendChild(el("h3",null,"Recipes"));const k=E?E.DISHES.filter(d=>l.recipes&&l.recipes[d.id]):[];pg.appendChild(el("div","ijl",k.length+" of "+(E?E.DISHES.length:20)+" recipes known"));
   k.forEach(d=>pg.appendChild(el("div","ijl","• "+d.n)));pg.appendChild(go("Open cooking guide",()=>{closeJournal();S.rpg.s5.cookbook();}));}
  else if(t==="settings"){pg.appendChild(el("h3",null,"Settings"));pg.appendChild(el("div","ijl","Sound / volume"));
@@ -215,7 +221,7 @@ html.ititle-open #dvbtn{visibility:hidden}
 .ijl{margin:4px 0;line-height:1.3}.ijart{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.ijfig{margin:0;padding:6px;border:1px dashed #8a6a3a}.ijfig img{width:100%;display:block}.ijnote{min-height:1.2em}
 .ijhw{font-family:"Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE",cursive;white-space:pre-line;color:#2a2350;transform:rotate(-.6deg);line-height:1.35}
 .ijentry{margin:0 0 16px;font-size:16px}.ijentry:nth-child(even){transform:rotate(.5deg)}.ijnote{font-size:13px;margin-top:4px}
-.ijhand{min-height:40vh;background:repeating-linear-gradient(transparent 0 27px,rgba(80,60,120,.25) 27px 28px)}
+.ijhand{min-height:40vh;background:repeating-linear-gradient(transparent 0 27px,rgba(80,60,120,.25) 27px 28px)}.ijbeast{margin:0}.ijbeast-lg{display:block}.ijbeast-lg img{width:100%;display:block}
 .ijour .iapp{max-width:540px;margin:6px auto}
 `;document.head.appendChild(css);
 })();

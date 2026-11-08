@@ -25,19 +25,19 @@ function parseShell(sw){
   }
   return parts.flat();
 }
-test("SHELL has unique URLs, one music.js?v=18, and VER 66",()=>{
+test("SHELL has unique URLs, one music.js?v=18, and VER 67",()=>{
   const sw=read("sw.js");
-  a.match(sw,/^const VER="66"/);
+  a.match(sw,/^const VER="67"/);
   const shell=parseShell(sw);
   a.equal(shell.length, new Set(shell).size);
   a.equal(shell.filter(x=>x==="music.js?v=18").length,1);
   a.equal(shell.filter(x=>x.startsWith("music.js")).length,1);
-  a.ok(shell.includes("intro.js?v=11"));
+  a.ok(shell.includes("intro.js?v=12"));
   a.ok(shell.includes("party.js?v=25"));
   a.ok(!shell.includes("music.js?v=17"));
   const html=read("index.html");
   a.ok(html.includes("music.js?v=18"));
-  a.ok(html.includes("intro.js?v=11"));
+  a.ok(html.includes("intro.js?v=12"));
   a.ok(html.includes("party.js?v=25"));
   a.ok(!html.includes("music.js?v=17"));
 });
