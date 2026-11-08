@@ -31,7 +31,7 @@ function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>
  if(!start&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!hasTent())return false;if(!same){live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
  // Camp scene gates observe arrival injuries; seen flags enter this save. Saving never rests.
  if(!start&&tavIdx(p.x,p.y)<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));
- live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];const next=clone(live);
+ syncMazeSlots();live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];const next=clone(live);
  try{localStorage.setItem(SLOT+slot,JSON.stringify(next));localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(next));}catch(e){toast("Could not save. Storage may be full.");return false;}
  activeSlot=slot;save=next;return true;}
 function loadSlot(slot){const o=saveSlots()[slot];if(!o)return false;
@@ -42,7 +42,7 @@ function savePicker(mode,done,cancel){const w=page("save-picker");w.appendChild(
   if(mode==="load"){if(loadSlot(i)&&done)done();}else if(doSave(false,i)&&done)done();},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
 
 // death: everything goes back to the last save
-function restore(){if(!save)return false;campVisit=null;live=clone(save);if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
+function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
  if(S.applyMaze)S.applyMaze(save.maze||{x:save.at.x,y:save.at.y,f:save.at.f});else S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
 function toast(t){const d=$("s4toast");d.textContent=displayText(t);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 // ---------- screens ----------
@@ -54,6 +54,45 @@ function head(title,back){const h=el("div","s4head");h.appendChild(el("div","s4t
 window.addEventListener("keydown",e=>{const t=e.target&&e.target.tagName;if(ui||t==="INPUT"||t==="TEXTAREA")e.stopImmediatePropagation();},true);
 // re-render a page but keep where it was scrolled to
 function page(kind){const top=ui===kind?ov.scrollTop:0;openUI(kind);ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);requestAnimationFrame(()=>{ov.scrollTop=top;});ov.scrollTop=top;return w;}
+// ---- Maze item shortcuts: bindings belong to this party save; bags own every copy. ----
+function mazeSlotAllowed(id){const it=R.ITEMS[id];return !!it&&((it.slot==="use"&&(it.heal||it.mana||it.revive||id==="ration"))||it.slot==="dish");}
+function syncMazeSlots(){const bindings=live&&Array.isArray(live.mazeSlots)?live.mazeSlots:[],counts={};
+ if(live)live.party.forEach(c=>c.bag.forEach(id=>{if(mazeSlotAllowed(id))counts[id]=(counts[id]||0)+1;}));
+ const next=Array.from({length:4},(_,i)=>{const id=bindings[i];if(!mazeSlotAllowed(id)||!(counts[id]>0))return null;counts[id]--;return id;});
+ if(live)live.mazeSlots=next;S.setMazeSlots(next);return next.slice();}
+function clearMazeSlots(){if(live)live.mazeSlots=[null,null,null,null];return syncMazeSlots();}
+function clearMazeSlot(i){if(!live||!Number.isInteger(i)||i<0||i>3)return false;syncMazeSlots();live.mazeSlots[i]=null;syncMazeSlots();return true;}
+function mazeSlotChoices(i){const bindings=syncMazeSlots();if(!live)return [];const counts={};
+ live.party.forEach(c=>c.bag.forEach(id=>{if(mazeSlotAllowed(id))counts[id]=(counts[id]||0)+1;}));
+ bindings.forEach((id,j)=>{if(id&&j!==i)counts[id]--;});
+ return Object.keys(counts).filter(id=>counts[id]>0).map(id=>({id,n:counts[id]}));}
+function assignMazeSlot(i,id){if(!live||!Number.isInteger(i)||i<0||i>3||!mazeSlotChoices(i).some(x=>x.id===id))return false;
+ live.mazeSlots[i]=id;syncMazeSlots();return true;}
+function mazeSlotPicker(i){const choices=mazeSlotChoices(i);if(!choices.length){toast("No potions or food to put here.");return;}
+ const w=page("maze-slot");w.appendChild(head("Item box "+(i+1),closeUI));
+ choices.forEach(({id,n})=>{const b=tapBtn(R.ITEMS[id].n+(n>1?" ×"+n:""),()=>{if(!assignMazeSlot(i,id)){toast("That item is no longer available.");mazeSlotPicker(i);return;}closeUI();},"wide");b.dataset.mazeItem=id;w.appendChild(b);});}
+function useMazeSlot(i,ci,expected){const bindings=syncMazeSlots(),id=bindings[i];if(!id||expected&&id!==expected)return false;
+ const c=live.party[ci],it=R.ITEMS[id];if(!c)return false;if(it.revive&&c.hp>0){toast("Nobody is knocked out.");return false;}
+ // Consume the real bag copy first. Clear this binding before reconciling other boxes.
+ if(!takeOne(id)){syncMazeSlots();toast("That item is no longer available.");return false;}
+ live.mazeSlots[i]=null;
+ if(id==="ration"||it.slot==="dish")eatDish(c,id);
+ else if(it.revive)c.hp=Math.max(1,Math.round(R.maxHp(c,hpMul())*it.revive));
+ else if(it.heal)c.hp=Math.min(R.maxHp(c,hpMul()),c.hp+Math.round(R.maxHp(c,hpMul())*it.heal));
+ else c.mp=R.maxMp(c); // Backpack mana-potion behavior: restore full MP.
+ syncMazeSlots();closeUI();toast(c.name+(id==="ration"||it.slot==="dish"?" ate ":" used ")+it.n);return true;}
+function mazeSlotTargets(i){const id=syncMazeSlots()[i];if(!id)return mazeSlotPicker(i);const it=R.ITEMS[id],food=id==="ration"||it.slot==="dish";
+ const targets=live.party.map((c,ci)=>({c,ci})).filter(({c})=>!it.revive||c.hp<=0);
+ if(!targets.length){toast("Nobody is knocked out.");return;}
+ const w=page("maze-slot");w.appendChild(head(it.n,()=>tapMazeSlot(i,true)));
+ targets.forEach(({c,ci})=>w.appendChild(tapBtn((it.revive?"Wake ":food?"Feed ":"Use on ")+c.name,()=>useMazeSlot(i,ci,id),"wide")));}
+function tapMazeSlot(i,back=false){if(!live||!Number.isInteger(i)||i<0||i>3)return;
+ if(!back&&(ui||S.mapOpen&&S.mapOpen()||S.puzzleOpen&&S.puzzleOpen()||S.storyOpen&&S.storyOpen()||S.panelOpen&&S.panelOpen()))return;
+ const id=syncMazeSlots()[i];if(!id)return mazeSlotPicker(i);
+ const w=page("maze-slot");w.appendChild(head(R.ITEMS[id].n,closeUI));
+ w.appendChild(tapBtn("Use",()=>mazeSlotTargets(i),"wide"));
+ w.appendChild(tapBtn("Clear",()=>{clearMazeSlot(i);closeUI();},"wide"));
+ w.appendChild(tapBtn("Replace",()=>mazeSlotPicker(i),"wide"));}
 // ---- portraits: small busts cut from the fight figure (same art, cached) ----
 const PCACHE=new Map();
 function portrait(c){const k=c.race+"|"+c.cls;if(PCACHE.has(k))return PCACHE.get(k);const cv=document.createElement("canvas");cv.width=cv.height=96;const g=cv.getContext("2d");
@@ -592,8 +631,9 @@ html.s5shop-open #s6d .s6box{left:8px;right:8px;bottom:12px;max-height:65vh;over
 @media(max-width:480px){.s5shop .s4head{font-size:14px}.s5camp>.s4note{margin-right:166px}.s5hubnav{gap:6px}}
 `;document.head.appendChild(sceneCSS);
 // test and debug hooks (no network, no secrets)
-S.rpg={s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
- setLive:o=>{live=o;},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
+S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+ setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=spr(heroKey(c)),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};
+syncMazeSlots();
 })();

@@ -67,14 +67,18 @@ function applyMaze(snap){
     catch(e){visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);}
   }else{poseAt(M.entrance[0],M.entrance[1],0);visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);}
   save();updHud();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
-function resetRun(){poseAt(M.entrance[0],M.entrance[1],0);visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);
+function resetRun(){setMazeSlots([null,null,null,null]);if(window.SOTA&&SOTA.rpg&&SOTA.rpg.clearMazeSlots)SOTA.rpg.clearMazeSlots();poseAt(M.entrance[0],M.entrance[1],0);visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);
  solvedR.fill(0);clearedR.fill(0);try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(ROOM_KEY);}catch(e){}
  save();saveRooms();updHud();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
 function stepped(){const i=st.y*N+st.x;visit(i);trail.push(i);if(trail.length>TRAIL_CAP+1)trail.splice(0,trail.length-TRAIL_CAP-1);if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
-// item boxes: 4 free slots, empty for now; later stages fill them
+// Item boxes are shortcuts to real party bag copies, never a second inventory.
 const ITEM_KEY="sota.items";let items=[null,null,null,null];
-try{const a=JSON.parse(localStorage.getItem(ITEM_KEY)||"null");if(Array.isArray(a)&&a.length===4)items=a;}catch(e){}
-try{localStorage.setItem(ITEM_KEY,JSON.stringify(items));}catch(e){}
+function setMazeSlots(bindings){const next=Array.from({length:4},(_,i)=>typeof bindings[i]==="string"?bindings[i]:null);
+ const changed=next.some((id,i)=>id!==items[i]);items=next;
+ try{if(changed||localStorage.getItem(ITEM_KEY)!==JSON.stringify(items))localStorage.setItem(ITEM_KEY,JSON.stringify(items));}catch(e){}
+ document.querySelectorAll("#slots .slot").forEach((b,i)=>{const id=items[i],it=id&&window.RPG&&window.RPG.ITEMS[id],name=it?it.n:"";
+  if(b.textContent!==name)b.textContent=name;const label="Item box "+(i+1)+" ("+(name||"empty")+")";if(b.getAttribute("aria-label")!==label)b.setAttribute("aria-label",label);});return items.slice();}
+setMazeSlots(items);
 const vis={x:st.x,y:st.y,a:st.f*Math.PI/2},anim={on:false,t0:0,dur:1,fx:0,fy:0,fa:0,tx:0,ty:0,ta:0};
 let animOn=true;
 function startAnim(dur){anim.fx=vis.x;anim.fy=vis.y;anim.fa=vis.a;anim.tx=st.x;anim.ty=st.y;
@@ -160,6 +164,7 @@ document.getElementById("pgo").addEventListener("pointerdown",e=>{e.preventDefau
 // ---------- loop ----------
 const ft=[];let lastT=0;
 function frame(t){
+ if(window.SOTA&&SOTA.rpg&&SOTA.rpg.syncMazeSlots)SOTA.rpg.syncMazeSlots();
  if(anim.on){let k=(t-anim.t0)/anim.dur;if(!(k<1)){k=1;anim.on=false;}const e=k*k*(3-2*k);
   vis.x=anim.fx+(anim.tx-anim.fx)*e;vis.y=anim.fy+(anim.ty-anim.fy)*e;vis.a=anim.fa+(anim.ta-anim.fa)*e;}
  else{vis.x=st.x;vis.y=st.y;vis.a=st.f*Math.PI/2+Math.round((vis.a-st.f*Math.PI/2)/(2*Math.PI))*2*Math.PI;}
@@ -171,7 +176,7 @@ requestAnimationFrame(frame);
 const hud=document.getElementById("hud"),HUD_KEY="sota.hud";let hudOn=true;try{hudOn=localStorage.getItem(HUD_KEY)!=="0";}catch(e){}
 function updHud(){hud.textContent="Zone "+zoneOf[st.y*N+st.x]+"  cell "+st.x+","+st.y+"  facing "+FN[st.f];hud.style.display=hudOn?"block":"none";}
 updHud();
-document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.remove("pressed");void b.offsetWidth;b.classList.add("pressed");});b.addEventListener("animationend",()=>b.classList.remove("pressed"));b.addEventListener("contextmenu",e=>e.preventDefault());});
+document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.remove("pressed");void b.offsetWidth;b.classList.add("pressed");if(window.SOTA&&SOTA.rpg&&SOTA.rpg.tapMazeSlot)SOTA.rpg.tapMazeSlot(Number(b.dataset.slot));});b.addEventListener("animationend",()=>b.classList.remove("pressed"));b.addEventListener("contextmenu",e=>e.preventDefault());});
 document.querySelectorAll("[data-cmd]").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();act(b.dataset.cmd);});b.addEventListener("contextmenu",e=>e.preventDefault());});
 document.getElementById("dbg").addEventListener("pointerdown",e=>{e.preventDefault();hudOn=!hudOn;try{localStorage.setItem(HUD_KEY,hudOn?"1":"0");}catch(e){}updHud();});
 window.addEventListener("keydown",e=>{const k={ArrowUp:"fwd",w:"fwd",ArrowDown:"back",s:"back",ArrowLeft:"left",a:"left",ArrowRight:"right",d:"right"}[e.key];if(k){e.preventDefault();act(k);}});
@@ -187,7 +192,7 @@ cv.addEventListener("pointerup",onViewPointer);
 // test/debug hooks (read-only views + direct commands)
 window.SOTA={contentCap,state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,resetRun,mazeSnap,applyMaze,enterDoor,useFacingDoor,
  frameTimes:()=>ft.slice(),setAnim:v=>{animOn=!!v;},animating:()=>anim.on,renderOnce:()=>{const t0=performance.now();render(performance.now());return performance.now()-t0;},
- items:()=>items.slice(),rooms:()=>({solved:[...solvedR.keys()].filter(i=>solvedR[i]),cleared:[...clearedR.keys()].filter(i=>clearedR[i])}),
+ setMazeSlots,items:()=>{if(window.SOTA.rpg&&SOTA.rpg.syncMazeSlots)SOTA.rpg.syncMazeSlots();return items.slice();},rooms:()=>({solved:[...solvedR.keys()].filter(i=>solvedR[i]),cleared:[...clearedR.keys()].filter(i=>clearedR[i])}),
  roomAt:(x,y)=>roomAt[y*N+x],isSolved:i=>!!solvedR[i],panelOpen:()=>panelOn,
  markSolved:i=>{solvedR[i]=1;saveRooms();},saveRooms,visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
  core:{solvedR,clearedR,mask,zoneOf,visited,trail:()=>trail,M,DIRS,BIT},
