@@ -1,4 +1,4 @@
-const a=require('assert'),fs=require('fs'),cp=require('child_process'),vm=require('vm');
+require('./t2103u_unpatch.js');const a=require('assert'),fs=require('fs'),cp=require('child_process'),vm=require('vm');
 const art=require('../dialogue-art.js'),data=require('../dialogue-art-data.js'),B1=require('../batch1-talks.js'),preview=require('../dialogue-view.js');
 const manifest=JSON.parse(fs.readFileSync('/workspace/secret-adventures/game-export/t2076u-dialogue-art/manifest.json'));
 const parse=s=>[...s.matchAll(/^(Mira|Sorrel|Brunn): "(.*)"$/gm)].map(m=>[m[1],m[2]]);

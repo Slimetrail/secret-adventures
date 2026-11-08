@@ -44,18 +44,17 @@ def t_stacking(p):
   check(len(st)==1 and st[0][0]=='3' and '×3' in st[0][1],f'teeth not stacked {st}');b.close()
 def t_shop_buy_sell(p):
   b,pg=setup(p);L(pg,'L.gold=100;L.party[0].bag.push("j_gem");');ev(pg,'SOTA.rpg.s5.tavernScreen(0)')
-  check(ev(pg,'SOTA.rpg.ui()')=='tavern','tavern did not open');tap(pg,'[data-tab=buy]');tap(pg,'[data-tab=food]');tap(pg,'[data-buy=ration]')
+  check(ev(pg,'SOTA.rpg.ui()')=='tavern','tavern did not open');tap(pg,'[data-hub="1"]');tap(pg,'[data-tab=food]');tap(pg,'[data-buy=ration]')
   check(L(pg,'return [L.gold,X.haveN("ration")]')==[96,1],'buying a ration failed')
-  v=L(pg,'return E.sellPrice("j_gem")');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-tab=sell]');tap(pg,'[data-sell=j_gem]')
+  v=L(pg,'return E.sellPrice("j_gem")');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-hub="1"]');tap(pg,'[data-tab=sell]');tap(pg,'[data-sell=j_gem]')
   check(L(pg,'return [L.gold,X.haveN("j_gem")]')==[96+v,0],'selling junk failed')
   L(pg,'L.gold=1');ev(pg,'SOTA.rpg.s5.shopList(0,"food")');tap(pg,'[data-buy=potion]');check(L(pg,'return L.gold')==1,'bought with too little gold')
   check(L(pg,'return E.sellPrice("potion")<E.price("potion")'),'resale should be below price');b.close()
 def t_buy_flow(p):
-  b,pg=setup(p);L(pg,'L.gold=500');ev(pg,'SOTA.rpg.s5.tavernScreen(2)')
-  tabs=ev(pg,'[...document.querySelectorAll(".s5tab")].map(x=>x.dataset.tab)');check(tabs[:2]==['buy','sell'],f'main menu should start with Buy, Sell {tabs}')
-  check(ev(pg,'document.querySelector("[data-tab=buy]").textContent.startsWith("‹")'),'Buy has no ‹ arrow on the left')
-  tap(pg,'[data-tab=buy]');check(ev(pg,'SOTA.rpg.ui()')=='buy','Buy is not its own screen')
-  check(ev(pg,'[...document.querySelectorAll(".s5tab")].map(x=>x.dataset.tab)')==['recipes','food','craft'],'Buy screen options wrong')
+  b,pg=setup(p);L(pg,'L.gold=500');ev(pg,'SOTA.teleport(...MAZE.taverns[2],0);SOTA.rpg.s5.tavernScreen(2)')
+  tabs=ev(pg,'[...document.querySelectorAll("[data-hub]")].map(x=>x.textContent)');check(tabs==['Zone 3','Shop','Zone 4'],f'tavern hub labels {tabs}')
+  tap(pg,'[data-hub="1"]');check(ev(pg,'SOTA.rpg.ui()')=='buy','Buy is not its own screen')
+  check(ev(pg,'[...document.querySelectorAll(".s5tab")].map(x=>x.dataset.tab)')==['recipes','food','craft','sell','done'],'Shop screen options wrong')
   check(ev(pg,'document.querySelectorAll("[data-buy],[data-recipe]").length')==0,'Buy screen lists items directly')
   want={'recipes':('[data-recipe]','[data-buy]'),'food':('[data-buy=i_bread]','[data-recipe],[data-buy=tent],[data-buy=p_silk]'),'craft':('[data-buy=tent]','[data-recipe],[data-buy=i_bread]')}
   for k,(has,hasnt) in want.items():
@@ -64,7 +63,7 @@ def t_buy_flow(p):
     tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='buy',f'Back from {k} did not go up to Buy')
   check(ev(pg,'document.querySelectorAll("[data-buy=p_silk]").length')==0,'');tap(pg,'[data-tab=craft]');check(ev(pg,'document.querySelectorAll("[data-buy=p_silk]").length')==1,'tavern 3 craft has no parts')
   tap(pg,'[data-tentb]');check(ev(pg,'SOTA.rpg.ui()')=='tent','build tent screen');tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='shop-craft','Back from tent build')
-  tap(pg,'.s4head button');tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='tavern','Back from Buy did not reach the tavern')
+  tap(pg,'.s4head button');tap(pg,'.s4head button');check(ev(pg,'SOTA.rpg.ui()')=='save-picker','Shop Back did not open save picker');tap(pg,'[data-save-slot="0"]');check(ev(pg,'SOTA.rpg.ui()')=='tavern','Shop save did not return to tavern')
   ev(pg,'SOTA.rpg.s5.shopList(0,"craft")');check(ev(pg,'document.querySelectorAll("[data-buy^=p_]").length')==0,'tavern 1 sells parts');b.close()
 def t_sell_party_only(p):
   b,pg=setup(p);L(pg,'L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1));L.party[0].bag.push("j_tooth","j_tooth","p_silk");L.party[1].bag.push("i_egg","rope");')
@@ -106,7 +105,7 @@ def t_cook_learn(p):
   check(L(pg,'return [X.haveN("i_bread"),X.haveN("i_herbs"),Object.keys(L.recipes).length]')==[1,0,0],'failed cook should use ingredients and learn nothing')
   tap(pg,'[data-ing=bread]');tap(pg,'[data-ing=butter]');tap(pg,'#s5cook')
   check(L(pg,'return [X.haveN("d_toast"),L.recipes.toast]')==[1,'earned'],'cook did not make toast / learn it')
-  L(pg,'L.gold=500');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-tab=buy]');tap(pg,'[data-tab=recipes]');tap(pg,'[data-recipe=broth]');check(L(pg,'return L.recipes.broth')=='bought','recipe not bought')
+  L(pg,'L.gold=500');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');tap(pg,'[data-hub="1"]');tap(pg,'[data-tab=recipes]');tap(pg,'[data-recipe=broth]');check(L(pg,'return L.recipes.broth')=='bought','recipe not bought')
   ev(pg,'SOTA.rpg.s5.cookbook()');k=ev(pg,'[...document.querySelectorAll(".s5rc.known")].map(x=>x.dataset.rc+":"+x.className)')
   check(sorted(k)==['broth:s5rc known bought','toast:s5rc known earned'],f'guide marks wrong {k}')
   check('✎' in ev(pg,'document.querySelector("[data-rc=toast]").textContent') and '◉' in ev(pg,'document.querySelector("[data-rc=broth]").textContent'),'earned/bought marks missing');b.close()
@@ -200,11 +199,11 @@ def t_s5_code_clean(p):
 T=[(n[2:],f) for n,f in list(globals().items()) if n.startswith('t_')]
 if __name__=='__main__':
   fails=0
+  selected=[(n,f) for n,f in T if not ONLY or n in ONLY]
   with sync_playwright() as p:
-    for n,f in T:
-      if ONLY and n not in ONLY:continue
+    for n,f in selected:
       t=time.time();ERRS.clear()
       try:
         f(p);check(not ERRS,f'console errors {ERRS[:3]}');print(f'PASS {n} ({time.time()-t:.1f}s)')
       except Exception as e:fails+=1;print(f'FAIL {n}: {str(e)[:400]}')
-  print(f'ALL STAGE 5 TESTS PASSED ({len(T)})' if not fails else f'{fails} FAILED');sys.exit(1 if fails else 0)
+  print(f'STAGE 5: {len(selected)-fails} passed, {fails} failed ({len(selected)} selected)');sys.exit(1 if fails else 0)

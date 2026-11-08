@@ -1,4 +1,4 @@
-const fs=require('fs'),a=require('assert'),cp=require('child_process'),crypto=require('crypto');
+require('./t2103u_unpatch.js');const fs=require('fs'),a=require('assert'),cp=require('child_process'),crypto=require('crypto');
 const B1=require('../batch1-talks.js'),B2=require('../batch2-talks.js');
 let checks=0;function test(name,fn){try{fn();checks++;}catch(e){throw new Error(name+': '+e.stack);}}
 const parse=file=>fs.readFileSync(file,'utf8').split(/^### /m).slice(1).map(s=>({id:s.split('.')[0],lines:[...s.matchAll(/^(Mira|Sorrel|Brunn): "(.*)"$/gm)].map(m=>[{Mira:'Q',Sorrel:'S',Brunn:'A'}[m[1]],'calm',m[2]])}));

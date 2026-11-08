@@ -24,7 +24,7 @@ def t_files(p):
  for k,h in APPROVED.items():check(hashlib.sha256(open(os.path.join(d,k+'.mp3'),'rb').read()).hexdigest()==h,'hash '+k)
  sw=open(os.path.join(ROOT,'sw.js')).read();js=open(os.path.join(ROOT,'music.js')).read()
  for k in APPROVED:check('"music/%s.mp3"'%k in sw,'not cached offline '+k)
- check('"music.js?v=14"' in sw,'music.js not cached')
+ check('"music.js?v=18"' in sw,'music.js not cached')
  for bad in ['http://','https://','XMLHttpRequest','sendBeacon','adsbygoogle']:check(bad not in js,'outside URL in music.js')
 def ctx2(p,auto=True):
  b=p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'] if auto else [])
@@ -36,7 +36,7 @@ def wait(pg,cue,ms=3000):
   pg.wait_for_timeout(50)
  raise Fail('wanted cue %s, got %s'%(cue,ev(pg,'SOTA.music.now()')))
 def t_flow(p):
- b,c=ctx2(p);errs=[];pg=page(c,errs);wait(pg,'title_intro')
+ b,c=ctx2(p);errs=[];pg=page(c,errs);pg.touchscreen.tap(200,400);wait(pg,'title_intro')
  create(pg);wait(pg,'sick_father');pg.wait_for_timeout(600);check(ev(pg,'SOTA.music.playing()'),'sick father not actually playing')
  S6.drain(pg);wait(pg,'maze_zone1',4500)
  tap(pg,'#partyb');wait(pg,'menu');ev(pg,'SOTA.rpg.s5.campScreen(0)');wait(pg,'camping');ev(pg,'SOTA.rpg.s5.tavernScreen(0)');wait(pg,'tavern')
@@ -70,13 +70,19 @@ def t_endings(p):
   S6.drain(pg);wait(pg,'credits');tap(pg,'[data-s6b=back]');wait(pg,'maze_zone1',4000);b.close()
 def t_zone_loops(p):
  b,c=ctx2(p);pg=page(c);create(pg);S6.drain(pg);wait(pg,'maze_zone1',4500)
- for z in [2,3,4,5]:
+ xy=ev(pg,'(()=>{const c=SOTA.core,N=SOTA.N;for(let i=0;i<N*N;i++)if(+c.zoneOf[i]==2&&c.mask[i])return [i%N,(i/N)|0];})()')
+ ev(pg,'SOTA.teleport(%d,%d,0)'%tuple(xy));wait(pg,'maze_zone2',4000)
+ ev(pg,'SOTA.teleport(19,24,0)');wait(pg,'maze_zone2',4000)
+ ev(pg,'SOTA.contentCap=window.SOTA_CONTENT_CAP.create(SOTA.N,SOTA.core.zoneOf,{maxZone:5,extraCells:[]})')
+ for z in [3,4,5]:
   xy=ev(pg,'(()=>{const c=SOTA.core,N=SOTA.N;for(let i=0;i<N*N;i++)if(+c.zoneOf[i]==%d&&c.mask[i])return [i%%N,(i/N)|0];})()'%z)
   ev(pg,'SOTA.teleport(%d,%d,0)'%tuple(xy));wait(pg,'maze_zone%d'%z,4000)
  b.close()
 def t_gesture_retry(p):
- b,c=ctx2(p,auto=False);pg=page(c);pg.wait_for_timeout(500);wait(pg,'title_intro')
- pg.touchscreen.tap(200,400);pg.wait_for_timeout(800);check(ev(pg,'SOTA.music.playing()'),'title music did not start after a tap');b.close()
+ b,c=ctx2(p,auto=False);pg=page(c);pg.wait_for_timeout(500)
+ check(ev(pg,'SOTA.music.now()') in (None,''),'title music started before a gesture')
+ check(not ev(pg,'SOTA.music.playing()'),'title music playing before a gesture')
+ pg.touchscreen.tap(200,400);wait(pg,'title_intro');check(ev(pg,'SOTA.music.playing()'),'title music did not start after a tap');b.close()
 TESTS=[v for k,v in list(globals().items()) if k.startswith('t_') and (len(sys.argv)<3 or k in sys.argv[2].split(','))]
 if __name__=='__main__':
  S4.BASE=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765/';ok=0;bad=[]

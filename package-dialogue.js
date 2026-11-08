@@ -18,12 +18,12 @@ function pick(pool,ev){const s=state();if(!s)return null;const eligible=pools[po
 function sayRow(pool,row,opt){if(!row)return false;state().seen['pool-'+pool+'-'+row.id]=1;api.play(pool,[[code[row.speaker],'calm',row.text]],opt||{bg:null});return true;}
 function pool(pool,ev,opt){return sayRow(pool,pick(pool,ev),opt);}
 // Sequential fallback already calls oldCamp; replace that older unapproved fallback only when no sequential is eligible.
-H.camp=k=>{if(api.sequential.select('camp'))return oldCamp(k);return pool('camp');};
+H.camp=k=>{if(api.sequential.select('camp'))return oldCamp(k);const row=pick('camp');return sayRow('camp',row,{bg:S.rpg.s5.campBg(row)});};
 H.tavern=t=>{const s=state(),l=live();if(!s||!l)return;const key=t+':'+l.steps;if(s.packageTavernVisit===key)return;s.packageTavernVisit=key;
- if(api.sequential.select('tavern'))return oldTavern(t);s.visit=key;s.shopN=0;pool('tavern',{t},{bg:'art6/tavern-'+(t+1)+'.webp'});};
-H.craft=(kind,t)=>{if(!['food','armor','ore','weapons'].includes(kind)||!Number.isInteger(t)||t<0)return;if(api.sequential.select('craft-wait'))return oldCraft(kind,t);return pool('tavern',{craft:true,t},{bg:'art6/tavern-'+(t+1)+'.webp'});};
+ if(api.sequential.select('tavern'))return oldTavern(t);s.visit=key;s.shopN=0;pool('tavern',{t},{bg:S.rpg.s5.tavernBg(t)});};
+H.craft=(kind,t)=>{if(!['food','armor','ore','weapons'].includes(kind)||!Number.isInteger(t)||t<0)return;if(api.sequential.select('craft-wait'))return oldCraft(kind,t);return pool('tavern',{craft:true,t},{bg:S.rpg.s5.tavernBg(t)});};
 H.joined=(c,t)=>{const s=state();if(!s)return;if(t!==3)return oldJoined(c,t);if(!s.brunnJoin)s.brunnJoin=api.brunnJoinVersion();s.seen['join'+t]=1;
- const ids=s.brunnJoin==='save'?['82','84']:['83','85'];const lines=ids.map(id=>pools.tavern.find(r=>r.id===id)).filter(present).map(r=>[code[r.speaker],'calm',r.text]);api.play('join',lines,{bg:'art6/tavern-4.webp'});};
+ const ids=s.brunnJoin==='save'?['82','84']:['83','85'];const lines=ids.map(id=>pools.tavern.find(r=>r.id===id)).filter(present).map(r=>[code[r.speaker],'calm',r.text]);api.play('join',lines,{bg:S.rpg.s5.tavernBg(3)});};
 // Fight-end overlays are silent; one post-victory slot is due every 5..10 wins, persisted in save.
 H.fightEnd=()=>{};
 H.fightContinue=snapshot=>{const s=state();if(!s)return false;if(!Number.isInteger(s.afterGap))s.afterGap=rand();s.afterCount=(s.afterCount|0)+1;if(s.afterCount<s.afterGap)return false;s.afterCount=0;const prev=s.afterGap;do{s.afterGap=rand();}while(s.afterGap===prev);
@@ -34,7 +34,7 @@ H.fightContinue=snapshot=>{const s=state();if(!s)return false;if(!Number.isInteg
 for(const c of ['Q','S','A'])for(const tone of ['fun','dark']){const rows=pools['post-combat'].filter(r=>code[r.speaker]===c&&r.condition.startsWith('Fight start'));if(rows.length)root.STORY.fight.start[c][tone]=rows.map(r=>r.text);}
 H.reachedTavern=t=>{const s=state();if(s)s.journalWear=Math.max(s.journalWear||1,t>=2?4:t>=1?3:1);};
 const owners=root.PACKAGE_STORY.owners;
-H.owner=(t,job)=>{const s=state();if(!s||t<0||t>3)return;const row=owners.find(r=>r.id==='TO'+(t+1)+'-'+job);if(row)api.play('keeper',[['K'+(t+1),row.mood,row.text]],{bg:'art6/tavern-'+(t+1)+'.webp'});};
+H.owner=(t,job)=>{const s=state();if(!s||t<0||t>3)return;const row=owners.find(r=>r.id==='TO'+(t+1)+'-'+job);if(row)api.play('keeper',[['K'+(t+1),row.mood,row.text]],{bg:S.rpg.s5.tavernBg(t)});};
 H.ownerVisit=t=>{const s=state();if(!s||t<0||t>3)return;s.ownerVisits=s.ownerVisits||{};const key=t+':'+live().steps;if(s.ownerVisitKey===key)return;s.ownerVisitKey=key;if(!s.ownerVisits[t]){H.owner(t,'GREET');H.owner(t,'GREET2');}else H.owner(t,'BACK');s.ownerVisits[t]=true;};
 api.packageDialogue={gate,pick,pool,rand};
 }

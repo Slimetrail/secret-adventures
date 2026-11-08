@@ -26,6 +26,12 @@ function st(){const l=live();if(!l||!l.party||!l.party.length)return null;let s=
 function who(code){const l=live();if(!l)return null;if(code==="H")return l.party[0];if(!ROLE[code])return null;
  return l.party.find(c=>c.role===ROLE[code])||(l.party[IDX[code]]&&!l.party[IDX[code]].role?l.party[IDX[code]]:null);}
 function fill(t){const out=t.replace(/\{([HQSA])\}/g,(_,c)=>{const m=who(c);return m?m.name:"friend";});return window.CompanionDisplay?window.CompanionDisplay.rewrite(out,live()):out;}
+// t2270u: a talk that has or needs a missing companion does not play at all (never a leftover fragment).
+const COMP_NAME={mira:"Q",sorrel:"S",brunn:"A"};
+function compCode(x){if(!x)return null;x=String(x);return /^[QSA]$/.test(x)?x:COMP_NAME[x.toLowerCase()]||null;}
+function talkPresent(lines,deps){const codes=[].concat(deps||[]).map(compCode);(lines||[]).forEach(l=>codes.push(compCode(Array.isArray(l)?l[0]:l&&(l.w||l.speaker))));
+ return codes.every(c=>!c||!!who(c));}
+const PARTIAL_OK={opening:1,wall:1,"art-room":1,boss:1,ending:1};
 function resolve(lines){return lines.filter(([w])=>w==="N"||w==="D"||/^K[1-4]$/.test(w)||who(w)).map(([w,e,t])=>{const m=w==="N"||w==="D"||/^K[1-4]$/.test(w)?null:who(w);
  return {w,e:e||"calm",t:fill(t),name:/^K[1-4]$/.test(w)?["Brannoc","Wynn","Sylvaine","Miso"][+w[1]-1]:w==="N"?"":w==="D"?"Dad":(window.CompanionDisplay?window.CompanionDisplay.displayName(m,live()):m.name),art:m?(SHEET[m.race]||"knight"):null};});}
 function zoneNow(){try{return S.state().zone||1;}catch(e){return 1;}}
@@ -34,7 +40,7 @@ function explored(){const s=st();return (S.rooms?S.rooms().solved.length:0)+(s?O
 function endingFor(){return {warning:"low",half:"mid",apology:"high"}[letterReading()];}
 function memUnlocked(code){return Math.min(D.memory[code].length,Math.floor(explored()/MEM_STEP));}
 function memLine(){const s=st();if(!s)return null;for(const c of["Q","S","A"]){if(!who(c))continue;const n=s.told[c]|0;if(n<memUnlocked(c)){s.told[c]=n+1;return [c,"calm",D.memory[c][n]];}}return null;}
-function withMem(lines){const m=memLine();return m?lines.concat([["N","calm","(A memory, shared by the fire.)"],m]):lines;}
+function withMem(lines){const m=memLine();return m&&talkPresent([m])?lines.concat([["N","calm","(A memory, shared by the fire.)"],m]):lines;}
 // ---------- dialogue box ----------
 let cur=null;const queue=[];let box=null;
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
@@ -42,15 +48,16 @@ function build(){if(box)return box;box=el("div","s6d");box.id="s6d";
  box.innerHTML='<div class="s6bg"></div><img class="s6wall" alt=""><div class="s6box"><div class="s6pf"><img class="s6p" alt=""></div><div class="s6name"></div><div class="s6t"></div><div class="s6more">▼</div><div class="s6btns"></div></div>';
  box.addEventListener("pointerdown",tap);box.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();});document.body.appendChild(box);return box;}
 function q(sel){return box.querySelector(sel);}
-function play(kind,lines,opt){const L=resolve(lines||[]);opt=opt||{};if(!L.length){if(opt.done)opt.done();return false;}queue.push({kind,L,opt});if(!cur)nextScene();return true;}
+function play(kind,lines,opt){opt=opt||{};if(!PARTIAL_OK[kind]&&!talkPresent(lines,opt.need)){if(opt.done)opt.done();return false;}const L=resolve(lines||[]);if(!L.length){if(opt.done)opt.done();return false;}queue.push({kind,L,opt});if(!cur)nextScene();return true;}
 function nextScene(){const sc=queue.shift();if(!sc){close();return;}build();cur={kind:sc.kind,L:sc.L,opt:sc.opt,i:-1,typing:false};
- box.className="s6d on"+(sc.opt.bg?" hasbg":"")+(sc.opt.wall?" haswall":"");box.dataset.scene=sc.kind;
+ box.className="s6d on"+(sc.opt.bg?" hasbg":"")+(sc.opt.wall?" haswall":"")+(sc.kind==="camp"&&/^art6\/camp\//.test(sc.opt.bg||"")?" camp-scene":"");box.dataset.scene=sc.kind;
  q(".s6bg").style.backgroundImage=sc.opt.bg?'url("'+sc.opt.bg+'")':"none";const w=q(".s6wall");if(sc.opt.wall){w.src=sc.opt.wall;w.style.display="block";}else{w.removeAttribute("src");w.style.display="none";}
  q(".s6btns").innerHTML="";document.documentElement.classList.add("s6open");if(sc.opt.visualOnly){cur.ending=true;cur.typing=false;q(".s6name").textContent="";q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";q(".s6t").textContent="";btns([["Back to the maze",()=>finish(),"back"]]);}else adv();}
 function adv(){if(!cur)return;cur.i++;if(cur.i>=cur.L.length){const sc=cur;cur=null;if(sc.opt.end){cur=sc;cur.i=sc.L.length-1;cur.ending=true;sc.opt.end();return;}
   if(queue.length)nextScene();else close();if(sc.opt.done)sc.opt.done();return;}show();}
 function show(){const ln=cur.L[cur.i],pf=q(".s6pf"),p=q(".s6p");box.dataset.line=cur.i;box.dataset.who=ln.w;box.dataset.emo=ln.e;
- pf.className="s6pf"+(ln.art?"":ln.w==="D"?" dad":" none");if(ln.art){const src="art6/"+ln.art+"-"+ln.e+".webp";if(p.getAttribute("src")!==src)p.setAttribute("src",src);p.dataset.art=ln.art;p.dataset.emo=ln.e;}else{p.removeAttribute("src");p.dataset.art="";p.dataset.emo="";}
+ const paintedCamp=cur.kind==="camp"&&/^art6\/camp\//.test(cur.opt.bg||"");
+ pf.className="s6pf"+(!paintedCamp&&ln.art?"":ln.w==="D"?" dad":" none");if(ln.art&&!paintedCamp){const src="art6/"+ln.art+"-"+ln.e+".webp";if(p.getAttribute("src")!==src)p.setAttribute("src",src);p.dataset.art=ln.art;p.dataset.emo=ln.e;}else{p.removeAttribute("src");p.dataset.art="";p.dataset.emo="";}
  pf.classList.remove("flash");void pf.offsetWidth;pf.classList.add("flash");
  q(".s6name").textContent=ln.name;q(".s6name").style.visibility=ln.name?"visible":"hidden";q(".s6more").classList.remove("on");
  const tx=q(".s6t");tx.textContent="";tx.classList.toggle("note",ln.w==="N");cur.typing=true;let k=0;const me=cur;
@@ -92,10 +99,10 @@ function endingLines(k){const s=st(),Q=!!who("Q"),Sch=!!who("S"),A=!!who("A"),w=
  else if(k==="mid"){if(Q)out=out.concat(pair("C1",s.revealed?["father already named from zone5-08 OR zone5-09"]:[]));if(Sch)out=out.concat(pair("C2",w[K.wizard]?["wizard found"]:w[K.council]?["council found"]:["default"]));if(A){if(!Q&&!Sch)out.push(["H","calm","We're alive. It's still bleeding."]);out=out.concat(pair(brunnVer()==="save"?"C3a":"C3b"));}}
  else{const f=pair("F1",s.wifeMotive?["save-his-wife unlocked: BOTH zone5-08 AND zone5-09 found, either order"]:[]);out=Q?f:[f[0]];if(Sch)out=out.concat(pair("F2",[w[K.wizard]?(w[K.council]?"council and wizard both found":"wizard found, council not found"):"council found, wizard not found"]));if(A&&brunnVer()==="save")out=out.concat(pair("F3"));}return out;}
 // ---------- scenes ----------
-const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
+const tavBg=t=>S.rpg.s5.tavernBg(t);
 function wallArt(id){return "art6/"+ROOM_ART[id][1]+".webp";}
 function showArtOnly(id){queue.push({kind:"wall",L:[],opt:{wall:wallArt(id),visualOnly:true}});if(!cur)nextScene();}
-function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(sc.need))&&(!sc.after||s.revealed));}
+function seenFirst(pool,s){return pool.find(sc=>!s.seen[sc.id]&&(!sc.need||who(sc.need))&&talkPresent(sc.lines,sc.need)&&(!sc.after||s.revealed));}
 const H={};
 H.plan=()=>{const s=st();return s?s.plan:null;};
 H.created=()=>{const s=st();if(!s)return;s.seen.opening=1;play("opening",INTRO_LINES,{bg:null});};
@@ -104,7 +111,7 @@ H.tavern=t=>{const s=st(),l=live();if(!s)return;const vk=t+":"+l.steps;if(s.visi
  const sc=seenFirst(D.tavern[t]||[],s);if(sc){s.seen[sc.id]=1;play("tavern",withMem(sc.lines),{bg:tavBg(t)});}};
 H.shop=()=>{const s=st();if(!s||!s.visit)return;s.shopN=(s.shopN|0)+1;if(s.shopN%3)return;const sc=seenFirst(D.stay[dark()?"dark":"fun"],s);
  if(sc){s.seen[sc.id]=1;play("stay",sc.lines,{bg:tavBg(+s.visit.split(":")[0])});}};
-H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fun"],s);if(sc){s.seen[sc.id]=1;play("camp",withMem(sc.lines),{bg:null});}};
+H.camp=k=>{const s=st();if(!s)return;const sc=seenFirst(D.camp[dark()?"dark":"fun"],s);if(sc){s.seen[sc.id]=1;play("camp",withMem(sc.lines),{bg:S.rpg.s5.campBg(sc)});}};
 function partyCodes(){return ["Q","S","A"].filter(c=>who(c)).join("");}
 H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!s.wallHeard||typeof s.wallHeard!=="object")s.wallHeard={};
  const pc=partyCodes(),first=!s.walls[id];if(!first&&s.wallHeard[id]==null){s.wallHeard[id]=pc;return;} // old save: assume heard with current party
@@ -197,12 +204,14 @@ H.fightStart=()=>{fightNo++;fightLine("start");};
 H.fightEnd=how=>{fightLine("end",how);};
 window.S6H=H;
 S.storyOpen=()=>!!cur;
-S.rpg.s6={play,letterReading,letterLines,brunnVer,brunnJoinVersion,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
+S.rpg.s6={talkPresent,play,letterReading,letterLines,brunnVer,brunnJoinVersion,LETTER_KEYS,st,who,explored,endingFor,memUnlocked,WALL_ART_ROOMS,PIECES:()=>PIECES.length,DAD_FROM,pieceFor,roomArt:()=>JSON.parse(JSON.stringify(ROOM_ART)),artRooms:()=>WALLS.map(r=>r.id),TOTAL_P,TOTAL_W,MEM_STEP,showEnding,bossNote,open:()=>!!cur,line:()=>cur?{i:cur.i,typing:cur.typing,kind:cur.kind,who:cur.L[cur.i]&&cur.L[cur.i].w}:null,
  finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)}),finalLock2:()=>({pz:window.PUZ.clone(FINAL_LOCK2.pz),s:window.PUZ.clone(lockState2)}),finalLock3:()=>({pz:window.PUZ.clone(FINAL_LOCK3.pz),s:window.PUZ.clone(lockState3),sel:lockSel3}),setSpeed:v=>{speed=v;},queue:()=>queue.length,H,pair,picnicLines,bedsideLines,endingLines};
 // styles (portrait only, small name tab)
 const css=document.createElement("style");css.textContent=`
 .s6d{display:none;position:fixed;inset:0;z-index:45;background:radial-gradient(ellipse at 50% 30%,#241838,#08050e 75%);color:#efe0b8;font:16px Georgia,serif;user-select:none;touch-action:none}
 .s6d.on{display:block}
+.s6d.camp-scene .s6bg{height:100%;opacity:1;mask-image:none;-webkit-mask-image:none}
+.s6d.camp-scene .s6pf{display:none}
 .s6bg{position:absolute;left:0;right:0;top:0;height:42vh;background-size:cover;background-position:center;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent);opacity:.95}
 .s6wall{display:none;position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);max-width:88vw;max-height:calc(100vh - 360px);border:2px solid #6f58b8;border-radius:6px;box-shadow:0 0 24px rgba(0,0,0,.8)}
 .s6box{position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom))}

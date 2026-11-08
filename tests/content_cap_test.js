@@ -61,6 +61,6 @@ test("old closed-cell save can walk back into slice without teleporting, then ca
 });
 test("new script loads before engine and is cached with matching engine version",()=>{
  const html=read("index.html"),c={self:{addEventListener(){}}};vm.runInNewContext(read("sw.js")+";globalThis.shell=SHELL;globalThis.version=VER;",c);
- a.ok(html.indexOf('src="content-cap.js?v=4"')<html.indexOf('src="game.js?v=16"'));a.ok(c.shell.includes("content-cap.js?v=4"));a.ok(c.shell.includes("game.js?v=16"));a.equal(c.version,"55");
+ a.ok(html.indexOf('src="content-cap.js?v=5"')<html.indexOf('src="game.js?v=17"'));a.ok(c.shell.includes("content-cap.js?v=5"));a.ok(c.shell.includes("game.js?v=17"));a.equal(c.version,"56");
  a.ok(/script-src 'self'/.test(html));
 });

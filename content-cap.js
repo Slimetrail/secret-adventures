@@ -10,7 +10,7 @@ function create(n,zoneOf,cap=DEFAULT){
  }
  // A pre-cap local save may walk out normally. Once back inside, the boundary holds.
  function allowsStep(x,y,nx,ny){return !isOpen(x,y)||isOpen(nx,ny);}
- return Object.freeze({isOpen,allowsStep});
+ return Object.freeze({isOpen,allowsStep,isZoneOpen:z=>Number.isInteger(z)&&z>=1&&z<=cap.maxZone});
 }
 root.SOTA_CONTENT_CAP=Object.freeze({DEFAULT,create});
 })(typeof window!=="undefined"?window:globalThis);

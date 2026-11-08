@@ -1,0 +1,50 @@
+"use strict";
+// t2262u/t2266u camp+tavern occupancy backgrounds. Harness copied from tavern_shop_camp_flow_test.js.
+const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const read=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
+const plain=o=>JSON.parse(JSON.stringify(o));
+const flow=read('tests/tavern_shop_camp_flow_test.js');
+const harness=eval('('+flow.slice(flow.indexOf('function harness'),flow.indexOf('\nfor(let t=0'))+')');
+const ROOT=path.join(__dirname,'..'),exists=p=>fs.existsSync(path.join(ROOT,p));
+const COMP={Q:['Mira','cat','quirky'],S:['Sorrel','elf','scholar'],A:['Brunn','dwarf','angry']};
+function setup(race='human',joined=[]){const h=harness(),l=h.r.live();const hero=h.R.newChar('Hero',race,'warrior',{str:0,sta:0,man:0},h.R.SKILLS.warrior[0].id);l.party=[plain(hero)];
+ for(const c of joined){const [n,r,role]=COMP[c];const m=plain(h.R.newChar(n,r,'warrior',{str:0,sta:0,man:0},h.R.SKILLS.warrior[0].id));m.role=role;m.name=n;l.party.push(m);}
+ l.party.forEach(c=>c.hp=h.R.maxHp(c,1));return h;}
+const bg=h=>h.ov.querySelector('.s4page').style.backgroundImage;
+test('campScreen keeps Cook Rest Return and sets a camp webp',()=>{const h=setup();h.r.s5.campScreen(0);a.deepEqual(h.ov.querySelectorAll('.s5tab').map(b=>b.textContent),['Cook','Rest','Return']);a.match(bg(h),/art6\/camp\/camp-[a-z-]+\.webp/);});
+test('hurt and not cooked -> injured',()=>{const h=setup();h.r.live().party[0].hp=1;h.r.s5.campScreen(0);a.match(bg(h),/camp-injured-human\.webp/);});
+test('after cookTry marks cooked -> eating',()=>{const h=setup();h.r.s5.campScreen(0);h.r.live().party[0].bag.push('i_bread','i_butter');h.r.s5.cookTry(['bread','butter'],'c0');h.r.s5.campScreen(0);a.match(bg(h),/camp-eating-human\.webp/);h.r.s5.cookScreen('c0');a.match(bg(h),/camp-eating-human\.webp/);});
+test('full HP, not cooked -> celebrating',()=>{const h=setup();h.r.s5.campScreen(0);a.match(bg(h),/camp-celebrating-human\.webp/);});
+test('solo party never uses arguing, even for a weapons-drawn talk',()=>{for(const race of ['human','elf','dwarf','cat']){const h=setup(race);const t={gate:'weapons',lines:[]};a.equal(h.r.s5.campMood(t),'celebrating');a.doesNotMatch(h.r.s5.campBg(t),/arguing/);}});
+test('arguing unlocked once Mira joined',()=>{const h=setup('human',['Q']);a.equal(h.r.s5.campBg({gate:'weapons',lines:[]}),'art6/camp/camp-arguing-weapons-human-cat.webp');});
+test('cat hero sits in cat seat, not center/human',()=>{const h=setup('cat');a.deepEqual(plain(h.r.s5.partySeats()),['cat']);h.r.s5.campScreen(0);a.match(bg(h),/camp-celebrating-cat\.webp/);a.doesNotMatch(bg(h),/human/);});
+test('human hero + all three uses original foursome; cat hero + all three has no second cat',()=>{let h=setup('human',['Q','S','A']);h.r.s5.campScreen(0);a.match(bg(h),/art6\/camp\/camp-celebrating\.webp/);h.r.s5.tavernScreen(0);a.match(bg(h),/art6\/tavern-1\.webp/);
+ h=setup('cat',['Q','S','A']);a.deepEqual(plain(h.r.s5.partySeats()),['dwarf','elf','cat']);});
+test('every reachable occupancy file exists',()=>{const sets=[['human'],['cat'],['elf'],['dwarf'],['human','cat'],['elf','cat'],['dwarf','cat'],['human','elf','cat'],['dwarf','elf','cat']];
+ for(const s of sets){for(const m of ['eating','injured','celebrating','arguing-weapons']){if(m==='arguing-weapons'&&['human','elf','dwarf'].includes(s.join('')))continue;a.ok(exists(`art6/camp/camp-${m}-${s.join('-')}.webp`),m+s);}
+  for(let n=1;n<=5;n++)a.ok(exists(`art6/tavern/tavern-${n}-${s.join('-')}.webp`));}});
+test('tavernScreen picks occupancy files; shop owner backgrounds unchanged',()=>{const h=setup('elf',['Q']);for(let t=0;t<4;t++){h.r.s5.tavernScreen(t);a.equal(bg(h),`url("art6/tavern/tavern-${t+1}-elf-cat.webp")`);h.r.s5.buyScreen(t);a.match(bg(h),new RegExp(`art6/shop/owner-${t+1}\\.webp`));}a.equal(h.r.s5.tavernBg(4),'art6/tavern/tavern-5-elf-cat.webp');});
+test('camp talk paths use painting bg and skip DialogueArt busts',()=>{const b1=read('batch1-talks.js'),st=read('story.js'),pd=read('package-dialogue.js');
+ a.match(b1,/context==="camp"\?Object\.assign\(\{\},opt,\{bg:S\.rpg\.s5\.campBg\(t\)\}\)/);a.match(b1,/context!=="camp"&&visual\?visual\.sceneOptions/);
+ a.match(st,/play\("camp",withMem\(sc\.lines\),\{bg:S\.rpg\.s5\.campBg\(sc\)\}\)/);a.match(pd,/sayRow\('camp',row,\{bg:S\.rpg\.s5\.campBg\(row\)\}\)/);
+ // run the real batch1 camp path with a fake DialogueArt that would attach busts
+ const {install}=require('../batch1-talks.js');const calls=[];let busts=0;global.DialogueArt={sceneOptions:(t,o)=>{busts++;return Object.assign({},o,{bg:'art-dialogue/'+t.id+'/backdrop.webp'});}};
+ const l={diff:'normal',party:[{role:'hero',race:'human',hp:100},{role:'quirky',hp:100},{role:'scholar',hp:100},{role:'angry',hp:100}]},roles={Q:'quirky',S:'scholar',A:'angry'};
+ const S={rpg:{live:()=>l,s5:{campBg:()=>'art6/camp/camp-celebrating.webp'},s6:{st:()=>({seen:{}}),who:c=>l.party.find(p=>p.role===roles[c]),play:(k,ln,o)=>calls.push(o)}}};
+ const m=install(S,{maxHp:()=>100,DIFF:{normal:{hp:1}}},{camp(){}});a.ok(m.run('camp',[{hp:100,maxHp:100}]));delete global.DialogueArt;a.match(calls[0].bg,/^art6\/camp\//);a.equal(busts,0);});
+test('derived images use shipped per-image exclusive masks and pixel-preservation audit',()=>{const result=require('node:child_process').execFileSync('python3',['-m','unittest','tests/t2262u_camp_art_tests.py','-v'],{cwd:ROOT,encoding:'utf8',stdio:'pipe'});a.equal(typeof result,'string');});
+test('sw.js SHELL lists every new image and pins match index.html',()=>{const sw=read('sw.js'),ix=read('index.html');for(const d of ['art6/camp','art6/tavern'])for(const f of fs.readdirSync(path.join(ROOT,d)))a.ok(sw.includes('"'+d+'/'+f+'"'),f);
+ for(const [name,min] of [['party',21],['story',21],['batch1-talks',4],['batch2-talks',2],['package-dialogue',5],['dialogue-art',2]]){const m=ix.match(new RegExp(name+'\\.js\\?v=(\\d+)'));a.ok(m,name);a.ok(+m[1]>=min,name);a.ok(sw.includes(name+'.js?v='+m[1]),name);}a.ok(read('party.js').includes('Please wait for update to continue.'));});
+// Real story -> sequential -> dialogue DOM coverage, not only a play() spy.
+function storyFixture(){
+ let source=flow.slice(flow.indexOf('function harness'),flow.indexOf('\nfor(let t=0'));
+ source=source.replace("set innerHTML(v){this.children=[];this._html=v;}",`set innerHTML(v){this.children=[];this._html=v;const stack=[this];for(const token of String(v).match(/<[^>]+>|[^<]+/g)||[]){if(token.startsWith('</')){if(stack.length>1)stack.pop();}else if(token.startsWith('<')){const m=token.match(/^<(\\w+)/);if(!m)continue;const child=new Element(m[1]);for(const a of token.matchAll(/([\\w-]+)="([^"]*)"/g))child.setAttribute(a[1],a[2]);stack[stack.length-1].appendChild(child);if(!/^(img|br|input|hr)$/i.test(m[1]))stack.push(child);}else stack[stack.length-1].textContent+=token;}}`);
+ source=source.replace('setAttribute(k,v){this[k]=v;}','setAttribute(k,v){this[k==="class"?"className":k]=v;}getAttribute(k){return this[k==="class"?"className":k]||null;}removeAttribute(k){delete this[k];}prepend(e){this.children.unshift(e);e.parentNode=this;}replaceChildren(...es){this.children=[];this.append(...es);}');
+ const h=eval('('+source+')')();h.c.window.PUZ=require('../puzzles.js');
+ for(const f of ['story-data.js','package-story-data.js','package-pools-data.js','story-gates.js','story.js','dialogue-art-data.js','dialogue-art.js','batch1-talks.js','batch2-talks.js','package-dialogue.js'])vm.runInContext(read(f),h.c,{filename:f});
+ h.addComp=code=>{const [n,r,role]=COMP[code],cls=r==='cat'?'rogue':r==='elf'?'mage':'warrior',c=h.R.newChar(n,r,cls,{str:0,sta:0,man:0},h.R.SKILLS[cls][0].id);c.role=role;h.r.live().party.push(c);h.r.live().party.forEach(p=>p.hp=h.R.maxHp(p,1));};return h;
+}
+test('real H.camp uses full-height camp painting with dialog in front and no s6p or da-person bust',()=>{const h=storyFixture();h.addComp('Q');h.addComp('S');let compositor=0;const original=h.c.window.DialogueArt.sceneOptions;h.c.window.DialogueArt.sceneOptions=(...args)=>{compositor++;return original(...args);};h.c.window.S6H.camp(0);const host=h.document.getElementById('s6d');a.ok(host);a.equal(host.dataset.scene,'camp');a.ok(host.classList.contains('camp-scene'));a.match(host.querySelector('.s6bg').style.backgroundImage,/art6\/camp\/camp-/);a.equal(host.querySelector('.s6p').getAttribute('src'),null);a.equal(host.querySelectorAll('.da-person').length,0);a.equal(compositor,0);a.match(read('story.js'),/\.s6d\.camp-scene \.s6bg\{height:100%/);});
+test('real after-fight continues to call sceneOptions and use A1-A6 art',()=>{const h=storyFixture();h.addComp('Q');h.addComp('S');let compositor=0;const original=h.c.window.DialogueArt.sceneOptions;h.c.window.DialogueArt.sceneOptions=(...args)=>{compositor++;return original(...args);};a.equal(h.r.s6.sequential.run('after-fight',[{hp:0,maxHp:100}]),true);a.equal(compositor,1);a.match(h.document.getElementById('s6d').querySelector('.s6bg').style.backgroundImage,/art-dialogue\/A[1-6]\/backdrop/);});
+test('cooked visit survives healing, stale lastMeal does not paint a new hub as eating, Return resets',()=>{const h=setup();h.r.s5.campScreen(0);h.r.live().party[0].bag.push('i_bread','i_butter');a.equal(h.r.s5.cookTry(['bread','butter'],'c0').dish.id,'toast');h.r.live().party[0].hp=1;a.equal(h.r.s5.campMood(),'eating');h.r.live().party[0].hp=h.R.maxHp(h.r.live().party[0],1);h.r.s5.campScreen(0);a.match(bg(h),/eating-human/);h.r.closeUI();h.r.live().story={lastMeal:'cooked'};h.r.s5.campScreen(0);a.match(bg(h),/celebrating-human/);a.equal(h.r.s5.campMood({gate:'hurt'}),'eating');});
+test('real package camp pool fallback also uses matching occupancy painting without busts',()=>{const h=storyFixture();h.addComp('Q');h.r.live().party[0].hp=1;h.r.s6.sequential.select=()=>null;h.c.window.S6H.camp(0);const host=h.document.getElementById('s6d');a.ok(host);a.match(host.querySelector('.s6bg').style.backgroundImage,/camp-injured-human-cat\.webp/);a.equal(host.querySelector('.s6p').getAttribute('src'),null);a.equal(host.querySelectorAll('.da-person').length,0);});

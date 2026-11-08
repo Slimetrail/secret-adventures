@@ -621,7 +621,7 @@ function install(S,R,H,M){
  }}
  seq.add(TALKS,seenKey,gate);
  const key=(t,l)=>t+":"+l.steps;
- const bg=t=>({bg:"art6/tavern-"+(Math.min(4,t+1))+".webp"});
+ const bg=t=>({bg:S.rpg.s5.tavernBg(t)});
  function here(){const p=S.state&&S.state();return p&&M?M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y):-1;}
  H.tavern=t=>{const s=api.st(),l=S.rpg.live();if(!s||!l)return oldTavern(t);
   const vk=key(t,l);if(s.batch2Visit&&s.batch2Visit.key===vk)return;

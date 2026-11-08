@@ -33,12 +33,22 @@ const style=document.createElement("style");style.textContent=`
  #dv.da-active #dvt{display:none}#dv.da-active #dvl{font-size:16px;min-height:3em}#dv.da-active #dvctl{margin-top:6px}#dv.da-active #dvctl button{min-height:34px;font-size:15px}
 }`;document.head.appendChild(style);
 function clear(host){if(host.classList.contains("da-active"))host.classList.remove("da-active");const stage=host.querySelector(".da-stage");if(stage)stage.remove();if(host.id==="dv")document.documentElement.classList.remove("da-sample");}
+const COMP_CODE={mira:"Q",sorrel:"S",brunn:"A"};
+function codeOf(x){if(!x)return null;x=String(x);if(/^[QSA]$/.test(x))return x;return COMP_CODE[x.toLowerCase()]||null;}
+function partyWho(){try{const S=root.SOTA,rpg=S&&S.rpg;if(!rpg||!rpg.live||!rpg.live()||!rpg.s6||!rpg.s6.who)return null;return rpg.s6.who;}catch(e){return null;}}
+function presentSides(host,l){const who=partyWho(),keep=name=>{const c=codeOf(name);return !c||!who||!!who(c);};
+ const out=[];["left","right"].forEach(side=>{if(l[side]&&keep(l[side]))out.push([side,l[side]]);});
+ const spk=l.speaker||host&&host.dataset&&host.dataset.who,sc=codeOf(spk);
+ if(sc&&keep(sc)&&!out.some(x=>codeOf(x[1])===sc)){const name=Object.keys(l.portraits||{}).find(n=>codeOf(n)===sc);
+  if(name&&l.crops&&l.crops[name]){const free=["left","right"].find(sd=>!out.some(x=>x[0]===sd));if(free)out.push([free,name]);}}
+ return out;}
 function render(host,id,index,text){const l=frame(id,index,text);if(!l){clear(host);return false;}
  let stage=host.querySelector(".da-stage");if(!stage){stage=document.createElement("div");stage.className="da-stage";stage.setAttribute("aria-hidden","true");host.prepend(stage);}
  if(!host.classList.contains("da-active"))host.classList.add("da-active");if(host.id==="dv")document.documentElement.classList.add("da-sample");
- const key=id+":"+index;if(stage.dataset.frame===key)return true;
+ // t2269u: draw only people the live party has; a present speaking companion must appear.
+ const sides=presentSides(host,l),key=id+":"+index+":"+sides.map(x=>x.join("=")).join(",");if(stage.dataset.frame===key)return true;
  stage.dataset.frame=key;stage.style.backgroundImage='url("art-dialogue/'+l.backdrop+'")';stage.replaceChildren();
- ["left","right"].forEach(side=>{const name=l[side],crop=l.crops[name],w=crop[2]-crop[0],h=crop[3]-crop[1];
+ sides.forEach(([side,name])=>{const crop=l.crops[name],w=crop[2]-crop[0],h=crop[3]-crop[1];
   const person=document.createElement("div");person.className="da-person "+side;person.dataset.character=name;person.style.setProperty("--ratio",w+" / "+h);
   const img=document.createElement("img");img.alt="";img.src="art-dialogue/"+l.portraits[name];img.style.cssText="width:"+(1024/w*100)+"%;height:"+(1536/h*100)+"%;left:"+(-crop[0]/w*100)+"%;top:"+(-crop[1]/h*100)+"%";person.appendChild(img);stage.appendChild(person);
  });

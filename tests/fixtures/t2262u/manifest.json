@@ -1,0 +1,901 @@
+{
+  "crop": [
+    0,
+    198,
+    840,
+    1457
+  ],
+  "seat_order": [
+    "dwarf",
+    "human",
+    "elf",
+    "cat"
+  ],
+  "method": "MobileSAM per-image boxes/points, manual silhouette omissions and personal weapon masks; source kept pixels protected exactly",
+  "scenes": {
+    "camp-eating": {
+      "source": "art6/camp/camp-eating.webp",
+      "size": [
+        1005,
+        1256
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/camp-eating-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/camp-eating-human-mask.png",
+        "elf": "tests/fixtures/t2262u/camp-eating-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/camp-eating-cat-mask.png"
+      }
+    },
+    "camp-injured": {
+      "source": "art6/camp/camp-injured.webp",
+      "size": [
+        841,
+        1218
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/camp-injured-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/camp-injured-human-mask.png",
+        "elf": "tests/fixtures/t2262u/camp-injured-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/camp-injured-cat-mask.png"
+      }
+    },
+    "camp-celebrating": {
+      "source": "art6/camp/camp-celebrating.webp",
+      "size": [
+        840,
+        1259
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/camp-celebrating-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/camp-celebrating-human-mask.png",
+        "elf": "tests/fixtures/t2262u/camp-celebrating-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/camp-celebrating-cat-mask.png"
+      }
+    },
+    "camp-arguing-weapons": {
+      "source": "art6/camp/camp-arguing-weapons.webp",
+      "size": [
+        870,
+        1152
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/camp-arguing-weapons-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/camp-arguing-weapons-human-mask.png",
+        "elf": "tests/fixtures/t2262u/camp-arguing-weapons-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/camp-arguing-weapons-cat-mask.png"
+      }
+    },
+    "tavern-1": {
+      "source": "art6/tavern-1.webp",
+      "size": [
+        720,
+        387
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/tavern-1-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/tavern-1-human-mask.png",
+        "elf": "tests/fixtures/t2262u/tavern-1-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/tavern-1-cat-mask.png"
+      }
+    },
+    "tavern-2": {
+      "source": "art6/tavern-2.webp",
+      "size": [
+        720,
+        387
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/tavern-2-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/tavern-2-human-mask.png",
+        "elf": "tests/fixtures/t2262u/tavern-2-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/tavern-2-cat-mask.png"
+      }
+    },
+    "tavern-3": {
+      "source": "art6/tavern-3.webp",
+      "size": [
+        720,
+        387
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/tavern-3-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/tavern-3-human-mask.png",
+        "elf": "tests/fixtures/t2262u/tavern-3-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/tavern-3-cat-mask.png"
+      }
+    },
+    "tavern-4": {
+      "source": "art6/tavern-4.webp",
+      "size": [
+        720,
+        387
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/tavern-4-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/tavern-4-human-mask.png",
+        "elf": "tests/fixtures/t2262u/tavern-4-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/tavern-4-cat-mask.png"
+      }
+    },
+    "tavern-5": {
+      "source": "art6/tavern-5.webp",
+      "size": [
+        720,
+        409
+      ],
+      "masks": {
+        "dwarf": "tests/fixtures/t2262u/tavern-5-dwarf-mask.png",
+        "human": "tests/fixtures/t2262u/tavern-5-human-mask.png",
+        "elf": "tests/fixtures/t2262u/tavern-5-elf-mask.png",
+        "cat": "tests/fixtures/t2262u/tavern-5-cat-mask.png"
+      }
+    }
+  },
+  "variants": [
+    {
+      "path": "art6/camp/camp-eating-human.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "human"
+      ],
+      "sha256": "4b040f7d0130e0e4bf1e674448c8b7b8f40df443c8bb117aa0e5f552060b407e",
+      "bytes": 1215526
+    },
+    {
+      "path": "art6/camp/camp-eating-cat.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "5682b40dabc00be1684bbdd7abd4faff7c671a7544613b8babb263ba87f13516",
+      "bytes": 1211102
+    },
+    {
+      "path": "art6/camp/camp-eating-elf.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "8a97ee2cee838138bd5d0ea3d3772025c3fe9763a7ecbb7bb1538c8a6621fbdd",
+      "bytes": 1207384
+    },
+    {
+      "path": "art6/camp/camp-eating-dwarf.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "c03da1042d06038096973a81c985ca6912c39f7a425f25fbd6bb2706dec08cb6",
+      "bytes": 1225748
+    },
+    {
+      "path": "art6/camp/camp-eating-human-cat.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "7cbccd3af461b1e402b9b1088b7397760af35049dc9213992260a4f78d25e32a",
+      "bytes": 1235550
+    },
+    {
+      "path": "art6/camp/camp-eating-elf-cat.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "43372d8f9803ae37d767f5329aa3734c49dfdc9a45a6aa6c0c46bc3bf1602bea",
+      "bytes": 1226584
+    },
+    {
+      "path": "art6/camp/camp-eating-dwarf-cat.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "c5deb44d21ad99749ca1a291a8520ed9c8d9f63ee42570c6c0db4349f122e872",
+      "bytes": 1247102
+    },
+    {
+      "path": "art6/camp/camp-eating-human-elf-cat.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "5c471455fdc4629221a28413c5d2bb6b8e8f416b3c33a3dea902e23b4303d35e",
+      "bytes": 1249508
+    },
+    {
+      "path": "art6/camp/camp-eating-dwarf-elf-cat.webp",
+      "scene": "camp-eating",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "06ab4c84b86d063187aaccb837ffb7c6d37acca34ee76700152af8f938a01e87",
+      "bytes": 1262350
+    },
+    {
+      "path": "art6/camp/camp-injured-human.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "human"
+      ],
+      "sha256": "8d1cedeed5044ad97e9cb6f8c80a3580bcbce59f2208969c369571680aaa1599",
+      "bytes": 1190322
+    },
+    {
+      "path": "art6/camp/camp-injured-cat.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "a7bcfaf2fc7a8085f21514ea84f5fc46b8d128b9279c930a87da7e2fe45fb59c",
+      "bytes": 1194464
+    },
+    {
+      "path": "art6/camp/camp-injured-elf.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "103509b6dfd0b4c7136c4fad6b2e4589260d5a5d519771c94b6c74e6db805061",
+      "bytes": 1185588
+    },
+    {
+      "path": "art6/camp/camp-injured-dwarf.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "e1b6304212d2f769611c754f33120f61c0a839ad231a6634c43569f56710d935",
+      "bytes": 1204386
+    },
+    {
+      "path": "art6/camp/camp-injured-human-cat.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "cfb438d6c8cd611292519ea79d5c2c870d69dce90a78a793945ab534f84e2b31",
+      "bytes": 1211036
+    },
+    {
+      "path": "art6/camp/camp-injured-elf-cat.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "fbdff6973414630118bdee5ba3a7aea5af399e6313f336bc4823433ee828e767",
+      "bytes": 1204002
+    },
+    {
+      "path": "art6/camp/camp-injured-dwarf-cat.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "83201e343c67901d9aaef1a783b41aa2c13e7a110e5ad3425bd9b3f5d5caa07c",
+      "bytes": 1226222
+    },
+    {
+      "path": "art6/camp/camp-injured-human-elf-cat.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "adf77d34a926b2a4f3605e60786055a42f5a6adc6509fac053c54ce72a445355",
+      "bytes": 1219282
+    },
+    {
+      "path": "art6/camp/camp-injured-dwarf-elf-cat.webp",
+      "scene": "camp-injured",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "41dfc651f5a64fa5651e1e32cb18aee2b9dc668b2c0b4d8ddeb2c4a195306be8",
+      "bytes": 1236184
+    },
+    {
+      "path": "art6/camp/camp-arguing-weapons-cat.webp",
+      "scene": "camp-arguing-weapons",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "5f94fc075639cb82ec824a0c13f35fc09ae3aa1758595b24351cf89bb02d2173",
+      "bytes": 1104952
+    },
+    {
+      "path": "art6/camp/camp-arguing-weapons-human-cat.webp",
+      "scene": "camp-arguing-weapons",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "a7cc8057fc8fe4f6fdc66a7fa2856069afcb7c8a4fc6040bc45b28a46cc1106e",
+      "bytes": 1125938
+    },
+    {
+      "path": "art6/camp/camp-arguing-weapons-elf-cat.webp",
+      "scene": "camp-arguing-weapons",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "ada75e3560911456370d694e8b04a8a95275873aba53a4cec2ee9b7ab2e2a695",
+      "bytes": 1118124
+    },
+    {
+      "path": "art6/camp/camp-arguing-weapons-dwarf-cat.webp",
+      "scene": "camp-arguing-weapons",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "15a292a22d68c526f08d31054c168fe8525f56bb536d3d878fb8e187caa536d4",
+      "bytes": 1139260
+    },
+    {
+      "path": "art6/camp/camp-arguing-weapons-human-elf-cat.webp",
+      "scene": "camp-arguing-weapons",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "011b45a61e4b09fdc57bc1f0a043a0acda26372343109baaa4f971106e14c33c",
+      "bytes": 1134920
+    },
+    {
+      "path": "art6/camp/camp-arguing-weapons-dwarf-elf-cat.webp",
+      "scene": "camp-arguing-weapons",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "5a4492ad3c729917bac642058510a89cc51d820434043cc324581bab1cd3569e",
+      "bytes": 1151792
+    },
+    {
+      "path": "art6/tavern/tavern-1-human.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "human"
+      ],
+      "sha256": "56faf22b49ba31ae7104bdf744aea8ef35edd036c42295937533fb9406082a25",
+      "bytes": 294498
+    },
+    {
+      "path": "art6/tavern/tavern-1-cat.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "633ee91acac236dc6b1277604c0f8abffebbf81ccefc90f6673633b099674ad7",
+      "bytes": 295832
+    },
+    {
+      "path": "art6/tavern/tavern-1-elf.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "a83426e7b8119738c65b384aa2bfe4d29de6ded6d906b2b3d4e93056922ae3e4",
+      "bytes": 294176
+    },
+    {
+      "path": "art6/tavern/tavern-1-dwarf.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "fb7bd62d27e4a30f62bb2941c2f2344a96e3bb3f105abb380da39958ca960787",
+      "bytes": 296276
+    },
+    {
+      "path": "art6/tavern/tavern-1-human-cat.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "e1563db02707d95b86b56f84b06852dc06bb074fcb68e33408c15865a062de14",
+      "bytes": 301822
+    },
+    {
+      "path": "art6/tavern/tavern-1-elf-cat.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "4c608bcca626619d1096ddffed22de98aec4c9ddd823ec9f08b0d052f9a73b38",
+      "bytes": 300520
+    },
+    {
+      "path": "art6/tavern/tavern-1-dwarf-cat.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "6a9415591b48cc0294d0403359aef8153e34cd264c073b68354ca857316a3dac",
+      "bytes": 303382
+    },
+    {
+      "path": "art6/tavern/tavern-1-human-elf-cat.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "b008cb0b3c02640356b64eac1fd60c19bf3f9b6fedbfd588b509e5abff06a755",
+      "bytes": 306346
+    },
+    {
+      "path": "art6/tavern/tavern-1-dwarf-elf-cat.webp",
+      "scene": "tavern-1",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "dc39f58dcc6e15c914fbd3e84116b688f6f20b0697d7d317ee11159f81917d35",
+      "bytes": 307798
+    },
+    {
+      "path": "art6/tavern/tavern-2-human.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "human"
+      ],
+      "sha256": "b75030c6d0159f8fb39c20376429a27c7ff21ffdd913dd68eccf4fca895075c8",
+      "bytes": 285022
+    },
+    {
+      "path": "art6/tavern/tavern-2-cat.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "2009ab08906027acb3e445e7362ff8b8f1c4abe9104015281c91147bf3935819",
+      "bytes": 282146
+    },
+    {
+      "path": "art6/tavern/tavern-2-elf.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "71b4ae1cb473947be829f09e8f65f5b5fabcb2c1464d370c0a16c4d91266a8d7",
+      "bytes": 284118
+    },
+    {
+      "path": "art6/tavern/tavern-2-dwarf.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "014dfe60d40b29458094988914860f826e0cd1d210424ddc840055b05abfef9d",
+      "bytes": 284180
+    },
+    {
+      "path": "art6/tavern/tavern-2-human-cat.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "8c5de91f7934aeca0fa88f5faa51a2a77b70c7e5acd6a6a59dd91844b257ac5f",
+      "bytes": 290948
+    },
+    {
+      "path": "art6/tavern/tavern-2-elf-cat.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "1789648df5d6ac15083190a3b41ec16895b80f95b0597c8e6809edddc6209b96",
+      "bytes": 289826
+    },
+    {
+      "path": "art6/tavern/tavern-2-dwarf-cat.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "db2c624b29c59a62a2102b329f660daaa77230ce1a9f51e16721ab1d355dcdcc",
+      "bytes": 290116
+    },
+    {
+      "path": "art6/tavern/tavern-2-human-elf-cat.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "7982a799697d2f4a66c92a8072bc64980c2f53234a96d78aa2fed96caae35fa1",
+      "bytes": 297948
+    },
+    {
+      "path": "art6/tavern/tavern-2-dwarf-elf-cat.webp",
+      "scene": "tavern-2",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "0e94778343f8dd69297af4d490ad7a295644c53425df9ee95dfd1d4b7585193e",
+      "bytes": 297536
+    },
+    {
+      "path": "art6/tavern/tavern-3-human.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "human"
+      ],
+      "sha256": "421eab3dd0b9e2d85e2dbce6a6bbc78ddce7962fa8f7ee62ceba35f88de028dc",
+      "bytes": 291848
+    },
+    {
+      "path": "art6/tavern/tavern-3-cat.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "920959cc4fd9cc5d04716d730961c7a951eb5f996f860f98a06347a7c1e8d8ac",
+      "bytes": 291318
+    },
+    {
+      "path": "art6/tavern/tavern-3-elf.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "14de9f21912e43898da299388e5fc7f956be5ecd7f9f437f815e945d40deed6f",
+      "bytes": 295030
+    },
+    {
+      "path": "art6/tavern/tavern-3-dwarf.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "382ad6bf35f1f27cd48b076fdd6c96ae010d61a308139d8fef5f8b5bcdd68650",
+      "bytes": 288338
+    },
+    {
+      "path": "art6/tavern/tavern-3-human-cat.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "f6c0679e9213460708729c6a3ab8474d2f16f2d73875705134bae7fb709abc4c",
+      "bytes": 295532
+    },
+    {
+      "path": "art6/tavern/tavern-3-elf-cat.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "2d78245aeaf64e4d3b5508a042b547be1ce27355e9e8a7fbb8510ce176123cf5",
+      "bytes": 298114
+    },
+    {
+      "path": "art6/tavern/tavern-3-dwarf-cat.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "06abde960aac80cce50125b8b70c290001a9b607f0e804cbe45286ffb169f620",
+      "bytes": 291762
+    },
+    {
+      "path": "art6/tavern/tavern-3-human-elf-cat.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "240d847b73356874ad09964d48309f834ba4382b1f7c4b39b26a2c29326f1d1c",
+      "bytes": 300964
+    },
+    {
+      "path": "art6/tavern/tavern-3-dwarf-elf-cat.webp",
+      "scene": "tavern-3",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "069d4f59b916f74a88a663bbf48678de2ab9fd0a9bd9da5aef943529a2a4ea3e",
+      "bytes": 297026
+    },
+    {
+      "path": "art6/tavern/tavern-4-human.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "human"
+      ],
+      "sha256": "eaeeb95711b7890d3d2ed1d6e81d66525b0a8e6dc6618fd515bc282e7e6c5582",
+      "bytes": 287066
+    },
+    {
+      "path": "art6/tavern/tavern-4-cat.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "bf8a7b78d187c50ea5ca9471bba91f11e6be67f6338e48f3f20f78f60237a75d",
+      "bytes": 279992
+    },
+    {
+      "path": "art6/tavern/tavern-4-elf.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "d50550c0077a790966dd724a6aba2e21872a928a43398f08ed1acb1996591f11",
+      "bytes": 287586
+    },
+    {
+      "path": "art6/tavern/tavern-4-dwarf.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "df22cd99d8ea7f08890846ede4c015a27dc482469f04358ecb21a78454d18b70",
+      "bytes": 283912
+    },
+    {
+      "path": "art6/tavern/tavern-4-human-cat.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "2545a8b4ba72cb4cdb7da9bc3a641d3c75b7243624c4849935c69e138e880ffd",
+      "bytes": 289580
+    },
+    {
+      "path": "art6/tavern/tavern-4-elf-cat.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "3ff77ee7861325999fb1cf2c979ab64fda7e70f2a48a61374bf502cdd28c9317",
+      "bytes": 289420
+    },
+    {
+      "path": "art6/tavern/tavern-4-dwarf-cat.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "b8e6cc7c9162b412ea53548459cbe3276e42a4ccfc27654322b35af0122ac44d",
+      "bytes": 286482
+    },
+    {
+      "path": "art6/tavern/tavern-4-human-elf-cat.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "1633652d3d852a0672bd48521805af899be1491e00dbc68acce8eaa2fd96a1ff",
+      "bytes": 298742
+    },
+    {
+      "path": "art6/tavern/tavern-4-dwarf-elf-cat.webp",
+      "scene": "tavern-4",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "5902f512db8f3fd576147ede4838615069db9265f5f41e76c9961f8791396fee",
+      "bytes": 295630
+    },
+    {
+      "path": "art6/tavern/tavern-5-human.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "human"
+      ],
+      "sha256": "5072c6c32586e6ad172deac9485f845278b7098bb8427a3297b64a5c8f3ad766",
+      "bytes": 303916
+    },
+    {
+      "path": "art6/tavern/tavern-5-cat.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "105ffb686302db7b8c6c347dd503a6db7a8f7be56ec468ef3d2ad023fd41445a",
+      "bytes": 300036
+    },
+    {
+      "path": "art6/tavern/tavern-5-elf.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "a06075d0fba2a4247664e9af7c44d5e623e4fac9e45b1310dda436d78293bc99",
+      "bytes": 301642
+    },
+    {
+      "path": "art6/tavern/tavern-5-dwarf.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "2603b000357687a7a88b264d72fb870cc67ca205637437d02051629eace3b82c",
+      "bytes": 300992
+    },
+    {
+      "path": "art6/tavern/tavern-5-human-cat.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "500fb641be05ce2cefc1daaafa8731632e52164201212b467efa2c50dd4662b4",
+      "bytes": 307124
+    },
+    {
+      "path": "art6/tavern/tavern-5-elf-cat.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "0ce6e9da5fd0619e978bc155a4dad22f16a868ff8a734193d577a22e26166d7c",
+      "bytes": 304200
+    },
+    {
+      "path": "art6/tavern/tavern-5-dwarf-cat.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "d9fbbf7238ea8ae70ab86898093b98d143dd3d127c017245875e7d8068082f6c",
+      "bytes": 303716
+    },
+    {
+      "path": "art6/tavern/tavern-5-human-elf-cat.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "07e4c6b746563d79b38162f1b140fb4a4f120fb95cbe56123831924a30b124b1",
+      "bytes": 310316
+    },
+    {
+      "path": "art6/tavern/tavern-5-dwarf-elf-cat.webp",
+      "scene": "tavern-5",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "5190f83581fb01f9caf5cde9c869a3ce42e9c3fb2cb7e86914a9d4455d8a70b4",
+      "bytes": 307234
+    },
+    {
+      "path": "art6/camp/camp-celebrating-human.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "human"
+      ],
+      "sha256": "f1ad6f58d579563edcabbaa8641f44902dc489635328f9f871d58e96ae16889e",
+      "bytes": 1253312
+    },
+    {
+      "path": "art6/camp/camp-celebrating-cat.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "cat"
+      ],
+      "sha256": "79339bc0974e77d3bf94635837f55e5d6dc6e24660a11dc0cb3ccbc81dff1100",
+      "bytes": 1250714
+    },
+    {
+      "path": "art6/camp/camp-celebrating-elf.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "elf"
+      ],
+      "sha256": "e71b77082cbd46092ca86baac2be5914867738c66dedccc82105253c3c99e372",
+      "bytes": 1250700
+    },
+    {
+      "path": "art6/camp/camp-celebrating-dwarf.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "dwarf"
+      ],
+      "sha256": "8f90ec446fe501836bbe10963cccd02bb07b81537deeeffbab099820193d3d8a",
+      "bytes": 1255848
+    },
+    {
+      "path": "art6/camp/camp-celebrating-human-cat.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "human",
+        "cat"
+      ],
+      "sha256": "e548137e9c25c4e785986d7f7578298c314568b8fc2deb787a9cca3dd7d01e7b",
+      "bytes": 1266116
+    },
+    {
+      "path": "art6/camp/camp-celebrating-elf-cat.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "elf",
+        "cat"
+      ],
+      "sha256": "655d7cf181ddb70caec59f2810732872f39429085f0f00d69dcce632337107f1",
+      "bytes": 1260104
+    },
+    {
+      "path": "art6/camp/camp-celebrating-dwarf-cat.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "dwarf",
+        "cat"
+      ],
+      "sha256": "99539a2e390d83f50a5ce8420da999f71515530ae8fdd5ed1173cef1012c698d",
+      "bytes": 1268040
+    },
+    {
+      "path": "art6/camp/camp-celebrating-human-elf-cat.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "human",
+        "elf",
+        "cat"
+      ],
+      "sha256": "58272047f6f7d718ffbf21f4aef1a28786bdb05eee3209343447e1fc8d78faab",
+      "bytes": 1272726
+    },
+    {
+      "path": "art6/camp/camp-celebrating-dwarf-elf-cat.webp",
+      "scene": "camp-celebrating",
+      "seats": [
+        "dwarf",
+        "elf",
+        "cat"
+      ],
+      "sha256": "8da1762293c5fe484866644bc49e6f10fd1484a4d4e1f24f679de183e96c12e0",
+      "bytes": 1277744
+    }
+  ]
+}

@@ -14,7 +14,7 @@ def page(c,pre=None):
   pg=c.new_page();pg.on('console',lambda m:ERRS.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.on('request',lambda r:REQS.append(r.url))
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('localStorage.clear()')
   if pre:pg.evaluate('p=>{for(const k in p)localStorage.setItem(k,p[k])}',pre)
-  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)');return pg
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)');past_title(pg);return pg
 def tap(pg,sel):
   # fix round 1: fight commands and party actions now sit in a branch menu opened by tapping a name
   if pg.locator(sel).count()==0:
@@ -30,6 +30,16 @@ def noslide(pg):
     if not pg.evaluate('!!document.querySelector("#s4br .sliding")'):return
     pg.wait_for_timeout(25)
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
+def past_title(pg):
+  """t2103u: boot now shows the title-only menu; a short tap on the wall opens creation (or, with a save, a long-press continues)"""
+  try:pg.wait_for_function('window.SOTA&&SOTA.intro',timeout=3000)
+  except Exception:return
+  if not ev(pg,'SOTA.intro.titleOpen()'):return
+  has=ev(pg,'!!localStorage.getItem("sota.party")')
+  if has:pg.mouse.move(195,420);pg.mouse.down();pg.wait_for_timeout(900);pg.mouse.up()
+  else:pg.touchscreen.tap(195,420)
+  pg.wait_for_timeout(150)
+  if ev(pg,'SOTA.intro.titleOpen()'):ev(pg,'SOTA.intro.longPress()' if has else 'SOTA.intro.shortTap()')
 def create(pg,race='human',cls='warrior',inc=('str','str','str'),skill=None,diff='normal',name='Jer'):
   if ev(pg,'SOTA.rpg.ui()')!='create':tap(pg,'#partyb')
   check(ev(pg,'SOTA.rpg.ui()')=='create','creation did not open');tap(pg,f'[data-race={race}]');tap(pg,f'[data-cls={cls}]');pg.fill('#ccname',name)

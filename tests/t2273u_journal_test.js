@@ -1,0 +1,12 @@
+'use strict';
+const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const src=fs.readFileSync('intro.js','utf8');
+function harness(pages,missing=''){
+ const e=(tag,c='',text='')=>({tag,className:c,textContent:text,dataset:{},children:[],appendChild(n){this.children.push(n);return n;}});
+ const s={walls:{},seen:{},journalSplit:{pages}},ctx={el:e,s6:()=>s,S:{rpg:{live:()=>({steps:0})}},TX:{journal:{}},zonesFound:()=>({}),has:p=>p!==missing,A:p=>'art-intro/'+p,jTab:'journal',window:{}};
+ vm.createContext(ctx);vm.runInContext(src.slice(src.indexOf('function keyMoments('),src.indexOf('// mood lookup'))+src.slice(src.indexOf('const JOURNAL_MONSTERS='),src.indexOf('function go('))+';this.api={keyMoments,page};',ctx);const pg=e('div');ctx.api.page(pg,{});return {pg,api:ctx.api};
+}
+const all=(n,tag)=>[...(n.tag===tag?[n]:[]),...n.children.flatMap(c=>all(c,tag))];
+for(const z of [1,2])test('cap:'+z+' renders seven existing sketches and exact handwritten text',()=>{const text='existing handwritten caption\nverbatim';const h=harness([{id:'page',kind:'monster-drawings',key:'cap:'+z,text}]);const imgs=all(h.pg,'img');a.equal(imgs.length,7);imgs.forEach(i=>a.match(i.src,new RegExp('^art-intro/journal/monsters/z'+z+'-.*\\.webp$')));a.equal(h.api.keyMoments()[0][1],text);a.equal(h.pg.children[1].children[0].textContent,text);a.equal(h.api.keyMoments()[0][2],'monster-drawings');a.equal(h.api.keyMoments()[0][3],'cap:'+z);});
+test('held zones, wrong page kind and missing art remain text only',()=>{for(const [kind,key] of [['monster-drawings','cap:3'],['monster-drawings','cap:4'],['monster-drawings','cap:5'],['other','cap:1']])a.equal(all(harness([{kind,key,text:'unchanged'}]).pg,'img').length,0);a.equal(all(harness([{kind:'monster-drawings',key:'cap:1',text:'unchanged'}],'journal/monsters/z1-rat.webp').pg,'img').length,6);});
+test('both offline manifests list exactly fourteen approved paths and script pins match',()=>{const c={window:{},self:{addEventListener(){}}};vm.runInNewContext(fs.readFileSync('intro-art-data.js','utf8'),c);vm.runInNewContext(fs.readFileSync('sw.js','utf8')+';this.shell=SHELL;',c);const paths=c.window.INTRO_ART.filter(x=>x.startsWith('journal/monsters/'));a.equal(paths.length,14);paths.forEach(p=>a.ok(c.shell.includes('art-intro/'+p)));for(const f of ['intro.js','intro-art-data.js','story.js','batch1-talks.js','dialogue-art.js']){const pin=fs.readFileSync('index.html','utf8').match(new RegExp(f.replaceAll('.','\\.')+'\\?v=\\d+'))[0];a.ok(c.shell.includes(pin));}});

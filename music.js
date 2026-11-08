@@ -8,17 +8,17 @@ const S=window.SOTA;if(!S||!S.rpg)return;
 const CUES={title_intro:[.5,1],sick_father:[.5,1],camping:[.45,1],art_room:[.5,1],tavern:[.5,1],fighting:[.55,1],victory:[.65,0],menu:[.4,1],
  final_boss:[.6,1],death:[.5,0],decision_pulse:[.4,1],sacrifice:[.5,0],partial_fix:[.5,0],true_ending:[.55,0],credits:[.45,1],maze_zone1:[.4,1],maze_zone2:[.4,1],maze_zone3:[.4,1],maze_zone4:[.4,1],maze_zone5:[.4,1]};
 const ENDING={low:"sacrifice",mid:"partial_fix",high:"true_ending"}; // The Shattered Crystal / The Price of Repair / Home Again
-const A={};let now=null,muted=false,lastFight=null,deathDone=false,vicDone=false;
+const A={};let now=null,muted=false,lastFight=null,deathDone=false,vicDone=false,gestured=false;
 function au(n){if(!A[n]){const a=new Audio("music/"+n+".mp3");a.preload="auto";a.loop=!!CUES[n][1];a.dataset.cue=n;a.addEventListener("ended",()=>{a._done=true;});A[n]=a;}return A[n];}
-function fade(a,to,ms,then){clearInterval(a._f);const from=a.volume,t0=performance.now();if(ms<=0){a.volume=to;if(then)then();return;}
- a._f=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);a.volume=Math.max(0,Math.min(1,from+(to-from)*k));if(k>=1){clearInterval(a._f);if(then)then();}},40);}
+function fade(a,to,ms,then){clearInterval(a._f);const from=a.volume,t0=performance.now();if(ms<=0){a.volume=muted?0:to;if(then)then();return;}
+ a._f=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);a.volume=muted?0:Math.max(0,Math.min(1,from+(to-from)*k));if(k>=1){clearInterval(a._f);if(then)then();}},40);}
 function stop(a,ms){if(!a)return;fade(a,0,ms,()=>{a.pause();try{a.currentTime=0;}catch(e){}});}
-function start(a){a._done=false;a._want=true;const p=a.play();if(p&&p.catch)p.then(()=>{a._ok=true;},()=>{a._ok=false;});else a._ok=true;}
+function start(a){if(!gestured)return;a._done=false;a._want=true;const p=a.play();if(p&&p.catch)p.then(()=>{a._ok=true;},()=>{a._ok=false;});else a._ok=true;}
 // cut: ms for the old cue to go away (0 = hard cut). fadeIn: ms for the new cue to come up.
 function go(n,cut,fadeIn){if(now===n)return;const old=now?A[now]:null;now=n;if(old){old._want=false;stop(old,cut);}if(!n)return;
  const a=au(n);clearInterval(a._f);try{a.currentTime=0;}catch(e){}a.volume=fadeIn>0?0:CUES[n][0]*(muted?0:1);start(a);if(fadeIn>0)fade(a,CUES[n][0],fadeIn);}
 // after a tap: retry a cue the browser refused to start (Android first tap)
-function retry(){if(!now)return;const a=A[now];if(a&&a._want&&!a._done&&(a.paused||!a._ok))start(a);}
+function retry(){if(!gestured||!now)return;const a=A[now];if(a&&a._want&&!a._done&&(a.paused||!a._ok))start(a);}
 ["pointerdown","touchend","keydown","click"].forEach(t=>window.addEventListener(t,retry,true));
 function storyKind(){try{const l=S.rpg.s6&&S.rpg.s6.line();return l?l.kind:null;}catch(e){return null;}}
 function want(){
@@ -31,6 +31,8 @@ function want(){
   if(F.over==="ran")return [maze(),700,0];
   return [boss?"final_boss":"fighting",300,0];}
  lastFight=null;
+ if(S.intro&&S.intro.titleOpen())return ["title_intro",1500,1500];   // t2103u title-only menu
+ if(S.intro&&S.intro.caveOpen())return ["sick_father",0,0];          // t2103u cave card keeps the opening cue, then dissolves into the maze
  const k=storyKind();
  if(k){if(k==="opening")return ["sick_father",1500,800];
   if(k==="camp")return ["camping",2500,2500]; // full fade into warmth
@@ -47,8 +49,10 @@ function want(){
  if(ui==="party"||ui==="equip"||ui==="skill"||ui==="stats"||ui==="cookbook"||ui==="treasure")return ["menu",150,600];
  // plain maze: the current zone loop. Tavern exit thins over ~2 bars while the zone pulse snaps back; sick father dissolves into it.
  return [maze(),now==="tavern"?2400:now==="sick_father"?3000:1500,now==="tavern"?0:now==="sick_father"?3000:1500];}
-function maze(){let z=1;try{z=S.state().zone||1;}catch(e){}return "maze_zone"+Math.max(1,Math.min(5,z));}
-function tick(){let w;try{w=want();}catch(e){return;}if(!S.rpg.live()&&!w[0]&&!S.rpg.ui())w=[null,1500];if((w[0]||null)!==now)go(w[0]||null,w[1]||0,w[2]||0);}
+function maze(){let z=1;try{z=S.state().zone||1;}catch(e){}z=Math.max(1,Math.min(5,+z||1));try{const cap=S.contentCap;if(cap&&typeof cap.isZoneOpen==="function"){while(z>1&&!cap.isZoneOpen(z))z--;}}catch(e){}return "maze_zone"+z;}
+function tick(){if(!gestured)return;let w;try{w=want();}catch(e){return;}if(!S.rpg.live()&&!w[0]&&!S.rpg.ui())w=[null,1500];if((w[0]||null)!==now)go(w[0]||null,w[1]||0,w[2]||0);}
 setInterval(tick,200);
-S.music={now:()=>now,cues:()=>Object.keys(CUES),playing:()=>!!(now&&A[now]&&!A[now].paused),setMuted:v=>{muted=!!v;for(const n in A)A[n].volume=muted?0:(n===now?CUES[n][0]:0);},tick};
+function armPlay(){if(gestured)return;gestured=true;tick();}
+["pointerup","click"].forEach(t=>window.addEventListener(t,armPlay,true));
+S.music={isMuted:()=>muted,now:()=>now,cues:()=>Object.keys(CUES),playing:()=>!!(now&&A[now]&&!A[now].paused),setMuted:v=>{muted=!!v;for(const n in A)A[n].volume=muted?0:(n===now?CUES[n][0]:0);},tick,maze};
 })();

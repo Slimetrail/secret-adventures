@@ -1,3 +1,4 @@
+require('./t2103u_unpatch.js');
 const a=require('assert'),fs=require('fs'),cp=require('child_process'),crypto=require('crypto'),vm=require('vm');
 const D=require('../companion-display.js');
 a.equal(D.rewrite('Hero',null),'Hero');
