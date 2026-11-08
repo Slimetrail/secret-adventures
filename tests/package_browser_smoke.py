@@ -20,7 +20,7 @@ with sync_playwright() as p:
    if pg.locator('#s6d .s6btns button').count():return
    pg.locator('#s6d .s6t').dispatch_event('pointerdown')
   raise AssertionError('drain limit')
- pg.evaluate('S6H.created()');pg.wait_for_timeout(20)
+ pg.evaluate('S6H.created()');pg.wait_for_timeout(500)
  check(pg.locator('#s6d .s6t').inner_text().startswith("Sit down, you're wearing a path"),'approved intro rendered');drain();pg.evaluate('SOTA.intro.hideCave()')
  pg.evaluate('S6H.ownerVisit(0)');pg.wait_for_timeout(10)
  check(pg.locator('#s6d .s6name').inner_text()=='Brannoc','keeper proper name rendered');drain()

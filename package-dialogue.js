@@ -4,6 +4,8 @@ function install(S,R,H,M){const api=S.rpg.s6,pools=root.PACKAGE_POOLS,oldCamp=H.
 const code={Quirky:'Q',Scholar:'S',Angry:'A',Any:'H'},rand=()=>5+Math.floor(Math.random()*6);
 const state=()=>api.st(),live=()=>S.rpg.live(),present=r=>code[r.speaker]==='H'||api.who(code[r.speaker]);
 function gate(row,ev={}){const s=state(),l=live(),c=row.condition;if(!s||!l||!present(row))return false;
+ if(row===pools.camp.find(r=>r.id==='7'))return false; // third favored-meal count is not observed yet
+ if(row===pools['wall-art'].find(r=>r.id==='1'))return ev.zone===1;
  if(c==='None')return true;if(c==='Beat-up')return l.party.some(p=>p.hp<=R.maxHp(p,R.DIFF[l.diff].hp)*.25);
  if(c==='After dad reveal')return !!s.revealed;if(c==='Rations only'||c==='Rations only or not a group meal')return s.lastMeal==='ration';if(c==='Good food cooked')return s.lastMeal==='cooked';
  if(c==='save-the-world join'||c==='save-the-world join + already joined')return api.brunnVer()==='save'&&!!api.who('A');if(c==='team-died join')return api.brunnVer()==='died'&&!!api.who('A');
