@@ -6,6 +6,7 @@ const SAVE_KEY="sota.stage1.save";
 const DIRS=[[0,-1],[1,0],[0,1],[-1,0]],BIT=[1,2,4,8],FN=["N","E","S","W"];
 const mask=new Uint8Array(N*N),zoneOf=new Uint8Array(N*N);
 for(let i=0;i<N*N;i++){mask[i]=parseInt(M.mask[i],16);zoneOf[i]=+M.zone[i];}
+const contentCap=window.SOTA_CONTENT_CAP.create(N,zoneOf);
 // block grid: cells at odd coords, walls between
 const solid=new Uint8Array(G*G).fill(1),bzone=new Uint8Array(G*G);
 for(let y=0;y<N;y++)for(let x=0;x<N;x++){const m=mask[y*N+x],bx=2*x+1,by=2*y+1;solid[by*G+bx]=0;if(m&2)solid[by*G+bx+1]=0;if(m&4)solid[(by+1)*G+bx]=0;}
@@ -63,9 +64,13 @@ function startAnim(dur){anim.fx=vis.x;anim.fy=vis.y;anim.fa=vis.a;anim.tx=st.x;a
  let d=st.f*Math.PI/2-vis.a;d=((d%(2*Math.PI))+3*Math.PI)%(2*Math.PI)-Math.PI;anim.ta=vis.a+d;anim.t0=performance.now();anim.dur=dur;anim.on=animOn;
  if(!animOn){vis.x=st.x;vis.y=st.y;vis.a=anim.ta;}}
 function blocked(){return !!(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen())||(SOTA.uiOpen&&SOTA.uiOpen())||(SOTA.storyOpen&&SOTA.storyOpen())||panelOn));}
+function contentCapToast(){const d=document.getElementById("s4toast");
+ d.textContent="More of the maze opens after you check for an update.";d.classList.add("on");
+ clearTimeout(contentCapToast.h);contentCapToast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 function act(cmd){if(blocked())return; // logical state changes at once; the animation only follows it, so no press is ever lost
  if(cmd==="fwd"||cmd==="back"){const d=cmd==="fwd"?st.f:(st.f+2)%4;
   if(canMove(st.x,st.y,d)){const ti=(st.y+DIRS[d][1])*N+st.x+DIRS[d][0],rid=roomAt[ti];
+   if(!contentCap.allowsStep(st.x,st.y,st.x+DIRS[d][0],st.y+DIRS[d][1])){bump=performance.now();contentCapToast();updHud();return;}
    if(locked(rid)){bump=performance.now();if(window.SOTA&&SOTA.openPuzzle)SOTA.openPuzzle(rid,cmd);updHud();return;}
    st.x+=DIRS[d][0];st.y+=DIRS[d][1];stepped();save();startAnim(150);if(rid>=0&&!clearedR[rid])showPanel(rid);if(window.SOTA&&SOTA.afterStep)SOTA.afterStep(rid);}else bump=performance.now();}
  else if(cmd==="left"){st.f=(st.f+3)%4;save();startAnim(160);}
