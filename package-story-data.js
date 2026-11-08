@@ -3627,7 +3627,7 @@
     [
      "H",
      "calm",
-     "My father must have hoped the ritual would save her. That love is real, and I'm frightened of what it meant."
+     "He could love her that much. I keep returning to that, as though it ought to make being his son less frightening."
     ]
    ]
   },
@@ -3652,7 +3652,7 @@
     [
      "H",
      "calm",
-     "He was trying to save his wife with the ritual. I thought I knew what loving him asked of me."
+     "Loving him used to be easy. Seeing how tender he could be has left me more confused, not less."
     ]
    ]
   },
@@ -3667,17 +3667,17 @@
     [
      "H",
      "calm",
-     "My father. I can barely say it without shame. How could this be his life?"
+     "My father. Saying it feels shameful. I wasn't ready to find so much tenderness in him here."
     ],
     [
      "S",
      "calm",
-     "Love for your father places no blame on you. His attachment suggests he meant to save his wife through the rite."
+     "Tenderness is part of this history. You may acknowledge it; kinship does not oblige you to defend his conduct."
     ],
     [
      "H",
      "calm",
-     "Then saving her was what he wanted. I need time to hold that beside everything else."
+     "I was already searching for a defense. Perhaps I can stop at being stunned that this love was his."
     ]
    ]
   },
@@ -3697,12 +3697,12 @@
     [
      "S",
      "calm",
-     "Without assigning yourself guilt. He appears to have sought his wife's rescue through the rite. I resent lacking the pictures that ought to introduce the rest; other connections remain broken."
+     "As knowledge, not a charge. Neglecting the earlier work has left other connections unresolved; that irritates me, but it gives no grounds for condemning you."
     ],
     [
      "H",
      "calm",
-     "I'll try to set the guilt down. Even with those connections missing, I have to take in why he wanted the rite."
+     "Knowledge. I'll try that word. It still shocks me that the man I came for belongs to such a gentle moment."
     ]
    ]
   },
@@ -3727,17 +3727,17 @@
     [
      "S",
      "calm",
-     "Mira is correct to defend him. Hero did not make these choices. His father appears to have attempted the rite to save his wife."
+     "There is no case against Hero. His father's capacity for affection is significant, but it transfers no responsibility to the son."
     ],
     [
      "A",
      "calm",
-     "His wife. So your father wanted one life saved, and the world paid for it. My anger belongs to him."
+     "Keep the son clear, then. His father can answer for the ruin the rest of us are choking on."
     ],
     [
      "H",
      "calm",
-     "I hear where your anger belongs. Being defended helps, but I can't make this stop being my father."
+     "Hearing you separate us helps. But I still love him, and I don't know where that leaves me."
     ]
    ]
   },
@@ -3762,7 +3762,7 @@
     [
      "S",
      "calm",
-     "Nor guilt for the father's decisions. He appears to have tried the rite for his wife's sake. Hero did not choose that course."
+     "Precisely. The relationship is established; guilt is not inherited along with it. He may love his father and still judge him."
     ],
     [
      "A",
@@ -3782,22 +3782,22 @@
     [
      "H",
      "calm",
-     "This couple belongs with the sick, pregnant wife I found. The closeness is suddenly unbearable."
+     "I recognized Dad beside his sick wife. Yet finding their happiness hurts in a way I hadn't prepared for."
     ],
     [
      "H",
      "calm",
-     "Now I can name him. My father. That earlier fear wasn't enough to tell me."
+     "Because it wasn't only happiness. It was something he could lose."
     ],
     [
      "H",
      "calm",
-     "The name makes me ashamed, though I had no choice in the life it belongs to."
+     "He turned to the ritual to keep his wife alive. That is what his love drove him to attempt."
     ],
     [
      "H",
      "calm",
-     "I know whose love this was now. I need to let that truth reach me before I ask anything more of it."
+     "Understanding that frightens me. A moment ago I felt ashamed of him; now I'm afraid of how close I come to understanding the wish."
     ]
    ]
   },
@@ -3807,22 +3807,22 @@
     [
      "Q",
      "calm",
-     "The couple... that's the same love we found with the sick wife, isn't it? You've gone very quiet."
+     "You knew he loved her. Does seeing them happy make it worse?"
     ],
     [
      "H",
      "calm",
-     "The man is my father. I wish saying that didn't feel like a confession."
+     "Yes. Dad wasn't reaching for power just to have it. He used the ritual because he wanted her to live."
     ],
     [
      "Q",
      "calm",
-     "Hey. It's a name, not something you've done. I'll sit with you through the hard bit."
+     "Oh. I'd want her to live too. You can feel that much. It isn't agreeing with what he did."
     ],
     [
      "H",
      "calm",
-     "Then stay while I say it properly. He's my father; this is where the fear finally has a name."
+     "I keep mixing those together. Stay close while I try to wish her well without defending him."
     ]
    ]
   },
@@ -3832,22 +3832,22 @@
     [
      "S",
      "calm",
-     "The man who tended the sick wife is your father. This loving couple gives the fear you felt a name."
+     "His love and her illness belong to one account. Your father undertook the rite as an attempt to cure his wife."
     ],
     [
      "H",
      "calm",
-     "My father. The fear I had before has turned into shame, as if the name were mine to answer for."
+     "A cure. So that was his purpose. Why does understanding him feel like something I should conceal?"
     ],
     [
      "S",
      "calm",
-     "You answer for your conduct. His identity is a fact about him, not an offense committed by you."
+     "Because you are confusing explanation with approval. The purpose can be understood without approving the decision."
     ],
     [
      "H",
      "calm",
-     "I'll try to separate those. This is the first time I can say whose life we've been finding."
+     "Then I'll say what I understand. Dad wanted her alive, and knowing why still leaves me shaken by what he chose."
     ]
    ]
   },
@@ -3857,22 +3857,22 @@
     [
      "S",
      "calm",
-     "We can name the man now. Your father, connected to the sick wife who shocked you."
+     "Your father's affection supplies the link to her illness: the ritual was meant to preserve his wife's life."
     ],
     [
      "H",
      "calm",
-     "My father. I'm ashamed of the name, though I can't explain why."
+     "That link hurts. I almost wish I hadn't understood it. Is that cowardly?"
     ],
     [
      "S",
      "calm",
-     "Kinship supplies no charge against you. The unvisited ritual rooms still disrupt my larger reading, but that limitation does not diminish this identification."
+     "Pain is not cowardice. I resent the unread work behind us for leaving the broader account in fragments, but his purpose is no longer among those gaps."
     ],
     [
      "H",
      "calm",
-     "Then I'll accept the name without making it a charge. The rest can remain unsettled while I do that."
+     "Then I won't hide from that purpose. However much is missing, I understand what Dad was afraid of losing."
     ]
    ]
   },
@@ -3882,32 +3882,32 @@
     [
      "A",
      "calm",
-     "Now the husband has a name. Your father. Let that land; there's no gentle version of the connection."
+     "Your dear father in happier company. Look at you shrinking from him again."
     ],
     [
      "H",
      "calm",
-     "My father, with the wife who was sick. I feel as though I've admitted something dreadful."
+     "I can't help it. We knew who he was already, but this happiness makes the shame worse."
     ],
     [
      "Q",
      "calm",
-     "You admitted who he is. That's all. Nobody gets to make being his son something you've done wrong."
+     "Stop making him shrink, then. He's allowed to miss a dad he could feel safe loving."
     ],
     [
      "S",
      "calm",
-     "Agreed. The sick wife brought shock, not identification. This encounter establishes the identity, with no responsibility transferred to Hero."
+     "That longing is not culpability. The new connection is motive: his father tried to save his wife by performing the rite."
     ],
     [
      "A",
      "calm",
-     "Your father keeps the responsibility. And every bit of anger I have for what he set loose."
+     "And left everyone else to choke on the result. His wife mattered; apparently the world could take its chances."
     ],
     [
      "H",
      "calm",
-     "I'm grateful you're keeping that distinction. It doesn't make naming him easy."
+     "That is what I can't settle. Wanting her alive sounds so human, and it led him somewhere I can hardly face."
     ]
    ]
   },
@@ -3917,32 +3917,32 @@
     [
      "A",
      "calm",
-     "The man with that sick wife was your father. Now we can say it. There's a bitter name for you."
+     "So your father had happiness to lose. My friends did too. We won't be admiring his at their expense."
     ],
     [
      "H",
      "calm",
-     "A bitter name, yes. I couldn't give him one before, and now I feel ashamed of knowing."
+     "I wasn't admiring it. I felt ashamed for wanting him to have kept it."
     ],
     [
      "Q",
      "calm",
-     "Oh, no. Knowing isn't a wrong you've done. You get to hurt without taking his blame."
+     "You can want a good thing for him. That doesn't push Brunn's friends aside."
     ],
     [
      "S",
      "calm",
-     "Exactly. The prior encounter established suffering. Only this one permits identification; neither makes Hero culpable."
+     "It does not. Taken with her illness, this love explains the ritual: he intended it to rescue his wife."
     ],
     [
      "A",
      "calm",
-     "I blame your father. My companions are dead, and his being loved doesn't blunt my anger."
+     "A rescue for her. My party ended up dead. Don't expect that explanation to sweeten him for me."
     ],
     [
      "H",
      "calm",
-     "I can't ask your anger to soften. I only needed room to learn who this was without becoming him."
+     "No sweetness. I understand his reason now, and I can hear exactly why it gives you no comfort."
     ]
    ]
   },
@@ -3952,22 +3952,22 @@
     [
      "H",
      "calm",
-     "The wife was expecting a child, and she was sick. That's more frightening than I was ready for."
+     "His wife was pregnant and sick. And the man afraid beside her is Dad."
     ],
     [
      "H",
      "calm",
-     "I can't explain why this feels so close. It's as if my own life were being touched."
+     "Dad. I came here worried about him, and found a fear of his that I never knew."
     ],
     [
      "H",
      "calm",
-     "And I'm ashamed of that feeling, though there's no wrong I can name as mine."
+     "I feel ashamed, as though recognizing him meant I had been keeping something from everyone."
     ],
     [
      "H",
      "calm",
-     "Closeness isn't proof. I have to bear the shock without deciding who the man is."
+     "But I only just understood. Even alone, I seem to be apologizing for a life I didn't know he had."
     ]
    ]
   },
@@ -3977,22 +3977,22 @@
     [
      "Q",
      "calm",
-     "Oh, a sick wife with a child on the way. I'd like to be wrong about that. You've gone pale."
+     "She's ill, with a little one coming. Oh, Hero, you look as if something just broke."
     ],
     [
      "H",
      "calm",
-     "It feels terribly close. I'm ashamed of how close, and I can't even explain the feeling."
+     "The man is my dad. I recognized him and wanted to hide it. I'm ashamed of that too."
     ],
     [
      "Q",
      "calm",
-     "You don't owe me an explanation. And feeling afraid for someone isn't a fault, all right?"
+     "Hey, you told me. I'm still here. You don't have to be brave about every tiny bit of this."
     ],
     [
      "H",
      "calm",
-     "All right. I'll let it hurt without making the hurt tell me who these people are."
+     "I thought I'd have to explain him before I could say it. I'm relieved you let me be frightened instead."
     ]
    ]
   },
@@ -4002,22 +4002,22 @@
     [
      "S",
      "calm",
-     "A pregnant wife, seriously ill. A disturbing personal cost; you need not treat your distress as guilt."
+     "The husband is your father. Illness during his wife's pregnancy makes this a particularly intimate history."
     ],
     [
      "H",
      "calm",
-     "It feels near enough to be mine. That's what frightens me, and makes me ashamed."
+     "Intimate enough that I feel I shouldn't let you see it. As if his being here were my fault."
     ],
     [
      "S",
      "calm",
-     "Proximity of feeling establishes no responsibility. The suffering is clear; the man's identity remains undetermined."
+     "Secrecy would not protect you from a fault you never committed. Your recognition is evidence about him, not against you."
     ],
     [
      "H",
      "calm",
-     "Then I can be shaken by this without calling the feeling proof."
+     "Evidence about him. That's harder to bear than a guess, but at least I don't have to pretend I missed it."
     ]
    ]
   },
@@ -4027,22 +4027,22 @@
     [
      "S",
      "calm",
-     "Illness during pregnancy. This is a severe personal blow, not a reason for you to stand accused."
+     "Your father, facing a wife ill during pregnancy. I take it the recognition has overwhelmed you."
     ],
     [
      "H",
      "calm",
-     "I know no one's accusing me. Still, the closeness makes me want to hide."
+     "Yes. It's him. I feel caught, though I had nothing to keep secret."
     ],
     [
      "S",
      "calm",
-     "You need not hide from an unproven connection. I am frustrated by the unread rooms behind us, but that absence cannot justify a name here."
+     "Then do not manufacture guilt. The work we passed unread still prevents other parts from fitting together; I dislike that omission, not your connection to him."
     ],
     [
      "H",
      "calm",
-     "Thank you for leaving the name open. I'll face what hurt me, even while we lack that record."
+     "I needed that made clear. We haven't understood everything, but this is Dad, and I can't put him at a distance anymore."
     ]
    ]
   },
@@ -4052,32 +4052,32 @@
     [
      "A",
      "calm",
-     "A pregnant wife, sick. Suddenly the suffering feels intimate enough to make you flinch. An ugly closeness."
+     "That's your father beside his sick wife. Quite a shock to find him here instead of safely in your thoughts."
     ],
     [
      "H",
      "calm",
-     "I am flinching. I can't say why it reaches so near, and I'm ashamed of the feeling."
+     "It is. I came here afraid for him. Now I'm ashamed even to admit he's mine."
     ],
     [
      "Q",
      "calm",
-     "Don't push him further into it. Being shaken by someone hurting isn't something shameful."
+     "Don't let that stick, Hero. Brunn can be angry without making you scared to love your dad."
     ],
     [
      "S",
      "calm",
-     "Correct. Hero's distress is not evidence of fault. The account establishes suffering, not the man's identity."
+     "The distinction is necessary. Pregnancy and illness make this painful; identifying the husband establishes no fault in his son."
     ],
     [
      "A",
      "calm",
-     "Distress, then. The world has plenty. This hurt gets close, and you can barely look at it."
+     "His son stays out of it. The father is the bastard I want answers from while the living still pay."
     ],
     [
      "H",
      "calm",
-     "I'll look. But I'll take the defense too; being shaken doesn't tell me whose hurt this was."
+     "Then ask them of him. I can't supply his answers just because I recognized his face."
     ]
    ]
   },
@@ -4087,32 +4087,32 @@
     [
      "A",
      "calm",
-     "This sick, pregnant wife gets very close to you. Look how raw you are. No distance left to hide in."
+     "Your father. His wife sick and pregnant, and here you are looking as if the disgrace were yours."
     ],
     [
      "H",
      "calm",
-     "I don't understand the closeness. I just feel exposed, and ashamed of being exposed."
+     "I know it's him. I don't know why hearing you say it makes me feel so small."
     ],
     [
      "Q",
      "calm",
-     "Then quit pressing on it. Hero hasn't done anything wrong because this frightens him."
+     "Because he's being cruel about it. You can care about your family, Hero. You haven't hurt his by caring."
     ],
     [
      "S",
      "calm",
-     "He has not. His reaction warrants neither blame nor an invented identity for the husband."
+     "That is correct. Recognizing his father does not diminish Brunn's loss or assign Hero responsibility for it."
     ],
     [
      "A",
      "calm",
-     "Fine. The hurt stays unnamed. It still isn't the company I'm grieving."
+     "I want his father to answer for my dead. The son can keep his grief; I've no use for it."
     ],
     [
      "H",
      "calm",
-     "I wasn't asking it to be. The defense helps me face this; the pain still can't give anyone a name."
+     "You sound almost angry that I have it. I'll keep it anyway. He is my father, and this hurts."
     ]
    ]
   },
@@ -4132,12 +4132,12 @@
     [
      "H",
      "calm",
-     "I knew he wanted to save her. Now that wanting feels more desperate, and harder to bear."
+     "Was that the reason for the rite? Not power for himself, but a way to save her. That's what I hadn't understood."
     ],
     [
      "H",
      "calm",
-     "And I'm ashamed again, though the shame helps neither of them. Their love was real; so was this suffering."
+     "I want to reach for him at that thought, and then I feel ashamed. His reason brings him closer; it doesn't put me at ease."
     ]
    ]
   },
@@ -4162,7 +4162,7 @@
     [
      "H",
      "calm",
-     "I'll stay. His love was something I could accept. Taking in what she faced is harder."
+     "Here, then. I think I finally understand the ritual: Dad was trying to cure her. I hadn't put his love and that fear together until this."
     ]
    ]
   },
@@ -4172,22 +4172,22 @@
     [
      "S",
      "calm",
-     "Your father's wife was ill during pregnancy. The stakes of his attachment become more painful here."
+     "Her illness gives his attachment a consequence we had not established: your father performed the ritual to save her."
     ],
     [
      "H",
      "calm",
-     "Painful enough that I'm ashamed again. I know her suffering wasn't mine to choose."
+     "So loving her was why he did it. I'm ashamed of the relief I felt when you said that."
     ],
     [
      "S",
      "calm",
-     "Then retain that knowledge. Her illness and pregnancy deepen the personal cost; neither implicates you."
+     "Relief at finding a reason is not acquittal. It resolves a question; it cannot erase the consequences."
     ],
     [
      "H",
      "calm",
-     "I'll try. I need to grieve what she faced without making the grief an admission."
+     "It was that sudden relief that scared me. I haven't forgiven him; I've stopped wondering what he hoped the ritual would do."
     ]
    ]
   },
@@ -4197,22 +4197,22 @@
     [
      "S",
      "calm",
-     "Your father loved a wife who was pregnant and ill. This adds suffering to the love we already know."
+     "She was ill as well as pregnant. We can connect his ritual to that danger now: he wanted to prevent his wife's death."
     ],
     [
      "H",
      "calm",
-     "And I feel ashamed all over again. The suffering seems too close for me to stand apart from it."
+     "I hadn't seen that connection. It makes me ache for him, and then feel ashamed for aching."
     ],
     [
      "S",
      "calm",
-     "Caring does not implicate you. I dislike lacking the pictures we did not stop for before these halls; the wider history remains disjointed, but her suffering needs our attention now."
+     "Sympathy requires no such penalty. Our neglected reading still leaves the surrounding history disordered, which is exasperating; it does not invalidate this discovery of purpose."
     ],
     [
      "H",
      "calm",
-     "I'll keep hold of that. We can lack those relations and still let her suffering matter for itself."
+     "I'll let myself feel it, then. Dad was frightened for her. That is something I understand now, even with so much unresolved."
     ]
    ]
   },
@@ -4237,17 +4237,17 @@
     [
      "S",
      "calm",
-     "Precisely. This deepens a known personal cost. It supplies no accusation against Hero and no new identity to establish."
+     "Indeed. We are not identifying him again. Her illness reveals what his decision was for: the ritual was his means of saving her."
     ],
     [
      "A",
      "calm",
-     "The accusation is for your father. His fear doesn't excuse the cost the world was made to bear."
+     "Saving her. A fine intention for a man who left the world this bill. He can answer for it himself."
     ],
     [
      "H",
      "calm",
-     "I won't ask you to excuse him. I can mourn the pain she carried and still leave every other cost standing."
+     "He must. I've only just grasped what he meant to do for her; understanding that won't make me offer forgiveness on everyone's behalf."
     ]
    ]
   },
@@ -4272,17 +4272,17 @@
     [
      "S",
      "calm",
-     "Both losses can be acknowledged. This illness increases the cost of the known love; Hero remains responsible for no part of it."
+     "Nor does learning his purpose. This illness joins the facts: he attempted the ritual because his wife needed saving."
     ],
     [
      "A",
      "calm",
-     "Your father is where my anger goes. His love won't make me mourn my companions less."
+     "Now we have his precious reason. My friends are still dead. Don't ask me to be grateful for understanding him."
     ],
     [
      "H",
      "calm",
-     "Nor should it. I can care about what frightened him without asking your grief to give way."
+     "I wasn't going to. This explains a choice I couldn't understand before; it gives me nothing that could comfort you."
     ]
    ]
   }
@@ -4405,7 +4405,7 @@
     "line": [
      "H",
      "calm",
-     "That's my dad."
+     "My dad, loving her. I can't get past that."
     ]
    },
    {
@@ -4419,7 +4419,7 @@
    },
    {
     "n": 3,
-    "tag": "default, and bedside-already-found",
+    "tag": "picnic-first; also bedside-already-found if R2 will play",
     "line": [
      "H",
      "calm",
@@ -4428,11 +4428,11 @@
    },
    {
     "n": 3,
-    "tag": "picnic-first AND Sorrel missing",
+    "tag": "bedside-already-found AND Sorrel missing",
     "line": [
      "H",
      "calm",
-     "No. I came all this way to save him, and he's the one who broke all of it. He did it for her. To keep her. Am I even a hero? Or just a son running after a ghost?"
+     "No. I thought rescuing him was my whole purpose. He broke everything attempting to cure his wife; that's why he used the ritual. Am I a hero at all, or a son still running after a ghost?"
     ]
    },
    {
@@ -4452,7 +4452,7 @@
     "line": [
      "H",
      "calm",
-     "That's my dad."
+     "My father loved her. I keep stumbling over that."
     ]
    },
    {
@@ -4461,7 +4461,7 @@
     "line": [
      "S",
      "calm",
-     "Then your father was no small man. Marks that reach this deep took real power to leave."
+     "The tenderness does not diminish his power. Leaving marks this deep required considerable strength."
     ]
    },
    {
@@ -4470,7 +4470,7 @@
     "line": [
      "H",
      "calm",
-     "I came to save him. He's the one who broke all of it. I can't tell anymore if I'm a hero, or only a son chasing a ghost."
+     "And I came to rescue him. He broke everything; I followed. I can't tell whether that leaves a hero here, or only a son chasing a ghost."
     ]
    },
    {
@@ -4479,7 +4479,7 @@
     "line": [
      "S",
      "calm",
-     "Learning whose hand this was changes nothing about why you came. That reason stands on its own. We keep going toward the center."
+     "Following him was your decision; the ritual was his. Her illness explains its object now: he sought a cure for his wife. We proceed to the center with that distinction intact."
     ]
    },
    {
@@ -4488,7 +4488,7 @@
     "line": [
      "S",
      "calm",
-     "Learning whose hand this was changes nothing about why you came. And it tells us his reason. He did the ritual to save his wife. We keep going toward the center."
+     "Your reason for entering remains yours. His power does not annul it. We should continue toward the center."
     ]
    }
   ],
@@ -4499,7 +4499,7 @@
     "line": [
      "H",
      "calm",
-     "That's my dad."
+     "Dad with someone he loved. I wasn't ready for this."
     ]
    },
    {
@@ -4508,7 +4508,7 @@
     "line": [
      "A",
      "calm",
-     "Your father. The man you crawled in here to save. He's the one who tore it open."
+     "He left everyone else a bloody mess. Tender feelings won't clear his name."
     ]
    },
    {
@@ -4517,7 +4517,7 @@
     "line": [
      "H",
      "calm",
-     "I know. I came for him, and he broke everything. I don't even know if I'm a hero now, or just a son chasing a ghost."
+     "I'm not clearing it. Only now do I see why he attempted the rite: he wanted his wife to survive her illness. The man I hoped to rescue caused this ruin. Does that leave a hero here, or just a son who can't stop following a ghost?"
     ]
    },
    {
@@ -4526,7 +4526,7 @@
     "line": [
      "H",
      "calm",
-     "I know. I came for him, and he broke everything. He did it to save her, didn't he? I don't even know if I'm a hero now, or just a son chasing a ghost."
+     "I can't clear it. I came for my father and found the man who broke everything. Calling myself a hero feels hollow. Maybe I'm just his son chasing a ghost."
     ]
    },
    {
@@ -4535,7 +4535,7 @@
     "line": [
      "A",
      "calm",
-     "His reasons are his rot. Not yours. I won't go easy on him, and I'm not stopping. We finish it and save whatever's still standing."
+     "Call yourself what you like. He's the one I blame. I'm here to finish the job, not polish his memory."
     ]
    }
   ],
@@ -4564,7 +4564,7 @@
     "line": [
      "S",
      "calm",
-     "He was that too. And there is the reason: he did the ritual to save his wife."
+     "That is also your father. Neither his power nor your attachment places his actions in your hands."
     ]
    },
    {
@@ -4573,7 +4573,7 @@
     "line": [
      "S",
      "calm",
-     "He was that too. It does not alter the fact: his power, his choice, not yours."
+     "He is also the husband who feared losing her. We can identify his aim now: saving his wife through the ritual. The decision was not yours."
     ]
    }
   ],
@@ -4613,7 +4613,7 @@
     "line": [
      "H",
      "calm",
-     "I shouldn't be here. This feels like walking in on someone."
+     "It's Dad. His wife was sick, and pregnant. I feel as if I've intruded on him."
     ]
    },
    {
@@ -4622,7 +4622,7 @@
     "line": [
      "Q",
      "calm",
-     "Hey, you've gone all pale. You okay? Sit a second with me."
+     "Oh, that knocked the breath out of you. Come sit. No need to squeeze any words out yet."
     ]
    },
    {
@@ -4631,7 +4631,7 @@
     "line": [
      "H",
      "calm",
-     "I don't know why it gets to me like this. It just does."
+     "I'm scared of what I'll say. I came looking for him, but not like this."
     ]
    },
    {
@@ -4640,7 +4640,7 @@
     "line": [
      "Q",
      "calm",
-     "Then it gets to you. That's allowed. You don't have to know why yet."
+     "Then we'll go slowly. I'm not going to wander off because you're scared."
     ]
    }
   ],
@@ -4651,7 +4651,7 @@
     "line": [
      "H",
      "calm",
-     "I shouldn't be here. This feels like walking in on someone."
+     "That man is my father. I feel ashamed for seeing something so private."
     ]
    },
    {
@@ -4660,7 +4660,7 @@
     "line": [
      "S",
      "calm",
-     "It is the most private thing in this maze. Also the nearest to the center. Neither fact is an accident."
+     "The privacy is deliberate, and placed unusually near the center. Recognizing him is not an intrusion you chose."
     ]
    },
    {
@@ -4669,7 +4669,7 @@
     "line": [
      "H",
      "calm",
-     "Then why does it feel like it's about me?"
+     "It still feels like I've stepped somewhere he never meant me to stand."
     ]
    },
    {
@@ -4678,7 +4678,7 @@
     "line": [
      "S",
      "calm",
-     "Because you are tired and far from home. A stranger's sickroom is not your debt."
+     "An understandable discomfort. Do not confuse it with wrongdoing; his wife's illness is not a charge against you."
     ]
    }
   ],
@@ -4689,7 +4689,7 @@
     "line": [
      "H",
      "calm",
-     "I shouldn't be here. This feels like walking in on someone."
+     "My father. His wife is ill, with a child coming. I can barely look."
     ]
    },
    {
@@ -4698,7 +4698,7 @@
     "line": [
      "A",
      "calm",
-     "Then quit gawking. You look like you think it's yours to grieve. It's some stranger's sickbed."
+     "Then he's managed to hurt you from here too. Your precious father has quite a reach."
     ]
    },
    {
@@ -4707,7 +4707,7 @@
     "line": [
      "H",
      "calm",
-     "I know. I can't stop feeling it anyway."
+     "I know you're angry with him. You don't have to grind his name into me."
     ]
    },
    {
@@ -4716,7 +4716,7 @@
     "line": [
      "A",
      "calm",
-     "Feel it walking. This room isn't our work."
+     "Fine. Keep it yourself. I want him answering for the damage, not you. We're moving."
     ]
    }
   ],
@@ -4727,7 +4727,7 @@
     "line": [
      "S",
      "calm",
-     "Whatever unsettles you here, it gives us nothing we can use yet. No name. No answer."
+     "His identity is settled. Your distress need not settle before we continue."
     ]
    },
    {
@@ -4736,7 +4736,7 @@
     "line": [
      "H",
      "calm",
-     "Maybe. I just can't put it down."
+     "I'm afraid it will catch me again the moment I try to move."
     ]
    },
    {
@@ -4745,7 +4745,7 @@
     "line": [
      "S",
      "calm",
-     "Carry it, then. But toward the center."
+     "Quite possibly. I can slow my pace. Our direction remains the center."
     ]
    }
   ],
@@ -4756,7 +4756,7 @@
     "line": [
      "A",
      "calm",
-     "Somebody else's wife, somebody else's misery. Staring harder won't make it yours."
+     "I could curse your father till my throat split. It wouldn't reach him from here."
     ]
    },
    {
@@ -4765,7 +4765,7 @@
     "line": [
      "H",
      "calm",
-     "I'm not trying to make it mine. It just won't let go of me."
+     "It reaches me. I haven't even worked out what to feel yet."
     ]
    },
    {
@@ -4774,7 +4774,7 @@
     "line": [
      "A",
      "calm",
-     "Then drag it along. I'm not standing in here all night."
+     "Then I'll save the rest for him. Get your feet under you; we're leaving."
     ]
    }
   ],
@@ -4897,7 +4897,7 @@
    },
    {
     "n": 3,
-    "tag": "picnic naming already happened",
+    "tag": "father already named from zone5-08 OR zone5-09",
     "line": [
      "H",
      "calm",
@@ -5031,7 +5031,7 @@
    },
    {
     "n": 1,
-    "tag": "picnic-first save-his-wife already played",
+    "tag": "save-his-wife unlocked: BOTH zone5-08 AND zone5-09 found, either order",
     "line": [
      "H",
      "calm",

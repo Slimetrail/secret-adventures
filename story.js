@@ -65,13 +65,32 @@ function finish(){const sc=cur;cur=null;if(queue.length)nextScene();else close()
 const REWRITE=window.PACKAGE_STORY.rewrite;
 function pair(key,tags){const rows=REWRITE[key]||[],out=[];for(const n of [...new Set(rows.map(r=>r.n))]){const choices=rows.filter(r=>r.n===n);const hit=choices.find(r=>r.tag&&(tags||[]).includes(r.tag))||choices.find(r=>!r.tag)||choices[0];out.push(hit.line);}return out;}
 const INTRO_LINES=pair("intro");
-// t2191u HOLD: R1/R1-alt/R1-alt2/R2/R3 and B1/B1-alt/B1-alt2/B2/B3 await approved recasts.
-function picnicLines(){return [];}
-function bedsideLines(){return [];}
+// t2191u approved first-picture naming; motive only after both pictures.
+function picnicLines(){
+  const s=st(), first=!s.walls[84]; // called BEFORE H.wall records the current find
+  const Q=!!who("Q"), Sch=!!who("S"), A=!!who("A");
+  let out=[];
+  if(Q){
+    if(!first && !Sch) out=pair("R1", ["bedside-already-found AND Sorrel missing"]);
+    else out=pair("R1", ["picnic-first; also bedside-already-found if R2 will play"]);
+  } else if(Sch) out=pair("R1-alt", first?["picnic-first"]:["bedside-already-found"]);
+  else if(A) out=pair("R1-alt2", first?["picnic-first"]:["bedside-already-found"]);
+  else out=[pair("R1")[0], pair("R1")[2]];
+  if(Q&&Sch) out=out.concat(pair("R2", first?["picnic-first"]:["bedside-already-found"]));
+  if(A&&(Q||Sch)) out=out.concat(pair("R3"));
+  return out;
+}
+function bedsideLines(){
+  if(st().revealed) return []; // picnic already found; this is bedside-first only
+  let out=who("Q")?pair("B1"):who("S")?pair("B1-alt"):who("A")?pair("B1-alt2"):[pair("B1")[0],pair("B1")[2]];
+  if(who("Q")&&who("S")) out=out.concat(pair("B2"));
+  if(who("A")&&(who("Q")||who("S"))) out=out.concat(pair("B3"));
+  return out;
+}
 function endingLines(k){const s=st(),Q=!!who("Q"),Sch=!!who("S"),A=!!who("A"),w=s.walls,K=LETTER_KEYS;let out=[];
  if(k==="low"){if(Q&&Sch){out=pair("D2");if(A)out=out.concat(pair("D3"));}else if(Q&&A)out=pair("D2-alt");else if(Sch&&A)out=pair("D2-alt2");else if(Q)out=[pair("D2")[0]];else if(Sch)out=[pair("D2-alt2")[0]];else if(A)out=[pair("D2-alt")[1]];}
- else if(k==="mid"){if(Q)out=out.concat(pair("C1",s.revealed?["picnic naming already happened"]:[]));if(Sch)out=out.concat(pair("C2",w[K.wizard]?["wizard found"]:w[K.council]?["council found"]:["default"]));if(A){if(!Q&&!Sch)out.push(["H","calm","We're alive. It's still bleeding."]);out=out.concat(pair(brunnVer()==="save"?"C3a":"C3b"));}}
- else{const f=pair("F1");out=Q?f:[f[0]];if(Sch)out=out.concat(pair("F2",[w[K.wizard]?(w[K.council]?"council and wizard both found":"wizard found, council not found"):"council found, wizard not found"]));if(A&&brunnVer()==="save")out=out.concat(pair("F3"));}return out;}
+ else if(k==="mid"){if(Q)out=out.concat(pair("C1",s.revealed?["father already named from zone5-08 OR zone5-09"]:[]));if(Sch)out=out.concat(pair("C2",w[K.wizard]?["wizard found"]:w[K.council]?["council found"]:["default"]));if(A){if(!Q&&!Sch)out.push(["H","calm","We're alive. It's still bleeding."]);out=out.concat(pair(brunnVer()==="save"?"C3a":"C3b"));}}
+ else{const f=pair("F1",s.wifeMotive?["save-his-wife unlocked: BOTH zone5-08 AND zone5-09 found, either order"]:[]);out=Q?f:[f[0]];if(Sch)out=out.concat(pair("F2",[w[K.wizard]?(w[K.council]?"council and wizard both found":"wizard found, council not found"):"council found, wizard not found"]));if(A&&brunnVer()==="save")out=out.concat(pair("F3"));}return out;}
 // ---------- scenes ----------
 const tavBg=t=>"art6/tavern-"+(Math.min(4,t+1))+".webp";
 function wallArt(id){return "art6/"+ROOM_ART[id][1]+".webp";}
