@@ -49,7 +49,7 @@ test("every physical open-to-closed edge refuses forward and backward before puz
  for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)if(cap.isOpen(x,y))for(let d=0;d<4;d++){
   const nx=x+dirs[d][0],ny=y+dirs[d][1];if(!(parseInt(M.mask[y*M.n+x],16)&(1<<d))||cap.isOpen(nx,ny))continue;edges++;
   for(const cmd of ["fwd","back"]){const e=engine(x,y,cmd==="fwd"?d:(d+2)%4),before=e.s.state(),stored=e.storage.get("sota.stage1.save");
-   e.s.act(cmd);a.deepEqual(e.s.state(),before);a.deepEqual(e.counts(),{steps:0,after:0,puzzles:0});a.equal(e.s.panelOpen(),false);a.equal(e.s.isVisited(nx,ny),false);a.equal(e.s.visitedCount(),1);a.equal(e.storage.get("sota.stage1.save"),stored);a.equal(e.el("s4toast").textContent,"More of the maze opens after you check for an update.");
+   e.s.act(cmd);a.deepEqual(e.s.state(),before);a.deepEqual(e.counts(),{steps:0,after:0,puzzles:0});a.equal(e.s.panelOpen(),false);a.equal(e.s.isVisited(nx,ny),false);a.equal(e.s.visitedCount(),1);a.equal(e.storage.get("sota.stage1.save"),stored);a.equal(e.el("s4toast").textContent,"Please wait for update to continue.");
   }
  }a.equal(edges,1);
 });
@@ -60,6 +60,6 @@ test("old closed-cell save can walk back into slice without teleporting, then ca
 });
 test("new script loads before engine and is cached with matching engine version",()=>{
  const html=read("index.html"),c={self:{addEventListener(){}}};vm.runInNewContext(read("sw.js")+";globalThis.shell=SHELL;globalThis.version=VER;",c);
- a.ok(html.indexOf('src="content-cap.js?v=2"')<html.indexOf('src="game.js?v=15"'));a.ok(c.shell.includes("content-cap.js?v=2"));a.ok(c.shell.includes("game.js?v=15"));a.equal(c.version,"50");
+ a.ok(html.indexOf('src="content-cap.js?v=2"')<html.indexOf('src="game.js?v=16"'));a.ok(c.shell.includes("content-cap.js?v=2"));a.ok(c.shell.includes("game.js?v=16"));a.equal(c.version,"53");
  a.ok(/script-src 'self'/.test(html));
 });

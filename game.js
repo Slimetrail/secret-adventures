@@ -65,7 +65,7 @@ function startAnim(dur){anim.fx=vis.x;anim.fy=vis.y;anim.fa=vis.a;anim.tx=st.x;a
  if(!animOn){vis.x=st.x;vis.y=st.y;vis.a=anim.ta;}}
 function blocked(){return !!(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen())||(SOTA.uiOpen&&SOTA.uiOpen())||(SOTA.storyOpen&&SOTA.storyOpen())||panelOn));}
 function contentCapToast(){const d=document.getElementById("s4toast");
- d.textContent="More of the maze opens after you check for an update.";d.classList.add("on");
+ d.textContent="Please wait for update to continue.";d.classList.add("on");
  clearTimeout(contentCapToast.h);contentCapToast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 function act(cmd){if(blocked())return; // logical state changes at once; the animation only follows it, so no press is ever lost
  if(cmd==="fwd"||cmd==="back"){const d=cmd==="fwd"?st.f:(st.f+2)%4;
