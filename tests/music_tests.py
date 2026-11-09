@@ -67,7 +67,7 @@ def t_endings(p):
   ev(pg,'(()=>{const s=SOTA.rpg.s6.st(),K=SOTA.rpg.s6.LETTER_KEYS;s.walls={};if("%s"!=="low"){s.walls[K.crack]=1;}if("%s"==="high"){K.z4.forEach(r=>s.walls[r]=1);s.walls[K.picnic]=1;s.walls[K.wizard]=1;}})()'%(k,k))
   ev(pg,'SOTA.rpg.s6.showEnding()');check(ev(pg,'SOTA.rpg.live().story.ending')==k,'ending key');
   if ev(pg,'!!SOTA.rpg.s6.line()&&!document.querySelector("#s6d .s6title")'):wait(pg,cue)
-  S6.drain(pg);wait(pg,'credits');tap(pg,'[data-s6b=back]');wait(pg,'maze_zone1',4000);b.close()
+  S6.drain(pg);wait(pg,'credits');tap(pg,'[data-s6b=continue]');wait(pg,'credits');tap(pg,'[data-s6b=back]')  # t2393u review, then credits;wait(pg,'maze_zone1',4000);b.close()
 def t_zone_loops(p):
  b,c=ctx2(p);pg=page(c);create(pg);S6.drain(pg);wait(pg,'maze_zone1',4500)
  xy=ev(pg,'(()=>{const c=SOTA.core,N=SOTA.N;for(let i=0;i<N*N;i++)if(+c.zoneOf[i]==2&&c.mask[i])return [i%N,(i/N)|0];})()')

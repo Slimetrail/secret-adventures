@@ -1,4 +1,5 @@
 """Stage 2 tests on a pretend phone (Playwright Chromium, touch). Usage: python tests/stage2_tests.py [base_url] [names...]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os,json,time,random
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','tools'));import walk as W
 from playwright.sync_api import sync_playwright
@@ -13,7 +14,7 @@ def page(c,errs=None,reqs=None):
   pg=c.new_page()
   if errs is not None:pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:errs.append(str(e)))
   if reqs is not None:pg.on('request',lambda r:reqs.append(r.url))
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA');return pg
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);return pg
 def bb(pg,sel):return pg.locator(sel).bounding_box()
 def ctr(b):return (b['x']+b['width']/2,b['y']+b['height']/2)
 def tap(pg,sel):
@@ -165,20 +166,20 @@ def t_pinch(p):
 
 def t_map_save(p):
   b,c=ctx(p);pg=page(c);cells=[tuple(x) for x in MZ['main_route'][:60]];walk(pg,cells);walk(pg,W.path(cells[-1],cells[40]))
-  v=pg.evaluate('SOTA.visitedCount()');t=pg.evaluate('SOTA.trailCells()');s=S(pg);pg.reload();pg.wait_for_function('window.SOTA')
+  v=pg.evaluate('SOTA.visitedCount()');t=pg.evaluate('SOTA.trailCells()');s=S(pg);pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg)
   check(pg.evaluate('SOTA.visitedCount()')==v and pg.evaluate('SOTA.trailCells()')==t and S(pg)==s,'visited/trail not restored')
   tap(pg,'#mapb');check(int(MD(pg)['cells'])==v and int(MD(pg)['dots'])==len(t)-1,'map after reload');b.close()
 
 def t_old_and_corrupt_save(p):
   b,c=ctx(p);pg=page(c)
-  pg.evaluate('localStorage.setItem("sota.stage1.save",JSON.stringify({x:3,y:63,f:1}))');pg.reload();pg.wait_for_function('window.SOTA')
+  pg.evaluate('localStorage.setItem("sota.stage1.save",JSON.stringify({x:3,y:63,f:1}))');pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg)
   s=S(pg);check((s['x'],s['y'],s['f'])==(3,63,1),'old save position lost');check(pg.evaluate('SOTA.visitedCount()')==1 and pg.evaluate('SOTA.trailCells()')==[[3,63]],'old save visited')
   for bad in ['{bad json','null','[]','{"x":3,"y":63,"f":1,"v":"zz","t":{"s":1,"m":"9"}}','{"x":3,"y":63,"f":1,"v":"'+'f'*1057+'","t":{"s":4160,"m":"0000"}}','{"x":"a"}','{"x":3,"y":63,"f":7}']:
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
-    pg.evaluate('v=>localStorage.setItem("sota.stage1.save",v)',bad);pg.reload();pg.wait_for_function('window.SOTA')
+    pg.evaluate('v=>localStorage.setItem("sota.stage1.save",v)',bad);pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg)
     check(not errs,f'crash on {bad}');vc=pg.evaluate('SOTA.visitedCount()');check(vc==1,f'corrupt map data used {bad} {vc}')
     tap(pg,'#mapb');check(MD(pg)['cells']=='1','map after corrupt');tap(pg,'#mclose')
-  pg.evaluate('localStorage.setItem("sota.items","{bad")');pg.reload();pg.wait_for_function('window.SOTA');check(pg.evaluate('SOTA.items()')==[None]*4,'bad items')
+  pg.evaluate('localStorage.setItem("sota.items","{bad")');pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);check(pg.evaluate('SOTA.items()')==[None]*4,'bad items')
   b.close()
 
 def t_rapid_map(p):
@@ -196,9 +197,9 @@ def t_rapid_map(p):
   check(not pg.locator('#map').is_visible(),'map stuck open');b.close()
 
 def t_offline2(p):
-  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA')
-  pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.map',timeout=8000)
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');SPL.pass_splash(pg)
+  pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller');SPL.pass_splash(pg)
+  c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.map',timeout=8000);SPL.pass_splash(pg)
   ok=pg.evaluate('(async()=>{const c=await caches.open((await caches.keys()).find(k=>k.startsWith("sota-s1-")));return !!(await c.match("map.js?v=14"))&&(await caches.keys()).length})()')
   check(ok==1,f'map.js not cached / old caches kept {ok}');tap(pg,'#mapb');check(MD(pg)['cells']=='1' or int(MD(pg)['cells'])>=1,'map offline');b.close()
 
@@ -209,7 +210,7 @@ def t_console_network2(p):
 
 def t_hud_default(p):
   b,c=ctx(p);pg=page(c);check(pg.locator('#hud').is_visible(),'hud not on by default');tap(pg,'#dbg');check(not pg.locator('#hud').is_visible(),'toggle')
-  pg.reload();pg.wait_for_function('window.SOTA');check(not pg.locator('#hud').is_visible(),'hud choice not remembered');b.close()
+  pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);check(not pg.locator('#hud').is_visible(),'hud choice not remembered');b.close()
 
 T={k[2:]:v for k,v in list(globals().items()) if k.startswith('t_')};fails=0
 with sync_playwright() as p:

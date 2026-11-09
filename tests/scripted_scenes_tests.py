@@ -115,7 +115,7 @@ def party(pg,mask):
   ev(pg,f'SOTA.rpg.live().party=window.testParty.filter((c,i)=>i===0||({mask}>>(i-1)&1))')
 
 def back(pg):
-  ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
+  ev(pg,'(()=>{const c=document.querySelector("[data-s6b=continue]");if(c)c.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))})()');ev(pg,'document.querySelector("[data-s6b=back]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
   check(not ev(pg,'SOTA.storyOpen()'),'Back did not close ending')
 
 def t_intro_exact(p):

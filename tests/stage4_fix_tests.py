@@ -1,5 +1,6 @@
 """Stage 4 fix round 1 tests on a pretend phone (Playwright Chromium, touch). Hero creation for a first-timer,
 name + branch menus, layouts. Usage: python tests/stage4_fix_tests.py [base_url] [names...]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os,time,re,shutil,subprocess,tempfile,socket
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 and sys.argv[1] else 'http://127.0.0.1:8765/').rstrip('/')+'/';ONLY=sys.argv[2:]
@@ -19,6 +20,7 @@ def noslide(pg):
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
 def past_title(pg):
   """t2103u: boot now shows the title-only menu; a short tap on the wall opens creation (or, with a save, a long-press continues)"""
+  SPL.pass_splash(pg)  # t2386u: the logo splash comes before the title
   try:pg.wait_for_function('window.SOTA&&SOTA.intro',timeout=3000)
   except Exception:return
   if not ev(pg,'SOTA.intro.titleOpen()'):return
@@ -28,10 +30,10 @@ def past_title(pg):
   pg.wait_for_timeout(150)
   if ev(pg,'SOTA.intro.titleOpen()'):ev(pg,'SOTA.intro.longPress()' if has else 'SOTA.intro.shortTap()')
 def fresh(c,pre=None,url=None):
-  pg=c.new_page();pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.goto((url or BASE)+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg')
+  pg=c.new_page();pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.goto((url or BASE)+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg)
   pg.evaluate('localStorage.clear()')
   if pre:pg.evaluate('p=>{for(const k in p)localStorage.setItem(k,p[k])}',pre)
-  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)');past_title(pg);return pg
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);pg.evaluate('SOTA.setAnim(false)');past_title(pg);return pg
 def swipe(pg,x,y,dy,sel='#s4'):
   """real touch drag (finger moves up by dy) sent as raw touch events, so the browser's own touch-action and scrolling decide"""
   s=pg.context.new_cdp_session(pg);n=12
@@ -74,7 +76,7 @@ def t_create_all_sizes(p):
     ttap(pg,'#ccgo');check('name' in err(pg).lower() and ui(pg)=='create',f'{w}x{h}: empty name gave no clear message')
     full_create(pg);L=ev(pg,'SOTA.rpg.live()');check(L and L['party'][0]['name']=='Wes Swordmaw' and L['party'][0]['cls']=='mage','hero not in party')
     s1=ev(pg,'SOTA.state()');check((s1['x'],s1['y'])==(s0['x'],s0['y']),'hero not at the entrance')
-    pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ui(pg) is None and ev(pg,'SOTA.rpg.live().party[0].name')=='Wes Swordmaw',f'{w}x{h}: reload lost the hero');b.close()
+    pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);check(ui(pg) is None and ev(pg,'SOTA.rpg.live().party[0].name')=='Wes Swordmaw',f'{w}x{h}: reload lost the hero');b.close()
 def t_keyboard_letters(p):
   b,c=ctx(p);pg=fresh(c);s0=ev(pg,'SOTA.state()');type_name(pg,'Wasd Mmm')
   check(ev(pg,'document.getElementById("ccname").value')=='Wasd Mmm','typing lost letters: '+ev(pg,'document.getElementById("ccname").value'))
@@ -128,10 +130,10 @@ def t_old_save(p):
     pg=fresh(c,pre);check(ui(pg)=='create',f'{w}x{h}: old save with no hero did not show creation')
     full_create(pg,'Old Timer','human','warrior');s=ev(pg,'SOTA.state()');check((s['x'],s['y'])==(5,3),f'{w}x{h}: old position lost {s}')
     check(ev(pg,'JSON.parse(localStorage.getItem("sota.rooms")).s.includes(2)'),'old solved rooms lost')
-    pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ui(pg) is None and ev(pg,'SOTA.rpg.live().party.length')==1,'reload lost the hero');s=ev(pg,'SOTA.state()');check((s['x'],s['y'])==(5,3),'reload lost position');b.close()
+    pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);check(ui(pg) is None and ev(pg,'SOTA.rpg.live().party.length')==1,'reload lost the hero');s=ev(pg,'SOTA.state()');check((s['x'],s['y'])==(5,3),'reload lost position');b.close()
 def t_standalone(p):
   b,c=ctx(p,390,844);pg=c.new_page();s=c.new_cdp_session(pg);s.send('Emulation.setEmulatedMedia',{'features':[{'name':'display-mode','value':'standalone'}]})
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg')
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);pg.evaluate('localStorage.clear()');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg)
   if not ev(pg,'matchMedia("(display-mode: standalone)").matches'):print('   NOTE standalone display-mode could not be emulated here: ran as browser only (standalone NOT CHECKED)')
   full_create(pg,'Appy');b.close()
 def copy_app(src,d):
@@ -145,12 +147,12 @@ def t_sw_update(p):
     d=tempfile.mkdtemp(prefix='sota-swup-')
     subprocess.run(f'git -C {ROOT} archive {old} | tar -x -C {d}',shell=True,check=True);pr,url=serve(d)
     try:
-      b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-      check(ev(pg,'caches.keys()')==['sota-s1-v'+ver],'old cache not in place');pg.reload();pg.wait_for_timeout(400)
+      b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');SPL.pass_splash(pg);[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
+      check(ev(pg,'caches.keys()')==['sota-s1-v'+ver],'old cache not in place');pg.reload();SPL.pass_splash(pg);pg.wait_for_timeout(400)
       expected_boot='14' if ver in ('16','17') else ver  # Stage 6 deliberately kept script query strings at v14
       check(ev(pg,'document.querySelector("script[src*=boot]").src').endswith('v='+expected_boot) or ver=='4','old files not being served')
       copy_app(ROOT,d)
-      pg.reload();t0=time.time()
+      pg.reload();SPL.pass_splash(pg);t0=time.time()
       while time.time()-t0<20:
         try:
           if ev(pg,'!!(window.SOTA&&SOTA.rpg&&SOTA.rpg.ui()==="create")') and ev(pg,'caches.keys()')==["sota-s1-v18"]:break
@@ -165,8 +167,8 @@ def t_sw_autoreload(p):
   """from v6 on: a new version (here a pretend v19) reloads by itself when no hero exists yet - no banner tap needed"""
   d=tempfile.mkdtemp(prefix='sota-swup7-');copy_app(ROOT,d);pr,url=serve(d)
   try:
-    b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
-    check(ev(pg,'caches.keys()')==['sota-s1-v18'],'v18 cache not in place');pg.reload();pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
+    b,c=ctx(p,390,844,sw=True);pg=c.new_page();pg.goto(url+'index.html');SPL.pass_splash(pg);[pg.wait_for_timeout(300) for _ in range(50) if not ev(pg,'!!navigator.serviceWorker.controller')]
+    check(ev(pg,'caches.keys()')==['sota-s1-v18'],'v18 cache not in place');pg.reload();SPL.pass_splash(pg);pg.wait_for_timeout(500);ev(pg,'window.__mark=1')
     s=open(os.path.join(d,'sw.js')).read();open(os.path.join(d,'sw.js'),'w').write(s.replace('VER="18"','VER="19"'))
     ev(pg,'navigator.serviceWorker.getRegistration().then(r=>r&&r.update())');t0=time.time()
     while time.time()-t0<20:

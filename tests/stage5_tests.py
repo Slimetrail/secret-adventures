@@ -1,4 +1,5 @@
 """Stage 5 (economy and cooking) tests on a pretend phone (Playwright Chromium, touch). Usage: python tests/stage5_tests.py [base_url] [names...]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os,json,time
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 import stage4_tests as S4
@@ -89,7 +90,7 @@ def t_junk_stock(p):
   check(L(pg,'return [X.shopCounts(0).potion,X.buy("potion",0)]')==[0,False],'sold out potion still sold')
   L(pg,'L.party[0].bag.push("rope");X.sell(0,0,0);');check(L(pg,'return X.shopCounts(0).ration')==6,'gear sale produced food')
   ev(pg,'(()=>{const t=MAZE.taverns[0];SOTA.teleport(t[0],t[1],0);SOTA.rpg.doSave()})()')
-  saved=L(pg,'return JSON.stringify(L.tavernStock)');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&SOTA.rpg.live()')
+  saved=L(pg,'return JSON.stringify(L.tavernStock)');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&SOTA.rpg.live()');SPL.pass_splash(pg)
   check(L(pg,'return JSON.stringify(L.tavernStock)')==saved,'stock lost on save/reload')
   check(L(pg,'return X.shopCounts(0).potion')==0,'reload restocked empty shelf');b.close()
 def t_dead_warrior_gear(p):
@@ -177,7 +178,7 @@ def t_place_tab(p):
   check(ev(pg,'getComputedStyle(document.getElementById("s5here")).display')=='block','no tavern tab');check('Tavern 1' in ev(pg,'document.getElementById("s5here").textContent'),'tab text')
   tap(pg,'#s5here');check(ev(pg,'SOTA.rpg.ui()')=='tavern','tab did not open tavern');b.close()
 def t_save_keeps_s5(p):
-  b,pg=setup(p);L(pg,'L.recipes.toast="earned";L.party[0].bag.push("tent");');tv=ev(pg,'MAZE.taverns[0]');step_into(pg,tv);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg')
+  b,pg=setup(p);L(pg,'L.recipes.toast="earned";L.party[0].bag.push("tent");');tv=ev(pg,'MAZE.taverns[0]');step_into(pg,tv);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg)
   check(L(pg,'return [L.recipes.toast,X.haveN("tent")]')==['earned',1],'recipes/tent lost over save');b.close()
 def t_fit_s5(p):
   for w,h in[(390,844),(360,800),(412,915)]:
@@ -189,9 +190,9 @@ def t_fit_s5(p):
       check(not ov,f'{w}x{h} {js}: overlaps {ov[:3]}')
     b.close()
 def t_offline5(p):
-  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');SPL.pass_splash(pg);pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller');SPL.pass_splash(pg)
   ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v18");return [k,!!(await c.match("econ.js?v=14"))]})()')
-  check(ok==[['sota-s1-v18'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
+  check(ok==[['sota-s1-v18'],True],f'econ.js not cached {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);check(ev(pg,'!!window.ECON&&ECON.DISHES.length===20'),'ECON missing offline');b.close()
 def t_s5_code_clean(p):
   src=''.join(open(os.path.join(ROOT,f)).read() for f in['econ.js','party.js'])
   check('fetch(' not in src and 'http' not in src and 'XMLHttpRequest' not in src,'network in stage 5 code')

@@ -1,4 +1,5 @@
 """Stage 7 content and Jeremy t1848u-t1855u chest choices, seeded profiles and locked content."""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import os,sys,json,time,hashlib,re
 sys.path.insert(0,os.path.dirname(__file__))
 import stage4_tests as S4
@@ -268,8 +269,8 @@ def t_boss_defeat_restore(p):
  b,c,pg=S6.start(p);gold=ev(pg,'SOTA.rpg.save().gold');ev(pg,'SOTA.rpg.live().gold+=123;SOTA.rpg.live().story.finalLock=true;SOTA.rpg.startBoss();SOTA.rpg.live().party.forEach(c=>c.hp=1);SOTA.rpg.act("defend")')
  check(ev(pg,'SOTA.rpg.fight().over')=='lose','boss defeat broken');tap(pg,'#fdone');check(ev(pg,'SOTA.rpg.live().gold')==gold,'boss defeat kept progress');check(not ev(pg,'SOTA.storyOpen()'),'boss loss played ending');b.close()
 def t_offline_boss(p):
- b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&navigator.serviceWorker.controller')
- check(ev(pg,'caches.keys()')==['sota-s1-v24'],'offline cache not v22');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');create(pg);S6.drain(pg)
+ b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S4.BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');SPL.pass_splash(pg);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&navigator.serviceWorker.controller');SPL.pass_splash(pg)
+ check(ev(pg,'caches.keys()')==['sota-s1-v24'],'offline cache not v22');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.s6.bossNote()');S6.drain(pg);S6.unlock_centre(pg);ev(pg,'document.querySelector("[data-s6b=open]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))')
  check(ev(pg,'SOTA.rpg.fight().m[0].n')=='Iron Golem','Golem unavailable offline');ev(pg,'SOTA.rpg.forceEnd("win")')
  if pg.locator('#s5lvlok').count():tap(pg,'#s5lvlok')

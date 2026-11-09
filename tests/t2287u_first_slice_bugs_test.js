@@ -48,15 +48,15 @@ test("Beasts tab shows only found zone 1-2 sketches",()=>{
  const imgs=all(found,"img");
  a.deepEqual(imgs.map(i=>i.src),[
   "art-intro/journal/monsters/z1-rat.webp",
-  "art-intro/journal/monsters/z2-goblin.webp"
+  "art-intro/journal/monsters/z2-goblin.webp",
+  "art-intro/journal/monsters/z3-wraith.webp" // t2404u: zone 3 sketches
  ]);
- a.equal(all(found,"figure").map(f=>f.dataset.beast).join(","),"z1-rat,z2-goblin");
- a.equal(imgs.some(i=>/z3-/.test(i.src)),false);
+ a.equal(all(found,"figure").map(f=>f.dataset.beast).join(","),"z1-rat,z2-goblin,z3-wraith");
 });
 
-test("fights record only named zone 1-2 beasts on the party save",()=>{
+test("fights record only named zone 1-3 beasts on the party save (t2404u adds zone 3)",()=>{
  const party=read("party.js");
- a.match(party,/function startFight\(mons,why\)\{if\(live\)\{if\(!Array\.isArray\(live\.beasts\)\)live\.beasts=\[\];\(mons\|\|\[\]\)\.forEach\(m=>\{const file=MON_FILE\[m\.n\];if\(file&&\/\^z\[12\]-\/\.test\(file\)&&!live\.beasts\.includes\(file\)\)live\.beasts\.push\(file\);\}\);\}/);
+ a.match(party,/function startFight\(mons,why\)\{if\(live\)\{if\(!Array\.isArray\(live\.beasts\)\)live\.beasts=\[\];\(mons\|\|\[\]\)\.forEach\(m=>\{const file=MON_FILE\[m\.n\];if\(file&&\/\^z\[123\]-\/\.test\(file\)&&!live\.beasts\.includes\(file\)\)live\.beasts\.push\(file\);\}\);\}/);
  a.equal(party.includes("live.beasts.push(monKey"),false);
  a.match(party,/"Rat":"z1-rat"/);
  a.match(party,/beasts:\[\]/);

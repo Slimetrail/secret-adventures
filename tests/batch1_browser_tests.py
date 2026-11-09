@@ -1,6 +1,7 @@
 """Sequential batch 1 integration checks through real party lifecycle and dialogue UI.
 Usage: python3 tests/batch1_browser_tests.py http://127.0.0.1:<port>/
 """
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys, re, json, time
 import stage6_tests as S6
 from stage6_tests import ev, check
@@ -95,14 +96,14 @@ def t_real_fight_continue_snapshot(p):
  b.close()
 
 def t_offline_batch(p):
- b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html')
+ b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html');SPL.pass_splash(pg)
  
  for _ in range(100):
   if ev(pg,'!!navigator.serviceWorker.controller'):break
   pg.wait_for_timeout(100)
  check(ev(pg,'!!navigator.serviceWorker.controller'),'service worker not ready')
  check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return !!(await c.match("batch1-talks.js?v=3"))&&!!(await c.match("party.js?v=16"));})()'),'new scripts not cached')
- c.set_offline(True);pg.reload();S6.create(pg);S6.drain(pg)
+ c.set_offline(True);pg.reload();SPL.pass_splash(pg);S6.create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.filter(d=>d.role!=="angry").map(d=>RPG.makeCompanion(d,1)));for(const id of ["C7","C8","C9","C10","C11","C12"])SOTA.rpg.s6.st().seen["batch2-"+id]=1;S6H.camp(0)')
  check(collect(pg)==TALKS['C1'],'offline batch unavailable');b.close()
 

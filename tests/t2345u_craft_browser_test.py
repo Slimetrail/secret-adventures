@@ -1,6 +1,7 @@
 """Jeremy t2345u/t2347u/t2348u/t2350u on a pretend phone (390x844, touch), through real taps:
 camp Craft button at the top centre (with and without a tent), 4 one-item boxes, picker, Craft, 8-bit result picture.
 Screenshots go to ../game-export/t2345u-shots/. Usage: python tests/t2345u_craft_browser_test.py [base_url]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 BASE=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8825/'
@@ -46,12 +47,12 @@ def t_first_camp_lesson(p):
   sv=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot1"))');T.check(sv['campTut']=='shown' and [sv['at']['x'],sv['at']['y']]==T.ev(pg,'MAZE.camps[0]'),'lesson or camp not in the save')
   pg.screenshot(path=os.path.join(SHOTS,'lesson-done-saved.png'))
   T.check(T.ev(pg,'SOTA.rpg.doSave()')==True and bagn(pg,'tent')==0,'same-spot re-save failed or used a tent')
-  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');T.past_title(pg);pg.wait_for_timeout(300);T.ev(pg,'SOTA.rpg.closeUI()')
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);T.past_title(pg);pg.wait_for_timeout(300);T.ev(pg,'SOTA.rpg.closeUI()')
   T.ev(pg,'SOTA.rpg.s5.campScreen(0)');pg.wait_for_timeout(200);T.check(tut_step(pg)==0,'lesson shown again after reload');b.close()
 def t_old_save_points(p):
   b,c=T.ctx(p);pg=T.fresh(c);T.full_create(pg,'Tess','human','warrior');T.ev(pg,'SOTA.rpg.doSave()')
   T.ev(pg,'(()=>{const k="sota.party.slot"+SOTA.rpg.activeSlot(),v=JSON.parse(localStorage.getItem(k));v.party[0].lvl=10;v.party[0].spent=60;v.party[0].stats.str+=5;localStorage.setItem(k,JSON.stringify(v));})()')
-  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');T.past_title(pg);pg.wait_for_timeout(300)
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);T.past_title(pg);pg.wait_for_timeout(300)
   r=T.ev(pg,'(()=>{SOTA.rpg.loadSlot(SOTA.rpg.activeSlot());const c=SOTA.rpg.live().party[0];return [c.lvl,c.spent,c.stats.str,RPG.pointsEarned(c.lvl)-c.spent]})()');print('  old save after load [lvl,spent,str,left]:',r)
   T.check(r[0]==10 and r[1]==T.ev(pg,'RPG.pointsEarned(10)') and r[2]==T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot"+SOTA.rpg.activeSlot())).party[0].stats.str') and r[3]==0,f'old save not clamped {r}')
   b.close()

@@ -22,6 +22,7 @@ function retry(){if(!gestured||!now)return;const a=A[now];if(a&&a._want&&!a._don
 ["pointerdown","touchend","keydown","click"].forEach(t=>window.addEventListener(t,retry,true));
 function storyKind(){try{const l=S.rpg.s6&&S.rpg.s6.line();return l?l.kind:null;}catch(e){return null;}}
 function want(){
+ if(S.splash&&S.splash.open())return [null,0,0];               // t2386u: no game music until the logo splash is gone
  const F=S.rpg.fight&&S.rpg.fight(),ui=S.rpg.ui&&S.rpg.ui();
  if(ui==="fight"&&F){if(F!==lastFight){lastFight=F;deathDone=false;vicDone=false;}
   const boss=F.why==="boss"||F.m.some(m=>m.boss);
@@ -39,7 +40,7 @@ function want(){
   if(k==="tavern"||k==="stay"||k==="join"||k==="keeper")return ["tavern",600,0];
   if(k==="wall"||k==="art-room"||k==="wall-art")return ["art_room",now&&now.startsWith("maze_")?120:600,0]; // early cut into clusters
   if(k==="boss")return ["menu",150,600];                                    // the note before you enter = journal reading
-  if(k==="ending"){const box=document.getElementById("s6d");if(box&&box.querySelector(".s6title"))return ["credits",2000,1500];
+  if(k==="ending"){const box=document.getElementById("s6d");if(box&&box.querySelector(".s6title,#icred"))return ["credits",2000,1500];
    let e=null;try{e=S.rpg.s6.st().ending;}catch(x){}return [ENDING[e]||"true_ending",1200,1200];}}
  if(S.intro&&S.intro.journalOpen())return ["menu",150,600];
  if(ui==="create")return ["title_intro",1500,1500];

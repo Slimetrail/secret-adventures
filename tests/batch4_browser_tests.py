@@ -1,4 +1,5 @@
 """Batch 4 real lifecycle, rendered words, shared registry, and offline checks."""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,json,re,time
 import batch1_browser_tests as B1
 import batch2_browser_tests as B2
@@ -95,13 +96,13 @@ def t_food_craft_shared_and_real_exclusions(p):
  b.close()
 
 def t_offline_v24(p):
- b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html')
+ b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html');SPL.pass_splash(pg)
  for _ in range(100):
   if ev(pg,'!!navigator.serviceWorker.controller'):break
   pg.wait_for_timeout(100)
  check(ev(pg,'!!navigator.serviceWorker.controller'),'service worker not ready')
  check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return !!(await c.match("batch4-talks.js?v=1"));})()'),'batch4 not cached')
- c.set_offline(True);pg.reload();S6.create(pg);S6.drain(pg)
+ c.set_offline(True);pg.reload();SPL.pass_splash(pg);S6.create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.map(d=>RPG.makeCompanion(d,1)));const s=SOTA.rpg.s6.st();for(let i=1;i<=18;i++){s.seen["batch"+(i<=6?1:i<=12?2:3)+"-C"+i]=1;}SOTA.rpg.live().party.forEach(c=>c.bag=[]);S6H.camp(0)')
  check(B1.collect(pg)==TALKS['C20'],'offline batch4 missing');b.close()
 

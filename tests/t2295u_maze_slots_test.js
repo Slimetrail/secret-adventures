@@ -27,10 +27,10 @@ test("slots call the party UI while retaining pressed animation",()=>{
  a.doesNotMatch(game,/empty for now|later stages fill them/);a.match(game,/classList.add\("pressed"\);if\(window.SOTA&&SOTA.rpg&&SOTA.rpg.tapMazeSlot\)SOTA.rpg.tapMazeSlot/);
  a.match(game,/animationend/);a.match(party,/S.rpg=\{syncMazeSlots,tapMazeSlot,assignMazeSlot/);
 });
-test("only potion, ether, salts, ration and actual cooked dishes are offered",()=>{
+test("only potion, ether, ration and actual cooked dishes are offered (t2398u: salts are battle-only)",()=>{
  const {api}=fixture();const allowed=Object.keys(api.R.ITEMS).filter(api.mazeSlotAllowed).sort();
- a.deepEqual(plain(allowed),["potion","ether","salts","ration",...api.E.DISHES.map(d=>"d_"+d.id)].sort());
- for(const id of ["sword","tent","rope","lockpick","i_bread","p_hide"])a.equal(api.mazeSlotAllowed(id),false,id);
+ a.deepEqual(plain(allowed),["potion","ether","ration",...api.E.DISHES.map(d=>"d_"+d.id)].sort());
+ for(const id of ["salts","sword","tent","rope","lockpick","i_bread","p_hide"])a.equal(api.mazeSlotAllowed(id),false,id);
 });
 test("assignment is a binding, not a cloned item; one copy cannot fill two boxes",()=>{
  const {api,hero}=fixture(["potion"]);a.equal(api.assignMazeSlot(0,"potion"),true);a.deepEqual(hero.bag,["potion"]);
@@ -54,10 +54,9 @@ test("rations and cooked dishes run actual eatDish including buffs and freshness
  a.equal(api.shown()[0],null);}
  a.match(party,/if\(id==="ration"\|\|it.slot==="dish"\)eatDish\(c,id\)/);
 });
-test("salts target only knocked-out members and preserve item when none are down",()=>{
- const {api,hero,c}=fixture(["salts"]);api.assignMazeSlot(0,"salts");api.mazeSlotTargets(0);a.equal(c.messages.at(-1),"Nobody is knocked out.");a.equal(api.useMazeSlot(0,0),false);a.equal(hero.bag.length,1);
- const target=api.live().party[1];target.hp=0;api.mazeSlotTargets(0);a.deepEqual(plain(api.pg().children.filter(n=>n.label).map(n=>n.label)),["Wake Bo"]);
- a.equal(api.useMazeSlot(0,1),true);a.equal(target.hp,Math.max(1,Math.round(api.R.maxHp(target,api.R.DIFF[api.live().diff].hp)*api.R.ITEMS.salts.revive)));a.equal(hero.bag.length,0);
+test("t2398u/t2399u: salts cannot be put in a maze box, even with a member knocked out; the bag copy is kept",()=>{
+ const {api,hero}=fixture(["salts"]);api.live().party[1].hp=0;a.equal(api.assignMazeSlot(0,"salts"),false);a.deepEqual(plain(api.shown()),[null,null,null,null]);a.equal(api.useMazeSlot(0,1),false);
+ a.equal(api.live().party[1].hp,0);a.deepEqual(plain(hero.bag),["salts"]);
 });
 test("empty tap opens carried-item picker or plain no-food toast",()=>{
  const {api,c}=fixture(["tent"]);api.tapMazeSlot(0);a.equal(c.messages.at(-1),"No potions or food to put here.");api.live().party[0].bag.push("ether");api.tapMazeSlot(0);
@@ -94,7 +93,7 @@ test("resetRun/new game clear all bindings together with existing maze reset",()
 test("portrait parchment layout and text-only slot art remain intact",()=>{
  a.match(html,/#slots\{[^}]*grid-template-columns:repeat\(2,52px\)/);a.match(html,/@media \(min-aspect-ratio:1\/1\)\{#slots\{grid-template-columns:repeat\(4,56px\)/);
  a.match(html,/font:10px\/1.15 Georgia,serif/);a.doesNotMatch(party.slice(party.indexOf('// ---- Maze item shortcuts'),party.indexOf('// ---- portraits:')),/\.webp|\.png|createElement\("img"/);
- const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u title rename */),"Only approved journal book and t2364u title art may change");
+ const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u title rename */||n==="art-intro/brand/logo3-neon-chosen-v1.jpg"||/^art-intro\/journal\/monsters\/z3-[a-z]+\.webp$/.test(n)/* t2404u zone 3 Beasts sketches */||n==="art-intro/brand/faith-badge-matthew-5-13-16.jpg"/* t2386u logo splash + credits faith badge, exact chosen bytes */),"Only approved journal book and t2364u title art may change");
 });
 test("index and service-worker pins match game 20, party 25, VER 70",()=>{
  const sw=read("sw.js");a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);for(const src of [html,sw]){a.ok(src.includes("game.js?v=20"));a.ok(src.includes("party.js?v=25"));a.ok(!src.includes("game.js?v=19"));a.ok(!src.includes("party.js?v=24"));}

@@ -1,6 +1,7 @@
 """t2103u browser checks: title-only boot, tap -> create, long-press continue, install/update placement,
 journal six tabs + wear art, intro/ending staging and moods, credits keep .s6title, notes locks, no network.
 Usage: python tests/t2103u_browser_tests.py [base_url]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,json
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765/').rstrip('/')+'/'
@@ -13,7 +14,7 @@ def page(c,reqs=None,errs=None):
   pg=c.new_page()
   if reqs is not None:pg.on('request',lambda r:reqs.append(r.url))
   if errs is not None:pg.on('pageerror',lambda e:errs.append(str(e)))
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.intro');pg.wait_for_timeout(200);return pg
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.intro');SPL.pass_splash(pg);pg.wait_for_timeout(200);return pg
 ev=lambda pg,s,*a:pg.evaluate(s,*a)
 def make(pg,race='human',cls='warrior',name='Wes'):
   ev(pg,'''([n,r,c])=>{const q=s=>document.querySelector(s);const i=q('#ccname');i.value=n;i.dispatchEvent(new Event('input'));q('[data-race='+r+']').click();q('[data-cls='+c+']').click();q('[data-skill]').click();q('#ccgo').click();if(SOTA.rpg.ui()==='create')q('#ccgo').click();}''',[name,race,cls])
@@ -37,7 +38,7 @@ def t_longpress_no_save(p):
 def t_save_kept_and_continue(p):
   b,c=ctx(p);pg=page(c);ev(pg,'SOTA.intro.shortTap()');ev(pg,'localStorage.setItem("sota.dev.nostory","1")');make(pg,'elf','mage','Ael')
   s0=ev(pg,'localStorage.getItem("sota.party")');check(s0,'no save after Confirm')
-  pg.reload();pg.wait_for_function('SOTA.intro&&SOTA.intro.titleOpen()');pg.touchscreen.tap(200,450);pg.wait_for_timeout(150)
+  pg.reload();SPL.pass_splash(pg);pg.wait_for_function('SOTA.intro&&SOTA.intro.titleOpen()');pg.touchscreen.tap(200,450);pg.wait_for_timeout(150)
   check(ev(pg,'SOTA.rpg.ui()')=='create' and ev(pg,'!!document.getElementById("ititleb")'),'tap with save: creation + back button')
   check('new adventure' in ev(pg,'document.getElementById("inew").textContent'),'new adventure note')
   check(ev(pg,'localStorage.getItem("sota.party")')==s0,'opening creation changed the save')
@@ -98,7 +99,10 @@ def t_endings(p):
       if ev(pg,'!!document.querySelector("#s6d .s6title")'):break
       pg.keyboard.press('Enter');pg.wait_for_timeout(60)
     pg.wait_for_timeout(450);r=ev(pg,'(()=>{const b=document.getElementById("s6d");return {bg:(b.querySelector(".ia-stage")||{style:{}}).style.backgroundImage,t:!!b.querySelector(".s6title"),cr:!!b.querySelector("#icred"),m:SOTA.music.now()}})()')
-    check(k+'-backdrop' in (r['bg'] or '') and r['t'] and r['cr'] and r['m']=='credits',f'{k}: {r}');b.close()
+    check(k+'-backdrop' in (r['bg'] or '') and r['t'] and not r['cr'] and r['m']=='credits',f'{k}: {r}')  # t2393u: review first, credits on their own screen
+    pg.locator('[data-s6b=continue]').tap();pg.wait_for_timeout(300)
+    r=ev(pg,'(()=>{const b=document.getElementById("s6d");return {bg:(b.querySelector(".ia-stage")||{style:{}}).style.backgroundImage,t:!!b.querySelector(".s6title"),cr:!!b.querySelector("#icred"),m:SOTA.music.now()}})()')
+    check(k+'-backdrop' in (r['bg'] or '') and not r['t'] and r['cr'] and r['m']=='credits',f'{k} credits: {r}');b.close()
 TESTS=[t_title_boot,t_longpress_no_save,t_save_kept_and_continue,t_intro_cave,t_race_only_paintings,t_journal,t_endings]
 if __name__=='__main__':
   ok=0

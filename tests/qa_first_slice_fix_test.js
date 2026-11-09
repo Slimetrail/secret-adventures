@@ -41,11 +41,11 @@ test("SHELL has unique URLs, one music.js?v=18, and VER 70",()=>{
   a.ok(html.includes("party.js?v=25"));
   a.ok(!html.includes("music.js?v=17"));
 });
-test("credits keep thank-you and add the standing Slimetrail line",()=>{
+test("credits keep thank-you; t2394u replaced the Slimetrail line with Music/Art/Game Design: SlimeTrail Production",()=>{
   const js=read("intro.js");
   a.ok(js.includes('el("div","icred-l","Thank you for playing.")'));
-  a.ok(js.includes('el("div","icred-l","A Slimetrail production")'));
-  a.equal((js.match(/A Slimetrail production/g)||[]).length,1);
+  a.ok(js.includes('const CREDIT_LINES=["Music: SlimeTrail Production","Art: SlimeTrail Production","Game Design: SlimeTrail Production"];'));
+  a.equal((js.match(/A Slimetrail production/g)||[]).length,0);
   a.ok(!js.includes("A Slimetrail production."));
 });
 test("tavern hubs contain the full scene; other scenes still cover",()=>{
@@ -103,6 +103,7 @@ test("maze picker still follows the content cap",()=>{
     vm.runInContext(read("music.js"),sandbox);
     return sandbox.window.SOTA.music.maze();
   }
-  a.equal(load(API.create(M.n,M.zone),3),"maze_zone2");
+  // t2362u step 2: the default cap now opens zone 3, so the zone 3 doorway plays zone 3 music; zone 4 still falls back
+  a.equal(load(API.create(M.n,M.zone),3),"maze_zone3");a.equal(load(API.create(M.n,M.zone),4),"maze_zone3");
   a.equal(load(API.create(M.n,M.zone,{maxZone:3,extraCells:[]}),3),"maze_zone3");
 });

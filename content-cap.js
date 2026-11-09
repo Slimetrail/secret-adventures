@@ -1,7 +1,9 @@
 /* Local release boundary. Raise maxZone in a later content update; keep maze data intact. */
 (function(root){
 "use strict";
-const DEFAULT=Object.freeze({maxZone:2,extraCells:Object.freeze([Object.freeze([19,24])])});
+// t2362u step 2 / t2370u: zone 3 plays through to Tavern 3 (51,14). Zones 4-5 stay closed; (51,15) is zone 4, so Tavern 3's Zone 4 exit waits.
+// (19,24), the old step-1 extra cell, is zone 3 and is now open as part of maxZone 3.
+const DEFAULT=Object.freeze({maxZone:3,extraCells:Object.freeze([])});
 function create(n,zoneOf,cap=DEFAULT){
  function isOpen(x,y){
   if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||y<0||x>=n||y>=n)return false;

@@ -84,14 +84,20 @@ function sync(){const b=box();if(!b)return;const on=b.classList.contains("on"),s
   return;}
  if(on&&sc==="ending"){let k=null;try{k=S.rpg.s6.st().ending;}catch(e){}setD(b,"intro","ending");setD(b,"endMood",END_MOOD[k]||"");setD(b,"crystal",(END_ART[k]||[]).join(","));
   const bg="endings/"+k+"-backdrop.webp";setD(b,"artReady",has(bg)?"1":"0");if(has(bg)){addC(b,"ia-active","ia-end");const cp=endFaces(b);stage(b,"ending",bg,cp[0],cp[1]);}
-  const t=b.querySelector(".s6title");if(t&&!b.querySelector(".icred"))credits(b);return;}
- if(b.dataset.intro)unstage(b);}
+  if(b.dataset.endScreen!=="credits")dropBadge(b);return;}
+ dropBadge(b);if(b.dataset.intro)unstage(b);}
 // ending companion mood faces: only Mira/Sorrel/Brunn files from the pair's line; no hero face (t2118u kit pending)
 function endFaces(b){const p=b.dataset.moodPair,i=+b.dataset.moodIndex;if(!p||p==="Intro"||isNaN(i))return [null,null];
  const f=["mira","sorrel","brunn"].map(c=>"moods/"+p+"/l"+(i+1)+"-"+c+".webp").filter(has);return [f[0]||null,f[1]||null];}
-function credits(b){const c=el("div","icred");c.id="icred";c.appendChild(el("div","icred-h","Credits"));c.appendChild(el("div","icred-t",TITLE));c.appendChild(el("div","icred-l","Thank you for playing."));c.appendChild(el("div","icred-l","A Slimetrail production"));
- const t=b.querySelector(".s6t");t.appendChild(c);}
-new MutationObserver(ms=>{if(ms.some(m=>m.target.id==="s6d"||m.target.classList&&m.target.classList.contains("s6more")||[...m.addedNodes].some(n=>n.id==="s6d"||n.classList&&n.classList.contains("s6title"))))sync();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class","data-scene","data-line","data-ending"]});
+// t2393u/t2394u: credits are their own screen after the end-game review, with the faith badge small in the bottom-left corner
+const CREDIT_LINES=["Music: SlimeTrail Production","Art: SlimeTrail Production","Game Design: SlimeTrail Production"];
+function credits(b){if(b.querySelector(".icred"))return;const c=el("div","icred");c.id="icred";c.appendChild(el("div","icred-h","Credits"));c.appendChild(el("div","icred-t",TITLE));
+ for(const l of CREDIT_LINES)c.appendChild(el("div","icred-l",l));c.appendChild(el("div","icred-l","Thank you for playing."));
+ const t=b.querySelector(".s6t");t.appendChild(c);
+ if(!b.querySelector(".icred-badge")){const g=el("img","icred-badge");g.src="art-intro/brand/faith-badge-matthew-5-13-16.jpg";g.alt="Be the salt and the light. Matthew 5:13-16";b.appendChild(g);}}
+function dropBadge(b){const g=b.querySelector(".icred-badge");if(g)g.remove();}
+window.SOTA_ENDING_CREDITS=credits;
+new MutationObserver(ms=>{if(ms.some(m=>m.target.id==="s6d"||m.target.classList&&m.target.classList.contains("s6more")||[...m.addedNodes].some(n=>n.id==="s6d"||n.classList&&n.classList.contains("s6title"))))sync();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class","data-scene","data-line","data-ending","data-end-screen"]});
 function skipSickDad(){try{if(S.rpg&&S.rpg.s6&&S.rpg.s6.skipOpening)S.rpg.s6.skipOpening();}catch(e){}
  try{const l=S.rpg.s6.line();if(l&&l.kind==="opening")return;}catch(e){}
  showCave();}
@@ -162,7 +168,9 @@ function closeJournal(){jBeast=null;jTab=null;jOpenSec=false;if(jb){jb.classList
 function itemName(id){return R.ITEMS[id]?R.ITEMS[id].n:id;}
 // Approved zone 1/2 pencil sketches only; later generated pages remain text-only.
 const JOURNAL_MONSTERS={"cap:1":[["Rat","z1-rat"],["Slime","z1-slime"],["Big bug","z1-bigbug"],["Cave bat","z1-bat"],["Giant spider","z1-spider"],["Mud toad","z1-toad"],["Fungus creeper","z1-fungus"]],"cap:2":[["Goblin","z2-goblin"],["Orc","z2-orc"],["Fairy","z2-fairy"],["Kobold","z2-kobold"],["Wild boar","z2-boar"],["Pixie swarm","z2-pixies"],["Hobgoblin brute","z2-hobgoblin"]]};
-function beastNote(name){const G=window.StoryJournalGenerator,f=G&&G.MONSTER_FACTS;if(!f)return null;return (f[1]||[]).concat(f[2]||[]).find(m=>m[0]===name)||null;}
+// t2404u: zone 3 pencil sketches for the Beasts tab only (art lock lifted for zone 3 only; journal pages for cap:3 stay text only)
+const BEASTS_Z3=[["Centaur","z3-centaur"],["Werewolf","z3-werewolf"],["Skeleton","z3-skeleton"],["Ghoul","z3-ghoul"],["Harpy","z3-harpy"],["Dire wolf","z3-direwolf"],["Wraith","z3-wraith"]];
+function beastNote(name){const G=window.StoryJournalGenerator,f=G&&G.MONSTER_FACTS;if(!f)return null;return (f[1]||[]).concat(f[2]||[],f[3]||[]).find(m=>m[0]===name)||null;}
 function monsterSketches(entry,kind,key){if(kind!=="monster-drawings")return;const g=el("div","ijart ijmonsters");
  (JOURNAL_MONSTERS[key]||[]).forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.appendChild(im);g.appendChild(f);});if(g.children.length)entry.appendChild(g);}
 function page(pg,l){const t=jTab,E=window.ECON;
@@ -175,7 +183,7 @@ function page(pg,l){const t=jTab,E=window.ECON;
   ids.forEach(id=>{const f=el("figure","ijfig");f.dataset.room=id;const im=el("img");im.alt="";im.src="art6/"+ra[id][1]+".webp";const n=el("figcaption","ijnote ijhw",wallNote(ra[id][1]));f.append(im,n);g.appendChild(f);});
   if(s&&s.seen&&s.seen.boss){const v=letterVar(),f=el("figure","ijfig");f.dataset.room="letter";f.dataset.variant=v;const im=el("img");im.alt="";im.src="art6/letter-note-before-you-enter.webp";f.append(im,el("figcaption","ijnote ijhw",TX.wall["letter-note-before-you-enter#"+v]||""));g.appendChild(f);}pg.appendChild(g);}
  else if(t==="journal"){pg.appendChild(el("h3",null,"Journal"));const h=el("div","ijhand");const es=keyMoments();if(!es.length)h.appendChild(el("div","ijl dim","(nothing written yet)"));es.forEach(([k,t,kind,key])=>{const e=el("div","ijentry ijhw",t);e.dataset.entry=k;monsterSketches(e,kind,key);h.appendChild(e);});pg.appendChild(h);}
- else if(t==="beasts"){pg.appendChild(el("h3",null,"Beasts"));const found=new Set(l.beasts||[]);const all=[].concat(JOURNAL_MONSTERS["cap:1"],JOURNAL_MONSTERS["cap:2"]).filter(([,file])=>found.has(file));
+ else if(t==="beasts"){pg.appendChild(el("h3",null,"Beasts"));const found=new Set(l.beasts||[]);const all=[].concat(JOURNAL_MONSTERS["cap:1"],JOURNAL_MONSTERS["cap:2"],BEASTS_Z3).filter(([,file])=>found.has(file));
   const pick=(typeof jBeast==="string"&&found.has(jBeast))?all.find(([,file])=>file===jBeast):null,fact=pick&&beastNote(pick[0]);
   if(pick&&fact){const path="journal/monsters/"+pick[1]+".webp",box=el("div","ijbeast");box.dataset.beastDetail=pick[1];
    if(has(path)){const f=el("figure","ijfig ijbeast-lg"),im=el("img");im.alt=pick[0];im.src=A(path);f.appendChild(im);box.appendChild(f);}
@@ -224,7 +232,7 @@ html.ititle-open #dvbtn{visibility:hidden}
 .ia-person{position:absolute;bottom:15%;height:min(72vh,110vw);width:55vw;z-index:1;filter:drop-shadow(0 5px 8px #100b18)}.ia-person.left{left:-4%}.ia-person.right{right:-4%}
 .ia-person img{width:100%;height:100%;object-fit:contain;object-position:bottom}
 .ia-active .s6pf{display:none!important}.ia-active .s6bg,.ia-active .s6wall{visibility:hidden!important}.ia-active .s6box{z-index:3;left:5%;right:5%;bottom:5%}
-.icred{margin-top:10px;text-align:center;font:15px Georgia,serif;color:#efe0b8}.icred-h{font:700 16px Georgia,serif;color:#ffe3a0}.icred-t{font:700 18px Georgia,serif;margin:4px 0}
+.icred{margin-top:4px;text-align:center;font:15px Georgia,serif;color:#efe0b8;line-height:1.5}#s6d{--bdg:56px}@media (min-width:700px) and (min-height:600px){#s6d{--bdg:72px}}#s6d[data-end-screen=credits] .s6box{top:max(12px,env(safe-area-inset-top));bottom:calc(var(--bdg) + 24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:flex-end}#s6d[data-end-screen=credits] .s6t{flex:0 1 auto;min-height:0;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain}#s6d[data-end-screen=credits] .s6btns{flex:none}.icred-badge{position:absolute;z-index:4;left:max(10px,env(safe-area-inset-left));bottom:calc(10px + env(safe-area-inset-bottom));width:var(--bdg);height:var(--bdg);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.6);pointer-events:none;display:block}.icred-h{font:700 16px Georgia,serif;color:#ffe3a0}.icred-t{font:700 18px Georgia,serif;margin:4px 0}
 #s6d[data-end-mood=vibrant] .s6t{border-color:#7fe0ff}#s6d[data-end-mood=cracked] .s6t{border-color:#c04a6a}#s6d[data-end-mood=damaged] .s6t{border-color:#6a5a70}
 .ijour{display:none;position:fixed;inset:0;z-index:96;background:rgba(8,5,14,.9);overflow-y:auto;touch-action:pan-y;padding:calc(10px + env(safe-area-inset-top)) 10px 16px 10px;box-sizing:border-box;font:16px Georgia,serif;color:#2b1a0e}
 .ijour.on{display:block}.ijclose{position:sticky;top:0;float:left;z-index:2}

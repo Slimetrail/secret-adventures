@@ -7,7 +7,7 @@ class JournalArt(unittest.TestCase):
   inv=(SRC/'LOOK-LEAD-INVENTORY.txt').read_bytes()
   self.assertEqual(hashlib.sha256(inv).hexdigest(),'4246769b03fb84f4b1fa62dd94196fca95ecac4a7dba3de570c7c5ec9a38cebd')
   rows=re.findall(r'/journal-monsters/(z[12]-[^\s]+\.webp)\nSHA-256 ([0-9a-f]{64})',inv.decode())
-  self.assertEqual(len(rows),14);self.assertEqual({p.name for p in DEST.iterdir()},{n for n,_ in rows})
+  self.assertEqual(len(rows),14);self.assertEqual({p.name for p in DEST.iterdir() if not p.name.startswith('z3-')},{n for n,_ in rows})  # t2404u: z3 sketches are new
   for n,sha in rows:
    with self.subTest(file=n):
     source=SRC/'journal-monsters'/n;dest=DEST/n

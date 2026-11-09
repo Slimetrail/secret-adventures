@@ -50,7 +50,7 @@ function build(){if(box)return box;box=el("div","s6d");box.id="s6d";
 function q(sel){return box.querySelector(sel);}
 function play(kind,lines,opt){opt=opt||{};if(!PARTIAL_OK[kind]&&!talkPresent(lines,opt.need)){if(opt.done)opt.done();return false;}const L=resolve(lines||[]);if(!L.length){if(opt.done)opt.done();return false;}queue.push({kind,L,opt});if(!cur)nextScene();return true;}
 function nextScene(){const sc=queue.shift();if(!sc){close();return;}build();cur={kind:sc.kind,L:sc.L,opt:sc.opt,i:-1,typing:false};
- box.className="s6d on"+(sc.opt.bg?" hasbg":"")+(sc.opt.wall?" haswall":"")+(sc.kind==="camp"&&/^art6\/camp\//.test(sc.opt.bg||"")?" camp-scene":"");box.dataset.scene=sc.kind;
+ box.className="s6d on"+(sc.opt.bg?" hasbg":"")+(sc.opt.wall?" haswall":"")+(sc.kind==="camp"&&/^art6\/camp\//.test(sc.opt.bg||"")?" camp-scene":"");box.dataset.scene=sc.kind;delete box.dataset.endScreen;
  q(".s6bg").style.backgroundImage=sc.opt.bg?'url("'+sc.opt.bg+'")':"none";const w=q(".s6wall");if(sc.opt.wall){w.src=sc.opt.wall;w.style.display="block";}else{w.removeAttribute("src");w.style.display="none";}
  q(".s6btns").innerHTML="";document.documentElement.classList.add("s6open");if(sc.opt.visualOnly){cur.ending=true;cur.typing=false;q(".s6name").textContent="";q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";q(".s6t").textContent="";btns([["Back to the maze",()=>finish(),"back"]]);}else adv();}
 function adv(){if(!cur)return;cur.i++;if(cur.i>=cur.L.length){const sc=cur;cur=null;if(sc.opt.end){cur=sc;cur.i=sc.L.length-1;cur.ending=true;sc.opt.end();return;}
@@ -179,7 +179,10 @@ function showEnding(){const s=st();if(!s)return;const k=endingFor(),E=D.ending[k
  const title=()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";t.appendChild(el("div","s6title","Ending: "+E.title));
   t.appendChild(el("div","s6cnt","Puzzles solved: "+(S.rooms().solved.length)+" / "+TOTAL_P+"  ·  Wall art found: "+Object.keys(s.walls).length+" / "+TOTAL_W));
   q(".s6name").style.visibility="hidden";q(".s6pf").className="s6pf none";box.dataset.ending=k;
-  btns([["Back to the maze",()=>finish(),"back"]]);};
+  box.dataset.endScreen="review";btns([["Continue",credits,"continue"]]);};
+ // t2393u: the end-game review comes first; Continue opens the credits on their own screen, which keeps Back to the maze
+ const credits=()=>{const t=q(".s6t");t.classList.remove("note");t.innerHTML="";box.dataset.endScreen="credits";
+  if(window.SOTA_ENDING_CREDITS)window.SOTA_ENDING_CREDITS(box);btns([["Back to the maze",()=>finish(),"back"]]);};
  const lines=endingLines(k);
  if(lines.length)play("ending",lines,{end:title});
  // A solo death has no speech. play([]) calls done, not end; open a title-only scene without a dummy line.

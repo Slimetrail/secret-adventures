@@ -25,15 +25,14 @@ function go(n,f){const b=el("button","ijgo",n);b.addEventListener("click",e=>{e.
  const pg=el("div");ctx.api.page(pg,live);ctx.lastPage=pg;return ctx;
 }
 
-test("Beasts grid still shows only found zone 1-2 sketches",()=>{
+test("Beasts grid shows only found sketches; zone 3 sketches allowed since t2404u",()=>{
  const empty=load({beasts:[]});
  a.equal(all(empty.lastPage,"img").length,0);
  a.ok(all(empty.lastPage,"div").some(n=>n.textContent==="No beasts found yet."));
  const found=load({beasts:["z1-rat","z2-goblin","z3-wraith","z1-missing"]});
  const imgs=all(found.lastPage,"img");
- a.deepEqual(imgs.map(i=>i.src),["art-intro/journal/monsters/z1-rat.webp","art-intro/journal/monsters/z2-goblin.webp"]);
- a.equal(all(found.lastPage,"figure").map(f=>f.dataset.beast).join(","),"z1-rat,z2-goblin");
- a.equal(imgs.some(i=>/z3-/.test(i.src)),false);
+ a.deepEqual(imgs.map(i=>i.src),["art-intro/journal/monsters/z1-rat.webp","art-intro/journal/monsters/z2-goblin.webp","art-intro/journal/monsters/z3-wraith.webp"]);
+ a.equal(all(found.lastPage,"figure").map(f=>f.dataset.beast).join(","),"z1-rat,z2-goblin,z3-wraith");
 });
 
 test("tapping a found beast opens an in-journal detail view",()=>{
@@ -70,17 +69,17 @@ test("detail notes reuse MONSTER_FACTS through caption and firstPerson",()=>{
  a.ok(all(toadBox,"div").some(n=>n.textContent===G.caption(toad)));
 });
 
-test("detail stays on found beasts and ignores zone 3+ facts",()=>{
+test("detail stays on found beasts; zone 3 facts allowed since t2404u, zone 4+ ignored",()=>{
  const intro=read("intro.js");
- a.match(intro,/function beastNote\(name\)\{const G=window\.StoryJournalGenerator,f=G&&G\.MONSTER_FACTS;if\(!f\)return null;return \(f\[1\]\|\|\[\]\)\.concat\(f\[2\]\|\|\[\]\)\.find\(m=>m\[0\]===name\)\|\|null;\}/);
+ a.match(intro,/function beastNote\(name\)\{const G=window\.StoryJournalGenerator,f=G&&G\.MONSTER_FACTS;if\(!f\)return null;return \(f\[1\]\|\|\[\]\)\.concat\(f\[2\]\|\|\[\],f\[3\]\|\|\[\]\)\.find\(m=>m\[0\]===name\)\|\|null;\}/);
  a.match(intro,/window\.StoryJournalGenerator\.caption\(fact\)/);
- a.equal(intro.includes("MONSTER_FACTS[3]"),false);
+ a.equal(intro.includes("f[4]"),false);
  const missing=load({beasts:["z1-rat"]},"z1-slime");
  a.equal(all(missing.lastPage,"div").some(n=>n.dataset.beastDetail),false);
  a.equal(all(missing.lastPage,"figure").map(f=>f.dataset.beast).join(","),"z1-rat");
  const z3=load({beasts:["z3-wraith","z1-rat"]},"z3-wraith");
- a.equal(all(z3.lastPage,"div").some(n=>n.dataset.beastDetail),false);
- a.equal(all(z3.lastPage,"img").some(i=>/z3-/.test(i.src)),false);
+ a.equal(all(z3.lastPage,"div").some(n=>n.dataset.beastDetail==="z3-wraith"),true); // t2404u: zone 3 art lock lifted
+ a.equal(all(z3.lastPage,"img").some(i=>/z3-wraith/.test(i.src)),true);
 });
 
 test("t2312u has no Back to Beasts button; the Beasts tab returns to the found-beast grid",()=>{
@@ -102,7 +101,7 @@ test("source keeps the journal open and does not rewrite sketch files",()=>{
  a.doesNotMatch(intro,/Back to Beasts/);
  a.doesNotMatch(intro.slice(intro.indexOf('t==="beasts"'),intro.indexOf('t==="recipes"')),/closeJournal\(\)/);
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});
- a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)),"Only approved journal book art may change");
+ a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/journal\/monsters\/z3-[a-z]+\.webp$/.test(n)/* t2404u */||/^art-intro\/brand\//.test(n)/* t2386u */||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u */),"Only approved journal book art may change");
  const html=read("index.html"),sw=read("sw.js");
  a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);
  for(const src of [html,sw]){a.ok(src.includes("intro.js?v=14"));a.ok(!src.includes("intro.js?v=13"));}

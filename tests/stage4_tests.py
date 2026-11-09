@@ -1,4 +1,5 @@
 """Stage 4 (combat and party) tests on a pretend phone (Playwright Chromium, touch, 390x844). Usage: python tests/stage4_tests.py [base_url] [names...]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os,json,time,subprocess,re
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765/').rstrip('/')+'/';ONLY=sys.argv[2:]
@@ -12,9 +13,9 @@ def ctx(p,w=390,h=844,sw=False):
   b=p.chromium.launch();c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block');c.add_init_script("try{localStorage.setItem('sota.dev.nostory','1')}catch(e){}");return b,c
 def page(c,pre=None):
   pg=c.new_page();pg.on('console',lambda m:ERRS.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.on('request',lambda r:REQS.append(r.url))
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('localStorage.clear()')
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);pg.evaluate('localStorage.clear()')
   if pre:pg.evaluate('p=>{for(const k in p)localStorage.setItem(k,p[k])}',pre)
-  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');pg.evaluate('SOTA.setAnim(false)');past_title(pg);return pg
+  pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);pg.evaluate('SOTA.setAnim(false)');past_title(pg);return pg
 def tap(pg,sel):
   # fix round 1: fight commands and party actions now sit in a branch menu opened by tapping a name
   if pg.locator(sel).count()==0:
@@ -32,6 +33,7 @@ def noslide(pg):
 def ev(pg,js,a=None):return pg.evaluate(js,a) if a is not None else pg.evaluate(js)
 def past_title(pg):
   """t2103u: boot now shows the title-only menu; a short tap on the wall opens creation (or, with a save, a long-press continues)"""
+  SPL.pass_splash(pg)  # t2386u: the logo splash comes before the title
   try:pg.wait_for_function('window.SOTA&&SOTA.intro',timeout=3000)
   except Exception:return
   if not ev(pg,'SOTA.intro.titleOpen()'):return
@@ -141,7 +143,7 @@ def t_save_only_camps(p):
   check(ev(pg,'localStorage.getItem("sota.party")')==s0,'storage changed on a plain step')
   cp=ev(pg,'MAZE.camps[0]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');step_into(pg,cp);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==999 and [sv['at']['x'],sv['at']['y']]==cp,'camp did not save')
   tv=ev(pg,'MAZE.taverns[0]');ev(pg,'SOTA.rpg.live().gold=5');step_into(pg,tv);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==5 and 'Tavern 1'==sv['at']['name'],'tavern did not save')
-  ev(pg,'SOTA.rpg.live().gold=777');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');check(ev(pg,'SOTA.rpg.live().gold')==5,'progress after save kept over reload');b.close()
+  ev(pg,'SOTA.rpg.live().gold=777');pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);check(ev(pg,'SOTA.rpg.live().gold')==5,'progress after save kept over reload');b.close()
 def t_death_restore(p):
   b,c=ctx(p);pg=page(c);create(pg);r0=ev(pg,'MAZE.rooms.find(r=>r.k==="treasure").id');ev(pg,f'SOTA.markSolved({r0})');cp=ev(pg,'MAZE.camps[1]');ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")');step_into(pg,cp);g=ev(pg,'SOTA.rpg.live().gold')
   r=ev(pg,'MAZE.rooms.find(r=>r.k==="story"&&!SOTA.isSolved(r.id)).id');ev(pg,f'SOTA.markSolved({r})');ev(pg,'SOTA.rpg.live().gold+=500;SOTA.rpg.live().party[0].xp+=5');ev(pg,'SOTA.teleport(5,63,0)')
@@ -190,9 +192,9 @@ def t_ui_fit(p):
     ev(pg,'SOTA.rpg.forceEnd("ran")');tap(pg,'#fdone');tap(pg,'#partyb');chk('party');tap(pg,'[data-equip="0"]');tap(pg,'[data-slot=weapon]');chk('equip');tap(pg,'.s4back');tap(pg,'[data-bag="0"]');chk('bag')
     check(not bad,f'{w}x{h} small/offscreen buttons {bad[:5]}');pb=pg.locator('#partyb').bounding_box();check(pb['width']>=44,'party button');b.close()
 def t_offline4(p):
-  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');SPL.pass_splash(pg);pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller');SPL.pass_splash(pg)
   ok=pg.evaluate('(async()=>{const k=await caches.keys();const c=await caches.open("sota-s1-v18");const r=[];for(const f of["rules.js?v=14","party.js?v=14","game.js?v=14","index.html"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v18'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
+  check(all(ok[1]) and ok[0]==['sota-s1-v18'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);tap(pg,'#partyb');check(ev(pg,'SOTA.rpg.ui()')=='create','offline creation');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 def t_unchanged(p):
   d=subprocess.run(['git','diff','--stat','c11ccd52511198071301d9c30bb032a4cfaed635','--','tex.js','puzzles.js','puzzle-ui.js','map.js','doors.js','maze-data.js'],cwd=ROOT,capture_output=True,text=True).stdout

@@ -22,7 +22,7 @@ function saveSlots(){const slots=Array.from({length:4},(_,i)=>readSave(SLOT+i));
  if(!slots.some(Boolean)){const old=readSave(SAVE);if(old){slots[0]=old;try{localStorage.setItem(SLOT+0,JSON.stringify(old));}catch(e){}}}return slots;}
 {const slots=saveSlots();let i=0;try{i=Number(localStorage.getItem(ACTIVE)||0);}catch(e){}
  activeSlot=Number.isInteger(i)&&i>=0&&i<4&&slots[i]?i:Math.max(0,slots.findIndex(Boolean));
- if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */}}
+ if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */migrateSaltsBoxes(live);}}
 function hpMul(){return R.DIFF[live.diff].hp;}
 function roomsNow(){const s=[],c=[];for(let i=0;i<C.solvedR.length;i++){if(C.solvedR[i])s.push(i);if(C.clearedR[i])c.push(i);}return {s,c};}
 function placeName(x,y){const t=M.taverns.findIndex(c=>c[0]===x&&c[1]===y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
@@ -44,7 +44,12 @@ function savePicker(mode,done,cancel){const w=page("save-picker");w.appendChild(
 // death: everything goes back to the last save
 function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
  if(S.applyMaze)S.applyMaze(save.maze||{x:save.at.x,y:save.at.y,f:save.at.f});else S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
-function toast(t){const d=$("s4toast");d.textContent=displayText(t);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
+// t2404u: while the craft pop-up is open, the toast ("You made ...!") goes where it covers neither the "Tap a box" hints
+// (the pop-up's own hint and the camp lesson box) nor the pop-up's buttons: above the pop-up, else just under it, else at the bottom.
+function toastSpot(d){d.style.top="";d.style.bottom="";const pop=$("s5craftpop");if(!pop||!d.getBoundingClientRect||!pop.getBoundingClientRect)return;
+ const avoid=[Array.from(pop.querySelectorAll(".s4note")).find(e=>/^Tap a box/.test(e.textContent)),$("s5tut")].concat(Array.from(pop.querySelectorAll("button"))).filter(Boolean).map(e=>e.getBoundingClientRect()),h=d.getBoundingClientRect().height,H=window.innerHeight;
+ for(const y of [6,pop.getBoundingClientRect().bottom+6,H-h-12])if(y>=0&&y+h<=H&&!avoid.some(r=>r.top<y+h&&y<r.bottom)){d.style.top=y+"px";d.style.bottom="auto";return;}}
+function toast(t){const d=$("s4toast");d.textContent=displayText(t);toastSpot(d);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
 // ---------- screens ----------
 const ov=$("s4");function openUI(kind){ui=kind;document.documentElement.classList.add("s4open");ov.className="open "+kind;ov.dataset.kind=kind;document.documentElement.classList.remove("s5shop-open");closeBranch();}
 function closeUI(){campVisit=null;ui=null;document.documentElement.classList.remove("s5shop-open");document.documentElement.classList.remove("s4open");ov.className="";ov.dataset.kind="";ov.dataset.result="";ov.innerHTML="";closeBranch();updBtn();}
@@ -56,8 +61,12 @@ window.addEventListener("keydown",e=>{const t=e.target&&e.target.tagName;if(ui||
 function page(kind){const top=ui===kind?ov.scrollTop:0;openUI(kind);ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);requestAnimationFrame(()=>{ov.scrollTop=top;});ov.scrollTop=top;return w;}
 // ---- Maze item shortcuts: bindings belong to this party save; bags own every copy. ----
 // t2345u: camp-crafted potions/food (it.craft) are not offered for maze boxes yet; the t2295u box list stays as approved
-function mazeSlotAllowed(id){const it=R.ITEMS[id];return !!it&&!it.craft&&((it.slot==="use"&&(it.heal||it.mana||it.revive||id==="ration"))||it.slot==="dish");}
-function syncMazeSlots(){const bindings=live&&Array.isArray(live.mazeSlots)?live.mazeSlots:[],counts={};
+// t2398u/t2399u: smelling salts work only in battle, so they never go in a maze box
+function mazeSlotAllowed(id){const it=R.ITEMS[id];return !!it&&!it.craft&&!it.revive&&((it.slot==="use"&&(it.heal||it.mana||id==="ration"))||it.slot==="dish");}
+// old saves: a maze box that held salts is cleared; boxes are only shortcuts, so every salts copy is still in a bag (re-added if one is missing)
+function migrateSaltsBoxes(L){if(!L||!Array.isArray(L.mazeSlots))return 0;let n=0;L.mazeSlots=L.mazeSlots.map(id=>{if(id==="salts"){n++;return null;}return id;});
+ if(n){const have=L.party.reduce((t,c)=>t+c.bag.filter(x=>x==="salts").length,0);for(let k=have;k<n;k++)L.party[0].bag.push("salts");}return n;}
+function syncMazeSlots(){migrateSaltsBoxes(live);/* t2398u: old saves */const bindings=live&&Array.isArray(live.mazeSlots)?live.mazeSlots:[],counts={};
  if(live)live.party.forEach(c=>c.bag.forEach(id=>{if(mazeSlotAllowed(id))counts[id]=(counts[id]||0)+1;}));
  const next=Array.from({length:4},(_,i)=>{const id=bindings[i];if(!mazeSlotAllowed(id)||!(counts[id]>0))return null;counts[id]--;return id;});
  if(live)live.mazeSlots=next;S.setMazeSlots(next);return next.slice();}
@@ -73,19 +82,17 @@ function mazeSlotPicker(i){const choices=mazeSlotChoices(i);if(!choices.length){
  const w=page("maze-slot");w.appendChild(head("Item box "+(i+1),closeUI));
  choices.forEach(({id,n})=>{const b=tapBtn(R.ITEMS[id].n+(n>1?" ×"+n:""),()=>{if(!assignMazeSlot(i,id)){toast("That item is no longer available.");mazeSlotPicker(i);return;}closeUI();},"wide");b.dataset.mazeItem=id;w.appendChild(b);});}
 function useMazeSlot(i,ci,expected){const bindings=syncMazeSlots(),id=bindings[i];if(!id||expected&&id!==expected)return false;
- const c=live.party[ci],it=R.ITEMS[id];if(!c)return false;if(it.revive&&c.hp>0){toast("Nobody is knocked out.");return false;}
+ const c=live.party[ci],it=R.ITEMS[id];if(!c||it.revive)return false;
  // Consume the real bag copy first. Clear this binding before reconciling other boxes.
  if(!takeOne(id)){syncMazeSlots();toast("That item is no longer available.");return false;}
  live.mazeSlots[i]=null;
  if(id==="ration"||it.slot==="dish")eatDish(c,id);
- else if(it.revive)c.hp=Math.max(1,Math.round(R.maxHp(c,hpMul())*it.revive));
  else R.useEffect(c,it,hpMul()); // heal / mana share / buff; the shop Mana potion still restores full MP
  syncMazeSlots();closeUI();toast(c.name+(id==="ration"||it.slot==="dish"?" ate ":" used ")+it.n);return true;}
 function mazeSlotTargets(i){const id=syncMazeSlots()[i];if(!id)return mazeSlotPicker(i);const it=R.ITEMS[id],food=id==="ration"||it.slot==="dish";
- const targets=live.party.map((c,ci)=>({c,ci})).filter(({c})=>!it.revive||c.hp<=0);
- if(!targets.length){toast("Nobody is knocked out.");return;}
+ const targets=live.party.map((c,ci)=>({c,ci}));
  const w=page("maze-slot");w.appendChild(head(it.n,()=>tapMazeSlot(i,true)));
- targets.forEach(({c,ci})=>w.appendChild(tapBtn((it.revive?"Wake ":food?"Feed ":"Use on ")+c.name,()=>useMazeSlot(i,ci,id),"wide")));}
+ targets.forEach(({c,ci})=>w.appendChild(tapBtn((food?"Feed ":"Use on ")+c.name,()=>useMazeSlot(i,ci,id),"wide")));}
 function tapMazeSlot(i,back=false){if(!live||!Number.isInteger(i)||i<0||i>3)return;
  if(!back&&(ui||S.mapOpen&&S.mapOpen()||S.puzzleOpen&&S.puzzleOpen()||S.storyOpen&&S.storyOpen()||S.panelOpen&&S.panelOpen()))return;
  const id=syncMazeSlots()[i];if(!id)return mazeSlotPicker(i);
@@ -251,7 +258,8 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
   if(it.slot==="craft"){const bt=el("div","s4sub",E.badText(selItem));bt.dataset.badtext=selItem;info.appendChild(bt);}
   const row=el("div","s4row s5rowR");if(it.slot==="craft"&&it.poison){const pb=tapBtn("Apply to weapon",()=>{if(!c.equip.weapon){toast("Equip a weapon first");return;}c.bag.splice(sel.bag,1);c.poison={f:E.POISON_FIGHTS,b:E.POISON_BONUS};sheetSel=null;toast(c.name+"'s "+R.ITEMS[c.equip.weapon].n+" is poisoned for "+E.POISON_FIGHTS+" fights");charScreen(i);},"small");pb.dataset.applypoison="1";row.appendChild(pb);}
   if(it.slot==="craft"&&it.food){const eb=tapBtn("Eat",()=>{eatFrom(c,sel.bag);sheetSel=null;charScreen(i);},"small");eb.dataset.eat="1";row.appendChild(eb);}
-  if(it.slot==="use")row.appendChild(tapBtn("Use",()=>{c.bag.splice(sel.bag,1);R.useEffect(c,it,hpMul());sheetSel=null;charScreen(i);},"small"));
+  if(it.slot==="use"&&it.revive)row.appendChild(el("span","s4note","Use in battle")); /* t2398u: salts only in battle */
+  if(it.slot==="use"&&!it.revive)row.appendChild(tapBtn("Use",()=>{c.bag.splice(sel.bag,1);R.useEffect(c,it,hpMul());sheetSel=null;charScreen(i);},"small"));
   if(it.slot==="dish"){const eb=tapBtn("Eat",()=>{eatFrom(c,sel.bag);sheetSel=null;charScreen(i);},"small");eb.dataset.eat="1";row.appendChild(eb);}
   const dr=tapBtn("Drop",()=>{gone(c.bag[sel.bag]);c.bag.splice(sel.bag,1);sheetSel=null;charScreen(i);},"small");dr.dataset.drop="1";row.appendChild(dr);
   if(live.party.length>1){const gb=tapBtn(sel.give?"Give ▾":"‹ Give",()=>{sheetSel={bag:sel.bag,give:!sel.give};charScreen(i);},"small");gb.dataset.giveb="1";row.appendChild(gb);}
@@ -268,7 +276,7 @@ function bagScreen(i){sheetSel=null;charScreen(i);}
 function addLoot(id){for(const c of live.party)if(R.canCarry(c,id)){c.bag.push(id);return c.name;}return null;}
 // ---------- fights ----------
 let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0,motionEnd=0;
-function startFight(mons,why){if(live){if(!Array.isArray(live.beasts))live.beasts=[];(mons||[]).forEach(m=>{const file=MON_FILE[m.n];if(file&&/^z[12]-/.test(file)&&!live.beasts.includes(file))live.beasts.push(file);});}F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;{const q=S.state&&S.state();F.bgv=q?((q.x*7+q.y*13+(why==="room"?3:0))%6+6)%6:fightNo%6;}FIGHT_ART.forEach(u=>spr(u.slice(11,-4)));turnI=0;nextAlive();fx=[];motionEnd=0;openUI("fight");ov.innerHTML="";ov.dataset.result="";
+function startFight(mons,why){if(live){if(!Array.isArray(live.beasts))live.beasts=[];(mons||[]).forEach(m=>{const file=MON_FILE[m.n];if(file&&/^z[123]-/.test(file)&&!live.beasts.includes(file))live.beasts.push(file);});}F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;{const q=S.state&&S.state();F.bgv=q?((q.x*7+q.y*13+(why==="room"?3:0))%6+6)%6:fightNo%6;}FIGHT_ART.forEach(u=>spr(u.slice(11,-4)));turnI=0;nextAlive();fx=[];motionEnd=0;openUI("fight");ov.innerHTML="";ov.dataset.result="";
  const w=el("div","s4fight");const top=el("div","s4stage");fcv=el("canvas");fcv.id="fcv";top.appendChild(fcv);const log=el("div","s4log","");log.id="flog";top.appendChild(log);w.appendChild(top);
  const bot=el("div","s4fbot");bot.id="fbot";const en=el("div","s4enemies");en.id="fen";bot.appendChild(en);const pr=el("div","s4party");pr.id="fparty";bot.appendChild(pr);const mn=el("div","s4menu");mn.id="fmenu";bot.appendChild(mn);w.appendChild(bot);
  ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();h6("fightStart");cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
@@ -301,14 +309,21 @@ function doAct(cmd,arg,targ){closeBranch();const c=live.party[turnI],before=F.m.
  say(text);turnI++;nextAlive();if(!F.over&&turnI>=live.party.length){const out=F.monstersTurn(),fight=F;
   (F.motionHits||[]).forEach(e=>{const t0=motionTime();fx.push({...e,k:"enemy",t0,dur:650});motionEnd=t0+650;});
   setTimeout(()=>{if(out.length&&F===fight&&!F.over)say(out.join(". "));},450);turnI=0;nextAlive();}drawMenu();}
+// t2397u: after a win (boss too) or a successful run, every knocked-out member wakes with exactly 1 HP and stays there until healed.
+// Called after XP is shared, so knocked-out members get no XP. A whole-party KO is still a loss (back to the last save).
+function wakeKO(){live.party.forEach(c=>{if(c.hp<=0)c.hp=1;});}
+// t2404u: companions keep unspent stat points; remind while any are left (on joining and on level-up)
+function pointsLeft(c){return Math.max(0,R.pointsEarned(c.lvl)-c.spent);}
+function pointsReminder(){if(!live)return "";const w=live.party.filter(c=>pointsLeft(c)>0);if(!w.length)return "";
+ return w.map(c=>c.name+" has "+pointsLeft(c)+" stat point"+(pointsLeft(c)>1?"s":"")).join(", ")+" to spend. Tap Party to spend them.";}
 function endFight(){const aftermath=live.party.map(c=>({hp:c.hp,maxHp:R.maxHp(c,hpMul())}));const mn=$("fmenu"),how=F.over;closeBranch();const fe=$("fen");if(fe)fe.style.display="none";
- if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+"! HP and MP fully restored."+(c.skills.length<R.skillSlots(c.lvl)?" New skill ready!":""));}});
+ if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+"! HP and MP fully restored."+(c.skills.length<R.skillSlots(c.lvl)?" New skill ready!":""));}});wakeKO();
   const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return R.ITEMS[id].n+(who?"":" (no room, left behind)");});
   mn.appendChild(el("div","s4win","Victory!"));const bossWon=F.m.some(m=>m.boss);const b=tapBtn("Continue",()=>{F=null;closeUI();if(bossWon)h6("bossWon");else h6("fightContinue",aftermath);},"s4go small");b.id="fdone";mn.appendChild(b);
   mn.appendChild(el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: "+jn.join(", "):"")));if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
  else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
   const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
- else{const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);tickBuffs();ov.dataset.result="ran";}
+ else{wakeKO();const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);tickBuffs();ov.dataset.result="ran";}
  drawParty();h6("fightEnd",how);}
 // ---- fight drawing t1962u: side view, original pixel sprites (art6/fight), big foes left, small party right, maze backdrops in zone colour (t1963u/t1964u) ----
 const ZC=[null,[150,112,60],[92,108,62],[70,92,124],[128,52,50],[96,62,128]];
@@ -437,7 +452,7 @@ function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.
 S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  if(R.isSavePoint(M,p.x,p.y)){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
   if(t>=0){h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
-  const ok=doSave(false);toast(joined+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can rest and cook at "+placeName(p.x,p.y)+", but you need a tent to save. Buy or build one."));updBtn();updHere();return;}
+  const ok=doSave(false);toast(joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can rest and cook at "+placeName(p.x,p.y)+", but you need a tent to save. Buy or build one."));updBtn();updHere();return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  const stink=live.stink>0;if(stink)live.stink--; // t2342u failed craft: monsters smell the party
  if(!(stink&&stepsSince>=4)){if(stepsSince<10)return;}if(!roll)roll=R.rng(live.seed>>>0);const r=roll()/(stink?3:1); /* stink: after 4 steps, 3x chance */
@@ -676,7 +691,7 @@ function tentScreen(t){s5init();const w=shopPage("tent",t,"Build a tent",()=>sho
  if(!ok){b1.classList.add("off");b2.classList.add("off");}row.appendChild(b1);row.appendChild(b2);w.appendChild(row);w.appendChild(el("div","s4note dim","Spare junk you carry is worth "+sj+" gold toward the fee."+(t>=2?" This tavern sells tent parts (Buy ‹ Craft).":"")));}
 // ---- level-up popup after a won fight ----
 function lvlPopup(lines){const old=$("s5lvl");if(old)old.remove();const p=el("div","s5pop");p.id="s5lvl";p.setAttribute("role","dialog");p.appendChild(el("div","s4win","Level up!"));lines.forEach(l=>p.appendChild(el("div","s4note",l)));
- const b=tapBtn("OK",()=>p.remove(),"small");b.id="s5lvlok";p.appendChild(b);ov.appendChild(p);}
+ const b=tapBtn("OK",()=>{p.remove();const r=pointsReminder();if(r)toast(r);},"small");b.id="s5lvlok";p.appendChild(b);ov.appendChild(p);}
 // ---------- top button + hint ----------
 const pb=$("partyb");function updBtn(){pb.classList.toggle("need",!live);$("s4hint").style.display=live?"none":"block";}
 pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())return;if(S.puzzleOpen&&S.puzzleOpen())return;if(ui)return;if(!live)creation();else partyScreen();});
@@ -698,6 +713,7 @@ html.s5shop-open #s6d{right:178px;overflow:hidden;clip-path:inset(0);background:
 html.s5shop-open #s6d .s6box{left:8px;right:8px;bottom:12px;max-height:65vh;overflow-y:auto;pointer-events:auto}
 .s5camp .s5craftb{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:6;min-height:44px;min-width:92px;margin:0}
 #s4 .s5craftpop{top:9%;width:min(360px,92vw);max-height:84vh;overflow-y:auto;z-index:40}
+html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-bottom))}/* t2404u: "You made ...!" no longer covers the Tap a box hint */
 .s5cboxes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}
 .s5cbox{min-height:64px;font-size:12px;text-align:center;line-height:1.15;padding:4px;border:2px dashed #8a7a5a;background:rgba(30,20,40,.9);color:#efe0b8;border-radius:8px}
 .s5cbox.full{border-style:solid;border-color:#ffe08a}.s5cbox.sel{outline:2px solid #ffe08a}

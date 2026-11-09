@@ -121,10 +121,10 @@ test("occupancy, sick-dad, and journal-monster files were not rewritten",()=>{
  const changedImages=changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n));
  a.ok(changedImages.every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u title rename */),changedImages.join("\n"));
  const mon=path.join(root,"art-intro/journal/monsters");
- const names=fs.readdirSync(mon).filter(n=>n.endsWith(".webp")).sort();
+ const names=fs.readdirSync(mon).filter(n=>n.endsWith(".webp")&&!n.startsWith("z3-")).sort(); // t2404u: new zone 3 sketches
  a.equal(names.length,14);
  for(const n of names){const f="art-intro/journal/monsters/"+n;const old=execFileSync("git",["-C",root,"show","HEAD:"+f]);a.equal(sha(f),crypto.createHash("sha256").update(old).digest("hex"));}
- a.equal(sha("story.js"),"8ccb97be7b4afb8f5bf31205db41f859aed46b7b0feea92fed76414a6ff202cd");
+ a.equal(sha("story.js"),"9396d7638836095ba7eefb9e48b281369dd3cf87c32b74ccc817cd15ae5a0c30"); // t2404u: story.js changed only for the t2393u review→credits split
 });
 
 test("t2317u/t2318u painted book art is locked to seven labels and five matching open variants",()=>{
@@ -137,7 +137,7 @@ test("t2317u/t2318u painted book art is locked to seven labels and five matching
   a.ok(art.includes('"journal/book-open-zone'+w+'.webp"'));
   a.ok(sw.includes('"art-intro/journal/book-open-zone'+w+'.webp"'));
  }
- for(const src of [html,sw])a.ok(src.includes("intro-art-data.js?v=4"));
+ for(const src of [html,sw])a.ok(src.includes("intro-art-data.js?v=5")); // t2404u: zone 3 sketches added
  const builder=read("tools/t2317u_journal_books.py");
  a.match(builder,/LABELS = \["Inventory", "Beasts", "Map", "Found art", "Journal", "Recipes", "Settings"\]/);
  a.doesNotMatch(builder,/Equipment|t2171u/);

@@ -1,3 +1,4 @@
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 from playwright.sync_api import sync_playwright
 import json,pathlib
 report=[]
@@ -6,7 +7,7 @@ def check(ok,name):
  if not ok:raise AssertionError(name)
 with sync_playwright() as p:
  b=p.chromium.launch();ctx=b.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,service_workers='block');pg=ctx.new_page();errors=[];pg.on('pageerror',lambda e:errors.append(str(e)))
- pg.goto('http://127.0.0.1:19864/');pg.wait_for_timeout(1000)
+ pg.goto('http://127.0.0.1:19864/');SPL.pass_splash(pg);pg.wait_for_timeout(1000)
  check(pg.evaluate('!!(SOTA.rpg.s6&&SOTA.rpg.s6.packageDialogue&&PackageRooms)'), 'package modules load on restored tree')
  check(pg.locator('#dvbtn').count()==0,'sample button absent')
  pg.evaluate('''()=>{SOTA.intro.hideTitle();const h=RPG.newChar('Hero','human','warrior',RPG.START_KIT.warrior.alloc,RPG.START_KIT.warrior.skill);const party=[h,...RPG.planParty(h,0).map(d=>RPG.makeCompanion(d,1))];SOTA.rpg.setLive({party,diff:'normal',gold:200,steps:0,recipes:{},fresh:{},tentWear:0});SOTA.rpg.s6.st();SOTA.teleport(...MAZE.taverns[0],0);SOTA.rpg.doSave();SOTA.rpg.s6.setSpeed(0);}''')

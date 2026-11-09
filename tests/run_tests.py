@@ -1,5 +1,6 @@
 """Stage 1 tests on a pretend phone (Playwright Chromium, touch emulation, 412x915).
 Usage: python tests/run_tests.py [base_url] [test names...]   exit 0 = all pass."""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,json,random,time
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8765/').rstrip('/')+'/'
@@ -19,7 +20,7 @@ def page(c,errs=None,reqs=None):
   if errs is not None:
     pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:errs.append(str(e)))
   if reqs is not None:pg.on('request',lambda r:reqs.append(r.url))
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');return pg
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);return pg
 def btn(pg):
   o={}
   for k in ['fwd','back','left','right']:
@@ -27,7 +28,7 @@ def btn(pg):
   return o
 def tap(pg,B,k):pg.touchscreen.tap(*B[k])
 def S(pg):return pg.evaluate('SOTA.state()')
-def fresh(pg):pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA')
+def fresh(pg):pg.evaluate('localStorage.clear();localStorage.setItem("sota.rooms",JSON.stringify({s:[...Array(85).keys()],c:[...Array(85).keys()]}))');pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg)
 
 def t_maze_loads(p):
   b,c=ctx(p);pg=page(c);fresh(pg)
@@ -97,15 +98,15 @@ def t_save_reload(p):
   b,c=ctx(p);pg=page(c);fresh(pg);B=btn(pg);r=MZ['main_route']
   for i in range(1,12):
     (x0,y0),(x1,y1)=r[i-1],r[i];turn_to(pg,B,D.index((x1-x0,y1-y0)));tap(pg,B,'fwd')
-  tap(pg,B,'left');s=S(pg);pg.reload();pg.wait_for_function('window.SOTA');s2=S(pg)
+  tap(pg,B,'left');s=S(pg);pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);s2=S(pg)
   check(s==s2 and (s['x'],s['y'])!=(0,64),f'save {s} reload {s2}')
-  pg.evaluate('localStorage.setItem("sota.stage1.save","{bad json")');pg.reload();pg.wait_for_function('window.SOTA')
+  pg.evaluate('localStorage.setItem("sota.stage1.save","{bad json")');pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg)
   check((S(pg)['x'],S(pg)['y'])==(0,64),'bad save not ignored');b.close()
 
 def t_offline(p):
   b,c=ctx(p,sw=True);pg=page(c)
-  pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
-  c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA',timeout=8000)
+  pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller');SPL.pass_splash(pg)
+  c.set_offline(True);pg.reload();pg.wait_for_function('window.SOTA',timeout=8000);SPL.pass_splash(pg)
   check(pg.evaluate('typeof SOTA.state')=='function','offline load failed')
   ok=pg.evaluate('Promise.all(["manifest.json","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png"].map(u=>fetch(u).then(r=>r.ok,()=>false)))')
   check(all(ok),f'offline assets {ok}')
@@ -119,7 +120,7 @@ def t_offline(p):
 def t_network_console(p):
   errs=[];reqs=[];b,c=ctx(p,sw=True);pg=page(c,errs,reqs);B=btn(pg)
   for k in ['fwd','right','fwd','left','back']:tap(pg,B,k)
-  pg.wait_for_timeout(1500);pg.reload();pg.wait_for_function('window.SOTA');pg.wait_for_timeout(500)
+  pg.wait_for_timeout(1500);pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);pg.wait_for_timeout(500)
   bad=[u for u in reqs if not u.startswith(BASE) and not u.startswith('data:')];check(not bad,f'outside requests {bad}')
   check(not errs,f'console errors {errs}');b.close()
 

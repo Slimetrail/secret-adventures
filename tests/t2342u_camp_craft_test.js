@@ -126,23 +126,25 @@ function zoneRule(X,list){for(const c of list){const size=X.craftSize(c),zones=O
   a.ok(size>=2&&size<=4,c.id+' size '+size);
   if(size===3)a.ok(zones.some(z=>z>=3),c.id+': 3-box without a zone 3+ material '+zones);
   if(size===4)a.ok(zones.some(z=>z>=5),c.id+': 4-box without a zone 5 material '+zones);a.equal(X.craftZone(c),Math.max(...zones));}}
-test('t2362u step 1: shipped crafts are only 2-box, plus Smelling salts and Hunter\'s jerky; all makeable in zones 1-2',()=>{const h=harness(),X=E(h);
+// t2362u step 2 (zone 3): the two medium 3-box crafts (Moon elixir, Hunter's stew) now ship; the strong 4-box ones stay held for step 4.
+test('t2362u step 2: shipped crafts are the 2-box ones, Smelling salts and Hunter\'s jerky, and the 2 medium zone 3 crafts; all makeable by zone 3',()=>{const h=harness(),X=E(h);
  a.deepEqual(plain(X.CRAFTS.filter(c=>c.exception).map(c=>c.id)).sort(),EXCEPT.slice().sort());
- for(const c of X.CRAFTS){if(c.exception)continue;a.equal(X.craftSize(c),2,c.id+' is not 2-box in step 1');}
- for(const c of X.CRAFTS)a.ok(X.craftZone(c)<=2,c.id+' needs zone '+X.craftZone(c));
- a.deepEqual(plain(X.CRAFTS.map(c=>c.id)),['potion','ether','ration','salts','jerky','tent']);
- for(const id of ['c_elixir','c_stew','c_dragonelixir','c_roast'])a.equal(h.R.ITEMS[id],undefined,id+' shipped');
+ for(const c of X.CRAFTS){if(c.exception)continue;a.equal(X.craftSize(c),['elixir','stew'].includes(c.id)?3:2,c.id+' box count');}
+ for(const c of X.CRAFTS)a.ok(X.craftZone(c)<=(['elixir','stew'].includes(c.id)?3:2),c.id+' needs zone '+X.craftZone(c));
+ a.deepEqual(plain(X.CRAFTS.map(c=>c.id)),['potion','ether','ration','salts','jerky','tent','elixir','stew']);
+ for(const id of ['c_elixir','c_stew'])a.ok(h.R.ITEMS[id],id+' not shipped');
+ for(const id of ['c_dragonelixir','c_roast'])a.equal(h.R.ITEMS[id],undefined,id+' shipped');
  a.ok(!/econ-held-crafts/.test(read('index.html'))&&!/econ-held-crafts/.test(read('sw.js')),'held file is loaded or cached');
  zoneRule(X,X.CRAFTS);});
 test('zone gate: 2-box any zone, 3-box needs a zone 3+ material, 4-box a zone 5 material; tent is 2-box from zones 1-2',()=>{const h=harness(),X=E(h);
  a.deepEqual(['p_silk','p_shell','p_shard','p_hide','p_ear','p_pelt','p_fang','p_dscale','p_claw','i_herbs','i_meat','i_moonleaf','i_fowl','i_firepepper','i_dragonmeat','i_hydrascale','i_starfruit','i_sage'].map(X.firstZone),[1,1,1,2,2,3,3,5,5,1,2,3,3,3,5,5,4,2]);
- zoneRule(X,HELD.CRAFTS);a.ok(HELD.CRAFTS.every(c=>X.craftSize(c)===(c.step===2?3:4)),'held step 2 = 3-box, step 4 = 4-box');
+ zoneRule(X,HELD.CRAFTS);a.ok(HELD.CRAFTS.length===2&&HELD.CRAFTS.every(c=>c.step===4&&X.craftSize(c)===4),'only the step 4 4-box crafts are still held');
  const tent=X.CRAFTS.find(c=>c.id==='tent');a.equal(X.craftSize(tent),2);a.ok(Object.keys(tent.need).every(id=>X.firstZone(id)<=2));
  // a made-up 3-box zone 1-2 recipe must fail the rule
  a.throws(()=>zoneRule(X,[{id:'bad',need:{i_herbs:2,p_shell:1}}]));a.throws(()=>zoneRule(X,[{id:'bad4',need:{i_herbs:1,i_moonleaf:1,p_fang:1,p_shell:1}}]));
  // shop stock is untouched by the gate
  a.deepEqual(plain(X.stock(0).parts),[]);a.deepEqual(plain(X.stock(2).parts),['p_silk','p_hide','p_shard']);a.ok(X.stock(3).ing.includes('i_starfruit'));});
-test('held recipes, once installed for their step: effects rise with box count (per potion / food)',()=>{const h=harness(),X=E(h);a.equal(heldOn(h,2),2);a.equal(X.CRAFTS.length,8);a.equal(heldOn(h,4),2);
+test('held recipes, once installed for their step: effects rise with box count (per potion / food)',()=>{const h=harness(),X=E(h);a.equal(heldOn(h,2),0,'step 2 crafts already ship');a.equal(X.CRAFTS.length,8);a.equal(heldOn(h,4),2);a.equal(X.CRAFTS.length,10);
  for(const kind of ['potion','food']){const by=n=>X.CRAFTS.filter(c=>c.kind===kind&&!c.exception&&X.craftSize(c)===n).map(c=>X.useScore(c.out));const [w,m,st]=[by(2),by(3),by(4)];
   a.ok(w.length&&m.length&&st.length,kind+' tiers');a.ok(Math.min(...m)>Math.max(...w),kind+' medium '+m+' vs weak '+w);a.ok(Math.min(...st)>Math.max(...m),kind+' strong '+st+' vs medium '+m);}
  for(const c of X.CRAFTS.filter(c=>c.out.startsWith('c_'))){const it=h.R.ITEMS[c.out];a.equal(it.slot,'use');a.ok(it.heal||it.mp,c.id+' has no effect');a.ok(X.useText(c.out).length>5);const art=X.pixelArt(c.id);a.equal(art.rows.length,12);}});

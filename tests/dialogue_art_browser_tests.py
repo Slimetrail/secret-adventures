@@ -1,6 +1,7 @@
 """Isolated headless local regression fixtures (never the user's desktop browser).
 Usage: python3 tests/dialogue_art_browser_tests.py http://127.0.0.1:<temporary-port>/
 """
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,json,pathlib,time
 import batch1_browser_tests as B1
 import batch2_browser_tests as B2
@@ -59,11 +60,11 @@ def t_later_batches_unchanged(p):
  b.close()
 
 def t_offline_v23(p):
- b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html');pg.wait_for_function('()=>!!navigator.serviceWorker.controller',timeout=90000)
+ b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html');pg.wait_for_function('()=>!!navigator.serviceWorker.controller',timeout=90000);SPL.pass_splash(pg)
  check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return (await c.keys()).length})()')==282,'incomplete cache')
  assets=sorted({'art-dialogue/'+f for l in DATA for f in [*l['portraits'].values(),l['backdrop']]})
  check(ev(pg,'(async()=>{const c=await caches.open("sota-s1-v24");return (await Promise.all('+json.dumps(assets)+'.map(p=>c.match(p)))).every(Boolean)})()'),'missing cached dialogue art')
- c.set_offline(True);pg.reload();pg.wait_for_function('()=>window.SampleTalks&&window.DialogueArt')
+ c.set_offline(True);pg.reload();pg.wait_for_function('()=>window.SampleTalks&&window.DialogueArt');SPL.pass_splash(pg)
  for id,line in [('closecall',3),('C5',4),('A6',4)]:
   for l in [x for x in DATA if x['talkId']==id]:
    if id=='closecall':

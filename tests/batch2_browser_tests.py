@@ -1,4 +1,5 @@
 """Real lifecycle / rendered lines / offline batch 2; temporary caller-owned server."""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,json,re,time
 import batch1_browser_tests as B1
 import stage6_tests as S6
@@ -96,13 +97,13 @@ def t_craft_real_paths_and_presence(p):
  b.close()
 
 def t_offline_v22(p):
- b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html')
+ b,c=S6.ctx(p,sw=True);pg=c.new_page();pg.goto(S6.S4.BASE+'index.html');SPL.pass_splash(pg)
  for _ in range(100):
   if ev(pg,'!!navigator.serviceWorker.controller'):break
   pg.wait_for_timeout(100)
  check(ev(pg,'!!navigator.serviceWorker.controller'),'service worker not ready')
  check(ev(pg,'(async()=>{const keys=await caches.keys(),c=await caches.open("sota-s1-v24");return keys.includes("sota-s1-v24")&&!!(await c.match("batch2-talks.js?v=1"))&&!!(await c.match("batch1-talks.js?v=3"))&&!!(await c.match("party.js?v=16"));})()'),'v22 scripts not cached')
- c.set_offline(True);pg.reload();S6.create(pg);S6.drain(pg)
+ c.set_offline(True);pg.reload();SPL.pass_splash(pg);S6.create(pg);S6.drain(pg)
  ev(pg,'SOTA.rpg.live().party.push(...RPG.COMPANIONS.map(d=>RPG.makeCompanion(d,1)));for(const id of ["C1","C2","C3","C4","C5","C6"])SOTA.rpg.s6.st().seen["batch1-"+id]=1;SOTA.rpg.live().party.forEach(c=>c.bag=[]);S6H.camp(0)')
  check(B1.collect(pg)==TALKS['C7'],'offline batch2 missing');b.close()
 

@@ -76,7 +76,7 @@ function useEffect(who,it,hpMul){const mh=maxHp(who,hpMul),mm=maxMp(who);let h=0
 function learn(c,id){if(c.skills.length>=skillSlots(c.lvl))return false;const s=SKILLS[c.cls].find(x=>x.id===id);if(!s||c.skills.includes(id))return false;c.skills.push(id);return true;}
 // items: slot, w weight (kg), a armor class 1-3, t weapon type, stats; junk has v value; potions use
 const ITEMS={
- potion:{n:"Healing potion",slot:"use",w:0.5,heal:0.45,v:8},ether:{n:"Mana potion",slot:"use",w:0.5,mana:0.5,v:10},salts:{n:"Smelling salts",slot:"use",w:0.2,revive:0.3,v:12},
+ potion:{n:"Healing potion",slot:"use",w:0.5,heal:0.45,v:8},ether:{n:"Mana potion",slot:"use",w:0.5,mana:0.5,v:10},salts:{n:"Smelling salts",slot:"use",w:0.2,revive:0.25,battle:true,v:12}/* t2398u/t2399u: in battle only, 25% max HP */,
  sword:{n:"Iron sword",slot:"weapon",t:"sword",w:4,atk:6},axe:{n:"Hand axe",slot:"weapon",t:"axe",w:5,atk:7},mace:{n:"Mace",slot:"weapon",t:"mace",w:5,atk:6},
  dagger:{n:"Dagger",slot:"weapon",t:"dagger",w:1,atk:4},bow:{n:"Short bow",slot:"weapon",t:"bow",w:2,atk:5},staff:{n:"Oak staff",slot:"weapon",t:"staff",w:2,atk:2,mag:5},
  buckler:{n:"Buckler",slot:"offhand",a:2,w:3,def:2},towershield:{n:"Tower shield",slot:"offhand",a:3,w:8,def:5},tome:{n:"Rune tome",slot:"offhand",a:1,w:1,mag:3},
@@ -487,7 +487,7 @@ const MONSTERS=[null,
  ["Centaur","Werewolf","Skeleton","Ghoul","Harpy","Dire wolf","Wraith"],
  ["Minotaur","Griffin","Lizard man","Stone gargoyle","Manticore","Ogre warlord","Giant scorpion"],
  ["Basilisk","Dragon","Hydra","Wyvern","Chimera","Salamander","Shadow drake"]];
-const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_MINLVL=[0,1,10,20,30,40],ZONE_MAXLVL=[0,10,20,30,40,50];
+const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_TOUGH0={hp:1,atk:1},ZONE_TOUGH={3:{hp:1.2,atk:1.35}}/* t2404u: zone 3 a bit harder (HP and hits only; XP and drops unchanged) */,ZONE_MINLVL=[0,1,10,20,30,40],ZONE_MAXLVL=[0,10,20,30,40,50];
 // Rows align with MONSTERS: role, HP/ATK/DEF multipliers, optional armor penetration.
 const ROLES=[null,
  [["scavenger",.65,.78,.40],["gel tank",1.55,.62,1.30],["shell guard",1.05,.85,1.80],["darting hunter",.70,1.12,.55],["ambusher",.90,1.35,.80],["bulwark",1.35,.80,1.55],["spore caster",.85,1.10,.65,.45]],
@@ -504,7 +504,7 @@ function partyLevel(party){return Math.round(party.reduce((t,c)=>t+c.lvl,0)/part
 function centreFactor(x,y,n){const h=(n-1)/2;return Math.max(0,1-Math.max(Math.abs(x-h),Math.abs(y-h))/h);}
 function monsterLevel(zone,plvl,cf){return Math.min(ZONE_MAXLVL[zone],Math.max(ZONE_MINLVL[zone],plvl)+Math.round(3*(cf||0)));}
 function makeMonster(zone,idx,plvl,cf,diff){const L=monsterLevel(zone,plvl,cf),m=ZONE_MUL[zone],d=DIFF[diff]||DIFF.normal,k=idx%7,nm=MONSTERS[zone][k],v=ROLES[zone][k];
- const hp=Math.round((16+9*L)*m*v[1]);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false};}
+ const z3=ZONE_TOUGH[zone]||ZONE_TOUGH0,hp=Math.round((16+9*L)*m*v[1]*z3.hp);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*z3.atk*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false};}
 function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 function encounter(zone,plvl,cf,diff,seed,party){const r=rng(seed),k=1+Math.floor(r()*3),out=[];for(let i=0;i<k;i++)out.push(makeMonster(zone,Math.floor(r()*7),plvl,cf,diff));
  // Jeremy t1965u/t1966u: hallway foes that are weak next to the party's current stats may come as a pack of up to four.
@@ -555,7 +555,7 @@ function simulate(party,mons,diff,seed,maxTurns){const f=new Fight(party,mons,di
  return f;}
 // save points: only camps and taverns
 function isSavePoint(M,x,y){return M.camps.some(c=>c[0]===x&&c[1]===y)||M.taverns.some(c=>c[0]===x&&c[1]===y);}
-// Stage 6: companions join at taverns 2, 3, 4 (index 1..3): cat girl (quirky), elf (scholar), dwarf (angry).
+// Stage 6: companions join at Taverns 1, 2 and 4 (index 0, 1, 3): cat girl (quirky), elf (scholar), dwarf (angry). Nobody joins at Tavern 3.
 // The companion who shares the hero's race is human instead. Classes are rolled from the hero's build so the party covers melee, magic, range and stealth.
 const COMPANIONS=[{tavern:0,role:"quirky",name:"Mira",race:"cat",cls:"rogue",note:"The quirky one: bored, a trouble maker, wants adventure",alloc:{sta:3},skill:"stab"},
  {tavern:1,role:"scholar",name:"Sorrel",race:"elf",cls:"mage",note:"The scholar: just wants to know what is going on",alloc:{man:3},skill:"mend"},

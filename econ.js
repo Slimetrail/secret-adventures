@@ -60,14 +60,20 @@ const TENT={buy:100,fee:10,parts:{p_silk:1,p_hide:1},nights:1};
 // Any later 3-box recipe needs a material first found in zone 3+, a 4-box recipe a zone 5 material (see firstZone); Smelling salts and
 // Hunter's jerky are kept as they were (exception:true). Tent = TENT.parts. The zone rule only limits crafting, never shop stock. ----
 // crafted potions and food (slot "use", like rations and potions): heal/mp = share of max refilled, buff = % for f fights
-// t2362u step 1 (zones 1-2): the medium (zone 3) and strong (zone 5) crafts are held in econ-held-crafts.js, which is NOT loaded.
+// t2362u step 1 (zones 1-2): the medium (zone 3) and strong (zone 5) crafts were held in econ-held-crafts.js, which is NOT loaded.
+// Step 2 (zone 3) ships the medium ones below; the strong ones stay held for step 4 (zone 5).
 const CRAFTS=[{id:"potion",n:"Healing potion",kind:"potion",out:"potion",need:{i_herbs:1,p_shell:1}},
  {id:"ether",n:"Mana potion",kind:"potion",out:"ether",need:{i_berries:1,p_shard:1}},
  {id:"ration",n:"Trail ration",kind:"food",out:"ration",need:{i_meat:1,i_roots:1}},
  // t2351u: these two stay exactly as before t2350u (named exceptions to the zone/strength rule)
  {id:"salts",n:"Smelling salts",kind:"potion",out:"salts",need:{i_salt:1,i_herbs:1,p_ear:1},exception:true},
  {id:"jerky",n:"Hunter's jerky",kind:"food",out:"d_jerky",need:{i_meat:1,i_salt:1,i_pepper:1,p_hide:1},exception:true},
- {id:"tent",n:"Tent",kind:"tent",out:"tent",need:Object.assign({},TENT.parts)}];
+ {id:"tent",n:"Tent",kind:"tent",out:"tent",need:Object.assign({},TENT.parts)},
+ // t2362u step 2 (zone 3): the two medium 3-box crafts move here from econ-held-crafts.js, unchanged. Each needs a material first
+ // had in zone 3: Moon elixir's moonleaf (first sold at Tavern 3; ghoul fang drops in zone 3), Hunter's stew's fowl and wolf pelt (zone 3 drops).
+ {id:"elixir",n:"Moon elixir",kind:"potion",out:"c_elixir",need:{i_herbs:1,i_moonleaf:1,p_fang:1}},
+ {id:"stew",n:"Hunter's stew",kind:"food",out:"c_stew",need:{i_meat:1,i_fowl:1,p_pelt:1}}];
+Object.assign(I,{c_elixir:{n:"Moon elixir",slot:"use",w:0.5,v:30,heal:0.6,mp:0.6,craft:true},c_stew:{n:"Hunter's stew",slot:"use",w:0.6,v:25,heal:0.35,buff:{str:0,sta:25,f:3},craft:true}});
 const STRENGTH={2:"Weak",3:"Medium",4:"Strong"};
 // first zone a material can be had: monster drops (PARTS zones, FOOD per zone) or a tavern shop (Tavern t+1 sits at the end of zone t+1)
 function firstZone(id){const z=[];if(PARTS[id])z.push(...PARTS[id][2]);const k=id.startsWith("i_")?id.slice(2):null;
@@ -78,7 +84,7 @@ function craftSize(cr){return Object.values(cr.need).reduce((a,b)=>a+b,0);}
 // effect size in % points, to check that more boxes always means a stronger item (legacy mana potion = full MP = 100)
 function useScore(id){const it=I[id];if(!it)return 0;const b=it.buff||{};return 100*(it.heal||0)+100*(it.mp||0)+100*(it.revive||0)+(b.str||0)+(b.sta||0)+(!it.heal&&!it.mp&&!it.buff&&!it.revive?100:0);}
 function useText(id){const it=I[id];if(!it)return "";const o=[];if(it.heal)o.push(it.heal>=1?"full health":"+"+Math.round(it.heal*100)+"% health");if(it.mp)o.push(it.mp>=1?"full mana":"+"+Math.round(it.mp*100)+"% mana");
- if(it.revive)o.push("wakes a knocked-out ally at "+Math.round(it.revive*100)+"% health");if(!it.heal&&!it.mp&&!it.buff&&!it.revive)o.push("full mana");
+ if(it.revive)o.push("in battle only: wakes a knocked-out ally at "+Math.round(it.revive*100)+"% health");if(!it.heal&&!it.mp&&!it.buff&&!it.revive)o.push("full mana");
  const b=it.buff;if(b){if(b.str)o.push("+"+b.str+"% strength");if(b.sta)o.push("+"+b.sta+"% stamina");}return o.join(", ")+(b?" ("+b.f+" fights)":"");}
 const CRAFT_BOXES=4;
 function countOf(ids){const m={};ids.forEach(id=>m[id]=(m[id]||0)+1);return m;}
@@ -105,7 +111,8 @@ const PIXSHAPE={flask:["....cccc....","....cccc....",".....oo.....",".....oo....
  puff:["............","....oo......","...owwo.oo..","..owwwwowwo.","..owwwwwwwo.",".owwwwwwwwo.",".owwwwwwwwwo","..owwwwwwwo.","...oowwooo..",".....oo.....","..o.....o...","............"]};
 const PIX={potion:["flask",{r:"#d83a3a"}],ether:["flask",{r:"#3a6ad8"}],salts:["jar",{r:"#e8e8f0"}],ration:["bowl",{r:"#b07a3a",c:"#7a4a24"}],jerky:["bowl",{r:"#8a3020",c:"#7a4a24"}],
  tent:["tent",{r:"#5a8a3a"}],poison:["flask",{r:"#5ad83a"}],stink:["stinkbowl",{r:"#7a8a3a",c:"#5a4a24"}],badhp:["bowl",{r:"#8a8a70",c:"#5a4a24"}],
- badmp:["flask",{r:"#6a5a4a"}],badsta:["bowl",{r:"#a08070",c:"#5a4a24"}],useless:["puff",{w:"#9a9aa2"}]};
+ badmp:["flask",{r:"#6a5a4a"}],badsta:["bowl",{r:"#a08070",c:"#5a4a24"}],useless:["puff",{w:"#9a9aa2"}],
+ elixir:["flask",{r:"#9a5ad8",w:"#e8d8ff"}],stew:["bowl",{r:"#c0702a",c:"#6a3a1a"}]};
 const PIXBASE={o:"#20140c",c:"#a87a44",w:"#ffffff",g:"#7ad83a"};
 function pixelArt(kind){const p=PIX[kind]||PIX.useless,rows=PIXSHAPE[p[0]],pal=Object.assign({},PIXBASE,p[1]);return {rows,pal};}
 // crafting fee may be paid in gold, or parts/junk (at their sell value), or both

@@ -1,4 +1,5 @@
 """Stage 3 (puzzle rooms) tests on a pretend phone (Playwright Chromium, touch). Usage: python tests/stage3_tests.py [base_url] [names...]"""
+import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os,json,time,subprocess,re
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','tools'));import walk as W
 from playwright.sync_api import sync_playwright
@@ -12,9 +13,9 @@ def ctx(p,w=412,h=915,sw=False):
   b=p.chromium.launch();c=b.new_context(viewport={'width':w,'height':h},has_touch=True,is_mobile=True,service_workers='allow' if sw else 'block');c.add_init_script("try{localStorage.setItem('sota.dev.nofight','1')}catch(e){}");return b,c
 def page(c,pre=None):
   pg=c.new_page();pg.on('console',lambda m:ERRS.append(m.text) if m.type=='error' else None);pg.on('pageerror',lambda e:ERRS.append(str(e)));pg.on('request',lambda r:REQS.append(r.url))
-  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');pg.evaluate('localStorage.clear()')
+  pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);pg.evaluate('localStorage.clear()')
   if pre:pg.evaluate('p=>{for(const k in p)localStorage.setItem(k,p[k])}',pre)
-  pg.reload();pg.wait_for_function('window.SOTA');pg.evaluate('SOTA.setAnim(false)');return pg
+  pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);pg.evaluate('SOTA.setAnim(false)');return pg
 def bb(pg,sel):return pg.locator(sel).first.bounding_box()
 def tap(pg,sel):
   b=bb(pg,sel);check(b,'no element '+sel);pg.touchscreen.tap(b['x']+b['width']/2,b['y']+b['height']/2)
@@ -73,7 +74,7 @@ def t_persist_and_once(p):
   check(pg.inner_text('#ptxt') in('Treasure room — open the chest.','Monster room — a powerful foe waits.','Story room — discover a wall painting.'),'panel text')
   tap(pg,'#pgo');check(not pg.evaluate('SOTA.panelOpen()'),'panel stays');tap(pg,'[data-cmd=back]');open_door(pg);check(not pg.evaluate('SOTA.panelOpen()'),'panel shown twice')
   r2=next(x for x in R(pg) if x['p']==4);solve_ui(pg,r2);tap(pg,'#pclose')  # solved but not entered
-  pg.reload();pg.wait_for_function('window.SOTA');check(pg.evaluate(f"SOTA.isSolved({r['id']})"),'solved lost on reload')
+  pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);check(pg.evaluate(f"SOTA.isSolved({r['id']})"),'solved lost on reload')
   check(pg.evaluate(f"SOTA.isSolved({r2['id']})"),'solved-not-entered lost on reload');approach(pg,r);open_door(pg)
   s=pg.evaluate('SOTA.state()');check([s['x'],s['y']]==r['c'] and not pg.evaluate('SOTA.puzzleOpen()'),'solved room relocked');check(not pg.evaluate('SOTA.panelOpen()'),'panel after reload')
   # 3D draws the open doorway for a solved room and the sealed door for a locked one (checked by pixel glow in shots/mutations)
@@ -94,7 +95,7 @@ def t_leave_reset(p):
     tap_moves(pg,t,[m]);h1=board(pg);check(h1!=h0,f'type {t} move did nothing');tap(pg,'#pclose');approach(pg,r);open_door(pg)
     check(board(pg)==h1,f'type {t} state lost on leave');check(not pg.evaluate('SOTA.puzzle.state().solved'),'solved after one move')
     tap(pg,'#preset');check(board(pg)==h0 or t==3 and re.sub(r' sel','',board(pg))==re.sub(r' sel','',h0),f'type {t} reset failed');pg.keyboard.press('Escape');check(not pg.evaluate('SOTA.puzzleOpen()'),'Esc')
-  pg.reload();pg.wait_for_function('window.SOTA');r=R(pg)[0];pg.evaluate(f"SOTA.puzzle.open({r['id']})");h=board(pg);pg.reload();pg.wait_for_function('window.SOTA');pg.evaluate(f"SOTA.puzzle.open({r['id']})");check(board(pg)==h,'puzzle differs after reload');b.close()
+  pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);r=R(pg)[0];pg.evaluate(f"SOTA.puzzle.open({r['id']})");h=board(pg);pg.reload();pg.wait_for_function('window.SOTA');SPL.pass_splash(pg);pg.evaluate(f"SOTA.puzzle.open({r['id']})");check(board(pg)==h,'puzzle differs after reload');b.close()
 
 def over(a,b):return not(a['x']+a['width']<=b['x']+.5 or b['x']+b['width']<=a['x']+.5 or a['y']+a['height']<=b['y']+.5 or b['y']+b['height']<=a['y']+.5)
 def t_ui_fit(p):
@@ -134,9 +135,9 @@ def t_difficulty(p):
   md=open(os.path.join(ROOT,'STAGE3-PROGRESS.md')).read();check('| Type' in md and 'Z5' in md,'table missing in STAGE3-PROGRESS.md')
 
 def t_offline3(p):
-  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller')
+  b,c=ctx(p,sw=True);pg=c.new_page();pg.goto(BASE+'index.html');pg.wait_for_function('navigator.serviceWorker.ready.then(()=>true)');SPL.pass_splash(pg);pg.reload();pg.wait_for_function('window.SOTA&&navigator.serviceWorker.controller');SPL.pass_splash(pg)
   ok=pg.evaluate('(async()=>{const k=(await caches.keys());const c=await caches.open(k.find(x=>x=="sota-s1-v18"));const r=[];for(const f of["puzzles.js?v=14","puzzle-ui.js?v=14","doors.js?v=14","game.js?v=14"])r.push(!!(await c.match(f)));return [k,r]})()')
-  check(all(ok[1]) and ok[0]==['sota-s1-v18'],f'cache {ok}');c.set_offline(True);pg.reload();pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
+  check(all(ok[1]) and ok[0]==['sota-s1-v18'],f'cache {ok}');c.set_offline(True);pg.reload();SPL.pass_splash(pg);pg.wait_for_selector('#puz',state='attached');pg.wait_for_timeout(500);pg.evaluate('SOTA.puzzle.open(3)');check(pg.evaluate('SOTA.puzzleOpen()'),'offline puzzle');b.close()
   check('updateViaCache:"none"' in open(os.path.join(ROOT,'boot.js')).read(),'updateViaCache')
 
 def t_console_network3(p):

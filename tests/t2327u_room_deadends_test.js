@@ -80,8 +80,9 @@ test('centre, taverns, camps and each door approach remain accessible',()=>{
 test('the released first slice remains connected with its existing content cap',()=>{
  const capped={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'content-cap.js'),'utf8'),capped);
  const cap=capped.window.SOTA_CONTENT_CAP.create(N,M.zone);
- assert.equal(capped.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,2);
- assert.deepEqual(JSON.parse(JSON.stringify(capped.window.SOTA_CONTENT_CAP.DEFAULT.extraCells)),[[19,24]]);
+ // t2362u step 2: the released cap is zones 1-3 (was maxZone 2 + the (19,24) doorway in step 1)
+ assert.equal(capped.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,3);
+ assert.deepEqual(JSON.parse(JSON.stringify(capped.window.SOTA_CONTENT_CAP.DEFAULT.extraCells)),[]);
  const seen=new Set([index(M.entrance)]),q=[index(M.entrance)];
  for(let k=0;k<q.length;k++)for(const j of neighbors(q[k]))if(!roomCells.has(j)&&!seen.has(j)&&cap.isOpen(j%N,Math.floor(j/N))){seen.add(j);q.push(j);}
  for(let i=0;i<N*N;i++)if(!roomCells.has(i)&&cap.isOpen(i%N,Math.floor(i/N)))assert.ok(seen.has(i),`unreachable released cell ${i%N},${Math.floor(i/N)}`);
@@ -109,13 +110,33 @@ test('t2370u zones 1-2: with every room and door cell impassable, all hallway ce
  for(const r of rooms12){const i=index(r.c);assert.ok(!seen.has(i));}
  console.log(`  t2370u zone 1: ${per[1][1]}/${per[1][0]} hallway cells, zone 2: ${per[2][1]}/${per[2][0]} (inside cap); rooms/doors z1-2: ${rooms12.length}; taverns/camps z1-2 reached: ${[...M.taverns,...M.camps].filter(z12).length}`);
 });
+// t2370u step 2: the same standing door rule for zone 3, now inside the released cap (zones 1-3).
+test('t2370u zone 3: with every room and door cell impassable, all zone 3 hallway cells, Tavern 3, its camps and door approaches are reachable',()=>{
+ const capped={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'content-cap.js'),'utf8'),capped);
+ const cap=capped.window.SOTA_CONTENT_CAP.create(N,M.zone),open=i=>cap.isOpen(i%N,Math.floor(i/N));
+ const doorCells=new Set(M.rooms.map(r=>index(r.c)));
+ const seen=new Set([index(M.entrance)]),q=[index(M.entrance)];
+ for(let k=0;k<q.length;k++)for(const j of neighbors(q[k]))if(!doorCells.has(j)&&!seen.has(j)&&open(j)){seen.add(j);q.push(j);}
+ let total=0,got=0;const bad=[];
+ for(let i=0;i<N*N;i++){if(+M.zone[i]!==3||doorCells.has(i))continue;assert.ok(open(i),'zone 3 cell closed by the cap');total++;if(seen.has(i))got++;else bad.push([i%N,Math.floor(i/N)]);}
+ assert.deepEqual(bad,[],'zone 3 hallway cells cut off by a door/room: '+JSON.stringify(bad));
+ const fac=[...M.taverns,...M.camps].filter(c=>+M.zone[index(c)]===3);assert.equal(fac.length,9,'Tavern 3 + 8 camps');
+ for(const c of fac)assert.ok(seen.has(index(c)),`unreachable tavern/camp ${c}`);
+ const rooms3=M.rooms.filter(r=>r.z===3);assert.equal(rooms3.length,16);
+ for(const r of rooms3){const nb=neighbors(index(r.c));assert.equal(nb.length,1,`door ${r.id} is not on a dead end`);
+  assert.ok(!doorCells.has(nb[0]),`door ${r.id} opens onto another room`);assert.ok(seen.has(nb[0]),`door ${r.id} approach unreachable`);assert.equal(+M.zone[nb[0]],3,`door ${r.id} approached from another zone`);
+  const old=ORIGINAL.find(o=>o.id===r.id);if(JSON.stringify(old.c)!==JSON.stringify(r.c))console.log(`  zone 3 door ${r.id} (${r.k}) moved ${old.c} -> ${r.c} (dead end)`);}
+ // no zone 4/5 cell is reachable inside the cap
+ for(const i of seen)assert.ok(+M.zone[i]<=3);
+ console.log(`  t2370u zone 3: ${got}/${total} hallway cells reached (inside cap); rooms/doors z3: ${rooms3.length}, all dead ends; Tavern 3 + ${fac.length-1} camps reached`);
+});
 test('maze cache pins advance together without changing combat pins',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/^const VER="79",/);
+ assert.match(sw,/^const VER="81",/); // t2404u combined release: live 79, zone3-work was 80, logo-work 80
  for(const source of [html,sw]){
   assert.ok(source.includes('maze-data.js?v=17'));assert.ok(!source.includes('maze-data.js?v=16'));
-  assert.ok(source.includes('rules.js?v=19'));assert.ok(source.includes('party.js?v=28'));
+  assert.ok(source.includes("rules.js?v=21"));assert.ok(source.includes("party.js?v=30"));
  }
 });
 console.log(`${passed} passed; 0 failed`);
