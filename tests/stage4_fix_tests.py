@@ -49,6 +49,7 @@ def ttap(pg,sel,tries=25):
     check(pg.locator(sel).count()>0,'no element '+sel)
     r=ev(pg,'s=>document.querySelector(s).getBoundingClientRect().top',sel);vw=ev(pg,'innerWidth');vh=ev(pg,'visualViewport.height')
     swipe(pg,vw*0.5,vh*0.45,(vh*0.3) if r>vh*0.5 else -(vh*0.3))
+    pg.wait_for_timeout(250)  # t2360u: let touch scrolling settle before the next look, so the tap lands where it was aimed
   raise Fail('could not reach '+sel+' by touch swiping')
 def ui(pg):return ev(pg,'SOTA.rpg.ui()')
 def err(pg):return ev(pg,'(document.getElementById("ccerr")||{}).textContent||""')

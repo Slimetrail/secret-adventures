@@ -21,7 +21,7 @@ def hold(pg,ms):pg.mouse.move(200,450);pg.mouse.down();pg.wait_for_timeout(ms);p
 def t_title_boot(p):
   b,c=ctx(p);reqs=[];errs=[];pg=page(c,reqs,errs)
   check(ev(pg,'SOTA.intro.titleOpen()') and ev(pg,'SOTA.rpg.ui()') is None,'boot did not show title-only menu')
-  check(ev(pg,'document.getElementById("ititle-t").textContent')=='Secret of the Adventures','title string')
+  check(ev(pg,'document.getElementById("ititle-t").textContent')=='Secret of the Adventure','title string')
   check(ev(pg,'document.querySelectorAll("#ititle button").length')==0,'buttons on title')
   check(ev(pg,'document.getElementById("ititle").dataset.art')=='ready','title wall art not wired')
   check(not ev(pg,'[...document.querySelectorAll(".iapp")].some(e=>e.offsetParent)'),'install/update visible on title')

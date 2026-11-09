@@ -87,13 +87,35 @@ test('the released first slice remains connected with its existing content cap',
  for(let i=0;i<N*N;i++)if(!roomCells.has(i)&&cap.isOpen(i%N,Math.floor(i/N)))assert.ok(seen.has(i),`unreachable released cell ${i%N},${Math.floor(i/N)}`);
  console.log(`  reachable released non-room cells: ${seen.size}`);
 });
+// t2370u: standing door rule, zones 1-2 (step 1). A door is the one open edge of a room cell, so room cell + door are both
+// treated as non-walkable; every hallway cell of each zone must still be reachable from the entrance inside the released cap.
+test('t2370u zones 1-2: with every room and door cell impassable, all hallway cells, taverns, camps and door approaches are reachable',()=>{
+ const capped={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'content-cap.js'),'utf8'),capped);
+ const cap=capped.window.SOTA_CONTENT_CAP.create(N,M.zone),open=i=>cap.isOpen(i%N,Math.floor(i/N));
+ const doorCells=new Set();for(const r of M.rooms){const i=index(r.c);doorCells.add(i);}
+ const seen=new Set([index(M.entrance)]),q=[index(M.entrance)];
+ for(let k=0;k<q.length;k++)for(const j of neighbors(q[k]))if(!doorCells.has(j)&&!seen.has(j)&&open(j)){seen.add(j);q.push(j);}
+ const per={1:[0,0],2:[0,0]},bad=[];
+ for(let i=0;i<N*N;i++){const z=+M.zone[i];if(z>2||doorCells.has(i))continue;per[z][0]++;if(seen.has(i))per[z][1]++;else if(open(i))bad.push([i%N,Math.floor(i/N),z]);}
+ assert.deepEqual(bad,[],'hallway cells cut off by a door/room: '+JSON.stringify(bad));
+ for(const z of [1,2])assert.equal(per[z][1],per[z][0],`zone ${z}: ${per[z][1]}/${per[z][0]} hallway cells reached`);
+ const z12=c=>+M.zone[index(c)]<=2;
+ for(const c of [...M.taverns,...M.camps].filter(z12))assert.ok(seen.has(index(c)),`unreachable tavern/camp ${c}`);
+ const rooms12=M.rooms.filter(r=>r.z<=2);
+ for(const r of rooms12){const nb=neighbors(index(r.c));assert.equal(nb.length,1,`door ${r.id} is not on a dead end`);
+  assert.ok(!doorCells.has(nb[0]),`door ${r.id} opens onto another room`);assert.ok(seen.has(nb[0]),`door ${r.id} approach ${[nb[0]%N,Math.floor(nb[0]/N)]} unreachable`);
+  assert.equal(+M.zone[nb[0]],r.z,`door ${r.id} approached from another zone`);}
+ // no door on a through-path: removing any one door never disconnects anything (it is a leaf)
+ for(const r of rooms12){const i=index(r.c);assert.ok(!seen.has(i));}
+ console.log(`  t2370u zone 1: ${per[1][1]}/${per[1][0]} hallway cells, zone 2: ${per[2][1]}/${per[2][0]} (inside cap); rooms/doors z1-2: ${rooms12.length}; taverns/camps z1-2 reached: ${[...M.taverns,...M.camps].filter(z12).length}`);
+});
 test('maze cache pins advance together without changing combat pins',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/^const VER="74",/);
+ assert.match(sw,/^const VER="79",/);
  for(const source of [html,sw]){
   assert.ok(source.includes('maze-data.js?v=17'));assert.ok(!source.includes('maze-data.js?v=16'));
-  assert.ok(source.includes('rules.js?v=17'));assert.ok(source.includes('party.js?v=26'));
+  assert.ok(source.includes('rules.js?v=19'));assert.ok(source.includes('party.js?v=28'));
  }
 });
 console.log(`${passed} passed; 0 failed`);

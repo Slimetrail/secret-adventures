@@ -14,5 +14,5 @@ t('v27 keeps every v25 and v26 cache entry',()=>{const load=s=>{const c={self:{a
  const html=fs.readFileSync('index.html','utf8');for(const x of w.shell.filter(x=>/\.js\?v=/.test(x)&&html.includes(x.split('?')[0]+'?')))if(html.includes(x.split('?')[0]+'?v='))a.ok(!html.includes(x.split('?')[0]+'?v=')||w.shell.includes(html.match(new RegExp(x.split('?')[0].replace('.','\\.')+'\\?v=\\d+'))[0]),x);});
 t('journal keeps original tabs plus Beasts and settings',()=>{const s=fs.readFileSync('intro.js','utf8'),m=s.match(/const TABS=(\[.*?\]\]);/)[1];a.deepStrictEqual(JSON.parse(m).map(x=>x[1]),['Inventory','Beasts','Map','Found art','Journal','Recipes','Settings']);});
 t('no network hosts / ads in new files',()=>{for(const f of ['intro.js','intro-art-data.js','t2103u-text.js'])a.ok(!/https?:\/\/|adsbygoogle|doubleclick|googletag/i.test(fs.readFileSync(f,'utf8')),f);});
-t('title string exact',()=>a.ok(fs.readFileSync('intro.js','utf8').includes('const TITLE="Secret of the Adventures"')));
+t('title string exact',()=>a.ok(fs.readFileSync('intro.js','utf8').includes('const TITLE="Secret of the Adventure"')));
 console.log('t2103u_test: '+n+'/'+n+' PASS');

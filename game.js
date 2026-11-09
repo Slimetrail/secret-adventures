@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 1+2: maze engine, first-person 3D view, visited cells + trail (map in map.js). Private build, no ads, no network. */
+/* Secret of the Adventure - Stage 1+2: maze engine, first-person 3D view, visited cells + trail (map in map.js). Private build, no ads, no network. */
 (function(){
 "use strict";
 const M=window.MAZE,TX=window.TEX,N=M.n,G=2*N+1,TS=TX.S;

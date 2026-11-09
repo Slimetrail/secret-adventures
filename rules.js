@@ -1,8 +1,8 @@
-/* Secret of the Adventures - Stage 4 rules: races, classes, stats, skills, levels, items, monsters, fights. Pure logic, no screen, no network.
+/* Secret of the Adventure - Stage 4 rules: races, classes, stats, skills, levels, items, monsters, fights. Pure logic, no screen, no network.
    Works in the browser (window.RPG) and in node (module.exports) so tests can run it directly. */
 (function(root){
 "use strict";
-const CAP=50,START_POINTS=10,LEVEL_POINTS=10;
+const CAP=50,START_POINTS=10,LEVEL_POINTS=4;
 // cost to raise a stat by 1 from its current value
 function cost(v){return v<=5?1:v<=10?2:v<=15?3:4;}
 function spendCost(from,to){let c=0;for(let v=from;v<to;v++)c+=cost(v);return c;}
@@ -11,12 +11,12 @@ const CLASSES={
  rogue:{name:"Rogue",main:"sta",magic:false,weapons:["dagger","sword"],armor:2},
  archer:{name:"Archer",main:"sta",magic:false,weapons:["bow","dagger"],armor:2},
  mage:{name:"Mage",main:"man",magic:true,weapons:["staff","dagger"],armor:1}};
-// armor: 1 light, 2 medium, 3 heavy. base stats: str strength, sta stamina, man mana
+// armor: 1 light, 2 medium, 3 heavy. base stats: str strength, sta stamina, con constitution (t2360u), man mana
 const RACES={
- human:{name:"Human",classes:["warrior","rogue","archer","mage"],armor:3,anyWeapon:true,base:{str:5,sta:5,man:5},carry:1},
- elf:{name:"Elf",classes:["mage","archer","rogue","warrior"],armor:2,anyWeapon:false,base:{str:5,sta:5,man:8},carry:1},
- dwarf:{name:"Dwarf",classes:["warrior","rogue","archer"],armor:3,anyWeapon:true,base:{str:9,sta:7,man:1},carry:1.6},
- cat:{name:"Cat person",classes:["mage","rogue","warrior"],armor:1,anyWeapon:false,base:{str:2,sta:9,man:5},carry:0.6}};
+ human:{name:"Human",classes:["warrior","rogue","archer","mage"],armor:3,anyWeapon:true,base:{str:5,sta:5,con:5,man:5},carry:1},
+ elf:{name:"Elf",classes:["mage","archer","rogue","warrior"],armor:2,anyWeapon:false,base:{str:5,sta:5,con:5,man:8},carry:1},
+ dwarf:{name:"Dwarf",classes:["warrior","rogue","archer"],armor:3,anyWeapon:true,base:{str:9,sta:7,con:7,man:1},carry:1.6},
+ cat:{name:"Cat person",classes:["mage","rogue","warrior"],armor:1,anyWeapon:false,base:{str:2,sta:9,con:9,man:5},carry:0.6}};
 function allowed(race,cls){return !!(RACES[race]&&CLASSES[cls]&&RACES[race].classes.includes(cls));}
 function armorCap(c){return RACES[c.race].armor;} // armor limits come from race only, as in the design sheet
 // skills: k = attack kind (phys / magic / heal / guard), p = power, mp = cost
@@ -26,12 +26,17 @@ const SKILLS={
  archer:[{id:"aimed",n:"Aimed Shot",k:"phys",p:1.8,mp:3},{id:"volley",n:"Volley",k:"phys",p:1.2,mp:4,all:1},{id:"pin",n:"Pinning Arrow",k:"phys",p:1.5,mp:3},{id:"hawk",n:"Hawk Eye",k:"phys",p:2.4,mp:6},{id:"rain",n:"Arrow Rain",k:"phys",p:1.8,mp:9,all:1},{id:"star",n:"Star Arrow",k:"phys",p:3.4,mp:12}],
  mage:[{id:"bolt",n:"Arcane Bolt",k:"magic",p:1.8,mp:3},{id:"frost",n:"Frost Shard",k:"magic",p:1.6,mp:3},{id:"mend",n:"Mend",k:"heal",p:1.6,mp:4},{id:"storm",n:"Void Storm",k:"magic",p:1.4,mp:7,all:1},{id:"nova",n:"Star Nova",k:"magic",p:2.8,mp:9},{id:"rift",n:"Crystal Rift",k:"magic",p:2.2,mp:14,all:1}]};
 function skillSlots(level){return 1+Math.floor(Math.min(level,CAP)/3);} // one at start, one more every 3 levels
-function pointsEarned(level){return START_POINTS+LEVEL_POINTS*Math.floor(Math.min(level,CAP)/2);} // 10 more every other level
-function xpNeed(level){return level>=CAP?Infinity:Math.round(1.8*level*level+9*level);}
+// Jeremy t2358u/t2361u: 4 stat points every level, 46 at level 10 (was 10 every other level)
+function pointsEarned(level){return START_POINTS+LEVEL_POINTS*(Math.min(level,CAP)-1);}
+// t2358u old saves: a character who spent more than the new total keeps every stat; spent is clamped to the total so
+// unspent points are 0 (never negative) and the next level-up gives its 4 points as normal.
+function clampPoints(c){migrateStats(c);if(c&&c.stats&&c.spent>pointsEarned(c.lvl))c.spent=pointsEarned(c.lvl);return c?pointsEarned(c.lvl)-c.spent:0;}
+// Jeremy t2358u: slower zone 1 pace, about 3, 5 and 7 fights per level and ~45 fights to level 10 (was 1.8L^2+9L)
+function xpNeed(level){return level>=CAP?Infinity:Math.round(5*level*level+25*level+30);}
 function newChar(name,race,cls,alloc,skill){
  if(!allowed(race,cls))throw new Error("race/class not allowed");
- const b=RACES[race].base,s={str:b.str,sta:b.sta,man:b.man};let spent=0;
- for(const k of["str","sta","man"]){const add=(alloc&&alloc[k])|0;if(add<0)throw new Error("bad points");spent+=spendCost(s[k],s[k]+add);s[k]+=add;}
+ const b=RACES[race].base,s={str:b.str,sta:b.sta,con:b.con,man:b.man};let spent=0;
+ for(const k of["str","sta","con","man"]){const add=(alloc&&alloc[k])|0;if(add<0)throw new Error("bad points");spent+=spendCost(s[k],s[k]+add);s[k]+=add;}
  if(spent>START_POINTS)throw new Error("too many points");
  if(!SKILLS[cls].slice(0,3).some(x=>x.id===skill))throw new Error("bad starting skill");
  if(race==="dwarf"&&s.man>RACES.dwarf.base.man)throw new Error("dwarves have no magic");
@@ -39,18 +44,35 @@ function newChar(name,race,cls,alloc,skill){
  c.hp=maxHp(c,1);c.mp=maxMp(c);return c;}
 function raise(c,k){const v=c.stats[k],p=cost(v);if(c.race==="dwarf"&&k==="man")return false;if(pointsEarned(c.lvl)-c.spent<p)return false;c.stats[k]++;c.spent+=p;return true;}
 function gearSum(c,key){let t=0;for(const s in c.equip){const it=c.equip[s]&&ITEMS[c.equip[s]];if(it&&it[key])t+=it[key];}return t;}
-function maxHp(c,hpMul){return Math.round((24+4*c.stats.sta+3*c.stats.str+7*c.lvl+gearSum(c,"hp"))*(hpMul||1));}
+// t2360u: CON (constitution) now drives HP and defense; STA is the rogue/archer attack stat and gives them crits.
+// Old saves have no CON: they get CON = their old STA for free, so max HP and defense stay the same.
+function migrateStats(c){if(c&&c.stats&&c.stats.con==null)c.stats.con=c.stats.sta;return c;}
+function conOf(c){return c.stats.con!=null?c.stats.con:c.stats.sta;}
+const CRIT_MUL=1.75;
+function critChance(c){return CLASSES[c.cls].main==="sta"?Math.min(0.30,0.03+0.01*c.stats.sta):0;}
+function maxHp(c,hpMul){return Math.round((24+4*conOf(c)+3*c.stats.str+7*c.lvl+gearSum(c,"hp"))*(hpMul||1));}
 function maxMp(c){return c.race==="dwarf"&&!CLASSES[c.cls].magic?6+2*c.stats.sta+c.lvl:8+2*c.stats.man+2*c.lvl;}
 function buffOf(c,k){const b=c.buff;return b&&b.f>0&&b[k]?b[k]/100:0;}
-function power(c){const m=CLASSES[c.cls].main,s0=c.stats,bs=buffOf(c,"sta"),s={str:s0.str,sta:s0.sta*(1+bs),man:s0.man};return (1+buffOf(c,"str"))*((m==="str"?2.2*s.str:m==="sta"?2.2*s.sta+0.5*s.str:0.8*s.str+0.6*s.sta)+c.lvl*1.5+gearSum(c,"atk")+4);}
+// t2345u: weapon poison from a failed camp craft adds weapon damage for a few fights (c.poison={f,b}); no poison = no change
+function poisonOf(c){const p=c.poison;return p&&p.f>0&&p.b>0?p.b:0;}
+function power(c){const m=CLASSES[c.cls].main,s0=c.stats,bs=buffOf(c,"sta"),s={str:s0.str,sta:s0.sta*(1+bs),man:s0.man};return (1+buffOf(c,"str")+poisonOf(c))*((m==="str"?2.2*s.str:m==="sta"?2.2*s.sta+0.5*s.str:0.8*s.str+0.6*s.sta)+c.lvl*1.5+gearSum(c,"atk")+4);}
 function magicPower(c){return 2.6*c.stats.man+c.lvl*1.8+gearSum(c,"mag")+4;}
-function defense(c){return gearSum(c,"def")+c.stats.sta*0.6+c.lvl*0.8;}
+function defense(c){return gearSum(c,"def")+conOf(c)*0.6+c.lvl*0.8;}
 function carryLimit(c){return Math.round((12+3*c.stats.str)*RACES[c.race].carry);}
 function bagWeight(c){const np=c.bag.filter(id=>ITEMS[id]&&ITEMS[id].slot==="part").length,bulk=window.ECON?window.ECON.partBulk(np):0;return c.bag.reduce((t,id)=>t+((ITEMS[id]&&ITEMS[id].w)||0),0)+bulk;}
 function canCarry(c,id){return bagWeight({bag:c.bag.concat([id])})<=carryLimit(c);}
 function gainXp(c,n,hpMul){const gained=[];if(c.lvl>=CAP)return gained;c.xp+=n;
  while(c.lvl<CAP&&c.xp>=xpNeed(c.lvl)){c.xp-=xpNeed(c.lvl);c.lvl++;gained.push(c.lvl);}
- if(c.lvl>=CAP)c.xp=0;return gained;}
+ if(c.lvl>=CAP)c.xp=0;
+ // Jeremy t2343u: a level-up refills health and mana to the new maximum (also t2341u: max MP growing no longer looks like a drain).
+ if(gained.length){c.hp=maxHp(c,hpMul);c.mp=maxMp(c);}return gained;}
+// t2350u: one place for what a usable item does. heal/mp = share of max, buff = {str,sta,f}. An item with none of these
+// (the shop Mana potion) refills MP fully, exactly as before. Returns the HP healed amount (before the cap) for the fight log.
+function useEffect(who,it,hpMul){const mh=maxHp(who,hpMul),mm=maxMp(who);let h=0;
+ if(it.heal){h=Math.round(mh*it.heal);who.hp=Math.min(mh,who.hp+h);}
+ if(it.mp)who.mp=Math.min(mm,who.mp+Math.round(mm*it.mp));
+ if(it.buff)who.buff={str:it.buff.str||0,sta:it.buff.sta||0,f:it.buff.f||1,n:it.n};
+ if(!it.heal&&!it.mp&&!it.buff)who.mp=mm;return h;}
 function learn(c,id){if(c.skills.length>=skillSlots(c.lvl))return false;const s=SKILLS[c.cls].find(x=>x.id===id);if(!s||c.skills.includes(id))return false;c.skills.push(id);return true;}
 // items: slot, w weight (kg), a armor class 1-3, t weapon type, stats; junk has v value; potions use
 const ITEMS={
@@ -500,17 +522,19 @@ function loot(zone,seed){const r=rng(seed^0x5bd1e995),gold=Math.round((4+r()*8)*
 // one hit: attacker power vs defender defense, +-15% spread
 function hit(pw,def,r){return Math.max(1,Math.round((pw-def*0.5)*(0.85+0.3*r)));}
 // --- fight engine (used by the screen and by tests) ---
-function Fight(party,mons,diff,seed){this.p=party;this.m=mons;this.d=DIFF[diff]||DIFF.normal;this.r=rng(seed);this.guard=new Set();this.log=[];this.over=null;this.turn=0;}
+function Fight(party,mons,diff,seed){this.p=party;this.m=mons;this.d=DIFF[diff]||DIFF.normal;this.r=rng(seed);this.cr=rng((seed^0x3c6ef372)>>>0);this.guard=new Set();this.log=[];this.over=null;this.turn=0;}
+// t2360u: rogue/archer crit roll on its own stream, so every other roll in a seeded fight stays the same
+Fight.prototype.crit=function(c,d){const p=critChance(c);if(p<=0)return [d,false];return this.cr()<p?[Math.round(d*CRIT_MUL),true]:[d,false];};
 Fight.prototype.alive=function(a){return a.filter(x=>x.hp>0);};
 Fight.prototype.act=function(ci,cmd,arg,targ){ // one hero action. returns text
  const c=this.p[ci],r=this.r;if(this.over||!c||c.hp<=0)return "";let t="";const foes=this.alive(this.m);const tg=foes.includes(this.m[targ])?this.m[targ]:foes[0];
- if(cmd==="attack"){const dmg=hit(power(c),tg.def,r());tg.hp=Math.max(0,tg.hp-dmg);t=c.name+" hits "+tg.n+" for "+dmg;}
+ if(cmd==="attack"){const [dmg,cr]=this.crit(c,hit(power(c),tg.def,r()));tg.hp=Math.max(0,tg.hp-dmg);t=c.name+" hits "+tg.n+" for "+dmg+(cr?". Critical hit!":"");}
  else if(cmd==="skill"){const s=SKILLS[c.cls].find(x=>x.id===arg);if(!s||!c.skills.includes(arg)||c.mp<s.mp)return this.act(ci,"attack",null,targ);c.mp-=s.mp;
   if(s.k==="heal"){const w=this.alive(this.p).sort((a,b)=>a.hp/maxHp(a,this.d.hp)-b.hp/maxHp(b,this.d.hp))[0],h=Math.round(magicPower(c)*s.p);w.hp=Math.min(maxHp(w,this.d.hp),w.hp+h);t=c.name+" casts "+s.n+": +"+h;}
   else if(s.k==="guard"){this.p.forEach((x,i)=>this.guard.add(i));t=c.name+" uses "+s.n;}
-  else{const list=s.all?foes:[tg],pw=(s.k==="magic"?magicPower(c):power(c))*s.p;let tot=0;list.forEach(f=>{const d=hit(pw,f.def,r());f.hp=Math.max(0,f.hp-d);tot+=d;});t=c.name+" uses "+s.n+" for "+tot;}}
+  else{const list=s.all?foes:[tg],pw=(s.k==="magic"?magicPower(c):power(c))*s.p;let tot=0,crit=false;list.forEach(f=>{let d=hit(pw,f.def,r());if(s.k!=="magic"){const x=this.crit(c,d);d=x[0];crit=crit||x[1];}f.hp=Math.max(0,f.hp-d);tot+=d;});t=c.name+" uses "+s.n+" for "+tot+(crit?". Critical hit!":"");}}
  else if(cmd==="item"){const id=arg,k=c.bag.indexOf(id),it=ITEMS[id];if(it&&it.revive){const tg=this.p[targ];if(k<0||!tg||tg.hp>0)return "";c.bag.splice(k,1);tg.hp=Math.max(1,Math.round(maxHp(tg,this.d.hp)*it.revive));t=c.name+" uses "+it.n+": "+tg.name+" is back up!";}else{const who=this.p[targ!=null&&this.p[targ]&&this.p[targ].hp>0?targ:ci];if(k<0||!it||it.slot!=="use")return "";c.bag.splice(k,1);
-  if(it.heal){const h=Math.round(maxHp(who,this.d.hp)*it.heal);who.hp=Math.min(maxHp(who,this.d.hp),who.hp+h);t=c.name+" uses "+it.n+": +"+h;}else{who.mp=maxMp(who);t=c.name+" uses "+it.n;}}}
+  const h=useEffect(who,it,this.d.hp);t=c.name+" uses "+it.n+(it.heal?": +"+h:"");}}
  else if(cmd==="defend"){this.guard.add(ci);t=c.name+" defends";}
  else if(cmd==="run"){if(this.m.some(x=>x.boss)){t="Can't run!";}else if(r()<0.6){this.over="ran";t="The party ran away";}else t="Couldn't get away";}
  this.log.push(t);this.check();return t;};
@@ -545,9 +569,9 @@ function planParty(hero,seed){const races=COMPANIONS.map(d=>companionRace(d,hero
  let pick=ok.length?ok[((seed>>>0)%ok.length)]:COMPANIONS.map((d,i)=>RACES[races[i]].classes[0]);
  return COMPANIONS.map((d,i)=>Object.assign({},d,{race:races[i],cls:pick[i],alloc:START_KIT[pick[i]].alloc,skill:START_KIT[pick[i]].skill}));}
 function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-1];return nx&&nx.tavern===tIdx?nx:null;}
-function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
+function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);c.stats.con=Math.max(c.stats.con,c.stats.sta);/* t2360u: free CON = STA keeps companion HP/DEF as before */while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
-const RPG={CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
+const RPG={poisonOf,useEffect,clampPoints,migrateStats,conOf,critChance,CRIT_MUL,CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
  ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);

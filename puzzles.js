@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 3 puzzle logic (no drawing). Same code runs in the game and in node (tools/solver.js).
+/* Secret of the Adventure - Stage 3 puzzle logic (no drawing). Same code runs in the game and in node (tools/solver.js).
    Every puzzle is made from a fixed seed per room, so a reload gives the same puzzle. Types: 0 mirror beams, 1 levers,
    2 pipe connections (zones 1-2) or Sudoku (zones 3-5), 3 moving blocks, 4 sliding tiles. */
 (function(root){

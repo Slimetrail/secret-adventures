@@ -1,2 +1,2 @@
-{"name":"Secret of the Adventures","short_name":"Secret Adv","start_url":"./index.html","scope":"./","display":"fullscreen","orientation":"portrait","background_color":"#000000","theme_color":"#1a1030",
+{"name":"Secret of the Adventure","short_name":"Secret Adv","start_url":"./index.html","scope":"./","display":"fullscreen","orientation":"portrait","background_color":"#000000","theme_color":"#1a1030",
 "icons":[{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icons/icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}

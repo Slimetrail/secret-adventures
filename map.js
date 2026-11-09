@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 2 map screen: hand-inked map of VISITED cells on worn parchment. Original drawing code, no assets, no network. */
+/* Secret of the Adventure - Stage 2 map screen: hand-inked map of VISITED cells on worn parchment. Original drawing code, no assets, no network. */
 (function(){
 "use strict";
 const S=window.SOTA,C=S.core,M=C.M,N=M.n,L=32; // L = layer pixels per cell

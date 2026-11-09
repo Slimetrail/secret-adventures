@@ -1,4 +1,4 @@
-/* Secret of the Adventures - procedural zone textures. All art is original and drawn here in code.
+/* Secret of the Adventure - procedural zone textures. All art is original and drawn here in code.
    Each texture is 64x64 RGBA; the alpha byte is used as a glow (emissive) amount, not transparency. */
 (function(){
 const S=64;

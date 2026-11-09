@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 6 story layer: dialogue box with painted portraits that change pose by line,
+/* Secret of the Adventure - Stage 6 story layer: dialogue box with painted portraits that change pose by line,
    opening, companion joins, tavern/camp/wall-art banter, fight start/end lines, boss-door note, endings, memory lines.
    Text only (no sound). Banter can't be skipped or fast-forwarded: a tap only moves on once the line has fully appeared.
    Offline: all art is in art6/. No network, no ads. */

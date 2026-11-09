@@ -9,7 +9,7 @@ function harness({race="cat",cls="rogue",title=true,ready=true}={}){
   const classes=new Set();n.classList={add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k)};
   Object.defineProperty(n,"innerHTML",{set(){for(const [tag,c] of [["div","icave-bg"],["div","icave-title"],["img","icave-hero"],["div","icave-tap"]])nodes.set("."+c,el(tag,c));}});return n;}
  const html=el("html"),body=el("body"),art=new Set(ready?["sickdad/sickdad-"+race+".webp"]:[]);
- const h={race,cls};const context={hero:()=>h,has:p=>art.has(p)||p==="cave/backdrop.webp"||p==="cave/back-"+race+"-"+cls+".webp"||(title&&p==="cave/title.webp"),A:p=>"art-intro/"+p,el,TITLE:"Secret of the Adventures",document:{body,documentElement:html},
+ const h={race,cls};const context={hero:()=>h,has:p=>art.has(p)||p==="cave/backdrop.webp"||p==="cave/back-"+race+"-"+cls+".webp"||(title&&p==="cave/title.webp"),A:p=>"art-intro/"+p,el,TITLE:"Secret of the Adventure",document:{body,documentElement:html},
   S:{rpg:{s6:{line:()=>currentLine}}},
   setInterval:(f,ms)=>{let id=next++;timers.set(id,{f,at:now+ms,interval:ms});return id;},clearInterval:id=>timers.delete(id),
   setTimeout:(f,ms)=>{let id=next++;timers.set(id,{f,at:now+ms});return id;},clearTimeout:id=>timers.delete(id)};
@@ -34,7 +34,7 @@ for(const title of [true,false])test("cave 2000ms stand, early-tap guard and "+(
  a.equal(h.nodes.get(".icave-hero").src,"art-intro/cave/back-cat-rogue.webp");
  cv.events.pointerup({preventDefault(){},stopPropagation(){}});h.hideCave();a.equal(h.open(),true);
  h.tick(1999);a.equal(cv.dataset.titleShown,"0");h.tick(1);a.equal(cv.dataset.titleShown,"1");a.equal(ti.hidden,false);a.equal(tap.hidden,false);a.equal(ti.children.length,1);
- a.equal(title?ti.children[0].src:ti.children[0].textContent,title?"art-intro/cave/title.webp":"Secret of the Adventures");
+ a.equal(title?ti.children[0].src:ti.children[0].textContent,title?"art-intro/cave/title.webp":"Secret of the Adventure");
  h.hideCave();a.equal(h.open(),false);h.showCave();a.equal(cv.dataset.titleShown,"0");a.equal(ti.children.length,0);
  h.tick(1000);h.showCave();h.tick(1000);a.equal(cv.dataset.titleShown,"0");h.tick(1000);a.equal(cv.dataset.titleShown,"1");
 });
@@ -45,7 +45,7 @@ test("four race paintings are listed in both offline manifests and versions agre
  for(const file of ["intro.js","intro-art-data.js"]){const pin=fs.readFileSync("index.html","utf8").match(new RegExp(file.replaceAll(".","\\.")+"\\?v=\\d+"))[0];a.ok(ctx.shell.includes(pin));}
 });
 test("spoken story, existing opening and content cap stay byte-identical; no steal dialogue written",()=>{
- const locks={"package-story-data.js": "6e8b2da31662bff47e193956cc78e6f3f8070247d1ee051d5d1be2a5f9a82598", "story.js": "5981c80a87bd7a402ff718ffc6d31f649479d8ad36ab90441d7c3c156a967893", "story-data.js": "2e66b4232f24d5eab486c7b27a8440401c07c429ffda5b6d7932a197acacf000", "t2103u-text.js": "900a7db214e9b090490a6a5934723a1665f5238622a5ea529ccba925f670ada8", "content-cap.js": "2001c6a0f801cc4ace8c724dcffe0441c1bd9ccac38af9b3a692f856caefd8e4"};
+ const locks={"package-story-data.js": "6e8b2da31662bff47e193956cc78e6f3f8070247d1ee051d5d1be2a5f9a82598", "story.js": "8ccb97be7b4afb8f5bf31205db41f859aed46b7b0feea92fed76414a6ff202cd", "story-data.js": "203470a2ab02eb2647024c9ef87618a42a3226fe229db4c2fb001b1e71a4b6a3", "t2103u-text.js": "900a7db214e9b090490a6a5934723a1665f5238622a5ea529ccba925f670ada8", "content-cap.js": "2001c6a0f801cc4ace8c724dcffe0441c1bd9ccac38af9b3a692f856caefd8e4"};
  for(const [f,hash] of Object.entries(locks))a.equal(crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex"),hash,f);
  a.doesNotMatch(source,/play\(["'](?:steal|opening)["']/);
 });

@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 3 puzzle screen (touch first, ink on parchment). Uses PUZ (puzzles.js) for all rules.
+/* Secret of the Adventure - Stage 3 puzzle screen (touch first, ink on parchment). Uses PUZ (puzzles.js) for all rules.
    Leaving keeps the puzzle as it was (kept in memory until the app is closed); Reset goes back to the start. Solutions are never shown. */
 (function(){
 "use strict";

@@ -119,12 +119,12 @@ test("occupancy, sick-dad, and journal-monster files were not rewritten",()=>{
  a.equal(sha("art-intro/sickdad/sickdad-cat.webp"),"30932b97843dbf94b568b11d306372fcbe54ae863a03f040c96186daa5ab61ca");
  const changed=execFileSync("git",["-C",root,"diff","--name-only","HEAD"],{encoding:"utf8"});
  const changedImages=changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n));
- a.ok(changedImages.every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)),changedImages.join("\n"));
+ a.ok(changedImages.every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u title rename */),changedImages.join("\n"));
  const mon=path.join(root,"art-intro/journal/monsters");
  const names=fs.readdirSync(mon).filter(n=>n.endsWith(".webp")).sort();
  a.equal(names.length,14);
  for(const n of names){const f="art-intro/journal/monsters/"+n;const old=execFileSync("git",["-C",root,"show","HEAD:"+f]);a.equal(sha(f),crypto.createHash("sha256").update(old).digest("hex"));}
- a.equal(sha("story.js"),"5981c80a87bd7a402ff718ffc6d31f649479d8ad36ab90441d7c3c156a967893");
+ a.equal(sha("story.js"),"8ccb97be7b4afb8f5bf31205db41f859aed46b7b0feea92fed76414a6ff202cd");
 });
 
 test("t2317u/t2318u painted book art is locked to seven labels and five matching open variants",()=>{

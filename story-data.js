@@ -1,4 +1,4 @@
-/* Secret of the Adventures - Stage 6 story text (first story layer). Original, family-friendly.
+/* Secret of the Adventure - Stage 6 story text (first story layer). Original, family-friendly.
    Lines: [who, emotion, text]. who: H hero, Q quirky (Mira), S scholar (Sorrel), A angry (Brunn), D dad, N narration/note.
    emotion: calm, happy, angry, shock. {H} {Q} {S} {A} are replaced by names. Lines for someone not in the party are skipped. */
 window.STORY={

@@ -1,4 +1,4 @@
-/* Secret of the Adventures - background music (Jeremy-approved cues, 2026-11-07, Eve t2058u).
+/* Secret of the Adventure - background music (Jeremy-approved cues, 2026-11-07, Eve t2058u).
    Local MP3s in music/ only: no network hosts, no ads. Maze exploration music is NOT installed yet (waits for
    Maze exploration (rewritten softer cues, Eve t2061u): zone 1..5 loops while walking the maze.
    Watches what is on screen and picks one cue; starts after a tap where the browser needs it and retries on later taps. */

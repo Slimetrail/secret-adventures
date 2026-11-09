@@ -135,3 +135,47 @@ test("centre pressure stays inside each zone band", () => {
  assert.equal(R.monsterLevel(1, 4, 1), 7);
  assert.equal(R.monsterLevel(1, 9, 1), 10);
 });
+
+// ---- Jeremy t2358u: approved leveling pace and 4 points per level (t2361u) ----
+test("t2358u/t2361u xpNeed and pointsEarned (4 per level, 46 at level 10)", () => {
+ for (let l = 1; l < R.CAP; l++) assert.equal(R.xpNeed(l), Math.round(5 * l * l + 25 * l + 30));
+ assert.equal(R.xpNeed(R.CAP), Infinity);
+ assert.deepEqual([1, 2, 5, 10].map(R.xpNeed), [60, 100, 280, 780]);
+ for (let l = 1; l <= R.CAP + 5; l++) assert.equal(R.pointsEarned(l), R.START_POINTS + 4 * (Math.min(l, R.CAP) - 1));
+ assert.deepEqual([1, 2, 10, 50, 60].map(R.pointsEarned), [10, 14, 46, 206, 206]);
+});
+test("t2358u unchanged: skill slot every 3 levels, stat costs, per-level HP/MP growth, refill on level-up", () => {
+ assert.deepEqual([1, 2, 3, 6, 9].map(R.skillSlots), [1, 1, 2, 3, 4]);
+ const c = R.newChar("Pace", "human", "warrior", {}, R.SKILLS.warrior[0].id), hp1 = R.maxHp(c, 1), mp1 = R.maxMp(c);
+ c.hp = 1; c.mp = 0; R.gainXp(c, R.xpNeed(1), 1);
+ assert.equal(c.lvl, 2); assert.equal(R.maxHp(c, 1) - hp1, 7); assert.equal(R.maxMp(c) - mp1, 2);
+ assert.deepEqual([c.hp, c.mp], [R.maxHp(c, 1), R.maxMp(c)]);
+});
+// Real zone 1 hallway fights: real encounter packs for the hero's level, real Fight.rewards, real gainXp.
+function zone1Pace(base) {
+ const c = R.newChar("Pace", "human", "warrior", {}, R.SKILLS.warrior[0].id), at = {};
+ for (let i = 1; i < 2000 && c.lvl < 10; i++) {
+  const seed = (base * 100003 + i * 7919) >>> 0, mons = R.encounter(1, c.lvl, 0, "normal", seed);
+  const rw = new R.Fight([c], mons, "normal", seed).rewards(seed);
+  for (const l of R.gainXp(c, rw.xp, 1)) at[l] = i;
+ }
+ return at;
+}
+test("t2358u zone 1 pace with real fights: ~2-3 fights to level 2, ~15 to level 5, ~45 to level 10", () => {
+ const runs = Array.from({length: 40}, (_, k) => zone1Pace(k + 1)), avg = l => runs.reduce((s, r) => s + r[l], 0) / runs.length;
+ const [a2, a5, a10] = [avg(2), avg(5), avg(10)];
+ console.log(`zone 1 pace (40 runs): level 2 after ${a2.toFixed(1)} fights, level 5 after ${a5.toFixed(1)}, level 10 after ${a10.toFixed(1)}; per level ${[3,4,5,6,7,8,9,10].map(l => (avg(l) - avg(l - 1)).toFixed(1)).join(", ")}`);
+ assert.ok(a2 >= 1.5 && a2 <= 4, `level 2 after ${a2}`);
+ assert.ok(a5 >= 10 && a5 <= 20, `level 5 after ${a5}`);
+ assert.ok(a10 >= 38 && a10 <= 55, `level 10 after ${a10}`);
+ assert.ok(avg(10) - avg(9) > avg(3) - avg(2), "later levels take more fights");
+});
+test("t2358u old saves: overspent points keep every stat and clamp to 0 unspent, then earn 4 per level", () => {
+ const c = R.newChar("Old", "human", "warrior", {}, R.SKILLS.warrior[0].id);
+ c.lvl = 10; c.spent = 60; const stats = JSON.stringify(c.stats);
+ assert.equal(R.pointsEarned(10) - c.spent, -14);
+ assert.equal(R.clampPoints(c), 0); assert.equal(c.spent, R.pointsEarned(10)); assert.equal(JSON.stringify(c.stats), stats);
+ assert.equal(R.raise(c, "str"), false);
+ R.gainXp(c, R.xpNeed(10), 1); assert.equal(c.lvl, 11); assert.equal(R.clampPoints(c), 4);
+ const ok = R.newChar("New", "human", "warrior", {}, R.SKILLS.warrior[0].id); const sp = ok.spent; assert.equal(R.clampPoints(ok), R.pointsEarned(1) - sp); assert.equal(ok.spent, sp);
+});

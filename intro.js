@@ -1,9 +1,9 @@
-/* Secret of the Adventures - t2103u opening flow, sick-dad / cave / ending staging, worn journal, install + update.
+/* Secret of the Adventure - t2103u opening flow, sick-dad / cave / ending staging, worn journal, install + update.
    Overlay only: no story-data.js lines, no batch talks, no music files are changed. Spoken lines stay where they were.
    Local only, offline, no network hosts, no ads. Art comes from art-intro/ once Graphics delivers it (intro-art-data.js). */
 (function(){"use strict";
 const S=window.SOTA,R=window.RPG,M=window.MAZE;if(!S||!S.rpg||!R)return;
-const TITLE="Secret of the Adventures",LONG_MS=600;
+const TITLE="Secret of the Adventure",LONG_MS=600;
 const ART=new Set(window.INTRO_ART||[]),has=p=>ART.has(p),A=p=>"art-intro/"+p;
 const $=id=>document.getElementById(id);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
@@ -184,7 +184,13 @@ function page(pg,l){const t=jTab,E=window.ECON;
   else {if(!all.length)pg.appendChild(el("div","ijl dim","No beasts found yet."));const g=el("div","ijart ijmonsters");
   all.forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.dataset.beast=file;f.appendChild(im);if(f.addEventListener)f.addEventListener("click",e=>{e.preventDefault();jBeast=file;openJournal("beasts");});g.appendChild(f);});if(g.children.length)pg.appendChild(g);}}
  else if(t==="recipes"){pg.appendChild(el("h3",null,"Recipes"));const k=E?E.DISHES.filter(d=>l.recipes&&l.recipes[d.id]):[];pg.appendChild(el("div","ijl",k.length+" of "+(E?E.DISHES.length:20)+" recipes known"));
-  k.forEach(d=>pg.appendChild(el("div","ijl","• "+d.n)));pg.appendChild(go("Open cooking guide",()=>{closeJournal();S.rpg.s5.cookbook();}));}
+  k.forEach(d=>pg.appendChild(el("div","ijl","• "+d.n)));pg.appendChild(go("Open cooking guide",()=>{closeJournal();S.rpg.s5.cookbook();}));
+  // t2342u/t2345u: crafting recipes learned at camp
+  const cr=E&&E.CRAFTS?E.CRAFTS.filter(c=>l.crafts&&l.crafts[c.id]):[];const ch=el("h3",null,"Crafting");ch.dataset.crafts=cr.length;pg.appendChild(ch);pg.appendChild(el("div","ijl",cr.length+" of "+(E&&E.CRAFTS?E.CRAFTS.length:5)+" crafts known"));
+  cr.forEach(c=>{const d=el("div","ijl","• "+c.n+": "+S.rpg.s5.craftNeedText(c));d.dataset.craft=c.id;pg.appendChild(d);});
+  // t2345u: mixes that gave nothing, so they are not tried again
+  const fl=Object.entries(l.failedMixes||{});const fh=el("h3",null,"Failed recipes");fh.dataset.failed=fl.length;pg.appendChild(fh);
+  if(!fl.length)pg.appendChild(el("div","ijl dim","No failed mixes yet."));fl.forEach(([k,ids])=>{const d=el("div","ijl","✗ "+S.rpg.s5.craftIdsText(ids));d.dataset.failmix=k;pg.appendChild(d);});}
  else if(t==="settings"){pg.appendChild(el("h3",null,"Settings"));pg.appendChild(el("div","ijl","Sound / volume"));
  const sound=go(S.music&&S.music.isMuted&&S.music.isMuted()?"Sound: Off":"Sound: On",()=>{if(S.music){S.music.setMuted(!(S.music.isMuted&&S.music.isMuted()));openJournal("settings");}});sound.dataset.setting="volume";pg.appendChild(sound);
  const load=go("Load a different save",()=>{closeJournal();S.rpg.savePicker("load",null,()=>{S.rpg.closeUI();openJournal("settings");});});load.dataset.setting="load";pg.appendChild(load);

@@ -152,8 +152,8 @@ def t_tent_costs(p):
   check(r['buy']/g[1]<2,f'in zone 4 a tent should cost under 2 fights {g}');b.close()
 def E_ok(r):return True
 def t_tent_build_ui(p):
-  b,pg=setup(p);L(pg,'L.gold=100;const c=L.party[0];for(let i=0;i<4;i++)c.bag.push("p_silk");for(let i=0;i<3;i++)c.bag.push("p_hide");c.bag.push("p_shard","p_shard","p_feather","p_feather","p_feather");')
-  ev(pg,'SOTA.rpg.s5.tentScreen(2)');check(ev(pg,'document.querySelectorAll(".s5need.ok").length')==3,'parts not shown as ready')
+  b,pg=setup(p);L(pg,'L.gold=100;const c=L.party[0];/* t2350u tent = silk 1 + hide 1; t2356u kit parts removed first */c.bag=c.bag.filter(x=>!x.startsWith("p_"));c.bag.push("p_silk","p_hide","p_feather","p_feather","p_feather");')
+  ev(pg,'SOTA.rpg.s5.tentScreen(2)');check(ev(pg,'document.querySelectorAll(".s5need.ok").length')==2,'parts not shown as ready')
   tap(pg,'[data-build=junk]');r=L(pg,'return [X.haveN("tent"),L.gold,X.haveN("p_silk"),X.haveN("p_feather")]')
   check(r[0]==1 and r[2]==0,f'tent not built {r}');check(r[3]<3 and r[1]==100-max(0,10-22*(3-r[3])),f'fee not paid with junk {r}')
   L(pg,'L.gold=10');ev(pg,'SOTA.rpg.s5.tentScreen(2)');tap(pg,'[data-buytent]');check(L(pg,'return X.haveN("tent")')==1,'bought a tent with 10 gold')
