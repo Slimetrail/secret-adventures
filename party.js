@@ -297,7 +297,7 @@ function doAct(cmd,arg,targ){closeBranch();const c=live.party[turnI],before=F.m.
   (F.motionHits||[]).forEach(e=>{const t0=motionTime();fx.push({...e,k:"enemy",t0,dur:650});motionEnd=t0+650;});
   setTimeout(()=>{if(out.length&&F===fight&&!F.over)say(out.join(". "));},450);turnI=0;nextAlive();}drawMenu();}
 function endFight(){const aftermath=live.party.map(c=>({hp:c.hp,maxHp:R.maxHp(c,hpMul())}));const mn=$("fmenu"),how=F.over;closeBranch();const fe=$("fen");if(fe)fe.style.display="none";
- if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+(c.skills.length<R.skillSlots(c.lvl)?" - new skill ready!":""));}else c.hp=1;});
+ if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+(c.skills.length<R.skillSlots(c.lvl)?" - new skill ready!":""));}});
   const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return R.ITEMS[id].n+(who?"":" (no room, left behind)");});
   mn.appendChild(el("div","s4win","Victory!"));const bossWon=F.m.some(m=>m.boss);const b=tapBtn("Continue",()=>{F=null;closeUI();if(bossWon)h6("bossWon");else h6("fightContinue",aftermath);},"s4go small");b.id="fdone";mn.appendChild(b);
   mn.appendChild(el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: "+jn.join(", "):"")));if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
@@ -530,7 +530,7 @@ function leaveTavern(t,z){if(hubBlocked())return false;if(!zoneOpen(z)){
  savePicker("save",closeUI,()=>tavernScreen(t,false));return true;}
 function tavernScreen(t,arrival=true){s5init();campVisit=null;const w=page("tavern");w.classList.add("s5scene","s5hub");w.style.backgroundImage='url("'+tavernBg(t)+'")';w.appendChild(head("Tavern "+(t+1)));
  const nav=el("div","s5hubnav");tavernLabels(t).forEach((label,i)=>{const b=tapBtn(label,()=>{if(hubBlocked())return;if(i===1)buyScreen(t);else leaveTavern(t,i===0?t+1:t+2);},"small");b.dataset.hub=i;nav.appendChild(b);});w.appendChild(nav);
- if(arrival){h6("ownerVisit",t);h6("tavern",t);}}
+ if(arrival){live.party.forEach(c=>{c.hp=R.maxHp(c,hpMul());c.mp=R.maxMp(c);});h6("ownerVisit",t);h6("tavern",t);}}
 function leaveShop(t){savePicker("save",()=>tavernScreen(t,false),()=>buyScreen(t,false));}
 function shopPage(kind,t,title,back){const w=page(kind);w.classList.add("s5scene","s5shop");w.style.backgroundImage='url("art6/shop/owner-'+(t+1)+'.webp")';
  document.documentElement.classList.add("s5shop-open");w.appendChild(head(title,back));return w;}

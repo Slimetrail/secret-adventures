@@ -50,7 +50,7 @@ function bagWeight(c){const np=c.bag.filter(id=>ITEMS[id]&&ITEMS[id].slot==="par
 function canCarry(c,id){return bagWeight({bag:c.bag.concat([id])})<=carryLimit(c);}
 function gainXp(c,n,hpMul){const gained=[];if(c.lvl>=CAP)return gained;c.xp+=n;
  while(c.lvl<CAP&&c.xp>=xpNeed(c.lvl)){c.xp-=xpNeed(c.lvl);c.lvl++;gained.push(c.lvl);}
- if(c.lvl>=CAP)c.xp=0;c.hp=Math.min(maxHp(c,hpMul),c.hp+Math.round(maxHp(c,hpMul)*0.3));c.mp=maxMp(c);return gained;}
+ if(c.lvl>=CAP)c.xp=0;return gained;}
 function learn(c,id){if(c.skills.length>=skillSlots(c.lvl))return false;const s=SKILLS[c.cls].find(x=>x.id===id);if(!s||c.skills.includes(id))return false;c.skills.push(id);return true;}
 // items: slot, w weight (kg), a armor class 1-3, t weapon type, stats; junk has v value; potions use
 const ITEMS={
