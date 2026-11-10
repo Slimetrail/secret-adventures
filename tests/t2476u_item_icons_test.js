@@ -16,7 +16,7 @@ test("covers every kind: potions, food, gear, rings, tents, salts, crafting mate
 test("templates are 12x12 pixel grids; no network or image files",()=>{const w=load();for(const [k,v] of Object.entries(w.SOTA_ICONS.TEMPLATES)){const r=v.split("|");a.equal(r.length,12,k);for(const x of r)a.equal(x.length,12,k);}
  const src=read("item-icons.js");a.ok(!/fetch\(|XMLHttpRequest|new Image|\.png|\.webp|\.jpg|https?:/.test(src),"item-icons.js must not load anything");});
 test("item-icons.js loads before game.js and is in the offline cache once",()=>{const h=read("index.html"),sw=read("sw.js");
- a.ok(h.indexOf('<script src="item-icons.js?v=1"></script>')>=0&&h.indexOf('item-icons.js?v=1')<h.indexOf('game.js?v='));a.equal(sw.split('"item-icons.js?v=1"').length-1,1);});
+ a.ok(h.indexOf('<script src="item-icons.js?v=3"></script>')>=0&&h.indexOf('item-icons.js?v=3')<h.indexOf('game.js?v='));a.equal(sw.split('"item-icons.js?v=3"').length-1,1);});
 test("item names stay visible next to the icons (the icon adds no text)",()=>{const g=read("game.js"),p=read("party.js");
  a.ok(g.includes('<span class="slotn">'),"maze box name under the icon");a.ok(g.includes('b.setAttribute("title",name)'),"title kept");a.ok(g.includes('"Item box "+(i+1)'),"aria-label kept");
  for(const k of ['withIc(b,id)','itemIc(id,"big")','withIc(o,iid)','sp.dataset.loot=x.id;withIc(sp,x.id)','if(it.d.item||it.d.sell)withIc(b,it.d.item||it.d.sell)'])a.ok(p.includes(k),k);});
