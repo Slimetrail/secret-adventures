@@ -35,7 +35,7 @@ def after_fight(pg,tag):
   """close a finished fight by taps: level-up popup OK, then Done; returns what the fight added to the bags"""
   if T.ev(pg,'!!document.getElementById("s5lvl")'):
     t=T.ev(pg,'document.getElementById("s5lvl").textContent');T.check('HP and MP fully restored' in t,t)
-    h=T.ev(pg,'(()=>{const L=SOTA.rpg.live();return L.party.map(c=>[c.name,c.lvl,c.hp===RPG.maxHp(c,RPG.DIFF[L.diff].hp)||c.hp<=0])})()');say('level-up',tag,h);T.check(all(x[2] for x in h),f'level-up refill {h}')
+    h=T.ev(pg,'(()=>{const L=SOTA.rpg.live();return L.party.map(c=>[c.name,c.lvl,c.hp===RPG.maxHp(c,RPG.DIFF[L.diff].hp)||c.hp<=0])})()');say('level-up',tag,h);T.check(all(x[2] for x in h if x[0]+' reached level' in t),f'level-up refill {h}')  # only the members who levelled are refilled (rules unchanged since live 6de0e16; the old check only held when nobody else was hurt)
     if tag not in shot_lvl:shot(pg,f'07-level-up-{tag}.png');shot_lvl.add(tag)
     T.ttap(pg,'#s5lvlok')
   T.ttap(pg,'#fdone');pg.wait_for_timeout(300)
@@ -54,6 +54,12 @@ def walk_to(pg,cell,maxsteps=400):
       for _ in range(turns):T.ttap(pg,'[data-cmd=right]')
     T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(60)
   raise T.Fail(f'walk to {cell} took too long')
+def camp_save(pg):
+  """VER 83 t2450u/t2451u: the player saves from the camp Save tab (asks to use a tent unless one is already pitched here), then picks the active slot"""
+  T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=save]')
+  if T.ev(pg,'!!document.querySelector("[data-tentyes]")'):T.ttap(pg,'[data-tentyes]')
+  T.check(T.ui(pg)=='save-picker','camp Save did not open the slot picker');T.ttap(pg,'[data-save-slot="'+str(T.ev(pg,'SOTA.rpg.activeSlot()'))+'"]');pg.wait_for_timeout(200)
+  T.check(T.ui(pg)=='camp','camp save did not return to the camp')
 def step_into(pg,cell):
   """teleport to an open neighbour of cell, facing it, then tap Forward into it (so arrival runs like a player's step)"""
   T.ev(pg,'''c=>{SOTA.rpg.closeUI();const D=SOTA.core.DIRS;for(let d=0;d<4;d++){if(!SOTA.canMove(c[0],c[1],d))continue;const nx=c[0]+D[d][0],ny=c[1]+D[d][1];if(SOTA.roomAt(nx,ny)>=0||!SOTA.contentCap.isOpen(nx,ny))continue;SOTA.teleport(nx,ny,(d+2)%4);return;}}''',list(cell))
@@ -77,6 +83,7 @@ def e2e(p):
    const c=RPG.makeCompanion(RPG.COMPANIONS[0],20);L.party.push(c);h.hp=RPG.maxHp(h,RPG.DIFF[L.diff].hp);h.mp=RPG.maxMp(h);
    h.bag.push("tent","tent","i_meat","i_meat");L.gold=400;L.campTut="done";})()''');T.ev(pg,SPEND_JS)
   step_into(pg,T.ev(pg,'MAZE.camps[5]'))
+  camp_save(pg);T.ev(pg,'SOTA.rpg.closeUI()')  # VER 83 t2450u: no camp auto-save, the player saves from the camp Save tab
   sv=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot"+SOTA.rpg.activeSlot()))');T.check(sv['at']['name']=='Camp 6' and sv['party'][0]['lvl']==20 and len(sv['party'])==2,'zone 2 camp save missing')
   T.check(bagn(pg,'tent')==1,'camp save did not use 1 tent');shot(pg,'01-zone2-camp6-saved.png')
   # ---- 2. reload the game and continue that save from the title (long press)
@@ -96,9 +103,9 @@ def e2e(p):
   walk_to(pg,[19,24]);walk_to(pg,[19,23]);s=st(pg);T.check(s['zone']==3,f'not in zone 3 {s}')
   T.check('Please wait' not in T.ev(pg,'document.getElementById("s4toast").textContent'),'wait toast in zone 3');T.check(T.ev(pg,'document.getElementById("hud").textContent').startswith('Zone 3'),'HUD not zone 3')
   shot(pg,'04-zone3-first-hall.png')
-  # ---- 5. a zone 3 camp (Camp 7) by a tap: the arrival saves there and uses a tent
+  # ---- 5. a zone 3 camp (Camp 7) by a tap; the player saves there (VER 83: no auto-save) and it uses a tent
   k=6;cell=T.ev(pg,f'MAZE.camps[{k}]');T.check(T.ev(pg,'c=>SOTA.core.zoneOf[c[1]*SOTA.N+c[0]]',cell)==3,'camp 7 not zone 3')
-  t0=bagn(pg,'tent');walk_to(pg,cell);T.check(bagn(pg,'tent')==t0-1,'zone 3 camp save did not use a tent')
+  t0=bagn(pg,'tent');walk_to(pg,cell);T.check(bagn(pg,'tent')==t0,'camp arrival used a tent');camp_save(pg);T.ev(pg,'SOTA.rpg.closeUI()');T.check(bagn(pg,'tent')==t0-1,'zone 3 camp save did not use a tent')
   T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot"+SOTA.rpg.activeSlot())).at.name')=='Camp 7','camp 7 not saved');say('walked by taps from (19,23) to Camp 7',cell,'- saved, tents left',bagn(pg,'tent'))
   T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=rest]');T.ttap(pg,'#s4 [data-tab=return]')
   # ---- 6. zone 3 fights by taps from Camp 7, tapping Rest between fights, until wolf pelt and fowl dropped (a loss goes back to the Camp 7 save)
@@ -111,14 +118,14 @@ def e2e(p):
     b0=bag(pg);r=fight_by_taps(pg)
     if r!='win':
       loss+=1;after_fight(pg,'lost');s=st(pg);say('fight',i,foes,r,'-> back at',s);T.check([s['x'],s['y']]==cell,f'loss did not restore the Camp 7 save {s}')
-      T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=rest]');T.ttap(pg,'#s4 [data-tab=return]');continue  # the camp save keeps the hurt party (saving never heals), so Rest
+      T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=rest]');T.ttap(pg,'#s4 [data-tab=return]');continue  # VER 83: Rest refills HP/MP (no save)
     wins+=1;new=[x for x in set(bag(pg)) if bag(pg).count(x)>b0.count(x)];note=T.ev(pg,'[...document.querySelectorAll("#s4 .s4note")].map(e=>e.textContent).join(" | ")')
     hp=T.ev(pg,'Math.round(100*SOTA.rpg.live().party.reduce((t,c)=>t+c.hp/RPG.maxHp(c,1),0)/SOTA.rpg.live().party.length)');say('fight',i,foes,f'win (HP left {hp}%); drops',new,'|',note[:100])
     for x in new:got[x]=got.get(x,0)+1
     if new and 'first' not in got:got['first']=1;shot(pg,'06-zone3-win-with-drop.png')
     after_fight(pg,'z3')
     if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()')
-    T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=rest]');T.ttap(pg,'#s4 [data-tab=return]')
+    camp_save(pg);T.ttap(pg,'#s4 [data-tab=return]')  # VER 83 t2450u: Rest only refills, so the player taps Save (tent already pitched here: free) to keep the drops
   got.pop('first',None);say(f'zone 3 fights: {wins} won, {loss} lost; drops kept {got}; foes seen {sorted(sprites)}')
   T.check(wins>=3,'too few zone 3 wins');T.check(bagn(pg,'p_pelt') and bagn(pg,'i_fowl'),'no wolf pelt + fowl after 40 zone 3 fights')
   # ---- 7. Craft at Camp 7 -> meat + fowl + pelt -> Hunter's stew (medium, 3 boxes)
@@ -145,16 +152,17 @@ def e2e(p):
   T.check(T.ev(pg,'document.getElementById("s4toast").textContent')=='Please wait for update to continue.','no wait toast at the zone 4 edge');shot(pg,'15-zone4-edge-wait-toast.png')
   # ---- 9. Moon elixir at Camp 14 next to Tavern 3, if a ghoul fang dropped
   if bagn(pg,'p_fang'):
-    t0=bagn(pg,'tent');T.ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")') if t0==0 else None  # bought-tent stand-in so the camp step saves
+    t0=bagn(pg,'tent');T.ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")') if t0==0 else None  # bought-tent stand-in so the camp Save can use one
     step_into(pg,T.ev(pg,'MAZE.camps[13]'));T.ttap(pg,'#s5here');T.ttap(pg,'[data-craftopen]');T.ttap(pg,'#s5craftpop [data-cbox="0"]')
     for m in ['i_herbs','i_moonleaf','p_fang']:T.ttap(pg,f'#s5craftpop [data-cpick={m}]')
     T.ttap(pg,'#s5craftpop #s5craft');T.check(bagn(pg,'c_elixir')==1 and T.ev(pg,'document.getElementById("s5craftpic").dataset.result')=='elixir','Moon elixir not crafted');shot(pg,'16-craft-moon-elixir.png')
     T.ttap(pg,'#s5craftpop [data-craftclose]');T.ttap(pg,'#s4 [data-tab=return]');say('crafted Moon elixir at Camp 14')
-    T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Camp 14','camp arrival did not auto-save to the active slot')
+    T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 3','camp arrival auto-saved (VER 83 t2450u: camps save only from the Save tab)')
+    camp_save(pg);T.ttap(pg,'#s4 [data-tab=return]');T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Camp 14','camp Save tab did not save to the active slot')
   else:say('no ghoul fang dropped this run; Moon elixir craft covered by the node test')
-  # ---- 10. journal: Hunter's stew known; Beasts tab (zone 3 has no sketches = not listed)
+  # ---- 10. journal: Hunter's stew known; Beasts tab (zone 3 sketches since t2404u: found ones listed with art)
   T.ev(pg,'SOTA.rpg.closeUI();SOTA.intro.openJournal("recipes")');T.check(T.ev(pg,'!!document.querySelector("#ijour [data-craft=stew]")'),'stew not in journal');shot(pg,'17-journal-recipes-crafts.png')
-  T.ev(pg,'SOTA.intro.openJournal("beasts")');bs=T.ev(pg,'[...document.querySelectorAll("#ijour [data-beast]")].map(f=>f.dataset.beast)');say('journal Beasts tab lists',bs);T.check(not any(x.startswith('z3-') for x in bs),'z3 beasts listed without art');shot(pg,'18-journal-beasts-no-z3-sketches.png')
+  T.ev(pg,'SOTA.intro.openJournal("beasts")');bs=T.ev(pg,'[...document.querySelectorAll("#ijour [data-beast]")].map(f=>f.dataset.beast)');say('journal Beasts tab lists',bs);pg.wait_for_function('()=>[...document.querySelectorAll("#ijour [data-beast] img")].every(i=>i.complete&&i.naturalWidth>0)',timeout=8000);T.check(all(w>0 for _,w in T.ev(pg,'[...document.querySelectorAll("#ijour [data-beast]")].map(f=>[f.dataset.beast,(f.querySelector("img")||{}).naturalWidth||0])')),'z3 beasts listed without art')  # t2404u (in live 6de0e16) added zone 3 sketches; found ones are listed with their art;shot(pg,'18-journal-beasts-z3-sketches.png')
   # ---- 11. step back into Tavern 3 (arrival auto-saves to the active slot), wander off unsaved, then load that save from the journal
   T.ev(pg,'SOTA.intro.closeJournal()');step_into(pg,T.ev(pg,'MAZE.taverns[2]'));T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 3','Tavern 3 arrival did not save')
   want={k:bagn(pg,k) for k in ['c_stew','c_elixir','i_moonleaf','p_fang']};say('bag at the Tavern 3 save',want)

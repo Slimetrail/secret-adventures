@@ -49,7 +49,7 @@ function render(host,id,index,text){const l=frame(id,index,text);if(!l){clear(ho
  const sides=presentSides(host,l),key=id+":"+index+":"+sides.map(x=>x.join("=")).join(",");if(stage.dataset.frame===key)return true;
  stage.dataset.frame=key;stage.style.backgroundImage='url("art-dialogue/'+l.backdrop+'")';stage.replaceChildren();
  sides.forEach(([side,name])=>{const crop=l.crops[name],w=crop[2]-crop[0],h=crop[3]-crop[1];
-  const person=document.createElement("div");person.className="da-person "+side;person.dataset.character=name;person.style.setProperty("--ratio",w+" / "+h);
+  const person=document.createElement("div");person.className="da-person "+side;person.dataset.character=name;person.style.setProperty("--ratio",w+" / "+h);person.style.setProperty("--rw",(w/h).toFixed(4));
   const img=document.createElement("img");img.alt="";img.src="art-dialogue/"+l.portraits[name];img.style.cssText="width:"+(1024/w*100)+"%;height:"+(1536/h*100)+"%;left:"+(-crop[0]/w*100)+"%;top:"+(-crop[1]/h*100)+"%";person.appendChild(img);stage.appendChild(person);
  });
  // Decode the next line's pair ahead of the next advance; all stay local/offline.

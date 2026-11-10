@@ -72,12 +72,19 @@ function resetRun(){setMazeSlots([null,null,null,null]);if(window.SOTA&&SOTA.rpg
  save();saveRooms();updHud();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
 function stepped(){const i=st.y*N+st.x;visit(i);trail.push(i);if(trail.length>TRAIL_CAP+1)trail.splice(0,trail.length-TRAIL_CAP-1);if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
 // Item boxes are shortcuts to real party bag copies, never a second inventory.
+// t2437u: Healing potion and Mana potion (ether) show as an original 8-bit bottle (red / blue) instead of their name; the name stays in aria-label and title.
+const BOTTLE=["....KKKK....","....KCCK....","....KCCK....","...KKKKKK...","....KGGK....","...KGGGGK...","..KLLLLLLK..",".KLWLLLLLDK.",".KLWLLLLLDK.",".KLLLLLLLDK.",".KLLLLLLLDK.",".KDLLLLLDDK.","..KDDDDDDK..","...KKKKKK..."];
+const BOTTLE_COL={potion:{L:"#d8343a",D:"#8e1b22",W:"#ffd2c8"},ether:{L:"#3a6ee0",D:"#1d3b8e",W:"#d6e4ff"}};
+function bottleSvg(id){const p=Object.assign({K:"#2b1a0e",C:"#9a6a3a",G:"#d9eef0"},BOTTLE_COL[id]);let r="";BOTTLE.forEach((row,y)=>[...row].forEach((ch,x)=>{if(p[ch])r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+p[ch]+'"/>';}));
+ return '<svg class="pbottle" data-bottle="'+id+'" viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">'+r+'</svg>';}
 const ITEM_KEY="sota.items";let items=[null,null,null,null];
 function setMazeSlots(bindings){const next=Array.from({length:4},(_,i)=>typeof bindings[i]==="string"?bindings[i]:null);
  const changed=next.some((id,i)=>id!==items[i]);items=next;
  try{if(changed||localStorage.getItem(ITEM_KEY)!==JSON.stringify(items))localStorage.setItem(ITEM_KEY,JSON.stringify(items));}catch(e){}
  document.querySelectorAll("#slots .slot").forEach((b,i)=>{const id=items[i],it=id&&window.RPG&&window.RPG.ITEMS[id],name=it?it.n:"";
-  if(b.textContent!==name)b.textContent=name;const label="Item box "+(i+1)+" ("+(name||"empty")+")";if(b.getAttribute("aria-label")!==label)b.setAttribute("aria-label",label);});return items.slice();}
+  /* t2476u: every item shows its own 8-bit icon with its name under it (potions keep the t2437u bottles) */
+  const icon=id&&(BOTTLE_COL[id]||(window.SOTA_ICONS&&SOTA_ICONS.has(id)))?id:"";if(icon){if(b.getAttribute("data-icon")!==icon){b.innerHTML=(BOTTLE_COL[icon]?bottleSvg(icon):SOTA_ICONS.svg(icon))+'<span class="slotn">'+name.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c])+'</span>';b.setAttribute("data-icon",icon);}}else if(b.getAttribute("data-icon")){b.setAttribute("data-icon","");b.textContent=name;}else if(b.textContent!==name)b.textContent=name;
+  if((b.getAttribute("title")||"")!==name)b.setAttribute("title",name);const label="Item box "+(i+1)+" ("+(name||"empty")+")";if(b.getAttribute("aria-label")!==label)b.setAttribute("aria-label",label);});return items.slice();}
 setMazeSlots(items);
 const vis={x:st.x,y:st.y,a:st.f*Math.PI/2},anim={on:false,t0:0,dur:1,fx:0,fy:0,fa:0,tx:0,ty:0,ta:0};
 let animOn=true;

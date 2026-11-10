@@ -73,7 +73,7 @@ test("heal, mana and food let the player choose any party member",()=>{
 });
 test("external bag mutations remove ghosts and excess later bindings, and update labels/storage",()=>{
  const {api,hero,buttons,storage}=fixture(["potion","potion"]);api.assignMazeSlot(0,"potion");api.assignMazeSlot(3,"potion");hero.bag.pop();api.syncMazeSlots();a.deepEqual(plain(api.shown()),["potion",null,null,null]);
- a.equal(buttons[0].textContent,"Healing potion");a.equal(buttons[0].attrs["aria-label"],"Item box 1 (Healing potion)");hero.bag.length=0;api.syncMazeSlots();a.equal(buttons[0].textContent,"");a.equal(buttons[0].attrs["aria-label"],"Item box 1 (empty)");a.deepEqual(JSON.parse(storage.get("sota.items")),[null,null,null,null]);
+ a.equal(buttons[0].attrs["data-icon"],"potion");a.match(buttons[0].innerHTML,/data-bottle="potion"/);a.equal(buttons[0].attrs.title,"Healing potion");/* t2437u: red 8-bit bottle instead of the name */a.equal(buttons[0].attrs["aria-label"],"Item box 1 (Healing potion)");hero.bag.length=0;api.syncMazeSlots();a.equal(buttons[0].textContent,"");a.equal(buttons[0].attrs["aria-label"],"Item box 1 (empty)");a.deepEqual(JSON.parse(storage.get("sota.items")),[null,null,null,null]);
  a.match(game,/function frame\(t\)\{\s*if\(window.SOTA&&SOTA.rpg&&SOTA.rpg.syncMazeSlots\)SOTA.rpg.syncMazeSlots\(\)/);
  a.match(game,/items:\(\)=>\{if\(window.SOTA.rpg&&SOTA.rpg.syncMazeSlots\)SOTA.rpg.syncMazeSlots\(\)/);
 });

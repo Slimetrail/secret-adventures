@@ -22,34 +22,40 @@ function saveSlots(){const slots=Array.from({length:4},(_,i)=>readSave(SLOT+i));
  if(!slots.some(Boolean)){const old=readSave(SAVE);if(old){slots[0]=old;try{localStorage.setItem(SLOT+0,JSON.stringify(old));}catch(e){}}}return slots;}
 {const slots=saveSlots();let i=0;try{i=Number(localStorage.getItem(ACTIVE)||0);}catch(e){}
  activeSlot=Number.isInteger(i)&&i>=0&&i<4&&slots[i]?i:Math.max(0,slots.findIndex(Boolean));
- if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */migrateSaltsBoxes(live);}}
+ if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */wakeLoaded();migrateSaltsBoxes(live);}}
 function hpMul(){return R.DIFF[live.diff].hp;}
 function roomsNow(){const s=[],c=[];for(let i=0;i<C.solvedR.length;i++){if(C.solvedR[i])s.push(i);if(C.clearedR[i])c.push(i);}return {s,c};}
 function placeName(x,y){const t=M.taverns.findIndex(c=>c[0]===x&&c[1]===y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
 // make a save. Only allowed at a camp or tavern (or once, at the very start when the hero is made).
-function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>3)return false;const p=S.state();if(!start&&!R.isSavePoint(M,p.x,p.y))return false;
- if(!start&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!same&&!hasTent())return false;/* t2356u: re-saving where the tent is already pitched uses no tent */if(!same){live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
+let tentUndo=null;
+function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>3)return false;tentUndo=null;const p=S.state();if(!start&&!R.isSavePoint(M,p.x,p.y))return false;
+ if(!start&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!same&&!hasTent())return false;/* t2356u: re-saving where the tent is already pitched uses no tent */if(!same){tentUndo={wear:live.tentWear,bags:live.party.map(c=>c.bag.slice())};live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
  // Camp scene gates observe arrival injuries; seen flags enter this save. Saving never rests.
  if(!start&&tavIdx(p.x,p.y)<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));
- syncMazeSlots();live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];const next=clone(live);
- try{localStorage.setItem(SLOT+slot,JSON.stringify(next));localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(next));}catch(e){toast("Could not save. Storage may be full.");return false;}
- activeSlot=slot;save=next;return true;}
+ syncMazeSlots();live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];live.hpv=1;/* t2442u: save made with exact-HP loading */const next=clone(live);
+ try{localStorage.setItem(SLOT+slot,JSON.stringify(next));localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(next));}catch(e){/* t2451u all-or-nothing: a failed write uses no tent */if(tentUndo){live.tentWear=tentUndo.wear;live.party.forEach((c,j)=>{if(tentUndo.bags[j])c.bag=tentUndo.bags[j];});}tentUndo=null;toast("Could not save. Storage may be full.");return false;}
+ tentUndo=null;activeSlot=slot;save=next;return true;}
 function loadSlot(slot){const o=saveSlots()[slot];if(!o)return false;
  try{localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast("Could not load save.");return false;}
  activeSlot=slot;save=clone(o);closeUI();restore();return true;}
-function savePicker(mode,done,cancel){const w=page("save-picker");w.appendChild(head(mode==="load"?"Load a save":"Choose a save slot",cancel||closeUI));
+function savePicker(mode,done,cancel,before){const w=page("save-picker");w.appendChild(head(mode==="load"?"Load a save":"Choose a save slot",cancel||closeUI));
  const slots=saveSlots();slots.forEach((o,i)=>{const b=tapBtn("Slot "+(i+1)+" · "+(o?(o.party[0].name+" · "+(o.at.name||placeName(o.at.x,o.at.y))):"Empty"),()=>{
-  if(mode==="load"){if(loadSlot(i)&&done)done();}else if(doSave(false,i)&&done)done();},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
+  if(mode==="load"){if(loadSlot(i)&&done)done();}else{/* t2451u: camp Save refills only when a slot is really written */const undo=before?before():null;if(doSave(false,i)){if(done)done();}else if(undo)undo();}},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
 
 // death: everything goes back to the last save
-function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
+function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */wakeLoaded();if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
  if(S.applyMaze)S.applyMaze(save.maze||{x:save.at.x,y:save.at.y,f:save.at.f});else S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
 // t2404u: while the craft pop-up is open, the toast ("You made ...!") goes where it covers neither the "Tap a box" hints
 // (the pop-up's own hint and the camp lesson box) nor the pop-up's buttons: above the pop-up, else just under it, else at the bottom.
 function toastSpot(d){d.style.top="";d.style.bottom="";const pop=$("s5craftpop");if(!pop||!d.getBoundingClientRect||!pop.getBoundingClientRect)return;
  const avoid=[Array.from(pop.querySelectorAll(".s4note")).find(e=>/^Tap a box/.test(e.textContent)),$("s5tut")].concat(Array.from(pop.querySelectorAll("button"))).filter(Boolean).map(e=>e.getBoundingClientRect()),h=d.getBoundingClientRect().height,H=window.innerHeight;
  for(const y of [6,pop.getBoundingClientRect().bottom+6,H-h-12])if(y>=0&&y+h<=H&&!avoid.some(r=>r.top<y+h&&y<r.bottom)){d.style.top=y+"px";d.style.bottom="auto";return;}}
-function toast(t){const d=$("s4toast");d.textContent=displayText(t);toastSpot(d);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),2200);}
+function toast(t){const d=$("s4toast");d.textContent=displayText(t);toastSpot(d);d.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>d.classList.remove("on"),toast.ms||2200);toast.ms=0;}
+// t2437u QA: a reminder (unspent stat points) stays up 6 s and never hides under a story dialogue: if one is open (or opens right after),
+// it waits until no dialogue is open for two checks in a row (chained scenes count), then shows.
+const REMIND_MS=6000;function remind(t){clearTimeout(remind.h);if(!t)return;const open=()=>!!(S.storyOpen&&S.storyOpen()),show=()=>{toast.ms=REMIND_MS;toast(t);};
+ const wait=()=>{let clear=0;const look=()=>{if(open())clear=0;else if(++clear>=2){show();return;}remind.h=setTimeout(look,150);};remind.h=setTimeout(look,150);};
+ if(open())wait();else{show();remind.h=setTimeout(()=>{if(open())wait();},120);}}
 // ---------- screens ----------
 const ov=$("s4");function openUI(kind){ui=kind;document.documentElement.classList.add("s4open");ov.className="open "+kind;ov.dataset.kind=kind;document.documentElement.classList.remove("s5shop-open");closeBranch();}
 function closeUI(){campVisit=null;ui=null;document.documentElement.classList.remove("s5shop-open");document.documentElement.classList.remove("s4open");ov.className="";ov.dataset.kind="";ov.dataset.result="";ov.innerHTML="";closeBranch();updBtn();}
@@ -80,7 +86,7 @@ function assignMazeSlot(i,id){if(!live||!Number.isInteger(i)||i<0||i>3||!mazeSlo
  live.mazeSlots[i]=id;syncMazeSlots();return true;}
 function mazeSlotPicker(i){const choices=mazeSlotChoices(i);if(!choices.length){toast("No potions or food to put here.");return;}
  const w=page("maze-slot");w.appendChild(head("Item box "+(i+1),closeUI));
- choices.forEach(({id,n})=>{const b=tapBtn(R.ITEMS[id].n+(n>1?" ×"+n:""),()=>{if(!assignMazeSlot(i,id)){toast("That item is no longer available.");mazeSlotPicker(i);return;}closeUI();},"wide");b.dataset.mazeItem=id;w.appendChild(b);});}
+ choices.forEach(({id,n})=>{const b=tapBtn(R.ITEMS[id].n+(n>1?" ×"+n:""),()=>{if(!assignMazeSlot(i,id)){toast("That item is no longer available.");mazeSlotPicker(i);return;}closeUI();},"wide");b.dataset.mazeItem=id;if(typeof withIc==="function")withIc(b,id);/* guarded: t2295u harness runs this function alone */w.appendChild(b);});}
 function useMazeSlot(i,ci,expected){const bindings=syncMazeSlots(),id=bindings[i];if(!id||expected&&id!==expected)return false;
  const c=live.party[ci],it=R.ITEMS[id];if(!c||it.revive)return false;
  // Consume the real bag copy first. Clear this binding before reconciling other boxes.
@@ -102,10 +108,12 @@ function tapMazeSlot(i,back=false){if(!live||!Number.isInteger(i)||i<0||i>3)retu
  w.appendChild(tapBtn("Replace",()=>mazeSlotPicker(i),"wide"));}
 // ---- portraits: small busts cut from the fight figure (same art, cached) ----
 const PCACHE=new Map();
-function portrait(c){const k=c.race+"|"+c.cls;if(PCACHE.has(k))return PCACHE.get(k);const cv=document.createElement("canvas");cv.width=cv.height=96;const g=cv.getContext("2d");
+// t2437u QA: a portrait drawn before its sprite has loaded was cached as a plain dark square for good. Only cache a drawn portrait;
+// until then hand back the dark card and redraw the <img> when the sprite arrives.
+function portrait(c,onReady){const k=c.race+"|"+c.cls;if(PCACHE.has(k))return PCACHE.get(k);const sk=heroKey(c),ready=!!spr(sk);const cv=document.createElement("canvas");cv.width=cv.height=96;const g=cv.getContext("2d");
  const bgc={warrior:"#3a1620",rogue:"#1a1f2c",archer:"#14281c",mage:"#1e1840"}[c.cls],rg=g.createRadialGradient(40,30,4,48,48,70);rg.addColorStop(0,bgc);rg.addColorStop(1,"#07040e");g.fillStyle=rg;g.fillRect(0,0,96,96);
- drawHero(g,Object.assign({},c,{hp:1}),56,150,150,0,false);const u=cv.toDataURL();PCACHE.set(k,u);return u;}
-function pimg(c,cls){const i=el("img",cls||"s4por");i.src=portrait(c);i.alt="";return i;}
+ drawHero(g,Object.assign({},c,{hp:1}),56,150,150,0,false);const u=cv.toDataURL();if(ready)PCACHE.set(k,u);else if(onReady&&SPR[sk]&&SPR[sk].addEventListener)SPR[sk].addEventListener("load",()=>onReady(portrait(c)),{once:true});return u;}
+function pimg(c,cls){const i=el("img",cls||"s4por");i.src=portrait(c,u=>{i.src=u;});i.alt="";return i;}
 function bar(v,mx,cls){const b=el("span","s4bar "+(cls||""));const f=el("span","s4barf");f.style.width=Math.max(0,Math.min(100,v/mx*100))+"%";b.appendChild(f);return b;}
 // ---- compact branching menu: tap a name, small labels branch out (flip near edges) ----
 let br=null,brBox=null;
@@ -115,7 +123,7 @@ function branch(anchor,items,level,owner,fight){level=level||0;if(level===0){clo
   br.insertAdjacentHTML("beforeend",'<svg class="s4brl"></svg>');document.body.appendChild(br);if(brBox){const P=brBox.r,bk=el("div","s4brbk");bk.style.cssText="left:"+P.left+"px;top:"+P.top+"px;width:"+P.width+"px;height:"+P.height+"px";bk.addEventListener("click",()=>closeBranch());br.insertBefore(bk,br.firstChild);}}
  [...br.querySelectorAll(".s4bcol")].filter(c=>+c.dataset.lv>=level).forEach(c=>c.remove());[...br.querySelectorAll("path")].filter(p=>+p.dataset.lv>=level).forEach(p=>p.remove());
  const col=el("div","s4bcol");col.dataset.lv=level;br.appendChild(col);
- items.forEach(it=>{const b=el("button","s4bi"+(it.off?" off":""),it.t);if(it.d)for(const k in it.d)b.dataset[k]=it.d[k];if(it.kids)b.classList.add("more");
+ items.forEach(it=>{const b=el("button","s4bi"+(it.off?" off":""),it.t);if(it.d){for(const k in it.d)b.dataset[k]=it.d[k];if(it.d.item||it.d.sell)withIc(b,it.d.item||it.d.sell);/* t2476u */}if(it.kids)b.classList.add("more");
   b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(it.off)return;[...col.children].forEach(x=>x.classList.remove("open"));
    if(it.kids){b.classList.add("open");const k=typeof it.kids==="function"?it.kids():it.kids;branch(b,k.length?k:[{t:"(none)",off:true}],level+1);}else{closeBranch();it.fn();}});col.appendChild(b);});
  // place: to the right of the anchor, or flip left near the edge; centre on the anchor, keep inside the screen (flip up near the bottom)
@@ -154,11 +162,12 @@ function slideTree(items,level){if(level===0){closeBranch();br=el("div","s4br sl
  const done=()=>col.classList.remove("sliding");col.addEventListener("animationend",done);setTimeout(done,450);
  if(level>0){const bk=el("button","s4bi back","‹ Back");bk.dataset.back=level;bk.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();
    [...sl.querySelectorAll(".s4bcol")].forEach(c=>{const lv=+c.dataset.lv;if(lv>=level)c.remove();else if(lv===level-1){c.style.display="";c.querySelectorAll(".open").forEach(x=>x.classList.remove("open"));}else if(lv>=level-2)c.style.display="";});});col.appendChild(bk);}
- items.forEach(it=>{const b=el("button","s4bi"+(it.off?" off":""),it.t);if(it.d)for(const k in it.d)b.dataset[k]=it.d[k];if(it.kids)b.classList.add("more");
+ items.forEach(it=>{const b=el("button","s4bi"+(it.off?" off":""),it.t);if(it.d){for(const k in it.d)b.dataset[k]=it.d[k];if(it.d.item||it.d.sell)withIc(b,it.d.item||it.d.sell);/* t2476u */}if(it.kids)b.classList.add("more");
   b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(it.off)return;[...col.children].forEach(x=>x.classList.remove("open"));
    if(it.kids){b.classList.add("open");const k=typeof it.kids==="function"?it.kids():it.kids;slideTree(k.length?k:[{t:"(none)",off:true}],level+1);}else{closeBranch();it.fn();}});col.appendChild(b);});
  // too wide for the screen: hide the oldest columns (Back brings them back)
  const cols=[...sl.querySelectorAll(".s4bcol")],need=()=>cols.filter(c=>c.style.display!=="none").reduce((s,c)=>s+c.offsetWidth+8,-8);for(const c of cols){if(need()<=sl.clientWidth||c===col)break;c.style.display="none";}
+ if(level>0&&cols.every(c=>c===col||c.style.display==="none"))col.style.marginTop="0px";/* VER 83: wider HP/MP name tabs can hide the opener on a 360px phone; then sit beside the name */
  return col;}
 // ---- character creation ----
 const cc={name:"Hero",race:"human",cls:"warrior",add:{str:0,sta:0,con:0,man:0},skill:null,diff:"normal",warned:false,err:""};
@@ -167,7 +176,7 @@ function ccChange(f){return ()=>{f();cc.warned=false;cc.err="";creation();};}
 function creation(){const w=page("create");w.classList.add("cc");w.appendChild(head("Make your hero"));
  w.appendChild(el("div","s4note","Pick a name, race and class, spend 10 points, choose a skill, then Confirm."));
  w.appendChild(el("div","s4lab","1. Name"));const nm=el("input","s4name");nm.id="ccname";nm.maxLength=14;nm.placeholder="Type your hero's name";nm.value=cc.name;nm.autocomplete="off";nm.setAttribute("enterkeyhint","done");
- nm.addEventListener("input",()=>{cc.name=nm.value;if(cc.err&&nm.value.trim()){cc.err="";const e=$("ccerr");if(e)e.textContent="";}});nm.addEventListener("keydown",e=>{if(e.key==="Enter")nm.blur();});w.appendChild(nm);
+ /* t2437u QA: "Hero" is only the default: tapping the box clears it so typing does not add to it; left empty it goes back to "Hero" */nm.addEventListener("focus",()=>{if(nm.value==="Hero"){nm.value="";cc.name="";}});nm.addEventListener("blur",()=>{if(!nm.value.trim()){nm.value="Hero";cc.name="Hero";}});nm.addEventListener("input",()=>{cc.name=nm.value;if(cc.err&&nm.value.trim()){cc.err="";const e=$("ccerr");if(e)e.textContent="";}});nm.addEventListener("keydown",e=>{if(e.key==="Enter")nm.blur();});w.appendChild(nm);
  w.appendChild(el("div","s4lab","2. Race"));const rr=el("div","s4row");for(const k in R.RACES){const b=tapBtn(R.RACES[k].name,ccChange(()=>{cc.race=k;if(!R.allowed(k,cc.cls))cc.cls=R.RACES[k].classes[0];cc.add={str:0,sta:0,con:0,man:0};cc.skill=null;}),cc.race===k?"sel":"");b.dataset.race=k;rr.appendChild(b);}w.appendChild(rr);
  w.appendChild(el("div","s4note",{human:"Any class, any armor. Average.",elf:"Mage, archer, rogue, warrior. Armor up to medium. Strong mana.",dwarf:"Warrior, rogue, archer. No magic. Very strong, carries a lot.",cat:"Mage, rogue, warrior. Light armor only. Strong stamina, weak strength, carries little."}[cc.race]));
  w.appendChild(el("div","s4lab","3. Class"));const cr=el("div","s4row");for(const k in R.CLASSES){const ok=R.allowed(cc.race,k),b=tapBtn(R.CLASSES[k].name,ccChange(()=>{if(!ok)return;cc.cls=k;cc.skill=null;}),(cc.cls===k?"sel":"")+(ok?"":" off"));b.dataset.cls=k;b.disabled=!ok;cr.appendChild(b);}w.appendChild(cr);
@@ -184,7 +193,7 @@ function creation(){const w=page("create");w.classList.add("cc");w.appendChild(h
  w.appendChild(el("div","s4note",{story:"Story: heroes have double health, monsters hit half as hard.",normal:"Normal: the game as planned.",hard:"Hard: monsters hit 50% harder."}[cc.diff]));
  const foot=el("div","s4foot");const er=el("div","s4err",cc.err);er.id="ccerr";er.setAttribute("role","alert");foot.appendChild(er);
  const go=tapBtn(cc.warned?"Confirm anyway":"Confirm hero",ccConfirm,"s4go");go.id="ccgo";foot.appendChild(go);w.appendChild(foot);}
-function ccConfirm(){const nmEl=$("ccname");if(nmEl)cc.name=nmEl.value;const left=R.START_POINTS-ccSpent();
+function ccConfirm(){const nmEl=$("ccname");if(nmEl)cc.name=nmEl.value;if(!cc.name.trim())cc.name="Hero";/* t2437u QA: empty = default name */const left=R.START_POINTS-ccSpent();
  if(!cc.name.trim()){cc.err="Type a name for your hero first.";creation();const n=$("ccname");if(n)n.scrollIntoView({block:"center"});return;}
  if(!cc.skill){cc.err="Pick a starting skill (step 5).";creation();return;}
  if(left>0&&!cc.warned){cc.warned=true;cc.err="You still have "+left+" stat point"+(left>1?"s":"")+" left. Spend them, or tap Confirm anyway.";creation();return;}
@@ -215,6 +224,9 @@ const ICON={weapon:"M8 32 L28 12 M24 8 L32 8 L32 16 M11 25 L15 29",offhand:"M20 
  gloves:"M12 33 L12 16 Q12 12 15 12 L15 20 L15 8 Q18 6 19 8 L19 19 L20 7 Q23 5 24 8 L24 19 L26 10 Q29 9 29 12 L28 33 Z",boots:"M14 6 L24 6 L24 24 L33 28 L33 34 L12 34 Z",acc1:"M20 30 A8 8 0 1 0 20.01 30 M16 12 L20 7 L24 12",acc2:"M20 30 A8 8 0 1 0 20.01 30 M16 12 L20 7 L24 12",
  use:"M16 6 L24 6 L24 12 Q32 16 32 24 Q32 34 20 34 Q8 34 8 24 Q8 16 16 12 Z",junk:"M8 14 L20 8 L32 14 L32 28 L20 34 L8 28 Z M8 14 L20 20 L32 14 M20 20 L20 34",acc:"M20 30 A8 8 0 1 0 20.01 30 M16 12 L20 7 L24 12"};
 function icon(s){const v=el("span","s4icw");v.innerHTML='<svg class="s4ic" viewBox="0 0 40 40"><path d="'+(ICON[s]||ICON.junk)+'"/></svg>';return v;}
+// t2476u: each item's own 8-bit icon (item-icons.js, inline SVG, no network). The name stays as text next to/under it.
+function itemIc(id,cls){if(!id||!window.SOTA_ICONS||!SOTA_ICONS.has||!SOTA_ICONS.has(id))return null;const v=el("span","iic"+(cls?" "+cls:""));v.innerHTML=SOTA_ICONS.svg(id);v.dataset.iconId=id;return v;}
+function withIc(b,id){const v=itemIc(id);if(v&&b&&typeof b.insertBefore==="function")b.insertBefore(v,b.firstChild||null);return b;}
 function statLine(c){return {atk:Math.round(R.power(c)),mag:Math.round(R.magicPower(c)),def:Math.round(R.defense(c)),hp:R.maxHp(c,hpMul())};}
 function diffText(a,b){const out=[];for(const[k,n]of[["atk","ATK"],["mag","MAG"],["def","DEF"],["hp","HP"]]){const d=b[k]-a[k];if(d)out.push((d>0?"+":"")+d+" "+n);}return out;}
 function fits(id,s){const t=R.ITEMS[id];return t&&(t.slot===s||(s.startsWith("acc")&&t.slot==="acc"));}
@@ -230,7 +242,7 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
  const colA=el("div","s4colA"),colB=el("div","s4colB");
  // figure with slot squares down both sides
  const doll=el("div","s4doll");const L=el("div","s4slc"),Rr=el("div","s4slc");
- const mk=s=>{const it=c.equip[s]&&R.ITEMS[c.equip[s]],ok=selItem&&fits(selItem,s),b=el("button","s4sq"+(it?" full":"")+(sel&&sel.slot===s?" sel":"")+(ok?(R.canEquip(c,selItem,s)?" ok":" no"):""));b.dataset.slot=s;b.appendChild(icon(s));b.appendChild(el("span","s4sqn",it?it.n:SLN[s]));b.setAttribute("aria-label",SLN[s]+": "+(it?it.n:"empty"));
+ const mk=s=>{const it=c.equip[s]&&R.ITEMS[c.equip[s]],ok=selItem&&fits(selItem,s),b=el("button","s4sq"+(it?" full":"")+(sel&&sel.slot===s?" sel":"")+(ok?(R.canEquip(c,selItem,s)?" ok":" no"):""));b.dataset.slot=s;b.appendChild((it&&itemIc(c.equip[s],"big"))||icon(s));b.appendChild(el("span","s4sqn",it?it.n:SLN[s]));b.setAttribute("aria-label",SLN[s]+": "+(it?it.n:"empty"));
   b.addEventListener("click",e=>{e.preventDefault();if(selItem!=null&&fits(selItem,s)){tryEquip(c,i,selItem,s);return;}sheetSel=sel&&sel.slot===s?null:{slot:s};charScreen(i);});return b;};
  ["helmet","chest","gloves","boots"].forEach(s=>L.appendChild(mk(s)));["weapon","offhand","acc1","acc2"].forEach(s=>Rr.appendChild(mk(s)));
  const pot=el("div","s4sq belt");pot.appendChild(icon("use"));pot.appendChild(el("span","s4sqn","Potions "+c.bag.filter(x=>R.ITEMS[x].slot==="use").length));Rr.appendChild(pot);
@@ -246,9 +258,9 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
  if(sel&&sel.slot){const s=sel.slot,cur=c.equip[s];info.appendChild(el("div","s4k",SLN[s]+": "+(cur?R.ITEMS[cur].n:"empty")+" - pick a backpack item that fits"));
   const opts=[...new Set(c.bag)].filter(id=>fits(id,s));if(!opts.length)info.appendChild(el("div","s4note","Nothing in the backpack fits here."));
   opts.forEach(id=>{const ok=R.canEquip(c,id,s);let pv=[];if(ok){const t=clone(c);R.equip(t,id,s);pv=diffText(sl,statLine(t));}
-   const o=el("button","s4opt"+(ok?"":" off"));o.dataset.opt=id;o.appendChild(el("span","s4on",R.ITEMS[id].n+(ok?"":" (not allowed)")));const pe=el("span","s4pv");pv.forEach(x=>pe.appendChild(el("span",x[0]==="+"?"up":"down",x)));o.appendChild(pe);
+   const o=el("button","s4opt"+(ok?"":" off"));o.dataset.opt=id;withIc(o,id);o.appendChild(el("span","s4on",R.ITEMS[id].n+(ok?"":" (not allowed)")));const pe=el("span","s4pv");pv.forEach(x=>pe.appendChild(el("span",x[0]==="+"?"up":"down",x)));o.appendChild(pe);
    o.addEventListener("click",e=>{e.preventDefault();tryEquip(c,i,id,s);});info.appendChild(o);});
-  if(cur){const o=el("button","s4opt","Take off "+R.ITEMS[cur].n);o.dataset.unequip=s;o.addEventListener("click",e=>{e.preventDefault();if(!R.unequip(c,s))toast("Backpack too heavy");sheetSel=null;charScreen(i);});info.appendChild(o);}}
+  if(cur){const o=el("button","s4opt","Take off "+R.ITEMS[cur].n);o.dataset.unequip=s;withIc(o,cur);o.addEventListener("click",e=>{e.preventDefault();if(!R.unequip(c,s))toast("Backpack too heavy");capVitals(c);sheetSel=null;charScreen(i);});info.appendChild(o);}}
  else if(selItem){const it=R.ITEMS[selItem];const cnt=c.bag.filter(x=>x===selItem).length,fl=it.slot==="dish"?freshLeft(selItem):null;info.appendChild(el("div","s4k",it.n+(cnt>1?" ×"+cnt:"")+" · "+it.w+" kg"+(it.slot==="junk"||it.slot==="part"?" · "+(it.slot==="part"?"monster part":"junk")+", sells for "+it.v+" gold":"")+(it.slot==="ing"?" · ingredient, never spoils":"")));
   if(it.slot==="dish")info.appendChild(el("div","s4sub",E.fxText(E.dish(it.dish).fx)+(fl!=null?" · spoils in "+fl+" steps":"")));
   const slots=R.SLOTS.filter(s=>fits(selItem,s));if(slots.length){const s=slots.find(x=>!c.equip[x])||slots[0],ok=R.canEquip(c,selItem,s);
@@ -267,12 +279,36 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
  else info.appendChild(el("div","s4note dim","Tap a slot or a backpack item. Then tap the other to equip."));
  const wt=R.bagWeight(c),lim=R.carryLimit(c);colB.appendChild(el("div","s4lab","Backpack · Weight "+(Math.round(wt*10)/10)+" / "+lim+" kg"));colB.appendChild(bar(wt,lim,"wt"));
  const grid=el("div","s4bag"),stk=E.stacks(c.bag);stk.forEach(({id,n})=>{const k=c.bag.indexOf(id),it=R.ITEMS[id],fitsSel=sel&&sel.slot&&fits(id,sel.slot),b=el("button","s4sq"+(sel&&sel.bag===k?" sel":"")+(fitsSel?(R.canEquip(c,id,sel.slot)?" ok":" no"):""));b.dataset.bagi=k;b.dataset.item=id;
-  b.dataset.n=n;b.appendChild(icon(it.slot));b.appendChild(el("span","s4sqn",it.n));if(n>1)b.appendChild(el("span","s5cnt","×"+n));b.addEventListener("click",e=>{e.preventDefault();if(sel&&sel.slot&&fits(id,sel.slot)){tryEquip(c,i,id,sel.slot);return;}sheetSel=sel&&sel.bag===k?null:{bag:k};charScreen(i);});grid.appendChild(b);});
+  b.dataset.n=n;b.appendChild(itemIc(id,"big")||icon(it.slot));b.appendChild(el("span","s4sqn",it.n));if(n>1)b.appendChild(el("span","s5cnt","×"+n));b.addEventListener("click",e=>{e.preventDefault();if(sel&&sel.slot&&fits(id,sel.slot)){tryEquip(c,i,id,sel.slot);return;}sheetSel=sel&&sel.bag===k?null:{bag:k};charScreen(i);});grid.appendChild(b);});
  for(let k=stk.length;k<Math.max(12,Math.ceil(stk.length/6)*6);k++)grid.appendChild(el("div","s4sq empty"));
  colB.appendChild(info);colB.appendChild(grid);const wrap=el("div","s4cols");wrap.appendChild(colA);wrap.appendChild(colB);w.appendChild(wrap);}
-function tryEquip(c,i,id,s){if(R.equip(c,id,s)){sheetSel=null;toast(c.name+" equipped "+R.ITEMS[id].n);}else toast(R.ITEMS[id].n+": your race or class can't use this");charScreen(i);}
+// t2437u Skeptic: taking off (or swapping out) HP gear at full HP left HP above the new max (223/218). Cap HP and MP after any gear change.
+function capVitals(c){c.hp=Math.min(c.hp,R.maxHp(c,hpMul()));c.mp=Math.min(c.mp,R.maxMp(c));}
+function tryEquip(c,i,id,s){if(R.equip(c,id,s)){capVitals(c);sheetSel=null;toast(c.name+" equipped "+R.ITEMS[id].n);}else toast(R.ITEMS[id].n+": your race or class can't use this");charScreen(i);}
 function equipScreen(i,pick){charScreen(i,pick);}
 function bagScreen(i){sheetSel=null;charScreen(i);}
+// t2441u: move items between party members' bags (journal > Inventory > Move items). Outside fights only.
+// Knocked-out members count (their salts can be taken out). The receiver's carry limit still applies: a move that would
+// put them over it is refused with a short message. Stacked items get a quantity picker.
+let mv={from:0,id:null,n:1};
+function inFight(){return !!F||ui==="fight";}
+function moveItem(from,to,id,n){if(inFight())return {ok:false,msg:"Not during a fight."};const g=live&&live.party[from],r=live&&live.party[to];n=Math.floor(Number(n));
+ if(!g||!r||from===to||!R.ITEMS[id]||!(n>=1))return {ok:false,msg:"Pick an item and who gets it."};const have=g.bag.filter(x=>x===id).length;if(have<n)return {ok:false,msg:g.name+" does not have that many."};
+ if(R.bagWeight({bag:r.bag.concat(Array(n).fill(id))})>R.carryLimit(r))return {ok:false,msg:r.name+"'s bag is full."};
+ for(let k=0;k<n;k++){g.bag.splice(g.bag.lastIndexOf(id),1);r.bag.push(id);}return {ok:true,msg:(n>1?n+" × ":"")+R.ITEMS[id].n+" moved to "+r.name+"."};}
+function moveItems(st,back){if(inFight()){toast("Not during a fight.");return false;}if(!live)return false;if(st)mv=Object.assign({from:mv.from,id:null,n:1},st);if(back!==undefined)moveItems.back=back;
+ if(!live.party[mv.from])mv={from:0,id:null,n:1};const w=page("move-items");w.classList.add("s5mv");w.appendChild(head("Move items",()=>{closeUI();if(moveItems.back)moveItems.back();}));
+ if(live.party.length<2){w.appendChild(el("div","s4note","Only one hero in the party. Nobody to move items to yet."));return true;}
+ w.appendChild(el("div","s4lab","1. Whose bag?"));const gr=el("div","s5mvrow");live.party.forEach((m,j)=>{const b=tapBtn(m.name+(m.hp>0?"":" (knocked out)"),()=>moveItems({from:j}),"small"+(j===mv.from?" sel":""));b.dataset.mvfrom=j;gr.appendChild(b);});w.appendChild(gr);
+ const c=live.party[mv.from],stk=E.stacks(c.bag);w.appendChild(el("div","s4lab","2. Which item?"));const list=el("div","s5mvrow");
+ if(!stk.length)list.appendChild(el("div","s4note dim",c.name+"'s bag is empty."));
+ stk.forEach(({id,n})=>{const b=tapBtn(R.ITEMS[id].n+(n>1?" ×"+n:""),()=>moveItems({from:mv.from,id,n:1}),"small"+(mv.id===id?" sel":""));b.dataset.mvitem=id;withIc(b,id);list.appendChild(b);});w.appendChild(list);
+ const have=mv.id?c.bag.filter(x=>x===mv.id).length:0;if(!have)return true;mv.n=Math.min(Math.max(1,mv.n),have);
+ if(have>1){w.appendChild(el("div","s4lab","How many?"));const q=el("div","s5mvrow s5mvq");const less=tapBtn("−",()=>{mv.n--;moveItems();},"small");less.dataset.mvless="1";less.setAttribute("aria-label","One less");if(mv.n<=1)less.disabled=true;
+  const num=el("span","s5mvn",mv.n+" of "+have);num.dataset.mvn=mv.n;const more=tapBtn("+",()=>{mv.n++;moveItems();},"small");more.dataset.mvmore="1";more.setAttribute("aria-label","One more");if(mv.n>=have)more.disabled=true;
+  const all=tapBtn("All",()=>{mv.n=have;moveItems();},"small");all.dataset.mvall="1";q.append(less,num,more,all);w.appendChild(q);}
+ w.appendChild(el("div","s4lab","3. Give "+(mv.n>1?mv.n+" × ":"")+R.ITEMS[mv.id].n+" to:"));const tr=el("div","s5mvrow");
+ live.party.forEach((m,j)=>{if(j===mv.from)return;const fits=R.bagWeight({bag:m.bag.concat(Array(mv.n).fill(mv.id))})<=R.carryLimit(m);const b=tapBtn(m.name+(m.hp>0?"":" (knocked out)")+(fits?"":" (bag full)"),()=>{const r=moveItem(mv.from,j,mv.id,mv.n);toast(r.msg);if(r.ok)mv={from:mv.from,id:c.bag.includes(mv.id)?mv.id:null,n:1};moveItems();},"small");b.dataset.mvto=j;if(!fits)b.classList.add("off");tr.appendChild(b);});w.appendChild(tr);return true;}
 function addLoot(id){for(const c of live.party)if(R.canCarry(c,id)){c.bag.push(id);return c.name;}return null;}
 // ---------- fights ----------
 let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0,motionEnd=0;
@@ -296,8 +332,8 @@ let rotTop=0;
 // fight v4: tabs stack in turn order; the member whose turn it is is the top tab, the one who just acted goes to the bottom
 function turnOrder(){const n=live.party.length;if(F&&!F.over&&live.party[turnI]&&live.party[turnI].hp>0)rotTop=turnI;rotTop=Math.min(rotTop,n-1);return [...Array(n).keys()].map(k=>(rotTop+k)%n);}
 function drawParty(){const pr=$("fparty");if(!pr)return;const was=pr.dataset.top;pr.innerHTML="";const ord=turnOrder();pr.dataset.top=ord[0];if(was!==undefined&&was!==String(ord[0])){pr.classList.remove("rot");void pr.offsetWidth;pr.classList.add("rot");}ord.forEach(i=>{const c=live.party[i];const now=i===turnI&&!F.over&&c.hp>0,r=el("div","s4pr"+(now?" now":"")+(c.hp<=0?" dead":""));const mx=R.maxHp(c,hpMul());
- const nb=el("button","s4nl");nb.dataset.hero=i;nb.disabled=!now;const top=el("span","s4nlt");top.appendChild(el("span","s4arrow",now?"‹":""));top.appendChild(el("span","s4nn",c.name));top.appendChild(el("span","s4pv",c.hp+"/"+mx));nb.appendChild(top);
- const bars=el("span","s4bars");bars.appendChild(bar(c.hp,mx,"hp"));bars.appendChild(bar(c.mp,R.maxMp(c),"mp"));nb.appendChild(bars);nb.addEventListener("click",e=>{e.preventDefault();if(now)heroMenu(nb);});r.appendChild(nb);pr.appendChild(r);});
+ const nb=el("button","s4nl");nb.dataset.hero=i;nb.disabled=!now;const top=el("span","s4nlt");top.appendChild(el("span","s4arrow",now?"‹":""));top.appendChild(el("span","s4nn",c.name));nb.appendChild(top);
+ const bars=el("span","s4bars");bars.appendChild(bar(c.hp,mx,"hp"));bars.appendChild(bar(c.mp,R.maxMp(c),"mp"));nb.appendChild(bars);/* t2432u: labelled HP and MP numbers for every member, under the bars */const vals=el("span","s4vals");vals.appendChild(el("span","s4hpv","HP "+c.hp+"/"+mx));vals.appendChild(el("span","s4mpv","MP "+c.mp+"/"+R.maxMp(c)));nb.appendChild(vals);nb.addEventListener("click",e=>{e.preventDefault();if(now)heroMenu(nb);});r.appendChild(nb);pr.appendChild(r);});
  const en=$("fen");if(en){en.textContent=F.m.filter(m=>m.hp>0).map(m=>m.n).join(" · ");}}
 function drawMenu(){drawParty();const mn=$("fmenu");if(!mn)return;mn.innerHTML="";const fw=document.querySelector(".s4fight");if(fw)fw.classList.toggle("over",!!F.over);if(F.over){endFight();return;}const c=live.party[turnI];mn.appendChild(el("div","s4who",c.name+"'s turn - tap the name"));}
 // Presentation events use the engine's actual target indices, never names or a second RNG roll.
@@ -312,15 +348,18 @@ function doAct(cmd,arg,targ){closeBranch();const c=live.party[turnI],before=F.m.
 // t2397u: after a win (boss too) or a successful run, every knocked-out member wakes with exactly 1 HP and stays there until healed.
 // Called after XP is shared, so knocked-out members get no XP. A whole-party KO is still a loss (back to the last save).
 function wakeKO(){live.party.forEach(c=>{if(c.hp<=0)c.hp=1;});}
+// t2442u: loading restores HP and MP exactly as saved (live = deep copy of the save). Only saves made before this marker existed
+// (VER 79 and older could store a knocked-out member at exactly 0 HP) get that 0 turned into 1 HP; every other stored value is kept.
+function wakeLoaded(){if(!live||!Array.isArray(live.party)||(save&&save.hpv>=1))return;live.party.forEach(c=>{if(c.hp===0)c.hp=1;});}
 // t2404u: companions keep unspent stat points; remind while any are left (on joining and on level-up)
 function pointsLeft(c){return Math.max(0,R.pointsEarned(c.lvl)-c.spent);}
 function pointsReminder(){if(!live)return "";const w=live.party.filter(c=>pointsLeft(c)>0);if(!w.length)return "";
  return w.map(c=>c.name+" has "+pointsLeft(c)+" stat point"+(pointsLeft(c)>1?"s":"")).join(", ")+" to spend. Tap Party to spend them.";}
 function endFight(){const aftermath=live.party.map(c=>({hp:c.hp,maxHp:R.maxHp(c,hpMul())}));const mn=$("fmenu"),how=F.over;closeBranch();const fe=$("fen");if(fe)fe.style.display="none";
  if(how==="win"){const rw=F.rewards((live.seed^fightNo*31)>>>0);live.gold+=rw.gold;const ups=[];live.party.forEach(c=>{if(c.hp>0){const g=R.gainXp(c,rw.xp,hpMul());if(g.length)ups.push(c.name+" reached level "+c.lvl+"! HP and MP fully restored."+(c.skills.length<R.skillSlots(c.lvl)?" New skill ready!":""));}});wakeKO();
-  const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return R.ITEMS[id].n+(who?"":" (no room, left behind)");});
+  const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return {id,t:R.ITEMS[id].n+(who?"":" (no room, left behind)")};});
   mn.appendChild(el("div","s4win","Victory!"));const bossWon=F.m.some(m=>m.boss);const b=tapBtn("Continue",()=>{F=null;closeUI();if(bossWon)h6("bossWon");else h6("fightContinue",aftermath);},"s4go small");b.id="fdone";mn.appendChild(b);
-  mn.appendChild(el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: "+jn.join(", "):"")));if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
+  {const nt=el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: ":""));/* t2476u: each found item with its icon; same text as before */jn.forEach((x,k)=>{const sp=el("span","s4loot",x.t+(k<jn.length-1?", ":""));sp.dataset.loot=x.id;withIc(sp,x.id);nt.appendChild(sp);});mn.appendChild(nt);}if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
  else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
   const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
  else{wakeKO();const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);tickBuffs();ov.dataset.result="ran";}
@@ -452,7 +491,7 @@ function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.
 S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  if(R.isSavePoint(M,p.x,p.y)){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
   if(t>=0){h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
-  const ok=doSave(false);toast(joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(ok?"Game saved at "+placeName(p.x,p.y)+".":"No tent: you can rest and cook at "+placeName(p.x,p.y)+", but you need a tent to save. Buy or build one."));updBtn();updHere();return;}
+  /* t2446u: only a tavern saves on arrival; a camp never saves or uses a tent by itself (Save tab on the camp screen) */const ok=t>=0?doSave(false):false,said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(t>=0?(ok?"Game saved at "+placeName(p.x,p.y)+".":"Could not save at "+placeName(p.x,p.y)+"."):"You reached "+placeName(p.x,p.y)+". Rest, cook, craft or save here (saving uses 1 tent).");if(joined)remind(said);else toast(said);/* t2437u QA: the join + points reminder shows after the join scene */updBtn();updHere();return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  const stink=live.stink>0;if(stink)live.stink--; // t2342u failed craft: monsters smell the party
  if(!(stink&&stepsSince>=4)){if(stepsSince<10)return;}if(!roll)roll=R.rng(live.seed>>>0);const r=roll()/(stink?3:1); /* stink: after 4 steps, 3x chance */
@@ -476,7 +515,7 @@ function treasurePanel(l){const found=[],pending=l.items.slice();
    if(!canMakeRoom){w.appendChild(el("div","s4note","Too heavy. Even an empty bag cannot hold it. You can only leave it."));return;}
    w.appendChild(el("div","s4lab","Drop something to make room"));w.appendChild(el("div","s4note","Dropped items are gone. No gold."));
    live.party.forEach((c,ci)=>{if(!c.bag.length)return;w.appendChild(el("div","s4lab",c.name));E.stacks(c.bag).forEach(({id:drop,n})=>{
-    const b=tapBtn("Drop 1 "+R.ITEMS[drop].n+(n>1?" ("+n+")":""),()=>{const k=c.bag.indexOf(drop);if(k<0)return;c.bag.splice(k,1);gone(drop);if(drop==="tent"&&!hasTent())live.tentWear=0;tryFit();draw();},"wide");b.dataset.chestdrop=ci;b.dataset.chestitem=drop;w.appendChild(b);
+    const b=tapBtn("Drop 1 "+R.ITEMS[drop].n+(n>1?" ("+n+")":""),()=>{const k=c.bag.indexOf(drop);if(k<0)return;c.bag.splice(k,1);gone(drop);if(drop==="tent"&&!hasTent())live.tentWear=0;tryFit();draw();},"wide");b.dataset.chestdrop=ci;b.dataset.chestitem=drop;withIc(b,drop);w.appendChild(b);
    });});return;
   }
   if(found.some(f=>f.who))w.appendChild(el("div","s4note dim","Race and class limits still apply. Keep it for a companion, or sell at a tavern."));w.appendChild(tapBtn("Continue",closeUI,"s4go small"));
@@ -559,13 +598,33 @@ function tavernScreen(t,arrival=true){s5init();campVisit=null;const w=page("tave
  const nav=el("div","s5hubnav");tavernLabels(t).forEach((label,i)=>{const b=tapBtn(label,()=>{if(hubBlocked())return;if(i===1)buyScreen(t);else leaveTavern(t,i===0?t+1:t+2);},"small");b.dataset.hub=i;nav.appendChild(b);});w.appendChild(nav);
  if(arrival){live.party.forEach(c=>{c.hp=R.maxHp(c,hpMul());c.mp=R.maxMp(c);});h6("ownerVisit",t);h6("tavern",t);}}
 function leaveShop(t){savePicker("save",()=>tavernScreen(t,false),()=>buyScreen(t,false));}
-function shopPage(kind,t,title,back){const w=page(kind);w.classList.add("s5scene","s5shop");w.style.backgroundImage='url("art6/shop/owner-'+(t+1)+'.webp")';
+// t2445u/t2452u/t2453u/t2454u scene framing. Story pictures end at the top of the dialogue box (--s6top). In a tavern owner's shop
+// the owner art is sized and placed so the owner's whole face (OWNER_FACE, fractions of the 528x516 art) sits in the free area left of
+// the tab column, under the header and the party inset (the tavern picture shown whole, top left), and above the dialogue box.
+const OWNER_FACE=[[.36,.02,.72,.36],[.38,.01,.64,.32],[.38,.01,.64,.34],[.38,.03,.68,.38]],OWNER_AR=516/528;let frameLast=null;
+function frameScenes(){const d=$("s6d"),root=document.documentElement,W=innerWidth,H=innerHeight;
+ if(d){const b=d.querySelector(".s6box");if(b){const dr=d.getBoundingClientRect(),br=b.getBoundingClientRect();if(br.height)d.style.setProperty("--s6top",Math.max(60,Math.round(br.top-dr.top-6))+"px");}}
+ const w=ov.querySelector(".s5shop");if(!w||ui===null){frameLast=null;return null;}
+ const t=Math.max(0,Math.min(3,+(w.dataset.owner||0))),tb=w.querySelector(".s5tabs"),bk=w.querySelector(".s4back"),hd=w.querySelector(".s4head");
+ const gd=w.querySelector(".s5gold"),colL=Math.min(tb?tb.getBoundingClientRect().left:W,bk?bk.getBoundingClientRect().left:W),top0=Math.max(hd?hd.getBoundingClientRect().bottom:50,gd&&gd.getBoundingClientRect().width?gd.getBoundingClientRect().bottom:0)+8;
+ const dlg=!!(d&&d.classList.contains("on")),box=dlg&&d.querySelector(".s6box"),boxTop=box?box.getBoundingClientRect().top:H,land=W>H;
+ let inset=null;if(dlg&&d.classList.contains("hasbg")){const L=colL-16,iw=Math.round(land?Math.min(L*.42,320):Math.min(L,420)),ar=frameScenes.ar||387/720,ih=Math.round(iw*ar),dr=d.getBoundingClientRect();
+  inset={l:8,t:top0,r:8+iw,b:top0+ih};d.style.setProperty("--shopInsetX",(8-dr.left)+"px");d.style.setProperty("--shopInsetY",(top0-dr.top)+"px");d.style.setProperty("--shopInsetW",iw+"px");d.style.setProperty("--shopInsetH",ih+"px");}
+ const x0=land&&inset?inset.r+8:8,x1=colL-8,y0=(!land&&inset?inset.b:top0)+8,y1=Math.max(y0+60,boxTop-8),f=OWNER_FACE[t],fw=f[2]-f[0],fh=(f[3]-f[1])*OWNER_AR;
+ const S=Math.min(Math.max(120,Math.min((x1-x0)/fw,(y1-y0)/fh)*.9),land?H*1.1:W*1.05);/* never zoomed past about the screen size */
+ const left=Math.round((x0+x1)/2-(f[0]+f[2])/2*S),top=Math.round(y0+2-f[1]*S*OWNER_AR);
+ w.style.setProperty("--ownS",Math.round(S)+"px auto");w.style.setProperty("--ownX",left+"px");w.style.setProperty("--ownY",top+"px");
+ frameLast={owner:t,face:{l:left+f[0]*S,t:top+f[1]*S*OWNER_AR,r:left+f[2]*S,b:top+f[3]*S*OWNER_AR},inset,art:{l:left,t:top,w:S,h:S*OWNER_AR}};return frameLast;}
+{let q=0;const go=()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;frameScenes();});};addEventListener("resize",go);
+ if(typeof MutationObserver==="function"&&document.body)new MutationObserver(go).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class","data-line"]});/* guarded: node test harnesses have no MutationObserver/Image */
+ if(typeof Image==="function"){const im=new Image();im.onload=()=>{if(im.naturalWidth)frameScenes.ar=im.naturalHeight/im.naturalWidth;};im.src="art6/tavern/tavern-1-human.webp";}}
+function shopPage(kind,t,title,back){const w=page(kind);w.classList.add("s5scene","s5shop");w.style.backgroundImage='url("art6/shop/owner-'+(t+1)+'.webp")';w.dataset.owner=t;
  document.documentElement.classList.add("s5shop-open");w.appendChild(head(title,back));return w;}
 // Shop root Back and Done save, while subpages go up one screen.
 function buyScreen(t,line=true){s5init();const w=shopPage("buy",t,E.KEEPERS[t].name+" · Shop",()=>leaveShop(t));goldLine(w);
  sideTabs(w,[["Recipes",null,()=>shopList(t,"recipes"),"recipes"],["Food",null,()=>shopList(t,"food"),"food"],["Craft",null,()=>shopList(t,"craft"),"craft"],["Sell",null,()=>sellScreen(t),"sell"],["Done",null,()=>leaveShop(t),"done"]]);
  if(line)h6("owner",t,"STOCK");}
-function shopRow(w,label,data,fn,off){const o=el("button","s4opt s5row"+(off?" off":""));for(const k in data)o.dataset[k]=data[k];o.appendChild(el("span","s4on",label));o.addEventListener("click",e=>{e.preventDefault();fn();});w.appendChild(o);return o;}
+function shopRow(w,label,data,fn,off){const o=el("button","s4opt s5row"+(off?" off":""));for(const k in data)o.dataset[k]=data[k];{const iid=data.buy||data.sell||(data.recipe&&(R.ITEMS["d_"+data.recipe]?"d_"+data.recipe:data.recipe))||(data.tentb?"tent":null);if(iid)withIc(o,iid);}/* t2476u */o.appendChild(el("span","s4on",label));o.addEventListener("click",e=>{e.preventDefault();fn();});w.appendChild(o);return o;}
 function shopList(t,kind){s5init();const st=E.stock(t),w=shopPage("shop-"+kind,t,{recipes:"Recipes",food:"Food",craft:"Craft"}[kind],()=>buyScreen(t,false));w.dataset.list=kind;goldLine(w);
  const q=shopCounts(t),item=id=>shopRow(w,R.ITEMS[id].n+" · "+E.price(id)+"g"+(q[id]!=null?" · Stock "+q[id]:""),{buy:id},()=>{buy(id,t);shopList(t,kind);},live.gold<E.price(id)||q[id]===0);
  if(kind==="recipes"){const l=E.recipesFor(t).filter(id=>!live.recipes[id]);if(!l.length)w.appendChild(el("div","s4note dim","You know all the recipes sold here."));
@@ -607,14 +666,25 @@ function campScreen(k){s5init();if(!campVisit||campVisit.k!==k)campVisit={k,cook
  if(k===0&&live&&!live.campTut){live.campTut="shown";tutStep=1;}/* t2356u: first-camp lesson, once per save */
  const cb=tapBtn("Craft",()=>{craftReset();craftLast=null;craftPop(k);},"small s5craftb");cb.dataset.craftopen="1";w.appendChild(cb);
  w.appendChild(el("div","s4note",hasTent()?"Tents: "+haveN("tent")+". Each tent is good for 1 save at a camp.":"No tent: you can still cook, craft and rest here. You need a tent to save at camp."));
- sideTabs(w,[["Cook",null,()=>cookScreen("c"+k),"cook"],["Rest",null,()=>campRest(k),"rest"],["Return",null,closeUI,"return"]]);if(k===0)tutDraw();}
+ sideTabs(w,[["Cook",null,()=>cookScreen("c"+k),"cook"],["Rest",null,()=>campRest(k),"rest"],["Save",null,()=>campSave(k),"save"],["Return",null,closeUI,"return"]]);if(k===0)tutDraw();}
+// t2446u/t2449u/t2450u: saving at a camp is a choice. Already pitched here (t2356u): free, straight to the slot picker. Otherwise it asks
+// "Use 1 tent to save?" first; without a tent it says how to get one. The tent is only used when a slot is actually written.
+function campPitched(){const p=S.state();return !!(save&&save.at&&save.at.x===p.x&&save.at.y===p.y);}
+function campSave(k,done){if(!live)return;const free=campPitched(),p=S.state();const old=$("s5tentask");if(old)old.remove();
+ const refill=()=>{const was=live.party.map(c=>[c.hp,c.mp]);live.party.forEach(c=>{c.hp=R.maxHp(c,hpMul());c.mp=R.maxMp(c);});return ()=>live.party.forEach((c,j)=>{c.hp=was[j][0];c.mp=was[j][1];});};
+ const pick=()=>savePicker("save",()=>{campScreen(k);toast("Party rested and game saved at "+placeName(p.x,p.y)+(free?". Tent already pitched here: no tent used.":". 1 tent used."));if(done)done();},()=>campScreen(k),refill);/* t2451u: refill + tent + slot write happen together on picking a slot */
+ if(free){pick();return;}
+ const d=el("div","s5pop");d.id="s5tentask";d.setAttribute("role","dialog");
+ if(!hasTent()){d.appendChild(el("div","s4note","You need a tent to save at a camp. Make one with Craft: 1 Spider silk + 1 Boar hide. Tavern shops sell them too."));const okb=tapBtn("OK",()=>d.remove(),"small");okb.dataset.tentok="1";d.appendChild(okb);ov.appendChild(d);return;}
+ d.appendChild(el("div","s4note","Use 1 tent to save? You have "+haveN("tent")+"."));const r=el("div","s4row");
+ const y=tapBtn("Yes, use 1 tent",()=>{d.remove();pick();},"small");y.dataset.tentyes="1";const n=tapBtn("No",()=>d.remove(),"small");n.dataset.tentno="1";r.append(y,n);d.appendChild(r);ov.appendChild(d);}
 function foodTree(back){const out=[];live.party.forEach((c,ci)=>E.stacks(c.bag).forEach(s=>{const it=R.ITEMS[s.id];if(it.slot==="dish"||s.id==="ration")out.push({t:it.n+(s.n>1?" ×"+s.n:"")+" ("+c.name+")",d:{food:s.id},kids:()=>live.party.map(m=>({t:"Feed "+m.name,fn:()=>{const k=c.bag.lastIndexOf(s.id);if(k<0)return;c.bag.splice(k,1);gone(s.id);eatDish(m,s.id);toast(m.name+" ate "+it.n);back();}}))});}));return out.length?out:[{t:"No food",off:true}];}
 let cookSel=[];
 function cookScreen(where){s5init();const k=where&&where[0]==="c"?+where.slice(1):Math.max(0,campIdx(S.state().x,S.state().y));where="c"+k;const back=()=>campScreen(k);const w=page("cook");w.classList.add("s5scene","s5camp");w.style.backgroundImage='url("'+campArt("eating")+'")';w.appendChild(head("Cooking",()=>{cookSel=[];back();}));
  w.appendChild(tapBtn("Cooking guide",()=>cookbook(()=>cookScreen(where)),"small"));
  const have=E.stacks(live.party.flatMap(c=>c.bag)).filter(s=>R.ITEMS[s.id].slot==="ing");
  w.appendChild(el("div","s4note","Pick 2 to 4 ingredients, then cook. A wrong mix ruins them and teaches nothing."));
- const chips=el("div","s5chips");have.forEach(s=>{const x=s.id.slice(2),n=cookSel.filter(y=>y===x).length,b=el("button","s4bi s5chip"+(n?" sel":""),R.ITEMS[s.id].n+" ×"+s.n+(n?" ("+n+")":""));b.dataset.ing=x;
+ const chips=el("div","s5chips");have.forEach(s=>{const x=s.id.slice(2),n=cookSel.filter(y=>y===x).length,b=el("button","s4bi s5chip"+(n?" sel":""),R.ITEMS[s.id].n+" ×"+s.n+(n?" ("+n+")":""));b.dataset.ing=x;withIc(b,s.id);
   b.addEventListener("click",e=>{e.preventDefault();if(n<s.n&&cookSel.length<4)cookSel.push(x);else cookSel=cookSel.filter(y=>y!==x);cookScreen(where);});chips.appendChild(b);});
  if(!have.length)chips.appendChild(el("div","s4note dim","No ingredients. Monsters drop food, taverns sell it."));w.appendChild(chips);
  const row=el("div","s4row");const cb=tapBtn("Cook"+(cookSel.length?" ("+cookSel.map(x=>R.ITEMS["i_"+x].n).join(" + ")+")":""),()=>{const r=cookTry(cookSel,where);cookSel=[];
@@ -650,11 +720,11 @@ function drawPix(cv,kind){const a=E.pixelArt(kind),n=a.rows.length,z=6;cv.width=
 function craftPop(k){s5init();if(k!=null)craftK=k;campScreen(craftK);const old=$("s5craftpop");if(old)old.remove();
  const p=el("div","s5pop s5craftpop");p.id="s5craftpop";p.setAttribute("role","dialog");p.appendChild(el("div","s4lab","Craft"));
  p.appendChild(el("div","s4note","Tap a box to add a part or ingredient. Tap a full box to empty it. 2 to 4 items. Everything in the boxes is used up."));
- const boxes=el("div","s5cboxes");craftBox.forEach((id,i)=>{const b=el("button","s4bi s5cbox"+(id?" full":"")+(craftAt===i?" sel":""),id?R.ITEMS[id].n:"+");b.dataset.cbox=i;if(id)b.dataset.item=id;
+ const boxes=el("div","s5cboxes");craftBox.forEach((id,i)=>{const b=el("button","s4bi s5cbox"+(id?" full":"")+(craftAt===i?" sel":""),id?R.ITEMS[id].n:"+");b.dataset.cbox=i;if(id){b.dataset.item=id;withIc(b,id);}
   b.addEventListener("click",e=>{e.preventDefault();if(craftBox[i]){craftClear(i);craftAt=null;}else{craftAt=i;craftPicking=true;}craftLast=null;craftPop();});boxes.appendChild(b);});p.appendChild(boxes);
  if(!craftBox.includes(null))craftPicking=false;
  if(craftPicking){const pk=el("div","s5cpick");pk.id="s5cpick";const ch=craftChoices();if(!ch.length)pk.appendChild(el("div","s4note dim","No parts or ingredients left. Monsters drop them."));
-  ch.forEach(({id,n})=>{const b=el("button","s4bi s5chip",R.ITEMS[id].n+" ×"+n);b.dataset.cpick=id;b.addEventListener("click",e=>{e.preventDefault();craftPut(id);craftPop();});pk.appendChild(b);});p.appendChild(pk);}
+  ch.forEach(({id,n})=>{const b=el("button","s4bi s5chip",R.ITEMS[id].n+" ×"+n);b.dataset.cpick=id;withIc(b,id);b.addEventListener("click",e=>{e.preventDefault();craftPut(id);craftPop();});pk.appendChild(b);});p.appendChild(pk);}
  const filled=craftBox.filter(Boolean),fm=live.failedMixes||{};if(filled.length>=2&&fm[E.mixKey(filled)]){const wn=el("div","s4note bad","You tried this mix before. Nothing useful came out.");wn.dataset.triedfail="1";p.appendChild(wn);}
  const go=tapBtn("Craft",()=>{const r=craftTry(craftBox.filter(Boolean));if(r.err){toast(r.err==="heavy"?"Nobody can carry that":r.err==="count"?"Put 2 to 4 items in the boxes":"Missing items");craftPop();return;}craftLast=r;craftReset();if(tutStep&&r.craft&&r.craft.id==="tent")tutStep=4;toast(craftMsg(r));craftPop();},"small");go.id="s5craft";if(filled.length<2)go.disabled=true;p.appendChild(go);
  if(craftLast){const res=el("div","s5cres");const cv=el("canvas");cv.id="s5craftpic";cv.dataset.result=craftLast.kind;cv.dataset.px=drawPix(cv,craftLast.kind);res.appendChild(cv);res.appendChild(el("div","s4note",craftMsg(craftLast)));p.appendChild(res);}
@@ -666,7 +736,7 @@ function craftPop(k){s5init();if(k!=null)craftK=k;campScreen(craftK);const old=$
 // ---- Jeremy t2356u/t2357u: first-camp lesson (Camp 1, once; live.campTut is kept in the save). The player crafts the tent
 // themselves (1 spider silk + 1 boar hide from the starting kit); nothing is handed over. Then Save uses exactly 1 tent. ----
 let tutStep=0;
-function tutDraw(){const old=$("s5tut");if(old)old.remove();ov.querySelectorAll(".s5hl").forEach(e=>e.classList.remove("s5hl"));if(!tutStep||!live||ui!=="camp")return;
+function tutDraw(){const old=$("s5tut");if(old)old.remove();{const p0=$("s5craftpop");if(p0&&p0.style)p0.style.maxHeight="";}ov.querySelectorAll(".s5hl").forEach(e=>e.classList.remove("s5hl"));if(!tutStep||!live||ui!=="camp")return;
  const pop=$("s5craftpop"),t=el("div","s5tut");t.id="s5tut";t.setAttribute("role","dialog");let step,txt,hl=null;
  if(tutStep===4){step=4;txt="You made a tent! You can only save at camping spots, only with a tent in your bag, and each save uses one tent.";}
  else if(!pop){step=1;txt="Tap Craft at the top. Crafting turns monster parts and food into useful things.";hl=ov.querySelector("[data-craftopen]");}
@@ -674,9 +744,11 @@ function tutDraw(){const old=$("s5tut");if(old)old.remove();ov.querySelectorAll(
  else{step=2;txt="Tap a box and put in 1 Spider silk. Then put 1 Boar hide in the next box.";hl=pop.querySelector(".s5cboxes");}
  t.dataset.step=step;t.appendChild(el("div","s4lab","Camp lesson · step "+step+" of 4"));t.appendChild(el("div","s4note",txt));
  const row=el("div","s4row");
- if(step===4){const sv=tapBtn("Save",()=>savePicker("save",()=>{tutStep=0;campScreen(0);toast("Game saved at Camp 1. 1 tent used.");},()=>craftPop(0)),"small");sv.dataset.tutsave="1";row.appendChild(sv);hl=sv;}
+ if(step===4){const sv=tapBtn("Save",()=>{const cp=$("s5craftpop");if(cp)cp.remove();campSave(0,()=>{tutStep=0;campScreen(0);});},"small");sv.dataset.tutsave="1";row.appendChild(sv);hl=sv;}
  const sk=tapBtn(step===4?"Done":"Skip",()=>{tutStep=0;tutDraw();},"small");sk.dataset.tutskip="1";row.appendChild(sk);t.appendChild(row);
- ov.appendChild(t);if(hl)hl.classList.add("s5hl");}
+ ov.appendChild(t);if(hl)hl.classList.add("s5hl");
+ /* t2437u QA: on short screens (360x640) the lesson panel covered the pop-up's Close; the pop-up now ends above the panel and scrolls inside */
+ if(pop&&pop.style&&pop.getBoundingClientRect&&t.getBoundingClientRect){const pr=pop.getBoundingClientRect(),tr=t.getBoundingClientRect();if(tr.height&&pr.bottom>tr.top-6){const mh=Math.floor(tr.top-6-pr.top);pop.style.maxHeight=Math.max(120,mh)+"px";const over=pop.getBoundingClientRect().bottom-(tr.top-6);/* padding and border sit outside max-height */if(over>0)pop.style.maxHeight=Math.max(120,mh-Math.ceil(over))+"px";}}}
 function cookbook(back){s5init();const w=page("cookbook");w.appendChild(head("Cooking guide",back||partyScreen));const n=Object.keys(live.recipes).length;w.appendChild(el("div","s4note",n+" of 20 recipes · ✎ cooked yourself · ◉ bought"));
  const g=el("div","s5book");E.DISHES.forEach((d,i)=>{const how=live.recipes[d.id],c=el("div","s5rc"+(how?" known "+how:""));c.dataset.rc=d.id;
   if(how){c.appendChild(el("b","",(how==="earned"?"✎ ":"◉ ")+d.n));c.appendChild(el("div","s4sub",d.ing.map(x=>R.ITEMS["i_"+x].n).join(" + ")));c.appendChild(el("div","s4sub s5fx",E.fxText(d.fx)+" · "+E.TIERN[d.tier]));c.appendChild(el("div","s4sub dim",how==="earned"?"learned by cooking":"bought at a tavern"));}
@@ -685,13 +757,13 @@ function tentScreen(t){s5init();const w=shopPage("tent",t,"Build a tent",()=>sho
  w.appendChild(el("div","s4note","A tent weighs nothing. You need one to save at a camp. Each tent is good for 1 save at a camp. Taverns save for free. Tents owned: "+haveN("tent")+"."));
  const bt=tapBtn("Buy a tent · "+E.TENT.buy+" gold",()=>{buy("tent");tentScreen(t);},"small");bt.dataset.buytent="1";if(live.gold<E.TENT.buy)bt.classList.add("off");const br0=el("div","s4row");br0.appendChild(bt);w.appendChild(br0);
  w.appendChild(el("div","s4lab","Or build one: parts + "+E.TENT.fee+" gold fee"));const need=tentNeed();
- need.forEach(x=>{const P=E.PARTS[x.id],z=P[2],r=el("div","s4st s5need"+(x.have>=x.n?" ok":""));r.dataset.need=x.id;r.appendChild(el("span","s4k",R.ITEMS[x.id].n+" ("+(z.length===1?"only zone "+z[0]:"zones "+z[0]+"-"+z[z.length-1])+")"));r.appendChild(el("span","s4v",Math.min(x.have,x.n)+" / "+x.n));w.appendChild(r);});
+ need.forEach(x=>{const P=E.PARTS[x.id],z=P[2],r=el("div","s4st s5need"+(x.have>=x.n?" ok":""));r.dataset.need=x.id;withIc(r,x.id);r.appendChild(el("span","s4k",R.ITEMS[x.id].n+" ("+(z.length===1?"only zone "+z[0]:"zones "+z[0]+"-"+z[z.length-1])+")"));r.appendChild(el("span","s4v",Math.min(x.have,x.n)+" / "+x.n));w.appendChild(r);});
  const ok=need.every(x=>x.have>=x.n),row=el("div","s4row"),sj=spareJunk().reduce((s,id)=>s+E.sellPrice(id),0);
  const b1=tapBtn("Build, pay "+E.TENT.fee+" gold",()=>{buildTent(false);tentScreen(t);},"small");b1.dataset.build="gold";const b2=tapBtn("Build, pay with junk",()=>{buildTent(true);tentScreen(t);},"small");b2.dataset.build="junk";
  if(!ok){b1.classList.add("off");b2.classList.add("off");}row.appendChild(b1);row.appendChild(b2);w.appendChild(row);w.appendChild(el("div","s4note dim","Spare junk you carry is worth "+sj+" gold toward the fee."+(t>=2?" This tavern sells tent parts (Buy ‹ Craft).":"")));}
 // ---- level-up popup after a won fight ----
 function lvlPopup(lines){const old=$("s5lvl");if(old)old.remove();const p=el("div","s5pop");p.id="s5lvl";p.setAttribute("role","dialog");p.appendChild(el("div","s4win","Level up!"));lines.forEach(l=>p.appendChild(el("div","s4note",l)));
- const b=tapBtn("OK",()=>{p.remove();const r=pointsReminder();if(r)toast(r);},"small");b.id="s5lvlok";p.appendChild(b);ov.appendChild(p);}
+ const b=tapBtn("OK",()=>{p.remove();remind(pointsReminder());},"small");/* t2437u QA: same as the join reminder */b.id="s5lvlok";p.appendChild(b);ov.appendChild(p);}
 // ---------- top button + hint ----------
 const pb=$("partyb");function updBtn(){pb.classList.toggle("need",!live);$("s4hint").style.display=live?"none":"block";}
 pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())return;if(S.puzzleOpen&&S.puzzleOpen())return;if(ui)return;if(!live)creation();else partyScreen();});
@@ -728,7 +800,7 @@ html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-b
 @media(max-width:480px){.s5shop .s4head{font-size:14px}.s5camp>.s4note{margin-right:166px}.s5hubnav{gap:6px}}
 `;document.head.appendChild(sceneCSS);
 // test and debug hooks (no network, no secrets)
-S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=spr(heroKey(c)),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};

@@ -8,10 +8,11 @@ function harness({save=true,art=true,standalone=false}={}){
    this.classList={contains:n=>this.className.split(/\s+/).includes(n),add:n=>{if(!this.classList.contains(n))this.className+=(this.className?" ":"")+n;},remove:n=>{this.className=this.className.split(/\s+/).filter(x=>x!==n).join(" ");}};}
   appendChild(e){e.parentNode=this;this.children.push(e);return e;}
   append(...es){es.forEach(e=>this.appendChild(e));}
+  replaceChildren(...es){this.children.forEach(c=>{c.parentNode=null;});this.children=[];es.forEach(e=>this.appendChild(e));} // t2446u: title menu rebuilds its buttons
   setAttribute(k,v){this[k]=v;}
   get isConnected(){return this===body||this===head||!!(this.parentNode&&this.parentNode.isConnected);}
   addEventListener(k,f){if(!this.events.has(k))this.events.set(k,[]);this.events.get(k).push(f);}
-  matches(s){return s[0]==="."?this.classList.contains(s.slice(1)):s[0]==="#"?this.id===s.slice(1):this.tagName===s.toUpperCase();}
+  matches(s){if(s.includes(","))return s.split(",").some(x=>this.matches(x.trim()));/* t2446u: selector lists */return s[0]==="."?this.classList.contains(s.slice(1)):s[0]==="#"?this.id===s.slice(1):this.tagName===s.toUpperCase();}
   closest(s){return this.matches(s)?this:this.parentNode&&this.parentNode.closest(s);}
   querySelector(s){for(const child of this.children){if(child.matches(s))return child;const e=child.querySelector(s);if(e)return e;}return null;}
  }

@@ -70,5 +70,5 @@ test('t2404u: Beasts shows the seven zone 3 pencil sketches (1024x1024 webp) onc
  const Z=['centaur','werewolf','skeleton','ghoul','harpy','direwolf','wraith'];for(const n of Z){const b=fs.readFileSync(path.join(__dirname,'..','art-intro/journal/monsters/z3-'+n+'.webp'));a.equal(b.slice(0,4).toString(),'RIFF');a.equal(b.slice(8,12).toString(),'WEBP');}
  const sw=read('sw.js'),art=read('intro-art-data.js');for(const n of Z){a.equal(sw.split('"art-intro/journal/monsters/z3-'+n+'.webp"').length-1,1);a.ok(art.includes('"journal/monsters/z3-'+n+'.webp"'));}
  a.equal(read('intro.js').includes('"cap:3":'),false,'cap:3 journal page still text only');});
-test('t2404u pins: VER 81 and party v30, rules v21, econ v17, intro v17, intro-art-data v5 in both index.html and sw.js',()=>{const h=read('index.html'),s=read('sw.js');a.match(s,/^const VER="81",/);
- for(const p of ['party.js?v=30','rules.js?v=21','econ.js?v=17','intro.js?v=17','intro-art-data.js?v=5','splash.js?v=1','story.js?v=25','music.js?v=20','content-cap.js?v=6'])for(const x of [h,s])a.ok(x.includes(p),p);});
+test('t2404u pins: VER 83 (t2432u-t2454u) and party v32, rules v21, econ v17, intro v19, intro-art-data v5 in both index.html and sw.js',()=>{const h=read('index.html'),s=read('sw.js');a.match(s,/^const VER="83",/);
+ for(const p of ['party.js?v=32','rules.js?v=21','econ.js?v=17','intro.js?v=19','intro-art-data.js?v=5','splash.js?v=1','story.js?v=25','music.js?v=20','content-cap.js?v=6'])for(const x of [h,s])a.ok(x.includes(p),p);});

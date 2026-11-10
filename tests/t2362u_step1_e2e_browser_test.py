@@ -59,7 +59,7 @@ def e2e(p):
   T.ttap(pg,'[data-craftopen]');T.ttap(pg,'#s5craftpop [data-cbox="0"]');T.ttap(pg,'#s5craftpop [data-cpick=p_silk]');T.ttap(pg,'#s5craftpop [data-cpick=p_hide]')
   T.check(tut_step(pg)==3,'lesson step 3 missing');shot(pg,'04-lesson-boxes.png');T.ttap(pg,'#s5craftpop #s5craft')
   T.check(bagn(pg,'tent')==1 and tut_step(pg)==4,'no crafted tent / step 4');shot(pg,'05-lesson-tent-and-save.png')
-  T.ttap(pg,'#s5tut [data-tutsave]');T.check(T.ui(pg)=='save-picker' and T.ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'no save picker');shot(pg,'06-save-picker.png')
+  T.ttap(pg,'#s5tut [data-tutsave]');T.ttap(pg,'[data-tentyes]');T.check(T.ui(pg)=='save-picker' and T.ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'no save picker');shot(pg,'06-save-picker.png')
   T.ttap(pg,'[data-save-slot="0"]');T.check(bagn(pg,'tent')==0,'save did not use 1 tent');sv0=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot0"))')
   T.check(sv0['campTut']=='shown' and [sv0['at']['x'],sv0['at']['y']]==T.ev(pg,'MAZE.camps[0]'),'camp save not in slot 1')
   T.ttap(pg,'#s4 [data-tab=return]');T.check(T.ui(pg) is None,'Return did not close camp')

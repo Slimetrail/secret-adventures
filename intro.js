@@ -43,14 +43,22 @@ function buildTitle(){if(tt)return tt;tt=el("div","ititle");tt.id="ititle";tt.da
  // Native buttons must not start the title tap/hold gesture.
  for(const type of ["pointerdown","pointerup","pointercancel"])controls.addEventListener(type,e=>e.stopPropagation());
  tt.appendChild(controls);
+ /* t2446u/t2449u/t2450u: visible Continue / Load Game / New Game buttons; the hidden hold-to-continue (and tap) gestures stay, but no button press reaches them */
+ const menu=el("div","ititle-menu");menu.id="ititle-menu";for(const type of ["pointerdown","pointerup","pointercancel","click"])menu.addEventListener(type,e=>e.stopPropagation());tt.appendChild(menu);
  let t0=0,tm=0,fired=false;
  tt.addEventListener("pointerdown",e=>{e.preventDefault();t0=performance.now();fired=false;clearTimeout(tm);tm=setTimeout(()=>{fired=true;longPress();},LONG_MS);});
  const up=e=>{e.preventDefault();clearTimeout(tm);if(!t0)return;t0=0;if(!fired)shortTap();};
  tt.addEventListener("pointerup",up);tt.addEventListener("pointercancel",()=>{clearTimeout(tm);t0=0;});
  tt.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();});tt.addEventListener("contextmenu",e=>e.preventDefault());
- addEventListener("keydown",e=>{if(tOpen&&!(e.target&&e.target.closest(".iapp"))&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopImmediatePropagation();shortTap();}},true);
+ addEventListener("keydown",e=>{if(tOpen&&!(e.target&&e.target.closest(".iapp,.ititle-menu"))&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopImmediatePropagation();shortTap();}},true);
  document.body.appendChild(tt);return tt;}
-function showTitle(){buildTitle().classList.add("on");tOpen=true;document.documentElement.classList.add("ititle-open");}
+function titleMenu(){const m=$("ititle-menu");if(!m)return;m.replaceChildren();const any=(()=>{try{return S.rpg.saveSlots().some(Boolean);}catch(e){return hasSave();}})();
+ const b=(t,id,f)=>{const x=el("button","ink s4b ititle-b",t);x.type="button";x.id=id;x.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();f();});m.appendChild(x);return x;};
+ if(hasSave())b("Continue","ititle-cont",()=>{if(tOpen)hideTitle();});
+ const lg=b("Load Game","ititle-load",()=>{hideTitle();S.rpg.savePicker("load",null,()=>{S.rpg.closeUI();showTitle();});});if(!any){lg.disabled=true;lg.title="No saved games yet";}
+ b("New Game","ititle-new",()=>{if(!hasSave()){shortTap();return;}m.replaceChildren();m.appendChild(el("div","s4note ititle-ask","Start a new game? When you confirm your new hero, it is saved over Slot "+((S.rpg.activeSlot?S.rpg.activeSlot():0)+1)+". Your other slots are kept."));
+  b("Yes, new game","ititle-newyes",()=>{titleMenu();shortTap();});b("No","ititle-newno",()=>titleMenu());});}
+function showTitle(){buildTitle().classList.add("on");titleMenu();tOpen=true;document.documentElement.classList.add("ititle-open");}
 function hideTitle(){if(tt)tt.classList.remove("on");tOpen=false;document.documentElement.classList.remove("ititle-open");}
 function shortTap(){if(!tOpen)return;hideTitle();S.rpg.creation();}            // opening creation never writes the save; only Confirm does
 function longPress(){if(!tOpen)return;if(!hasSave()){shortTap();return;}hideTitle();} // continue the existing save as loaded
@@ -71,7 +79,7 @@ const addC=(e,...c)=>c.forEach(x=>{if(!e.classList.contains(x))e.classList.add(x
 function sickArt(){const h=hero();if(!h)return null;const b="sickdad/sickdad-"+h.race+".webp";
  return {b,ready:has(b)};}
 function stage(host,cls,bg,left,right){let s=host.querySelector(".ia-stage");if(!s){s=el("div","ia-stage");s.setAttribute("aria-hidden","true");host.prepend(s);}
- const key=[cls,bg,left,right].join("|");if(s.dataset.key===key)return;s.dataset.key=key;s.className="ia-stage "+cls;s.style.backgroundImage=bg?'url("'+A(bg)+'")':"none";s.replaceChildren();
+ const key=[cls,bg,left,right].join("|");if(s.dataset.key===key)return;s.dataset.key=key;s.className="ia-stage "+cls;s.style.backgroundImage=bg?'url("'+A(bg)+'")':"none";s.style.setProperty("--fit",bg?'url("'+A(bg)+'")':"none");/* t2445u */s.replaceChildren();
  [["left",left],["right",right]].forEach(([side,src])=>{if(!src)return;const p=el("div","ia-person "+side);const im=el("img");im.alt="";im.src=A(src);p.appendChild(im);s.appendChild(p);});}
 function unstage(host){if(host.classList.contains("ia-active"))host.classList.remove("ia-active","ia-end");delete host.dataset.intro;const s=host.querySelector(".ia-stage");if(s)s.remove();const sk=host.querySelector(".iskip");if(sk)sk.remove();const c=host.querySelector(".icred");if(c&&!host.classList.contains("on"))c.remove();}
 const END_ART={low:["zone3-05-crystal-cracked-smoke","zone4-05-dark-robes-cracked-crystal"],mid:["zone3-05-crystal-cracked-smoke","zone4-05-dark-robes-cracked-crystal"],high:["zone3-01-crystal-defined-monsters","zone5-01-handshake-crystal","zone5-04-crystal-between-two-figures"]};
@@ -176,7 +184,7 @@ function monsterSketches(entry,kind,key){if(kind!=="monster-drawings")return;con
 function page(pg,l){const t=jTab,E=window.ECON;
  if(t==="inventory"){pg.appendChild(el("h3",null,"Inventory"));l.party.forEach((c,i)=>{pg.appendChild(el("div","ijl",c.name+": "+(c.bag.length?c.bag.map(itemName).join(", "):"(empty)")));
   const eq=c.equip||{};const v=Object.keys(eq).filter(k=>eq[k]).map(k=>k+": "+itemName(eq[k]));pg.appendChild(el("div","ijl",c.name+" — "+(v.join(" · ")||"nothing equipped")));});
-  pg.appendChild(el("div","ijl","Gold: "+l.gold));pg.appendChild(go("Open backpack",()=>{closeJournal();S.rpg.bagScreen(0);}));pg.appendChild(go("Open equipment",()=>{closeJournal();S.rpg.equipScreen(0);}));}
+  pg.appendChild(el("div","ijl","Gold: "+l.gold));pg.appendChild(go("Open backpack",()=>{closeJournal();S.rpg.bagScreen(0);}));pg.appendChild(go("Open equipment",()=>{closeJournal();S.rpg.equipScreen(0);}));/* t2441u */if(l.party.length>1&&S.rpg.ui()!=="fight"&&S.rpg.moveItems){const mvb=go("Move items between bags",()=>{closeJournal();S.rpg.moveItems({from:0,id:null,n:1},()=>openJournal("inventory"));});mvb.dataset.mvopen="1";pg.appendChild(mvb);}}
  else if(t==="map"){pg.appendChild(el("h3",null,"Map"));pg.appendChild(go("Open the map",()=>{closeJournal();S.rpg.closeUI();const b=$("mapb");if(b)b.click();}));}
  else if(t==="art"){pg.appendChild(el("h3",null,"Found art"));let s=null;try{s=S.rpg.s6.st();}catch(e){}const ra=S.rpg.s6.roomArt(),ids=s?(s.order||Object.keys(s.walls)).filter(id=>ra[id]):[];
   if(!ids.length)pg.appendChild(el("div","ijl dim","No wall art found yet."));const g=el("div","ijart");
@@ -210,6 +218,10 @@ const css=el("style");css.textContent=`
  background-color:#1d1820;background-size:cover;background-position:center;
  background-image:linear-gradient(rgba(0,0,0,.25),rgba(0,0,0,.6)),repeating-linear-gradient(0deg,#0d0a10 0 4px,transparent 4px 64px),repeating-linear-gradient(90deg,#0d0a10 0 4px,transparent 4px 96px),linear-gradient(#3a3340,#231e28)}
 .ititle.on{display:flex}
+.ititle-menu{position:absolute;z-index:3;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));width:min(94vw,520px);display:flex;flex-wrap:wrap;justify-content:center;gap:8px;touch-action:manipulation}
+.ititle-menu .ititle-b{min-height:52px;font-size:18px;flex:1 1 0;min-width:0;padding:6px 4px;white-space:nowrap}.ititle-ask{flex:1 1 100%}.ititle-menu .ititle-b:disabled{opacity:.5}
+.ititle-ask{background:rgba(12,8,18,.88);color:#efe0b8;border-radius:8px;padding:10px;font-size:16px}
+@media(max-height:480px){.ititle-menu{bottom:calc(80px + env(safe-area-inset-bottom));width:min(70vw,520px)}.ititle-menu .ititle-b{min-height:44px;font-size:16px}}
 .ititle > .iapp{position:absolute;z-index:2;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));margin:0;padding:10px;box-sizing:border-box;max-height:calc(100% - 24px);overflow-y:auto;border-radius:10px;background:rgba(12,8,18,.92);touch-action:manipulation}
 .ititle > .iapp .s4b{min-height:44px;min-width:44px;flex:1 1 130px;white-space:normal}
 .ititle[data-art=ready]{background-color:#000;background-size:cover}.ititle[data-art=ready] .ititle-t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0}

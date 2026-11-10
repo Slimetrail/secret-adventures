@@ -306,7 +306,7 @@ def t_fight_v4_tree(p):
     check(len(arr)==3 and all(a.startswith('"‹') and a.endswith('|none') for a in arr),f'next-level arrows not on the left: {arr}')
     check(ev(pg,'[...document.querySelectorAll("#s4br .s4bcol[data-lv=\'0\'] .s4bi")].map(e=>e.textContent)')==['Defend','Attack','Skill','Items','Run'],'level 0 items')
     ttap(pg,'#s4br [data-cmd4=skill]');c0b=ev(pg,RECTS,'#s4br .s4bcol[data-lv="0"]');c1=ev(pg,RECTS,'#s4br .s4bcol[data-lv="1"]')[0]
-    sp=ev(pg,RECTS,'#s4br [data-cmd4=skill]')[0]
+    sp=(ev(pg,RECTS,'#s4br [data-cmd4=skill]') or [None])[0]  # VER 83: wider HP/MP name tabs; on a 360px phone level 0 may hide (allowed below)
     check(c1[2]<=(c0b[0][0] if c0b else at[0]),'level 1 not left of level 0');check(abs(c1[1]-(sp[1] if c0b else at[1]))<=2,f'level 1 not beside the choice that opened it {c1} {sp}')
     check(bool(c0b) or w<380,'level 0 hidden on a wide phone')
     check(ev(pg,'!!document.querySelector("#s4br .s4bcol[data-lv=\'1\'] [data-back]")'),'no Back button')

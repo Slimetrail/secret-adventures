@@ -41,7 +41,8 @@ def t_first_camp_lesson(p):
   T.check(bagn(pg,'tent')==1 and T.ev(pg,'SOTA.rpg.live().crafts.tent')=='earned','player did not craft the tent')
   T.check(tut_step(pg)==4,'no step 4');note=T.ev(pg,'document.querySelector("#s5tut .s4note").textContent')
   T.check('only save at camping spots' in note and 'each save uses one tent' in note,note);pg.screenshot(path=os.path.join(SHOTS,'lesson-4-save.png'))
-  T.ttap(pg,'#s5tut [data-tutsave]');T.check(T.ui(pg)=='save-picker' and T.ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'no 4-slot picker')
+  T.ttap(pg,'#s5tut [data-tutsave]');T.check('Use 1 tent to save?' in T.ev(pg,'document.getElementById("s5tentask").textContent'),'no tent question');T.ttap(pg,'[data-tentyes]');  # VER 83 t2451u: the lesson Save asks before using the tent
+  T.check(T.ui(pg)=='save-picker' and T.ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'no 4-slot picker')
   T.ttap(pg,'[data-save-slot="1"]');pg.wait_for_timeout(200)
   T.check(bagn(pg,'tent')==0,'save did not use exactly 1 tent');T.check(T.ui(pg)=='camp' and tut_step(pg)==0,'lesson did not end')
   sv=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot1"))');T.check(sv['campTut']=='shown' and [sv['at']['x'],sv['at']['y']]==T.ev(pg,'MAZE.camps[0]'),'lesson or camp not in the save')
