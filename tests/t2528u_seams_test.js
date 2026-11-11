@@ -84,6 +84,6 @@ test("archway texture: 128 preferred with 64 fallback, glow mask, stone mask, ti
  const c={window:{}};vm.createContext(c);vm.runInContext(read("tex.js"),c);a.equal(c.window.TEX.S,64);a.ok(c.window.TEX.pal[1].c1&&c.window.TEX.pal[5].ink);
  a.ok(read("party.js").includes('S.onArchBump='));
  const sw=read("sw.js");for(const f of fs.readdirSync(path.join(root,"art6/seam")))a.equal(sw.split('"art6/seam/'+f+'"').length-1,1,"sw cache "+f);
- a.match(sw,/^const VER="97",/);for(const p of ["game.js?v=24","tex.js?v=16","party.js?v=35"])for(const s of [sw,read("index.html")])a.ok(s.includes(p),p);
+ a.match(sw,/^const VER="98",/);for(const p of ["game.js?v=24","tex.js?v=16","party.js?v=36"])for(const s of [sw,read("index.html")])a.ok(s.includes(p),p);
  a.ok(read("index.html").indexOf("Please wait for update to continue.")>=0||read("party.js").includes('"Please wait for update to continue."'));
 });

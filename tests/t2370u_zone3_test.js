@@ -122,5 +122,5 @@ test('t2404u: zone 3 monsters have pencil sketches and a fought zone 3 beast is 
  vm.runInContext(read('intro-art-data.js'),h.c);const i=h.intro();i.openJournal('beasts');const jb=h.document.getElementById('ijour');a.deepEqual(jb.querySelectorAll('[data-beast]').map(f=>f.dataset.beast),['z1-rat',z3[0]]);});
 test('cache pins: content-cap, econ and party moved together with sw VER (>=80), rules.js v20 and match index.html',()=>{const html=read('index.html'),sw=read('sw.js');
  const ver=+sw.match(/^const VER="(\d+)"/)[1];a.ok(ver>=80,'VER '+ver+' (stage1-build is 79)');
- for(const pin of ['content-cap.js?v=6','econ.js?v=17','party.js?v=35','rules.js?v=22'] /* party 35 in VER 95 (t2528u seams on live 94) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
+ for(const pin of ['content-cap.js?v=6','econ.js?v=17','party.js?v=36','rules.js?v=22'] /* party 36 in VER 98 (t2655u shop tabs on live 97) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
  for(const old of ['content-cap.js?v=5"','econ.js?v=15"','party.js?v=28"','rules.js?v=19"','rules.js?v=18"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);});

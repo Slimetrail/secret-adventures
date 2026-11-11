@@ -632,23 +632,31 @@ function tavernScreen(t,arrival=true){s5init();campVisit=null;const w=page("tave
  const nav=el("div","s5hubnav");tavernLabels(t).forEach((label,i)=>{const b=tapBtn(label,()=>{if(hubBlocked())return;if(i===1)buyScreen(t);else leaveTavern(t,i===0?t+1:t+2);},"small");b.dataset.hub=i;nav.appendChild(b);});w.appendChild(nav);
  if(arrival){live.party.forEach(c=>{c.hp=R.maxHp(c,hpMul());c.mp=R.maxMp(c);});h6("ownerVisit",t);h6("tavern",t);}}
 function leaveShop(t){savePicker("save",()=>tavernScreen(t,false),()=>buyScreen(t,false));}
-// t2445u/t2452u/t2453u/t2454u scene framing. Story pictures end at the top of the dialogue box (--s6top). In a tavern owner's shop
-// the owner art is sized and placed so the owner's whole face (OWNER_FACE, fractions of the 528x516 art) sits in the free area left of
-// the tab column, under the header and the party inset (the tavern picture shown whole, top left), and above the dialogue box.
+// t2445u/t2452u/t2453u/t2454u scene framing. Story pictures end at the top of the dialogue box (--s6top).
+// t2522u/t2655u: in a tavern owner's shop the tabs sit in a bottom grid so the owner's background art shows and no tab covers
+// the face. The owner's face and upper body (OWNER_BODY, fractions of the 528x516 art) are centred in the free area under the
+// header/Gold line (and the party inset during a talk) and above the bottom tab row or the dialogue box. List screens
+// (Recipes, Food, Craft, Sell, tent) keep the owner in a band under the gold line (--ownBand) and the list starts below it.
 const OWNER_FACE=[[.36,.02,.72,.36],[.38,.01,.64,.32],[.38,.01,.64,.34],[.38,.03,.68,.38]],OWNER_AR=516/528;let frameLast=null;
+const OWNER_BODY=OWNER_FACE.map(f=>[Math.max(0,f[0]-.14),f[1],Math.min(1,f[2]+.14),Math.min(.68,f[3]+.30)]);
 function frameScenes(){const d=$("s6d"),root=document.documentElement,W=innerWidth,H=innerHeight;
  if(d){const b=d.querySelector(".s6box");if(b){const dr=d.getBoundingClientRect(),br=b.getBoundingClientRect();if(br.height)d.style.setProperty("--s6top",Math.max(60,Math.round(br.top-dr.top-6))+"px");}}
  const w=ov.querySelector(".s5shop");if(!w||ui===null){frameLast=null;return null;}
- const t=Math.max(0,Math.min(3,+(w.dataset.owner||0))),tb=w.querySelector(".s5tabs"),bk=w.querySelector(".s4back"),hd=w.querySelector(".s4head");
- const gd=w.querySelector(".s5gold"),colL=Math.min(tb?tb.getBoundingClientRect().left:W,bk?bk.getBoundingClientRect().left:W),top0=Math.max(hd?hd.getBoundingClientRect().bottom:50,gd&&gd.getBoundingClientRect().width?gd.getBoundingClientRect().bottom:0)+8;
- const dlg=!!(d&&d.classList.contains("on")),box=dlg&&d.querySelector(".s6box"),boxTop=box?box.getBoundingClientRect().top:H,land=W>H;
- let inset=null;if(dlg&&d.classList.contains("hasbg")){const L=colL-16,iw=Math.round(land?Math.min(L*.42,320):Math.min(L,420)),ar=frameScenes.ar||387/720,ih=Math.round(iw*ar),dr=d.getBoundingClientRect();
+ const t=Math.max(0,Math.min(3,+(w.dataset.owner||0))),tb=w.querySelector(".s5tabs"),hd=w.querySelector(".s4head"),gd=w.querySelector(".s5gold");
+ const gb=gd&&gd.getBoundingClientRect().width?gd.getBoundingClientRect().bottom:0,top0=Math.max(hd?hd.getBoundingClientRect().bottom:50,gb)+8;
+ const tr=tb&&tb.getBoundingClientRect(),tabTop=tr&&tr.height?tr.top:H;if(tr&&tr.height)root.style.setProperty("--s5tabsH",Math.round(H-tr.top)+"px");
+ const dlg=!!(d&&d.classList.contains("on")),box=dlg&&d.querySelector(".s6box"),boxTop=box?box.getBoundingClientRect().top:H,land=W>H,sub=!tb;
+ let inset=null;if(dlg&&d.classList.contains("hasbg")){const iw=Math.round(land?Math.min(W*.3,320):Math.min(W*.42,200)),ar=frameScenes.ar||387/720,ih=Math.round(iw*ar),dr=d.getBoundingClientRect();
   inset={l:8,t:top0,r:8+iw,b:top0+ih};d.style.setProperty("--shopInsetX",(8-dr.left)+"px");d.style.setProperty("--shopInsetY",(top0-dr.top)+"px");d.style.setProperty("--shopInsetW",iw+"px");d.style.setProperty("--shopInsetH",ih+"px");}
- const x0=land&&inset?inset.r+8:8,x1=colL-8,y0=(!land&&inset?inset.b:top0)+8,y1=Math.max(y0+60,boxTop-8),f=OWNER_FACE[t],fw=f[2]-f[0],fh=(f[3]-f[1])*OWNER_AR;
- const S=Math.min(Math.max(120,Math.min((x1-x0)/fw,(y1-y0)/fh)*.9),land?H*1.1:W*1.05);/* never zoomed past about the screen size */
- const left=Math.round((x0+x1)/2-(f[0]+f[2])/2*S),top=Math.round(y0+2-f[1]*S*OWNER_AR);
+ const x0=land&&inset?inset.r+8:8,x1=W-8,y0=(!land&&inset?inset.b:top0)+8;let y1;
+ if(sub){const band=Math.round(Math.max(150,Math.min(land?H*.5:H*.36,360)));y1=y0+band;w.style.setProperty("--ownBand",Math.max(0,Math.round(y1+8-gb))+"px");}
+ else{w.style.setProperty("--ownBand","0px");y1=Math.max(y0+60,Math.min(tabTop,boxTop)-8);}
+ const f=OWNER_FACE[t],g=OWNER_BODY[t],gw=g[2]-g[0],gh=(g[3]-g[1])*OWNER_AR;
+ const S=Math.min(Math.max(120,Math.min((x1-x0)/gw,(y1-y0)/gh)),land?H*1.1:W);/* never wider than the screen in portrait */
+ const left=Math.round((x0+x1)/2-(g[0]+g[2])/2*S),top=Math.round(y0+Math.max(0,(y1-y0-gh*S)/2)-g[1]*S*OWNER_AR);
  w.style.setProperty("--ownS",Math.round(S)+"px auto");w.style.setProperty("--ownX",left+"px");w.style.setProperty("--ownY",top+"px");
- frameLast={owner:t,face:{l:left+f[0]*S,t:top+f[1]*S*OWNER_AR,r:left+f[2]*S,b:top+f[3]*S*OWNER_AR},inset,art:{l:left,t:top,w:S,h:S*OWNER_AR}};return frameLast;}
+ const R=q=>({l:left+q[0]*S,t:top+q[1]*S*OWNER_AR,r:left+q[2]*S,b:top+q[3]*S*OWNER_AR});
+ frameLast={owner:t,sub,face:R(f),body:R(g),area:{l:x0,t:y0,r:x1,b:y1},inset,art:{l:left,t:top,w:S,h:S*OWNER_AR}};return frameLast;}
 {let q=0;const go=()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;frameScenes();});};addEventListener("resize",go);
  if(typeof MutationObserver==="function"&&document.body)new MutationObserver(go).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class","data-line"]});/* guarded: node test harnesses have no MutationObserver/Image */
  if(typeof Image==="function"){const im=new Image();im.onload=()=>{if(im.naturalWidth)frameScenes.ar=im.naturalHeight/im.naturalWidth;};im.src="art6/tavern/tavern-1-human.webp";}}
@@ -810,13 +818,20 @@ const sceneCSS=el("style");sceneCSS.textContent=`
 .s5hubnav{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:12px;right:12px;display:flex;justify-content:space-between;gap:10px}
 .s5hubnav button{min-height:48px;min-width:80px;max-width:30%;flex:0 1 130px}
 html.s6open #s4.tavern .s5hubnav{visibility:hidden;pointer-events:none}
-.s5shop .s5tabs,.s5camp .s5tabs{position:fixed;right:12px;top:calc(74px + env(safe-area-inset-top));width:150px}
+.s5camp .s5tabs{position:fixed;right:12px;top:calc(74px + env(safe-area-inset-top));width:150px}
+/* t2522u/t2655u owner shop: tabs in a bottom grid (3+2 portrait, 5 in a row landscape), 48px, bottom safe area; header and Gold on top, Back top right compact so the owner name stays on one line at 360 */
+#s4 .s5shop .s5tabs{position:fixed;left:8px;right:8px;top:auto;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;align-items:stretch;z-index:5}
+#s4 .s5shop .s5tabs .s5tab{width:auto;min-width:0;min-height:48px;grid-column:span 2}
+#s4 .s5shop .s5tabs .s5tab:nth-child(n+4){grid-column:span 3}
+@media(orientation:landscape){#s4 .s5shop .s5tabs{grid-template-columns:repeat(5,1fr);max-width:none}#s4 .s5shop .s5tabs .s5tab:nth-child(n){grid-column:auto}}
 .s5scene .s5tabs button{min-height:46px;background:rgba(12,8,18,.95)}
-.s5shop .s4back{position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top));width:150px;min-height:46px}
-.s5shop .s4head{margin-right:166px}.s5shop .s5gold{align-self:flex-start}
+.s5shop .s4back{position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top));width:auto;min-width:64px;min-height:46px;padding-left:14px;padding-right:14px}
+.s5shop .s4head{margin-right:0;padding-right:88px}.s5shop .s4title{white-space:nowrap}
+.s5shop .s5gold{align-self:flex-start;margin-bottom:var(--ownBand,0px)}
 .s5shop .s4opt,.s5shop .s4lab{max-width:520px}
-html.s5shop-open #s6d{right:178px;overflow:hidden;clip-path:inset(0);background:transparent;pointer-events:none}
-html.s5shop-open #s6d .s6box{left:8px;right:8px;bottom:12px;max-height:65vh;overflow-y:auto;pointer-events:auto}
+html.s5shop-open #s6d{right:0;overflow:hidden;clip-path:inset(0);background:transparent;pointer-events:none}
+html.s5shop-open #s6d .s6box{left:8px;right:8px;bottom:calc(12px + env(safe-area-inset-bottom));max-height:40vh;overflow-y:auto;pointer-events:auto}
+html.s5shop-open:has(#s4 .s5shop .s5tabs) #s6d .s6box{bottom:calc(var(--s5tabsH,118px) + 8px)}/* t2522u: the talk sits above the bottom tabs */
 .s5camp .s5craftb{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:6;min-height:44px;min-width:92px;margin:0}
 #s4 .s5craftpop{top:9%;width:min(360px,92vw);max-height:84vh;overflow-y:auto;z-index:40}
 html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-bottom))}/* t2404u: "You made ...!" no longer covers the Tap a box hint */
