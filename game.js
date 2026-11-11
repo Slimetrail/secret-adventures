@@ -258,12 +258,29 @@ function frame(t){
   vis.x=anim.fx+(anim.tx-anim.fx)*e;vis.y=anim.fy+(anim.ty-anim.fy)*e;vis.a=anim.fa+(anim.ta-anim.fa)*e;}
  else{vis.x=st.x;vis.y=st.y;vis.a=st.f*Math.PI/2+Math.round((vis.a-st.f*Math.PI/2)/(2*Math.PI))*2*Math.PI;}
  if(window.SOTA&&((SOTA.mapOpen&&SOTA.mapOpen())||(SOTA.puzzleOpen&&SOTA.puzzleOpen()))){lastT=t;requestAnimationFrame(frame);return;}
- const t0=performance.now();render(t);const dt=performance.now()-t0;ft.push(dt);if(ft.length>240)ft.shift();
+ if(st.f!==cmpF)updCompass();const t0=performance.now();render(t);const dt=performance.now()-t0;ft.push(dt);if(ft.length>240)ft.shift();
  lastT=t;requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 // ---------- HUD + input ----------
 const hud=document.getElementById("hud"),HUD_KEY="sota.hud";let hudOn=true;try{hudOn=localStorage.getItem(HUD_KEY)!=="0";}catch(e){}
-function updHud(){hud.textContent="Zone "+zoneOf[st.y*N+st.x]+"  cell "+st.x+","+st.y+"  facing "+FN[st.f];hud.style.display=hudOn?"block":"none";}
+function updHud(){hud.textContent="Zone "+zoneOf[st.y*N+st.x]+"  cell "+st.x+","+st.y+"  facing "+FN[st.f];hud.style.display=hudOn?"block":"none";updCompass();}
+// t2573u/t2574u/t2576u: the round top-right button is a compass. Its rose turns so N always points to the TOP of the 2D map
+// (map top = north, y-1). Facing N it points up, facing E it points left, S down, W right. Clockwise CSS rotate = -facing*90,
+// always the shortest way round (the angle is kept as a running total). The cream 'ink' frame never turns.
+// One loader: the Graphics rose (art6/hud/compass-rose-144.png, 48 for 1x) if it loads, else a code-drawn rose in the same slot.
+const cmpEl=document.getElementById("cmp");let cmpDeg=null,cmpF=-1;
+const CMP_SVG='<svg id="cmpsvg" viewBox="0 0 144 144" aria-hidden="true"><g fill="#1a120a"><path d="M72 8a64 64 0 1 1-0.01 0zm0 6a58 58 0 1 0 0.01 0z" fill-rule="evenodd"/>'+
+ '<path d="M72 29L85 72H59z M72 72L100 59V85z M72 72L85 100H59z M72 72L44 59V85z"/><path d="M72 62l5 10-5 10-5-10z" fill="#ead9b0"/>'+
+ '<path d="M62 2h5l10 13V2h5v20h-5L67 9v13h-5z"/></g></svg>';
+function loadCompass(){if(!cmpEl)return;
+ // Node harness stubs have a #cmp with no dataset and no Image. Skip or use the code rose; never throw.
+ if(typeof Image==="undefined"||!cmpEl.dataset){if(cmpEl.dataset){cmpEl.innerHTML=CMP_SVG;cmpEl.dataset.art="code";}return;}
+ const im=new Image();im.id="cmpimg";im.alt="";im.width=36;im.height=36;im.decoding="async";
+ im.onerror=()=>{cmpEl.innerHTML=CMP_SVG;cmpEl.dataset.art="code";};im.onload=()=>{cmpEl.dataset.art="png";};
+ im.srcset="art6/hud/compass-rose-48.png 1x, art6/hud/compass-rose-144.png 2x";im.src="art6/hud/compass-rose-144.png";cmpEl.innerHTML="";cmpEl.appendChild(im);cmpEl.dataset.art="loading";}
+function updCompass(){if(!cmpEl||st.f===cmpF)return;const want=-st.f*90;if(cmpDeg===null){cmpDeg=want;cmpEl.style.transition="none";}
+ else{let d=((want-cmpDeg)%360+540)%360-180;cmpDeg+=d;cmpEl.style.transition="";}cmpF=st.f;cmpEl.style.transform="rotate("+cmpDeg+"deg)";}
+loadCompass();
 updHud();
 document.querySelectorAll(".slot").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.remove("pressed");void b.offsetWidth;b.classList.add("pressed");if(window.SOTA&&SOTA.rpg&&SOTA.rpg.tapMazeSlot)SOTA.rpg.tapMazeSlot(Number(b.dataset.slot));});b.addEventListener("animationend",()=>b.classList.remove("pressed"));b.addEventListener("contextmenu",e=>e.preventDefault());});
 document.querySelectorAll("[data-cmd]").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();act(b.dataset.cmd);});b.addEventListener("contextmenu",e=>e.preventDefault());});
@@ -292,5 +309,5 @@ window.SOTA={contentCap,seams:()=>SEAMS.map(s=>JSON.parse(JSON.stringify(s))),ar
  markSolved:i=>{solvedR[i]=1;saveRooms();},saveRooms,visitedCount:()=>visCount,isVisited:(x,y)=>!!visited[y*N+x],trailCells:()=>trail.map(i=>[i%N,(i/N)|0]),
  core:{solvedR,clearedR,mask,zoneOf,visited,trail:()=>trail,M,DIRS,BIT},
  teleport:(x,y,f)=>{st.x=x;st.y=y;st.f=f;visit(y*N+x);trail=[y*N+x];if(window.SOTA.onStep)SOTA.onStep();vis.x=x;vis.y=y;vis.a=f*Math.PI/2;anim.on=false;const z=ZA[zoneOf[y*N+x]].fog;fogNow[0]=z[0];fogNow[1]=z[1];fogNow[2]=z[2];save();updHud();},
- size:()=>({W,H}),vis:()=>({x:vis.x,y:vis.y,a:vis.a}),N,zones:()=>{const c=[0,0,0,0,0,0];for(let i=0;i<N*N;i++)c[zoneOf[i]]++;return c;}};
+ compass:()=>({deg:cmpDeg,f:cmpF,art:cmpEl?cmpEl.dataset.art:null}),size:()=>({W,H}),vis:()=>({x:vis.x,y:vis.y,a:vis.a}),N,zones:()=>{const c=[0,0,0,0,0,0];for(let i=0;i<N*N;i++)c[zoneOf[i]]++;return c;}};
 })();

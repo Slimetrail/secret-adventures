@@ -133,7 +133,7 @@ test('t2370u zone 3: with every room and door cell impassable, all zone 3 hallwa
 test('maze cache pins advance together without changing combat pins',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/^const VER="96",/); // t2512u map on live VER 95
+ assert.match(sw,/^const VER="97",/); // t2574u compass on live VER 96
  for(const source of [html,sw]){
   assert.ok(source.includes('maze-data.js?v=17'));assert.ok(!source.includes('maze-data.js?v=16'));
   assert.ok(source.includes("rules.js?v=22"));assert.ok(source.includes("party.js?v=35"));
