@@ -5,6 +5,21 @@ const S=window.SOTA,C=S.core,M=C.M,N=M.n,L=32; // L = layer pixels per cell
 const el=document.getElementById("map"),cv=document.getElementById("mapc"),ctx=cv.getContext("2d");
 const ZT=[null,[196,160,60],[110,150,80],[90,130,175],[195,100,115],[140,100,175]]; // zone tints, muted for parchment
 const kind=new Map();M.camps.forEach(c=>kind.set(c[1]*N+c[0],"camp"));M.taverns.forEach(c=>kind.set(c[1]*N+c[0],"tavern"));const roomOf=new Map();M.rooms.forEach(r=>{kind.set(r.c[1]*N+r.c[0],r.k);roomOf.set(r.c[1]*N+r.c[0],r.id);});
+// t2512u/t2515u: room cells are walls to walking (click-to-enter, t2327u), so they are never "visited". A spot is FOUND when it was
+// visited or an open neighbour was visited (you stood at its door). Rooms, camps and taverns show once found.
+// t2528u: nothing past the furthest tavern reached is drawn. Each zone seam is one maze edge at a tavern, so the shown zone limit is
+// 1 + (furthest tavern index reached + 1); a tavern counts as reached when its cell, or any cell of a later zone, was visited.
+const DXY=[[0,-1,1],[1,0,2],[0,1,4],[-1,0,8]];
+function isFound(i){const v=C.visited;if(v[i])return true;const x=i%N,y=(i/N)|0,m=C.mask[i];for(const d of DXY){if(!(m&d[2]))continue;const nx=x+d[0],ny=y+d[1];if(nx<0||ny<0||nx>=N||ny>=N)continue;if(v[ny*N+nx])return true;}return false;}
+let zoneLimit=1;
+function calcZoneLimit(){const v=C.visited;let maxZ=1;for(let i=0;i<N*N;i++)if(v[i]&&C.zoneOf[i]>maxZ)maxZ=C.zoneOf[i];let k=-1;
+ M.taverns.forEach((t,j)=>{const ti=t[1]*N+t[0];if(v[ti]||maxZ>=C.zoneOf[ti]+1)k=Math.max(k,j);});
+ const s=S.state();zoneLimit=Math.max(1,k>=0?C.zoneOf[M.taverns[k][1]*N+M.taverns[k][0]]+1:1,s?C.zoneOf[s.y*N+s.x]:1);return zoneLimit;}
+function shown(i){return C.zoneOf[i]<=zoneLimit;}
+// ---- map icons (steering 19:06): painted PNGs from modules/map-icons once installed (tools/install_map_icons.py fills MAP_ICON_FILES
+// and adds the files to sw.js), else the code-drawn ink icons below. Kinds: tavern, camp, door (unopened room), room (opened room).
+const MAP_ICON_FILES={"tavern":"art6/map/map-tavern-96.png","camp":"art6/map/map-camp-96.png","door":"art6/map/map-door-closed-96.png","room":"art6/map/map-room-open-96.png"};const iconImg={};
+Object.keys(MAP_ICON_FILES).forEach(k=>{const im=new Image();im.onload=()=>{iconImg[k]=im;if(open)req();};im.src=MAP_ICON_FILES[k];});
 function rnd(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
 function hsh(a,b){return(((a*73856093)^(b*19349663))>>>0)%1000/1000;}
 // ---- maze layer: drawn once per newly visited cell ----
@@ -20,8 +35,10 @@ function drawCell(i){if(drawn[i])return;drawn[i]=1;drawnCount++;const x=i%N,y=(i
  lc.strokeStyle="rgba(38,22,10,.92)";lc.lineCap="round";
  if(!(m&1))wall(px,py,px+L,py,y*N+x);if(!(m&4))wall(px,py+L,px+L,py+L,(y+1)*N+x);
  if(!(m&8))wall(px,py,px,py+L,100000+y*N+x);if(!(m&2))wall(px+L,py,px+L,py+L,100000+y*N+x+1);}
-function sync(){const v=C.visited;for(let i=0;i<N*N;i++)if(v[i]&&!drawn[i])drawCell(i);}
-function resetDrawn(){drawn.fill(0);drawnCount=0;lc.clearRect(0,0,lay.width,lay.height);}
+let roomCells=0;
+function sync(){calcZoneLimit();const v=C.visited;for(let i=0;i<N*N;i++)if(v[i]&&!drawn[i]&&shown(i))drawCell(i);
+ for(const [i] of roomOf)if(!drawn[i]&&shown(i)&&isFound(i)){drawCell(i);drawnCount--;roomCells++;}}
+function resetDrawn(){drawn.fill(0);drawnCount=0;roomCells=0;lc.clearRect(0,0,lay.width,lay.height);}
 // ---- parchment background (cached per screen size) ----
 let bg=null,BW=0,BH=0,dpr=1;
 function makeBg(){dpr=Math.min(2,window.devicePixelRatio||1);BW=Math.round(innerWidth*dpr);BH=Math.round(innerHeight*dpr);cv.width=BW;cv.height=BH;
@@ -44,7 +61,7 @@ function makeBg(){dpr=Math.min(2,window.devicePixelRatio||1);BW=Math.round(inner
 const view={cx:0,cy:0,z:22};const ZMIN=3,ZMAX=60,FIT_CAP=44; // FIT_CAP: biggest automatic cell size (css px)
 function center(){const s=S.state();view.cx=s.x+.5;view.cy=s.y+.5;clamp();}
 let bb={x0:0,y0:0,x1:1,y1:1};
-function bbox(){const v=C.visited;let x0=N,y0=N,x1=-1,y1=-1;for(let i=0;i<N*N;i++)if(v[i]){const x=i%N,y=(i/N)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+function bbox(){calcZoneLimit();const v=C.visited;let x0=N,y0=N,x1=-1,y1=-1;for(let i=0;i<N*N;i++)if((v[i]||(roomOf.has(i)&&isFound(i)))&&shown(i)){const x=i%N,y=(i/N)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
  if(x1<0){const s=S.state();x0=x1=s.x;y0=y1=s.y;}bb={x0,y0,x1:x1+1,y1:y1+1};return bb;}
 // free screen area for the fitted view (css px): below the title, left of the button column
 function area(){const w=innerWidth,h=innerHeight;return{l:22,t:58,r:w-70,b:h-22};}
@@ -54,49 +71,63 @@ function fit(){const b=bbox(),a=area(),m=0.8,bw=b.x1-b.x0+2*m,bh=b.y1-b.y0+2*m;
 // keep at least ~1.5 cells of the explored box on screen
 function clamp(){const hw=innerWidth/2/view.z,hh=innerHeight/2/view.z,k=Math.min(1.5,(bb.x1-bb.x0)),q=Math.min(1.5,(bb.y1-bb.y0));
  view.cx=Math.max(bb.x0+k-hw,Math.min(bb.x1-k+hw,view.cx));view.cy=Math.max(bb.y0+q-hh,Math.min(bb.y1-q+hh,view.cy));}
-function icon(k,x,y,z,sv){ctx.save();ctx.translate(x,y);const s=z/32;ctx.scale(s,s);ctx.lineJoin="round";ctx.lineCap="round";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2.2;
+function icon(k,x,y,z){ctx.save();ctx.translate(x,y);const s=z/32;ctx.scale(s,s);ctx.lineJoin="round";ctx.lineCap="round";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2.2;
  if(k==="camp"){ctx.fillStyle="#b07a3c";ctx.beginPath();ctx.moveTo(-11,9);ctx.lineTo(0,-11);ctx.lineTo(11,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="#3a2210";ctx.beginPath();ctx.moveTo(-3,9);ctx.lineTo(0,1);ctx.lineTo(3,9);ctx.fill();ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(-3,-15);ctx.moveTo(0,-11);ctx.lineTo(3,-15);ctx.stroke();}
  else if(k==="tavern"){ctx.fillStyle="#d9a441";ctx.beginPath();ctx.rect(-8,-8,13,17);ctx.fill();ctx.stroke();ctx.fillStyle="#fff6e0";ctx.beginPath();ctx.ellipse(-1.5,-9,8,3.5,0,0,6.3);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(7,1,5,-1.4,1.4);ctx.stroke();ctx.beginPath();ctx.moveTo(-4,-4);ctx.lineTo(-4,6);ctx.moveTo(1,-4);ctx.lineTo(1,6);ctx.lineWidth=1.3;ctx.stroke();}
- else if(!sv){ctx.fillStyle="#8a5426";ctx.beginPath();ctx.moveTo(-7,11);ctx.lineTo(-7,-5);ctx.quadraticCurveTo(0,-13,7,-5);ctx.lineTo(7,11);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-2.5,-7);ctx.lineTo(-2.5,11);ctx.moveTo(2.5,-7);ctx.lineTo(2.5,11);ctx.stroke();
-  // padlock = still locked
-  ctx.fillStyle="#d8b040";ctx.lineWidth=1.6;ctx.beginPath();ctx.rect(-3.5,1,7,6);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(0,1,2.6,Math.PI,0);ctx.stroke();
-  if(k==="monster"){ctx.strokeStyle="#c0141c";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-12,-12);ctx.lineTo(12,12);ctx.moveTo(12,-12);ctx.lineTo(-12,12);ctx.stroke();}
-  if(k==="treasure"){ctx.fillStyle="#e8b830";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(-9,10,3.2,0,6.3);ctx.fill();ctx.stroke();}}
- else{ // solved: open dark doorway with the door swung aside, green tick; monster X faded grey and struck through
-  ctx.fillStyle="#2b1a0e";ctx.beginPath();ctx.moveTo(-7,11);ctx.lineTo(-7,-5);ctx.quadraticCurveTo(0,-13,7,-5);ctx.lineTo(7,11);ctx.closePath();ctx.fill();
-  ctx.fillStyle="#a56a34";ctx.beginPath();ctx.moveTo(7,11);ctx.lineTo(7,-5);ctx.lineTo(12,-8);ctx.lineTo(12,13);ctx.closePath();ctx.fill();ctx.stroke();
-  if(k==="monster"){ctx.strokeStyle="rgba(90,80,70,.75)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-12,-12);ctx.lineTo(12,12);ctx.moveTo(12,-12);ctx.lineTo(-12,12);ctx.stroke();ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();}
-  ctx.strokeStyle="#fff";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(-1,7);ctx.lineTo(8,-5);ctx.stroke();ctx.strokeStyle="#1f8a2e";ctx.lineWidth=3.5;ctx.stroke();}
+
+ else if(k==="door"){ // UNOPENED DOOR: closed arched plank door in its stone frame, iron bands, ring handle, keyhole
+  ctx.fillStyle="#cdb48a";ctx.beginPath();ctx.moveTo(-12,13);ctx.lineTo(-12,-4);ctx.quadraticCurveTo(0,-17,12,-4);ctx.lineTo(12,13);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="#8a5426";ctx.beginPath();ctx.moveTo(-8,13);ctx.lineTo(-8,-3);ctx.quadraticCurveTo(0,-12,8,-3);ctx.lineTo(8,13);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-3,-8.5);ctx.lineTo(-3,13);ctx.moveTo(2.5,-8.8);ctx.lineTo(2.5,13);ctx.stroke();
+  ctx.lineWidth=2;ctx.strokeStyle="#3a2a1a";ctx.beginPath();ctx.moveTo(-8,-1);ctx.lineTo(8,-1);ctx.moveTo(-8,8);ctx.lineTo(8,8);ctx.stroke();
+  ctx.strokeStyle="#2b1a0e";ctx.fillStyle="#e0b84a";ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(4.5,3.5,2.6,0,6.3);ctx.stroke();ctx.beginPath();ctx.arc(-4.5,3.5,1.4,0,6.3);ctx.fillStyle="#1a0f07";ctx.fill();}
+ else{ // OPENED ROOM: open doorway showing a lit room floor, door swung wide, green tick
+  ctx.fillStyle="#cdb48a";ctx.beginPath();ctx.moveTo(-12,13);ctx.lineTo(-12,-4);ctx.quadraticCurveTo(0,-17,12,-4);ctx.lineTo(12,13);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="#f3df9e";ctx.beginPath();ctx.moveTo(-8,13);ctx.lineTo(-8,-3);ctx.quadraticCurveTo(0,-12,8,-3);ctx.lineTo(8,13);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.lineWidth=1;ctx.strokeStyle="rgba(43,26,14,.6)";ctx.beginPath();ctx.moveTo(-8,6);ctx.lineTo(8,6);ctx.moveTo(-8,9.5);ctx.lineTo(8,9.5);ctx.moveTo(-3,6);ctx.lineTo(-4,13);ctx.moveTo(3,6);ctx.lineTo(4,13);ctx.stroke();
+  ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2.2;ctx.fillStyle="#a56a34";ctx.beginPath();ctx.moveTo(-8,13);ctx.lineTo(-8,-3);ctx.lineTo(-15,-7);ctx.lineTo(-15,16);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle="#fff";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-3,-1);ctx.lineTo(1,3);ctx.lineTo(9,-7);ctx.stroke();ctx.strokeStyle="#1f8a2e";ctx.lineWidth=3.5;ctx.stroke();}
  ctx.restore();}
-let open=false,last={},mk={};const ft=[];
+// one entry point for every map icon: painted PNG when installed, else the code icon. size = icon box edge in device px.
+function drawMapIcon(kind,x,y,size,mark){const im=iconImg[kind];let how="code";if(im&&im.naturalWidth){ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(im,x-size/2,y-size/2,size,size);ctx.restore();how="png";}else icon(kind,x,y,size);
+ if(mark)overlay(mark,kind==="room",x,y,size);return how;}
+// room-kind marks stay in code on top of either icon: monster = red X (faded grey and struck through once opened), treasure = gold coin (until opened)
+function overlay(k,opened,x,y,z){ctx.save();ctx.translate(x,y);const s=z/32;ctx.scale(s,s);ctx.lineCap="round";ctx.lineJoin="round";
+ if(k==="monster"&&!opened){ctx.strokeStyle="#c0141c";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-12,-12);ctx.lineTo(12,12);ctx.moveTo(12,-12);ctx.lineTo(-12,12);ctx.stroke();}
+ else if(k==="monster"){ctx.strokeStyle="rgba(90,80,70,.75)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-12,-12);ctx.lineTo(12,12);ctx.moveTo(12,-12);ctx.lineTo(-12,12);ctx.stroke();ctx.strokeStyle="#2b1a0e";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();}
+ else if(k==="treasure"&&!opened){ctx.fillStyle="#e8b830";ctx.strokeStyle="#2b1a0e";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(-11,11,3.4,0,6.3);ctx.fill();ctx.stroke();}
+ ctx.restore();}
+let open=false,last={},mk={};const ft=[],hits=[];const ICON_BOX=0.95; // icon box = 0.95 x cell size
 function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(bg,0,0);
  const z=view.z*dpr,ox=BW/2-view.cx*z,oy=BH/2-view.cy*z;ctx.imageSmoothingEnabled=true;
  ctx.save();ctx.beginPath();ctx.rect(14*dpr,14*dpr,BW-28*dpr,BH-28*dpr);ctx.clip();
  ctx.drawImage(lay,ox,oy,N*z,N*z);
- const v=C.visited,cnt={cells:drawnCount,camp:0,door:0,monster:0,tavern:0,dots:0,solved:0,locked:0};
+ const v=C.visited,cnt={cells:drawnCount,camp:0,door:0,monster:0,tavern:0,dots:0,solved:0,locked:0,blank:0,png:0};hits.length=0;
  // trail dots (in walking order; the last entry is where you stand, marked by the arrow)
  const tr=C.trail();ctx.fillStyle="rgba(150,30,20,.85)";const rr=Math.max(1.2,z*.07);
- for(let k=0;k<tr.length-1;k++){const i=tr[k],j=hsh(i,k);const x=ox+(i%N+.5+(j-.5)*.3)*z,y=oy+(((i/N)|0)+.5+(hsh(k,i)-.5)*.3)*z;ctx.beginPath();ctx.arc(x,y,rr,0,6.3);ctx.fill();cnt.dots++;}
- for(const [i,k] of kind){if(!v[i])continue;const rid=roomOf.has(i)?roomOf.get(i):-1,sv=rid>=0&&!!C.solvedR[rid];if(rid>=0){if(sv)cnt.solved++;else cnt.locked++;}const x=ox+(i%N+.5)*z,y=oy+(((i/N)|0)+.5)*z;
+ for(let k=0;k<tr.length-1;k++){const i=tr[k],j=hsh(i,k);if(!shown(i))continue;const x=ox+(i%N+.5+(j-.5)*.3)*z,y=oy+(((i/N)|0)+.5+(hsh(k,i)-.5)*.3)*z;ctx.beginPath();ctx.arc(x,y,rr,0,6.3);ctx.fill();cnt.dots++;}
+ for(const [i,k] of kind){if(!shown(i)||!isFound(i))continue;const rid=roomOf.has(i)?roomOf.get(i):-1,sv=rid>=0&&!!C.solvedR[rid];if(rid>=0){if(sv)cnt.solved++;else cnt.locked++;if(!drawn[i])cnt.blank++;}const x=ox+(i%N+.5)*z,y=oy+(((i/N)|0)+.5)*z;
+  const ik=rid>=0?(sv?"room":"door"):k;
+  if(k==="camp"||k==="tavern")hits.push({kind:k,i,x:x/dpr,y:y/dpr,r:Math.max(22,z*0.5/dpr)});
   if(x<-z||y<-z||x>BW+z||y>BH+z){cnt[k==="camp"||k==="tavern"?k:"door"]++;if(k==="monster")cnt.monster++;continue;}
-  icon(k,x,y,z*0.95,sv);if(k==="camp")cnt.camp++;else if(k==="tavern")cnt.tavern++;else{cnt.door++;if(k==="monster")cnt.monster++;}}
+  if(drawMapIcon(ik,x,y,z*ICON_BOX,rid>=0?k:null)==="png")cnt.png++;if(k==="camp")cnt.camp++;else if(k==="tavern")cnt.tavern++;else{cnt.door++;if(k==="monster")cnt.monster++;}}
  const s=S.state(),pcx=ox+(s.x+.5)*z,pcy=oy+(s.y+.5)*z,pul=0.5+0.5*Math.sin(performance.now()*0.006);
- const ir=z*0.95*0.45,R0=Math.max(8*dpr,z*0.62),aa=Math.max(9*dpr,z*0.34); // icon radius, ring radius, arrow half-length
+ const ir=z*ICON_BOX*0.45,R0=Math.max(8*dpr,z*0.62),aa=8*dpr; // icon radius, ring radius, arrow half-length (tip to base = 1.75*aa = 14 css px)
+ const D0=C.DIRS[s.f],here=s.y*N+s.x,ahead=(s.y+D0[1])*N+s.x+D0[0],onIcon=(kind.has(here)&&isFound(here)&&shown(here))||(ahead>=0&&ahead<N*N&&kind.has(ahead)&&isFound(ahead)&&shown(ahead)&&(C.mask[here]&C.BIT[s.f])),aAlpha=onIcon?0.7:1;
  ctx.save();ctx.lineWidth=Math.max(3*dpr,z*.1);ctx.strokeStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.arc(pcx,pcy,R0+ctx.lineWidth*.5,0,6.3);ctx.stroke();
  ctx.strokeStyle=`rgba(20,70,220,${0.75+0.25*pul})`;ctx.lineWidth=Math.max(2.5*dpr,z*.08);ctx.beginPath();ctx.arc(pcx,pcy,R0+ctx.lineWidth*.5+(1+pul*2)*dpr,0,6.3);ctx.stroke();
  const dd=R0+aa+4*dpr,D=C.DIRS[s.f],ax=pcx+D[0]*dd,ay=pcy+D[1]*dd;ctx.translate(ax,ay);ctx.rotate(s.f*Math.PI/2);
- ctx.fillStyle="#1f4fd8";ctx.strokeStyle="#fff";ctx.lineWidth=2.5*dpr;ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(0,-aa);ctx.lineTo(aa*.8,aa*.75);ctx.lineTo(0,aa*.35);ctx.lineTo(-aa*.8,aa*.75);ctx.closePath();ctx.stroke();ctx.fill();
+ ctx.globalAlpha=aAlpha;ctx.fillStyle="#1f4fd8";ctx.strokeStyle="rgba(255,250,235,.9)";ctx.lineWidth=1.5*dpr;ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(0,-aa);ctx.lineTo(aa*.8,aa*.75);ctx.lineTo(0,aa*.35);ctx.lineTo(-aa*.8,aa*.75);ctx.closePath();ctx.stroke();ctx.fill();
  ctx.strokeStyle="#0c1a40";ctx.lineWidth=1*dpr;ctx.stroke();ctx.restore();
- mk={px:pcx/dpr,py:pcy/dpr,ax:ax/dpr,ay:ay/dpr,ar:aa/dpr,rr:R0/dpr,ir:ir/dpr};
+ mk={px:pcx/dpr,py:pcy/dpr,ax:ax/dpr,ay:ay/dpr,ar:aa/dpr,rr:R0/dpr,ir:ir/dpr,alpha:aAlpha,onIcon:!!onIcon};
  ctx.restore();
  // title + north mark
  ctx.fillStyle="#2b1a0e";ctx.font=`italic 700 ${26*dpr}px Georgia,serif`;ctx.textAlign="center";ctx.fillText("Map",BW/2,40*dpr);
  ctx.font=`700 ${14*dpr}px Georgia,serif`;ctx.fillText("N",30*dpr,BH-62*dpr);ctx.beginPath();ctx.moveTo(30*dpr,BH-56*dpr);ctx.lineTo(24*dpr,BH-28*dpr);ctx.lineTo(30*dpr,BH-34*dpr);ctx.lineTo(36*dpr,BH-28*dpr);ctx.closePath();ctx.fill();
- Object.assign(el.dataset,{cells:cnt.cells,tents:cnt.camp,doors:cnt.door,xs:cnt.monster,taverns:cnt.tavern,dots:cnt.dots,solved:cnt.solved,locked:cnt.locked,arrow:s.f,cx:view.cx.toFixed(2),cy:view.cy.toFixed(2),z:view.z});
+ Object.assign(el.dataset,{roomcells:roomCells,blank:cnt.blank,zonelimit:zoneLimit,iconpng:cnt.png,iconbox:(z*ICON_BOX/dpr).toFixed(1),cells:cnt.cells,tents:cnt.camp,doors:cnt.door,xs:cnt.monster,taverns:cnt.tavern,dots:cnt.dots,solved:cnt.solved,locked:cnt.locked,arrow:s.f,cx:view.cx.toFixed(2),cy:view.cy.toFixed(2),z:view.z});
  ft.push(performance.now()-t0);if(ft.length>240)ft.shift();}
 let pend=false;function req(){if(!pend){pend=true;requestAnimationFrame(()=>{pend=false;draw();});}}
-function setOpen(o){open=o;el.classList.toggle("open",o);if(o){if(!bg||BW!==Math.round(innerWidth*dpr))makeBg();bbox();fit();draw();pulse();}}
+function setOpen(o){const was=open;open=o;if(!o)closeAsk();el.classList.toggle("open",o);if(was&&!o&&S.rpg&&S.rpg.s5&&S.rpg.s5.updHere)try{S.rpg.s5.updHere();}catch(e){}if(o){if(!bg||BW!==Math.round(innerWidth*dpr))makeBg();bbox();fit();draw();pulse();}}
 function pulse(){if(!open)return;draw();setTimeout(()=>requestAnimationFrame(pulse),80);}
 const tap=(id,f)=>{const b=document.getElementById(id);b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();f();});b.addEventListener("contextmenu",e=>e.preventDefault());};
 tap("mapb",()=>setOpen(true));tap("mclose",()=>setOpen(false));
@@ -110,8 +141,48 @@ cv.addEventListener("pointermove",e=>{const p=pts.get(e.pointerId);if(!p)return;
  if(pts.size===2){const [a,b]=[...pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)view.z=Math.min(ZMAX,Math.max(ZMIN,view.z*d/pinch));pinch=d;}
  clamp();req();});
 const up=e=>{pts.delete(e.pointerId);pinch=0;};cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+// ---- tap travel (t2516u/t2528u): tap a FOUND tavern or camp icon -> "Travel to ...?" -> you walk there along cells you already know.
+// The walk is written into the saved trail (so save/load stays valid and nothing new is revealed); you land on a walkable, visited cell
+// next to the spot, facing it. Unfound spots have no icon and cannot be picked (travelTarget refuses them too).
+let tapStart=null;
+cv.addEventListener("pointerdown",e=>{tapStart=pts.size===1?{id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),moved:false}:null;});
+cv.addEventListener("pointermove",e=>{if(tapStart&&e.pointerId===tapStart.id&&Math.hypot(e.clientX-tapStart.x,e.clientY-tapStart.y)>10)tapStart.moved=true;if(pts.size>1)tapStart=null;},true);
+cv.addEventListener("pointerup",e=>{const t=tapStart;tapStart=null;if(!t||t.id!==e.pointerId||t.moved||performance.now()-t.t>700)return;const h=hitAt(e.clientX,e.clientY);if(h)askTravel(h.kind,h.idx);});
+function hitAt(cx,cy){let best=null,bd=1e9;for(const h of hits){const d=Math.hypot(h.x-cx,h.y-cy);if(d<=h.r&&d<bd){bd=d;best=h;}}
+ if(!best)return null;const list=best.kind==="tavern"?M.taverns:M.camps;return{kind:best.kind,idx:list.findIndex(c=>c[1]*N+c[0]===best.i)};}
+function spotName(kind,idx){return (kind==="tavern"?"Tavern ":"Camp ")+(idx+1);}
+// where travel to a spot would put you: {x,y,f,path:[dirs]} or null (unfound, hidden, closed zone, or no known way there)
+function travelTarget(kind,idx){const list=kind==="tavern"?M.taverns:kind==="camp"?M.camps:null;if(!list||!list[idx])return null;const c=list[idx],ti=c[1]*N+c[0];
+ calcZoneLimit();if(!isFound(ti)||!shown(ti))return null;const v=C.visited,cap=S.contentCap,s=S.state(),start=s.y*N+s.x;
+ const ends=new Map();DXY.forEach((d,k)=>{if(!(C.mask[ti]&d[2]))return;const nx=c[0]+d[0],ny=c[1]+d[1];if(nx<0||ny<0||nx>=N||ny>=N)return;const ni=ny*N+nx;
+  if(v[ni]&&shown(ni)&&S.roomAt(nx,ny)<0&&(!cap||cap.isOpen(nx,ny)))ends.set(ni,(k+2)%4);}); // face back toward the spot
+ if(!ends.size)return null;
+ const prev=new Int32Array(N*N).fill(-2),pd=new Int8Array(N*N);prev[start]=-1;const q=[start];let hit=-1;
+ for(let h=0;h<q.length;h++){const i=q[h];if(ends.has(i)){hit=i;break;}const x=i%N,y=(i/N)|0;
+  for(let k=0;k<4;k++){if(!(C.mask[i]&DXY[k][2]))continue;const nx=x+DXY[k][0],ny=y+DXY[k][1],ni=ny*N+nx;if(nx<0||ny<0||nx>=N||ny>=N||prev[ni]!==-2||!v[ni]||!shown(ni)||S.roomAt(nx,ny)>=0)continue;prev[ni]=i;pd[ni]=k;q.push(ni);}}
+ if(hit<0)return null;const path=[];for(let i=hit;prev[i]>=0;i=prev[i])path.push(pd[i]);path.reverse();return{x:hit%N,y:(hit/N)|0,f:ends.get(hit),path};}
+function busy(){return !!((S.uiOpen&&S.uiOpen())||(S.panelOpen&&S.panelOpen())||(S.storyOpen&&S.storyOpen())||(S.puzzleOpen&&S.puzzleOpen())||(S.rpg&&S.rpg.inFight&&S.rpg.inFight()));}
+function travel(kind,idx){if(busy())return{ok:false,why:"busy"};const t=travelTarget(kind,idx);if(!t)return{ok:false,why:"unfound"};
+ const snap=S.mazeSnap();let m=snap.t.m+t.path.join(""),s0=snap.t.s;const CAP=4000;
+ if(m.length>CAP){const cut=m.length-CAP;let x=s0%N,y=(s0/N)|0;for(let k=0;k<cut;k++){const d=+m[k];x+=C.DIRS[d][0];y+=C.DIRS[d][1];}s0=y*N+x;m=m.slice(cut);}
+ snap.t={s:s0,m};snap.x=t.x;snap.y=t.y;snap.f=t.f;S.applyMaze(snap);
+ const p=S.state();if(p.x!==t.x||p.y!==t.y)return{ok:false,why:"rejected"};
+ if(S.rpg&&S.rpg.s5&&S.rpg.s5.updHere)try{S.rpg.s5.updHere();}catch(e){}
+ bbox();fit();req();return{ok:true,x:t.x,y:t.y,f:t.f,steps:t.path.length};}
+let ask=null;
+function closeAsk(){if(ask){ask.remove();ask=null;}el.dataset.ask="";}
+function askTravel(kind,idx){closeAsk();if(idx<0)return;const t=travelTarget(kind,idx),name=spotName(kind,idx);
+ const d=document.createElement("div");d.id="mtravel";d.setAttribute("role","dialog");d.setAttribute("aria-label","Travel to "+name);
+ d.style.cssText="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(300px,80vw);background:#e3cf9f;border:3px solid #2b1a0e;border-radius:14px 10px 16px 9px;box-shadow:0 6px 18px rgba(0,0,0,.45);padding:14px 14px 12px;font:700 18px Georgia,serif;color:#2b1a0e;text-align:center;z-index:5";
+ const msg=document.createElement("div");msg.textContent=t?(busy()?"Not now.":"Travel to "+name+"?"):"You can't get to "+name+" from here.";d.appendChild(msg);
+ const row=document.createElement("div");row.style.cssText="display:flex;gap:10px;justify-content:center;margin-top:12px";
+ const mk2=(id,txt)=>{const b=document.createElement("button");b.id=id;b.className="ink";b.textContent=txt;b.style.cssText="min-width:96px;height:48px;font:700 17px Georgia,serif;border-radius:12px 9px 13px 8px";row.appendChild(b);return b;};
+ if(t&&!busy()){const go=mk2("mtgo","Travel");go.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();const r=travel(kind,idx);closeAsk();if(r.ok)setOpen(false);});}
+ const no=mk2("mtno",t&&!busy()?"Cancel":"OK");no.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();closeAsk();});
+ d.appendChild(row);d.addEventListener("pointerdown",e=>e.stopPropagation());el.appendChild(d);ask=d;el.dataset.ask=kind+":"+idx;}
 window.addEventListener("resize",()=>{if(open){makeBg();req();}else bg=null;});
 window.addEventListener("keydown",e=>{if(e.key==="m"||e.key==="M"||(open&&e.key==="Escape")){e.preventDefault();setOpen(!open);}});
 S.mapOpen=()=>open;S.onStep=()=>{if(open)req();};S.resetMapLayer=resetDrawn;
-S.map={resetDrawn,marker:()=>Object.assign({},mk),bboxScreen:()=>{const b=bbox(),z=view.z,ox=innerWidth/2-view.cx*z,oy=innerHeight/2-view.cy*z;return{l:ox+b.x0*z,t:oy+b.y0*z,r:ox+b.x1*z,b:oy+b.y1*z,z,cap:FIT_CAP};},area,open:()=>setOpen(true),close:()=>setOpen(false),view:()=>Object.assign({},view),pan:(dx,dy)=>{view.cx+=dx;view.cy+=dy;clamp();draw();},drawOnce:()=>{const t=performance.now();draw();return performance.now()-t;},frameTimes:()=>ft.slice()};
+S.map={resetDrawn,marker:()=>Object.assign({},mk),bboxScreen:()=>{const b=bbox(),z=view.z,ox=innerWidth/2-view.cx*z,oy=innerHeight/2-view.cy*z;return{l:ox+b.x0*z,t:oy+b.y0*z,r:ox+b.x1*z,b:oy+b.y1*z,z,cap:FIT_CAP};},area,open:()=>setOpen(true),close:()=>setOpen(false),view:()=>Object.assign({},view),pan:(dx,dy)=>{view.cx+=dx;view.cy+=dy;clamp();draw();},drawOnce:()=>{const t=performance.now();draw();return performance.now()-t;},frameTimes:()=>ft.slice(),
+ drawMapIcon,iconFiles:()=>Object.assign({},MAP_ICON_FILES),zoneLimit:()=>calcZoneLimit(),isFound:(x,y)=>isFound(y*N+x),hits:()=>hits.map(h=>Object.assign({},h)),travelTarget,travel,askTravel,tapAt:(x,y)=>{const h=hitAt(x,y);if(h)askTravel(h.kind,h.idx);return h;}};
 })();

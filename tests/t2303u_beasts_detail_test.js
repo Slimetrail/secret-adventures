@@ -101,7 +101,7 @@ test("source keeps the journal open and does not rewrite sketch files",()=>{
  a.doesNotMatch(intro,/Back to Beasts/);
  a.doesNotMatch(intro.slice(intro.indexOf('t==="beasts"'),intro.indexOf('t==="recipes"')),/closeJournal\(\)/);
  const changed=execFileSync("git",["ls-files","--others","--exclude-standard"],{cwd:root,encoding:"utf8"})+execFileSync("git",["diff","--name-only","HEAD"],{cwd:root,encoding:"utf8"});
- a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/journal\/monsters\/z3-[a-z]+\.webp$/.test(n)/* t2404u */||/^art-intro\/brand\//.test(n)/* t2386u */||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u */||/^art6\/seam\/[a-z0-9-]+\.png$/.test(n)/* t2528u seam archway + Safe post */),"Only approved journal book art may change");
+ a.ok(changed.split("\n").filter(n=>/\.(png|webp|jpe?g|svg|gif)$/.test(n)).every(n=>/^art-intro\/journal\/book-(?:open-)?zone[1-5]\.webp$/.test(n)||/^art-intro\/journal\/monsters\/z3-[a-z]+\.webp$/.test(n)/* t2404u */||/^art-intro\/brand\//.test(n)/* t2386u */||/^art-intro\/(?:cave\/title|menu\/title-wall)\.webp$/.test(n)/* t2364u */||/^art6\/seam\/[a-z0-9-]+\.png$/.test(n)/* t2528u seam archway + Safe post */||/^art6\/map\/[a-z0-9-]+\.png$/.test(n)/* t2512u map door/room/camp/tavern icons */),"Only approved journal book art may change");
  const html=read("index.html"),sw=read("sw.js");
  a.match(sw,/^const VER="70",CACHE="sota-s1-v"\+VER/);
  for(const src of [html,sw]){a.ok(src.includes("intro.js?v=14"));a.ok(!src.includes("intro.js?v=13"));}
