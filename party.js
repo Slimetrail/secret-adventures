@@ -57,8 +57,8 @@ const REMIND_MS=6000;function remind(t){clearTimeout(remind.h);if(!t)return;cons
  const wait=()=>{let clear=0;const look=()=>{if(open())clear=0;else if(++clear>=2){show();return;}remind.h=setTimeout(look,150);};remind.h=setTimeout(look,150);};
  if(open())wait();else{show();remind.h=setTimeout(()=>{if(open())wait();},120);}}
 // ---------- screens ----------
-const ov=$("s4");function openUI(kind){ui=kind;document.documentElement.classList.add("s4open");ov.className="open "+kind;ov.dataset.kind=kind;document.documentElement.classList.remove("s5shop-open");closeBranch();}
-function closeUI(){campVisit=null;ui=null;document.documentElement.classList.remove("s5shop-open");document.documentElement.classList.remove("s4open");ov.className="";ov.dataset.kind="";ov.dataset.result="";ov.innerHTML="";closeBranch();updBtn();}
+const ov=$("s4");function openUI(kind){if(!/^(party|equip|stats|move-items|cookbook|skill)$/.test(kind))lockStats();ui=kind;document.documentElement.classList.add("s4open");ov.className="open "+kind;ov.dataset.kind=kind;document.documentElement.classList.remove("s5shop-open");closeBranch();}
+function closeUI(){lockStats();campVisit=null;ui=null;document.documentElement.classList.remove("s5shop-open");document.documentElement.classList.remove("s4open");ov.className="";ov.dataset.kind="";ov.dataset.result="";ov.innerHTML="";closeBranch();updBtn();}
 S.uiOpen=()=>!!ui;
 function head(title,back){const h=el("div","s4head");h.appendChild(el("div","s4title",title));if(back)h.appendChild(tapBtn("Back",back,"s4back"));return h;}
 // typing in a stage 4 screen must never reach the walk/map keys (w a s d m and arrows were eaten before = fix round 1)
@@ -212,11 +212,22 @@ function partyScreen(){const w=page("party");w.appendChild(head("Party",closeUI)
   gearText(c).forEach(x=>info.appendChild(el("div","s4gear",x)));
   const flags=[];if(R.pointsEarned(c.lvl)-c.spent>0)flags.push("stat points");if(c.skills.length<R.skillSlots(c.lvl))flags.push("new skill");if(flags.length)info.appendChild(el("div","s4sub glowt",flags.join(" · ")+" ready"));
   card.appendChild(info);card.addEventListener("click",e=>{e.preventDefault();charScreen(i);});g.appendChild(card);});w.appendChild(g);w.appendChild(el("div","s4note dim","Tap a character to open the character sheet."));const cg=tapBtn("Cooking guide",()=>cookbook(partyScreen),"small");cg.dataset.guide="1";w.appendChild(cg);}
-function statScreen(i){const c=live.party[i];const w=page("stats");w.appendChild(head(c.name+" - stats",()=>charScreen(i)));
+// t2615u: minus on the level-up stat screen, same look as character creation. Floors are the stats when this session began.
+// Points lock when the skills page shows, the character menu closes (any closeUI path), or openUI opens a page outside the character menu (party/equip/stats/move-items/cookbook/skill). After that there is no minus. Back from the sheet to the party list does not lock.
+let statSess=new Map();
+function beginStatSess(c){if(!statSess.has(c))statSess.set(c,{str:c.stats.str,sta:c.stats.sta,con:c.stats.con,man:c.stats.man});}
+function lockStats(){statSess=new Map();}
+function applyStatVitals(c,mh,mm){if(c.hp>0){c.hp+=R.maxHp(c,hpMul())-mh;if(c.hp<1)c.hp=1;}c.mp+=R.maxMp(c)-mm;if(c.mp<0)c.mp=0;capVitals(c);}
+function statScreen(i){const c=live.party[i];beginStatSess(c);const floor=statSess.get(c);const w=page("stats");w.appendChild(head(c.name+" - stats",()=>charScreen(i)));
  w.appendChild(el("div","s4lab","Points left: "+(R.pointsEarned(c.lvl)-c.spent)));
- for(const k of["str","sta","con","man"]){const row=el("div","s4stat");row.appendChild(el("span","s4sn",{str:"Strength",sta:"Stamina",con:"Constitution",man:"Mana"}[k]));row.appendChild(el("span",""));row.appendChild(el("span","s4sv",String(c.stats[k])));
-  const pl=tapBtn("+",()=>{const mh=R.maxHp(c,hpMul()),mm=R.maxMp(c);if(R.raise(c,k)){if(c.hp>0)c.hp+=R.maxHp(c,hpMul())-mh;c.mp+=R.maxMp(c)-mm;}statScreen(i);},"s4pm");pl.dataset.raise=k;row.appendChild(pl);row.appendChild(el("span","s4cost","costs "+R.cost(c.stats[k])));w.appendChild(row);}}
-function skillScreen(i){const c=live.party[i];const w=page("skill");w.appendChild(head(c.name+" - new skill",()=>charScreen(i)));
+ const SN={str:"Strength",sta:"Stamina",con:"Constitution",man:"Mana"};
+ for(const k of["str","sta","con","man"]){const row=el("div","s4stat");row.appendChild(el("span","s4sn",SN[k]));
+  const canDown=c.stats[k]>floor[k],minus=tapBtn("-",()=>{const mh=R.maxHp(c,hpMul()),mm=R.maxMp(c);if(R.lower(c,k,floor[k]))applyStatVitals(c,mh,mm);statScreen(i);},"s4pm"+(canDown?"":" off"));minus.dataset.dec=k;row.appendChild(minus);
+  row.appendChild(el("span","s4sv",String(c.stats[k])));
+  const blocked=c.race==="dwarf"&&k==="man",need=R.cost(c.stats[k]),left=R.pointsEarned(c.lvl)-c.spent,canUp=!blocked&&left>=need;
+  const pl=tapBtn("+",()=>{const mh=R.maxHp(c,hpMul()),mm=R.maxMp(c);if(R.raise(c,k))applyStatVitals(c,mh,mm);statScreen(i);},"s4pm"+(canUp?"":" off"));pl.dataset.raise=k;row.appendChild(pl);
+  row.appendChild(el("span","s4cost","costs "+need));w.appendChild(row);}}
+function skillScreen(i){lockStats();const c=live.party[i];const w=page("skill");w.appendChild(head(c.name+" - new skill",()=>charScreen(i)));
  R.SKILLS[c.cls].filter(s=>!c.skills.includes(s.id)).forEach(s=>{const b=tapBtn(s.n+"  ("+s.mp+" MP)",()=>{R.learn(c,s.id);charScreen(i);},"wide");b.dataset.lskill=s.id;w.appendChild(b);});}
 // ---- character sheet: figure with square slots, stats, backpack boxes. Tap item then slot, or slot then item ----
 const SLN={weapon:"Weapon",offhand:"Off-hand",helmet:"Helmet",chest:"Chest",gloves:"Gloves",boots:"Boots",acc1:"Ring",acc2:"Ring"};
@@ -249,7 +260,7 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
  doll.appendChild(L);doll.appendChild(figure(c));doll.appendChild(Rr);colA.appendChild(doll);
  const st=el("div","s4status");[["HP",c.hp+"/"+sl.hp],["MP",c.mp+"/"+R.maxMp(c)],["Level",c.lvl],["XP next",c.lvl>=R.CAP?"max":R.xpNeed(c.lvl)-c.xp],["STR",c.stats.str],["STA",c.stats.sta],["CON",R.conOf(c)],["MAN",c.stats.man],["CRIT",R.critChance(c)?Math.round(R.critChance(c)*100)+"%":"none"],["ATK",sl.atk],["MAG",sl.mag],["DEF",sl.def],["Armor",["","light","medium","any"][R.armorCap(c)]],["Race",R.RACES[c.race].name]].forEach(([k,v])=>{const r=el("div","s4st");r.appendChild(el("span","s4k",k));r.appendChild(el("span","s4v",String(v)));st.appendChild(r);});
  colA.appendChild(st);
- const acts=el("div","s4row");const pts=R.pointsEarned(c.lvl)-c.spent;if(pts>0){const b=tapBtn("Spend "+pts+" points",()=>statScreen(i),"small");b.dataset.stats=i;acts.appendChild(b);}
+ const acts=el("div","s4row");const pts=R.pointsEarned(c.lvl)-c.spent;const fl=statSess.get(c);const above=!!fl&&["str","sta","con","man"].some(k=>c.stats[k]>fl[k]);if(pts>0||above){const b=tapBtn(pts>0?"Spend "+pts+" points":"Change points",()=>statScreen(i),"small");b.dataset.stats=i;acts.appendChild(b);}
  if(c.skills.length<R.skillSlots(c.lvl)){const b=tapBtn("Learn skill",()=>skillScreen(i),"small");b.dataset.learn=i;acts.appendChild(b);}
  if(c.poison&&c.poison.f>0){const pz=el("div","s4sub","Weapon poisoned: +"+Math.round(c.poison.b*100)+"% damage, "+c.poison.f+" fight"+(c.poison.f>1?"s":"")+" left");pz.dataset.poisoned=c.poison.f;colA.appendChild(pz);}
  colA.appendChild(el("div","s4sub","Skills: "+c.skills.map(id=>R.SKILLS[c.cls].find(s=>s.id===id).n).join(", ")));if(acts.children.length)colA.appendChild(acts);
@@ -800,7 +811,7 @@ html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-b
 @media(max-width:480px){.s5shop .s4head{font-size:14px}.s5camp>.s4note{margin-right:166px}.s5hubnav{gap:6px}}
 `;document.head.appendChild(sceneCSS);
 // test and debug hooks (no network, no secrets)
-S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=spr(heroKey(c)),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};

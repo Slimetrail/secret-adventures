@@ -43,6 +43,8 @@ function newChar(name,race,cls,alloc,skill){
  const c={name:String(name||"Hero").slice(0,14),race,cls,lvl:1,xp:0,stats:s,spent,skills:[skill],equip:{weapon:null,offhand:null,helmet:null,chest:null,gloves:null,boots:null,acc1:null,acc2:null},bag:[]};
  c.hp=maxHp(c,1);c.mp=maxMp(c);return c;}
 function raise(c,k){const v=c.stats[k],p=cost(v);if(c.race==="dwarf"&&k==="man")return false;if(pointsEarned(c.lvl)-c.spent<p)return false;c.stats[k]++;c.spent+=p;return true;}
+// t2615u: take back one point added in this session; min is the stat value when the session began (never below that).
+function lower(c,k,min){const v=c.stats[k];if(v<=min)return false;if(c.race==="dwarf"&&k==="man")return false;const p=cost(v-1);c.stats[k]--;c.spent-=p;if(c.spent<0)c.spent=0;return true;}
 function gearSum(c,key){let t=0;for(const s in c.equip){const it=c.equip[s]&&ITEMS[c.equip[s]];if(it&&it[key])t+=it[key];}return t;}
 // t2360u: CON (constitution) now drives HP and defense; STA is the rogue/archer attack stat and gives them crits.
 // Old saves have no CON: they get CON = their old STA for free, so max HP and defense stay the same.
@@ -571,7 +573,7 @@ function planParty(hero,seed){const races=COMPANIONS.map(d=>companionRace(d,hero
 function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-1];return nx&&nx.tavern===tIdx?nx:null;}
 function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);c.stats.con=Math.max(c.stats.con,c.stats.sta);/* t2360u: free CON = STA keeps companion HP/DEF as before */while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
-const RPG={poisonOf,useEffect,clampPoints,migrateStats,conOf,critChance,CRIT_MUL,CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
+const RPG={poisonOf,useEffect,clampPoints,migrateStats,conOf,critChance,CRIT_MUL,CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,lower,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
  ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);

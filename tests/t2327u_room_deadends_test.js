@@ -133,10 +133,10 @@ test('t2370u zone 3: with every room and door cell impassable, all zone 3 hallwa
 test('maze cache pins advance together without changing combat pins',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/^const VER="86",/); // t2404u combined release: live 79, zone3-work was 80, logo-work 80
+ assert.match(sw,/^const VER="94",/); // t2615u level-up minus off live 86
  for(const source of [html,sw]){
   assert.ok(source.includes('maze-data.js?v=17'));assert.ok(!source.includes('maze-data.js?v=16'));
-  assert.ok(source.includes("rules.js?v=21"));assert.ok(source.includes("party.js?v=32"));
+  assert.ok(source.includes("rules.js?v=22"));assert.ok(source.includes("party.js?v=34"));
  }
 });
 console.log(`${passed} passed; 0 failed`);
