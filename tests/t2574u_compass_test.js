@@ -2,13 +2,13 @@
 const test=require('node:test'),a=require('node:assert'),fs=require('fs');
 const read=f=>fs.readFileSync(f,'utf8');
 const WAIT='Please wait for update to continue.';
-test('t2574u pins: VER 97, game.js?v=25, compass art in the shell, wait wording unchanged',()=>{
+test('t2574u pins: VER 97, game.js?v=26, compass art in the shell, wait wording unchanged',()=>{
  const h=read('index.html'),s=read('sw.js'),g=read('game.js');
- a.match(s,/^const VER="105",/);
- for(const p of ['game.js?v=25','art6/hud/compass-rose-48.png','art6/hud/compass-rose-144.png']){
+ a.match(s,/^const VER="106",/);
+ for(const p of ['game.js?v=26','art6/hud/compass-rose-48.png','art6/hud/compass-rose-144.png']){
   a.ok(s.includes('"'+p+'"')||s.includes(p), 'sw missing '+p);
  }
- a.ok(h.includes('game.js?v=25'));
+ a.ok(h.includes('game.js?v=26'));
  a.ok(h.includes('id="cmp"'));
  a.ok(h.includes('aria-label="Compass. Tap to show or hide location info"'));
  a.ok(!h.includes('>i</button>'),'old i label still in the button');

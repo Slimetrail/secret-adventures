@@ -42,6 +42,11 @@ Object.assign(I,{ration:{n:"Ration",slot:"use",w:0.4,heal:0.15,camp:true,v:2},lo
 // ---- prices ----
 const PRICE={ration:4,potion:20,ether:25,salts:30,lockpick:15,rope:10,tent:100,w_sword:40,w_dagger:20,w_bow:35,w_staff:35,w_leather:35,w_helm:40,w_buckler:25,p_silk:30,p_hide:40,p_shard:15};
 for(const k in ING)PRICE["i_"+k]=TIERP[ING[k][1]]||0;
+// t2759u special class gear (gear.js): slot "gear", hero-only, used up on use. The buy price depends on the zone (SOTA_GEAR.price);
+// PRICE here is only the zone 1 price, so it sells for half of that anywhere (no buy-low, sell-high loop between zones).
+const GEAR=(typeof window!=="undefined"&&window.SOTA_GEAR)||null;
+if(GEAR)GEAR.IDS.forEach(id=>{const g=GEAR.ITEMS[id];I[id]={n:g.n,slot:"gear",w:g.w,v:Math.floor(GEAR.price(1)/2),special:true,cls:g.cls,stat:g.stat};PRICE[id]=GEAR.price(1);});
+function gearPrice(id,zone){return GEAR&&GEAR.ITEMS[id]?GEAR.price(zone):price(id);}
 function price(id){return PRICE[id]||0;}
 function sellPrice(id){const it=I[id];if(!it)return 0;if(it.tent||it.slot==="junk"||it.slot==="part"||it.slot==="dish"||it.slot==="ing")return it.v||0;return Math.max(1,Math.floor((PRICE[id]||it.v||(it.atk||it.def||it.mag?16:2))/2));}
 // ---- tavern shops (index 0-3 = Tavern 1-4). Taverns 3 and 4 also sell tent parts ----
@@ -123,5 +128,5 @@ function drops(zone,seed){const r=R.rng((seed^0x2c1b3c6d)>>>0),out=[];const pz=O
 // ---- bulk: body parts are light alone, but more than 5 parts gets heavy, 10 is very heavy ----
 function partBulk(n){return Math.max(0,n-5)*0.6+Math.max(0,n-9)*1.2;}
 function stacks(bag){const m=new Map();bag.forEach(id=>m.set(id,(m.get(id)||0)+1));return [...m].map(([id,n])=>({id,n}));}
-window.ECON={ING,DISHES,TIERN,RECIPE_PRICE,SPOIL_STEPS,fxText,cook,PARTS,FOOD,PRICE,price,sellPrice,KEEPERS,stock,recipesFor,TENT,payFee,drops,partBulk,stacks,CRAFTS,CRAFT_BOXES,STRENGTH,firstZone,craftZone,craftSize,useScore,useText,craftMatch,craftFail,countOf,needList,mixKey,FAILS,FAIL_ITEM,FAIL_STINK_STEPS,POISON_FIGHTS,POISON_BONUS,BAD_HP,BAD_MP,BAD_STA,BAD_STA_FIGHTS,badText,PIX,pixelArt,dish:id=>DISHES.find(d=>d.id===id)};
+window.ECON={gearPrice,GEAR,ING,DISHES,TIERN,RECIPE_PRICE,SPOIL_STEPS,fxText,cook,PARTS,FOOD,PRICE,price,sellPrice,KEEPERS,stock,recipesFor,TENT,payFee,drops,partBulk,stacks,CRAFTS,CRAFT_BOXES,STRENGTH,firstZone,craftZone,craftSize,useScore,useText,craftMatch,craftFail,countOf,needList,mixKey,FAILS,FAIL_ITEM,FAIL_STINK_STEPS,POISON_FIGHTS,POISON_BONUS,BAD_HP,BAD_MP,BAD_STA,BAD_STA_FIGHTS,badText,PIX,pixelArt,dish:id=>DISHES.find(d=>d.id===id)};
 })();

@@ -14,7 +14,10 @@ let cur=null,openFlag=false;const kept=new Map(),gens=new Map();const ft=[];
  for(let k=0;k<220;k++){const x=r()*512,y=r()*512,s=4+r()*46,gr=g.createRadialGradient(x,y,0,x,y,s);gr.addColorStop(0,r()<.5?"rgba(140,95,40,.08)":"rgba(255,245,215,.12)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-s,y-s,2*s,2*s);}
  for(let k=0;k<500;k++){g.fillStyle=`rgba(90,60,25,${r()*.07})`;g.fillRect(r()*512,r()*512,1+r()*24,.8);}
  el.style.backgroundImage=`radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 55%,rgba(80,45,15,.55) 100%),url(${c.toDataURL()})`;})();
-function gen(id){if(!gens.has(id))gens.set(id,P.forRoom(M.rooms[id]));return gens.get(id);}
+// t2759u: a failed Rogue's lockpick doubles the door: TWO new puzzles (same type and zone) must be solved one after the other.
+// rounds(id) = puzzles still to solve on a doubled door (0 = a normal door). Each round has its own puzzle and its own kept state.
+const GL=()=>S.gearLock||null,rounds=id=>{const g=GL();return g&&g.rounds?g.rounds(id)|0:0;},gk=id=>{const L=rounds(id);return L>0?id+":"+L:id;};
+function gen(id){const k=gk(id);if(!gens.has(k)){const r=M.rooms[id],L=rounds(id);gens.set(k,L>0?P.make(r.p,r.z,((r.id+1)*9973+17*r.z+104729*L)>>>0):P.forRoom(r));}return gens.get(k);}
 function layout(){const land=innerWidth>innerHeight;el.classList.toggle("land",land);
  const aw=land?innerWidth-300:innerWidth-24,ah=land?innerHeight-20:innerHeight-250;return{aw,ah,land};}
 function cellSize(n,extra){const L=layout();return Math.max(44,Math.floor(Math.min(L.aw/(n+extra),L.ah/(n+extra))));}
@@ -58,19 +61,29 @@ function render(){const t0=performance.now();const {pz,s}=cur,done=P.solved(pz,s
  enter.style.display=done?"block":"none";el.dataset.solved=done?"1":"0";el.dataset.type=pz.t;el.dataset.mode=pz.mode||"";el.classList.toggle("content2",pz.t===2);el.dataset.room=cur.id;
  ft.push(performance.now()-t0);if(ft.length>200)ft.shift();}
 let sel=-1,sudokuCell=-1;
-function move(mv){if(!cur||P.solved(cur.pz,cur.s))return;cur.s=P.apply(cur.pz,cur.s,mv);kept.set(cur.id,cur.s);if(P.solved(cur.pz,cur.s)){S.markSolved(cur.id);const id=cur.id;close();if(S.enterDoor)S.enterDoor(id);return;}render();}
+function move(mv){if(!cur||P.solved(cur.pz,cur.s))return;cur.s=P.apply(cur.pz,cur.s,mv);kept.set(gk(cur.id),cur.s);if(P.solved(cur.pz,cur.s)&&doubleNext())return;if(P.solved(cur.pz,cur.s)){S.markSolved(cur.id);const id=cur.id;close();if(S.enterDoor)S.enterDoor(id);return;}render();}
+// t2759u doubled door: after round 1 of 2 the next puzzle opens (true); after the last round the door opens as normal (false)
+function doubleNext(){const id=cur.id;if(!(rounds(id)>0))return false;GL().solvedRound(id);if(!(rounds(id)>0))return false;open(id,cur.cmd);stat.textContent="One down! Solve one more to open the door.";return true;}
 board.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b||!cur)return;e.preventDefault();
  if(b.dataset.cell!==undefined){if(!cur.pz.given[+b.dataset.cell])sudokuCell=+b.dataset.cell;render();return;}
  if(b.dataset.value!==undefined){if(sudokuCell>=0)move([sudokuCell,+b.dataset.value]);return;}
  if(b.dataset.blk!==undefined){sel=+b.dataset.blk;render();return;}
  if(b.dataset.dir!==undefined){if(sel>=0)move([sel,+b.dataset.dir]);return;}
  if(b.dataset.mv!==undefined){const v=b.dataset.mv;move(v==="clr"?"clr":+v);}});
-function open(id,cmd){const g=gen(id);cur={id,cmd,pz:g.pz,s:kept.get(id)||P.clone(g.s),start:g.s};sel=cur.pz.t===3?0:-1;sudokuCell=-1;openFlag=true;el.classList.add("open");
- ttl.textContent=(cur.pz.t===2?(cur.pz.mode==="pipes"?"Pipe connections":"Sudoku"):P.NAMES[cur.pz.t])+" \u00B7 Zone "+cur.pz.zone;info.textContent=cur.pz.t===2?(cur.pz.mode==="pipes"?INS_PIPES:INS_SUDOKU):INS[cur.pz.t];render();}
-function close(){openFlag=false;el.classList.remove("open");cur=null;}
+function open(id,cmd){const g=gen(id);cur={id,cmd,pz:g.pz,s:kept.get(gk(id))||P.clone(g.s),start:g.s};sel=cur.pz.t===3?0:-1;sudokuCell=-1;openFlag=true;el.classList.add("open");
+ ttl.textContent=(cur.pz.t===2?(cur.pz.mode==="pipes"?"Pipe connections":"Sudoku"):P.NAMES[cur.pz.t])+" \u00B7 Zone "+cur.pz.zone;info.textContent=cur.pz.t===2?(cur.pz.mode==="pipes"?INS_PIPES:INS_SUDOKU):INS[cur.pz.t];
+ const L=rounds(id);if(L>0)ttl.textContent+=" \u00B7 Double ("+(GL().total-L+1)+" of "+GL().total+")";el.dataset.double=L;lockBtn();render();}
+// t2759u Rogue's lockpick on this door: only a rogue hero carrying one, on a normal (not doubled, not solved) room door. Never the boss door
+// (the boss locks are story.js FINAL_LOCK puzzles, not room puzzles, so they never open this screen).
+let lockB=null;function lockBtn(){const g=GL(),ok=!!(cur&&g&&g.can&&g.can(cur.id)&&!P.solved(cur.pz,cur.s));
+ if(!lockB&&ok&&document.createElement){lockB=document.createElement("button");lockB.id="plock";lockB.className="pz plock";lockB.textContent="\u{1F5DD}\uFE0F Use Rogue's lockpick";lockB.style.cssText="position:absolute;left:50%;transform:translateX(-50%);bottom:10px;min-height:44px;padding:0 14px;font:700 16px Georgia,serif;border-radius:12px 9px 13px 8px;z-index:3";
+  lockB.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();if(!cur)return;const id=cur.id,r=GL().use(id);if(!r||!r.ok)return;
+   if(r.pass){S.markSolved(id);close();if(S.enterDoor)S.enterDoor(id);}else open(id,cur.cmd);});el.appendChild(lockB);}
+ if(lockB)lockB.style.display=ok?"block":"none";el.dataset.lockpick=ok?"1":"0";}
+function close(){openFlag=false;el.classList.remove("open");cur=null;if(lockB)lockB.style.display="none";}
 const tap=(id,f)=>{const b=document.getElementById(id);b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();f();});};
 tap("pclose",close);
-tap("preset",()=>{if(cur&&!P.solved(cur.pz,cur.s)){cur.s=P.clone(cur.start);kept.delete(cur.id);sel=cur.pz.t===3?0:-1;sudokuCell=-1;render();}});
+tap("preset",()=>{if(cur&&!P.solved(cur.pz,cur.s)){cur.s=P.clone(cur.start);kept.delete(gk(cur.id));sel=cur.pz.t===3?0:-1;sudokuCell=-1;render();}});
 tap("penter",()=>{if(!cur)return;const id=cur.id;close();if(S.enterDoor)S.enterDoor(id);});
 window.addEventListener("keydown",e=>{if(!openFlag)return;if(e.key==="Escape"){e.preventDefault();close();}
  else if(cur&&cur.pz.t===2&&cur.pz.mode==="sudoku"&&sudokuCell>=0&&(/^[1-9]$/.test(e.key)||["Backspace","Delete"].includes(e.key))){e.preventDefault();e.stopPropagation();move([sudokuCell,/^[1-9]$/.test(e.key)?+e.key:0]);}else if(cur&&cur.pz.t===3&&sel>=0&&/^Arrow/.test(e.key)){e.preventDefault();e.stopPropagation();move([sel,/Left|Up/.test(e.key)?-1:1]);}},true);
@@ -87,6 +100,6 @@ const css=document.createElement("style");css.textContent=`
 #puz.land.content2 #pboard{flex-direction:row;align-items:center;gap:8px}
 #puz.land.content2 .pskeys{grid-template-columns:repeat(2,44px)}
 `;document.head.appendChild(css);
-S.puzzleOpen=()=>openFlag;S.openPuzzle=open;
+S.puzzleOpen=()=>openFlag;S.openPuzzle=open;S.puzzleRefresh=()=>{if(cur)lockBtn();};
 S.puzzle={open:id=>open(id,null),close,state:()=>cur?{id:cur.id,type:cur.pz.t,solved:P.solved(cur.pz,cur.s)}:null,frameTimes:()=>ft.slice(),renderOnce:()=>{const t=performance.now();render();return performance.now()-t;}};
 })();

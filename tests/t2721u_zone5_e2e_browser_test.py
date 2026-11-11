@@ -1,5 +1,5 @@
 """Jeremy t2721u: zone 5 end-to-end, story ON, one browser and one page at a time. Sizes 412x891 (phone, touch) and 1280x800.
-Per size: loads with no console/page errors (VER 105, maxZone 5), creates a hero by taps, a L50 hero+Mira+Sorrel party bumps the
+Per size: loads with no console/page errors (VER 106, maxZone 5), creates a hero by taps, a L50 hero+Mira+Sorrel party bumps the
 Tavern 4 archway (Brunn joins), takes Tavern 4's Zone 5 exit through the 4-slot save picker into zone 5 (46,48), walks by taps to a
 zone 5 camp (fights on the way by taps) and saves there, fights a fixed zone 5 pack by taps (Shadow drake veil, Hydra regrow,
 Salamander burn) and checks the zone 5 lines show and the battle backdrop is purple, reloads and continues the zone 5 save
@@ -170,7 +170,7 @@ def run(p,w,h,tag):
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'localStorage.clear()')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'SOTA.setAnim(false)');T.past_title(pg)
   ver=ev(pg,'fetch("sw.js").then(r=>r.text()).then(t=>t.match(/VER="(\\d+)"/)[1])');say(f'[{tag}] loaded in {time.time()-t0:.1f}s; VER {ver}; maxZone',ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone'))
-  T.check(ver=='105','VER is not 105');T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5');T.check(not ERRS,f'errors on load {ERRS}')
+  T.check(ver=='106','VER is not 106');T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5');T.check(not ERRS,f'errors on load {ERRS}')
   T.full_create(pg,'Tess','human','warrior');drain(pg)
   ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];const s=SOTA.rpg.s6.st();
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,45));s.seen.join0=1;s.seen.join1=1;

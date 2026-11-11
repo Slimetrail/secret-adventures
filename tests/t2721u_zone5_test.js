@@ -82,7 +82,7 @@ test("attack-only rarely beats the Golem (t2732u: about 5% at L50, tests/t2732u_
 });
 test("content cap is zones 1-5 and pins advance together (VER 105)",()=>{
  const c={window:{}};vm.runInNewContext(read("content-cap.js"),c);a.equal(c.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,5);
- const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="105",/);
- for(const p of ["content-cap.js?v=8","rules.js?v=26","party.js?v=42","game.js?v=25","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
+ const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="106",/);
+ for(const p of ["content-cap.js?v=8","rules.js?v=26","party.js?v=43","game.js?v=26","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
  a.ok(read("party.js").includes('const WAIT_UPDATE="Please wait for update to continue.";'));
 });

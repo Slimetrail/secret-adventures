@@ -57,11 +57,14 @@ function makeBg(){dpr=Math.min(2,window.devicePixelRatio||1);BW=Math.round(inner
  for(let k=0;k<700;k++){g.fillStyle=`rgba(90,60,25,${r()*.08})`;g.fillRect(r()*BW,r()*BH,(1+r()*30)*dpr,dpr*.8);}
  const vg=g.createRadialGradient(BW/2,BH/2,Math.min(BW,BH)*.25,BW/2,BH/2,Math.hypot(BW,BH)*.58);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(80,45,15,.6)");g.fillStyle=vg;g.fillRect(0,0,BW,BH);
  g.restore();g.strokeStyle="rgba(70,40,15,.7)";g.lineWidth=2*dpr;g.stroke(edge);}
+// t2759u: the crystal ball path kept in the party save (party.js), shown while its end is not found
+function crystal(){const r=S.rpg&&S.rpg.special&&S.rpg.special.route?S.rpg.special.route():null;return r&&Array.isArray(r.path)&&r.path.length>1&&!isFound(r.to)?r:null;}
 // ---- view ----
 const view={cx:0,cy:0,z:22};const ZMIN=3,ZMAX=60,FIT_CAP=44; // FIT_CAP: biggest automatic cell size (css px)
 function center(){const s=S.state();view.cx=s.x+.5;view.cy=s.y+.5;clamp();}
 let bb={x0:0,y0:0,x1:1,y1:1};
 function bbox(){calcZoneLimit();const v=C.visited;let x0=N,y0=N,x1=-1,y1=-1;for(let i=0;i<N*N;i++)if((v[i]||(roomOf.has(i)&&isFound(i)))&&shown(i)){const x=i%N,y=(i/N)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+ const cr=crystal();if(cr&&x1>=0)for(const i of cr.path){const x=i%N,y=(i/N)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
  if(x1<0){const s=S.state();x0=x1=s.x;y0=y1=s.y;}bb={x0,y0,x1:x1+1,y1:y1+1};return bb;}
 // free screen area for the fitted view (css px): below the title, left of the button column
 function area(){const w=innerWidth,h=innerHeight;return{l:22,t:58,r:w-70,b:h-22};}
@@ -106,6 +109,12 @@ function draw(){if(!open)return;const t0=performance.now();sync();ctx.setTransfo
  // trail dots (in walking order; the last entry is where you stand, marked by the arrow)
  const tr=C.trail();ctx.fillStyle="rgba(150,30,20,.85)";const rr=Math.max(1.2,z*.07);
  for(let k=0;k<tr.length-1;k++){const i=tr[k],j=hsh(i,k);if(!shown(i))continue;const x=ox+(i%N+.5+(j-.5)*.3)*z,y=oy+(((i/N)|0)+.5+(hsh(k,i)-.5)*.3)*z;ctx.beginPath();ctx.arc(x,y,rr,0,6.3);ctx.fill();cnt.dots++;}
+ // t2759u crystal ball pass: a gold dashed path to the nearest place not found yet (no time limit; gone once that place is found)
+ const cr=crystal();if(cr){ctx.save();ctx.lineCap="round";ctx.lineJoin="round";const P=i=>[ox+(i%N+.5)*z,oy+(((i/N)|0)+.5)*z];
+  ctx.strokeStyle="rgba(60,30,0,.55)";ctx.lineWidth=Math.max(5*dpr,z*.22);ctx.beginPath();cr.path.forEach((i,k)=>{const[x,y]=P(i);k?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  ctx.strokeStyle="rgba(255,205,40,.98)";ctx.lineWidth=Math.max(3*dpr,z*.13);if(ctx.setLineDash)ctx.setLineDash([Math.max(4*dpr,z*.35),Math.max(3*dpr,z*.2)]);ctx.stroke();if(ctx.setLineDash)ctx.setLineDash([]);
+  const[ex,ey]=P(cr.to);ctx.strokeStyle="rgba(255,205,40,.98)";ctx.lineWidth=Math.max(3*dpr,z*.1);ctx.beginPath();ctx.arc(ex,ey,Math.max(8*dpr,z*.45),0,6.3);ctx.stroke();ctx.restore();}
+ el.dataset.route=cr?cr.path.length:0;
  for(const [i,k] of kind){if(!shown(i)||!isFound(i))continue;const rid=roomOf.has(i)?roomOf.get(i):-1,sv=rid>=0&&!!C.solvedR[rid];if(rid>=0){if(sv)cnt.solved++;else cnt.locked++;if(!drawn[i])cnt.blank++;}const x=ox+(i%N+.5)*z,y=oy+(((i/N)|0)+.5)*z;
   const ik=rid>=0?(sv?"room":"door"):k;
   if(k==="camp"||k==="tavern")hits.push({kind:k,i,x:x/dpr,y:y/dpr,r:Math.max(22,z*0.5/dpr)});

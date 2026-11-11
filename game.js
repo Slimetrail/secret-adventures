@@ -119,6 +119,10 @@ function applyMaze(snap){
 function resetRun(){setMazeSlots([null,null,null,null]);if(window.SOTA&&SOTA.rpg&&SOTA.rpg.clearMazeSlots)SOTA.rpg.clearMazeSlots();poseAt(M.entrance[0],M.entrance[1],0);visited.fill(0);visCount=0;trail=[st.y*N+st.x];visit(st.y*N+st.x);
  solvedR.fill(0);clearedR.fill(0);try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(ROOM_KEY);}catch(e){}
  save();saveRooms();updHud();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
+// t2759u crystal ball fail: forget every walked cell of zone z except the one you stand on. The trail restarts here, so a saved
+// map still passes the load check (every trail cell visited); otherwise a load would wipe every zone.
+function wipeZone(z){const keep=st.y*N+st.x;let n=0;for(let i=0;i<N*N;i++)if(zoneOf[i]===z&&i!==keep&&visited[i]){visited[i]=0;n++;}visCount-=n;trail=[keep];visit(keep);
+ save();if(window.SOTA&&SOTA.resetMapLayer)SOTA.resetMapLayer();if(window.SOTA&&SOTA.onStep)SOTA.onStep();return n;}
 function stepped(){const i=st.y*N+st.x;visit(i);trail.push(i);if(trail.length>TRAIL_CAP+1)trail.splice(0,trail.length-TRAIL_CAP-1);if(window.SOTA&&SOTA.onStep)SOTA.onStep();}
 // Item boxes are shortcuts to real party bag copies, never a second inventory.
 // t2437u: Healing potion and Mana potion (ether) show as an original 8-bit bottle (red / blue) instead of their name; the name stays in aria-label and title.
@@ -302,7 +306,7 @@ window.SOTA={contentCap,seams:()=>SEAMS.map(s=>JSON.parse(JSON.stringify(s))),ar
  archTex:()=>({ready:ARCH.ready,size:ARCH.size,src:ARCH.src,mode:ARCH.mode,mask:ARCH.mask,tints:ARCH.tints,flip:0,voff:0}),archLoad:()=>archLoad,archDrawn:()=>({ts:archDrawn.ts,cols:archDrawn.cols,wallTS:TS}),
  archTexel:(z,x,y)=>{if(!ARCH.ready)return null;const t=ARCH.tint[z],i=(y*ARCH.size+x)*4;return [t[i],t[i+1],t[i+2],t[i+3]];},
  floorMark:(x,y)=>{const i=mark[y*N+x];return i>=0?mkKind[i]:null;},sprites:()=>spriteLast.map(s=>Object.assign({},s)),spriteLift:(z,v)=>{if(v!=null&&z>=1&&z<=5)SPRITE_LIFT[z]=+v;return SPRITE_LIFT.slice();},postReady:()=>!!POST.d,
- pick:(x)=>({door:pickCol[x],arch:pickArch[x],y0:pickY0[x],y1:pickY1[x]}),zbuf:()=>zbuf?Array.from(zbuf):[],state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,resetRun,mazeSnap,applyMaze,enterDoor,useFacingDoor,
+ pick:(x)=>({door:pickCol[x],arch:pickArch[x],y0:pickY0[x],y1:pickY1[x]}),zbuf:()=>zbuf?Array.from(zbuf):[],state:()=>({x:st.x,y:st.y,f:st.f,zone:zoneOf[st.y*N+st.x]}),act,canMove,resetRun,mazeSnap,applyMaze,wipeZone,enterDoor,useFacingDoor,
  frameTimes:()=>ft.slice(),setAnim:v=>{animOn=!!v;},animating:()=>anim.on,renderOnce:()=>{const t0=performance.now();render(performance.now());return performance.now()-t0;},
  setMazeSlots,items:()=>{if(window.SOTA.rpg&&SOTA.rpg.syncMazeSlots)SOTA.rpg.syncMazeSlots();return items.slice();},rooms:()=>({solved:[...solvedR.keys()].filter(i=>solvedR[i]),cleared:[...clearedR.keys()].filter(i=>clearedR[i])}),
  roomAt:(x,y)=>roomAt[y*N+x],isSolved:i=>!!solvedR[i],panelOpen:()=>panelOn,

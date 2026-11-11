@@ -366,7 +366,7 @@ function itemDesc(id,c){const it=R.ITEMS[id];if(!it)return "";const n=(it.n||"")
  else if(it.slot==="ing")t="Used for cooking. It never spoils.";
  else if(it.slot==="part")t="A monster part. Use it for crafting, or sell it.";
  else if(it.slot==="junk")t="Junk. Sell it in a shop.";
- else if(it.slot==="gear")t=it.tent?"A tent. You need it to save at a camp.":"A tool for the road.";
+ else if(it.slot==="gear")t=it.special?specialDesc(id):it.tent?"A tent. You need it to save at a camp.":"A tool for the road.";
  else if(it.slot==="craft")t=E.badText?E.badText(id):"A crafted item.";
  if(it.worn)t+=" It is old and worn.";
  if(c&&["weapon","offhand","helmet","chest","gloves","boots","acc"].includes(it.slot)){const s=it.slot==="acc"?"acc1":it.slot;t+=R.canEquip(c,id,s)?" "+c.name+" can use this.":" "+c.name+" can't use this.";}
@@ -424,6 +424,8 @@ function charScreen(i,pick){closeCmp();const c=live.party[i];if(pick)sheetSel={s
   if(it.slot==="use"&&it.revive)row.appendChild(el("span","s4note","Use in battle")); /* t2398u: salts only in battle */
   if(it.slot==="use"&&!it.revive)row.appendChild(tapBtn("Use",()=>{c.bag.splice(sel.bag,1);R.useEffect(c,it,hpMul());sheetSel=null;charScreen(i);},"small"));
   if(it.slot==="dish"){const eb=tapBtn("Eat",()=>{eatFrom(c,sel.bag);sheetSel=null;charScreen(i);},"small");eb.dataset.eat="1";row.appendChild(eb);}
+  if(it.special&&GEAR&&GEAR.ITEMS[selItem].use==="bag"){const ub=tapBtn("Use",()=>{sheetSel=null;useSpecial(selItem);},"small");ub.dataset.usegear=selItem;row.appendChild(ub);}
+  if(it.special&&GEAR&&GEAR.ITEMS[selItem].use==="lockpick")row.appendChild(el("span","s4note","Use it at a puzzle door"));
   const dr=tapBtn("Drop",()=>{gone(c.bag[sel.bag]);c.bag.splice(sel.bag,1);sheetSel=null;charScreen(i);},"small");dr.dataset.drop="1";row.appendChild(dr);
   if(live.party.length>1){const gb=tapBtn(sel.give?"Give ▾":"‹ Give",()=>{sheetSel={bag:sel.bag,give:!sel.give};charScreen(i);},"small");gb.dataset.giveb="1";row.appendChild(gb);}
   info.appendChild(row);if(sel.give&&live.party.length>1){const gr=el("div","s4row s5give");gr.appendChild(el("span","s4k","Give to:"));live.party.forEach((m,j)=>{if(j===i)return;const ok=R.canCarry(m,selItem),b=tapBtn(m.name+(ok?"":" (too heavy)"),()=>{if(!ok)return;const kk=c.bag.indexOf(selItem);if(kk<0)return;c.bag.splice(kk,1);m.bag.push(selItem);sheetSel=null;toast(it.n+" given to "+m.name);charScreen(i);},"small");b.dataset.give=j;if(!ok)b.classList.add("off");gr.appendChild(b);});info.appendChild(gr);}}
@@ -640,14 +642,16 @@ function loop(t){if(!F||!fcv){return;}sizeF();const t0=performance.now(),g=fctx,
 // ---------- hooks from the walk ----------
 function zoneAt(x,y){return C.zoneOf[y*N+x];}
 function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.x,p.y,N),pl=R.partyLevel(live.party);startFight((why==="room"?R.roomEncounter:R.encounter)(z,pl,cf,live.diff,(live.seed+fightNo*104729+p.x*65+p.y)>>>0,live.party),why);}
-S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
+S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();crystalDone();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  /* t2528u-t2539u: a seam tavern is entered by bumping its archway (S.onArchBump), never by stepping on a cell */
  if(R.isSavePoint(M,p.x,p.y)&&seamTav(p.x,p.y)<0){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
-  if(t>=0){h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
+  if(t>=0){live.lastTav={t,x:p.x,y:p.y,f:p.f};/* t2759u rope */h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
   /* t2446u: only a tavern saves on arrival; a camp never saves or uses a tent by itself (Save tab on the camp screen) */const ok=t>=0?doSave(false):false,said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(t>=0?(ok?"Game saved at "+placeName(p.x,p.y)+".":"Could not save at "+placeName(p.x,p.y)+"."):"You reached "+placeName(p.x,p.y)+". Rest, cook, craft or save here (saving uses 1 tent).");if(joined)remind(said);else toast(said);/* t2437u QA: the join + points reminder shows after the join scene */updBtn();updHere();
   /* t2530u/t2551u: stepping on a camp circle (Safe post) opens the camp tabs; still no auto-save */if(t<0){const k=campIdx(p.x,p.y);if(k>=0&&!ui)campScreen(k);}return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
- const stink=live.stink>0;if(stink)live.stink--; // t2342u failed craft: monsters smell the party
+ const hide=window.SOTA_GEAR?window.SOTA_GEAR.hideMode(live.hide):null;if(hide==="pass")return; /* t2759u hide smell pass: no random fights (monster doors fight in onRoomOpen) */
+ const stinky=live.stink>0;if(stinky)live.stink--; // t2342u failed craft: monsters smell the party
+ const stink=stinky||hide==="fail"; /* t2759u hide smell fail: the same x3 as Stinky stew; the two never stack */
  if(!(stink&&stepsSince>=4)){if(stepsSince<10)return;}if(!roll)roll=R.rng(live.seed>>>0);const r=roll()/(stink?3:1); /* stink: after 4 steps, 3x chance */
  if(r<(rid>=0?0.25:0.06)){stepsSince=0;fightHere("random");}};
 // Chest items wait for an explicit choice when bags are full. No stash, ground pile or sale.
@@ -702,7 +706,7 @@ function seamTav(x,y){return S.seamTavernAt?S.seamTavernAt(x,y):-1;}
 function tavIdx(x,y){const k=seamTav(x,y);return k>=0?k:M.taverns.findIndex(c=>c[0]===x&&c[1]===y);}
 // t2528u-t2539u: bumping or tapping a seam archway = arriving at that tavern (heal, companion, free save), then the tavern screen
 let archPending=false;
-S.onArchBump=t=>{if(!live||ui||hubBlocked()||archPending)return false;s5init();let joined="";h6("reachedTavern",t);
+S.onArchBump=t=>{if(!live||ui||hubBlocked()||archPending)return false;s5init();let joined="";{const p=S.state();live.lastTav={t,x:p.x,y:p.y,f:p.f};}/* t2759u rope */h6("reachedTavern",t);
  const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}
  const ok=doSave(false),said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(ok?"Game saved at Tavern "+(t+1)+".":"Could not save at Tavern "+(t+1)+".");if(joined)remind(said);else toast(said);updBtn();
  let scene=!!(S.storyOpen&&S.storyOpen());
@@ -822,6 +826,7 @@ function shopList(t,kind){s5init();const st=E.stock(t),w=shopPage("shop-"+kind,t
  else if(kind==="food"){["ration","potion","ether","salts"].concat(st.ing).forEach(item);}
  else{w.appendChild(el("div","s4lab","Tent"));item("tent");shopRow(w,"‹ Build a tent from parts",{tentb:"1"},()=>tentScreen(t)).querySelector(".s4on").classList.add("s5more");
   w.appendChild(el("div","s4lab","Gear"));["lockpick","rope"].concat(st.gear).forEach(item);
+  specialRows(w,t);
   if(st.parts.length){w.appendChild(el("div","s4lab","Parts"));st.parts.forEach(item);}
   w.appendChild(el("div","s4note dim","Dead warriors' gear is cheap but worse than new."));}}
 // Sell: lists only what the party carries (bags of every member), sold at the normal sell rules
@@ -1012,10 +1017,79 @@ html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-b
 /* t2721u fix1: watch for the ending's credits, then offer the end-of-game save once the story box closes */
 if(typeof MutationObserver==="function"&&document.body){new MutationObserver(ms=>{for(const m of ms)if(m.target&&m.target.dataset&&m.target.dataset.endScreen==="credits")endSeen=true;}).observe(document.body,{subtree:true,attributes:true,attributeFilter:["data-end-screen"]});
  new MutationObserver(()=>{if(endSeen&&!document.documentElement.classList.contains("s6open")){endSeen=false;setTimeout(offerEndSave,0);}}).observe(document.documentElement,{attributes:true,attributeFilter:["class"]});}
+// ================= t2759u special class gear (Jeremy t2745u-t2758u; rules in gear.js) =================
+// Hero only (party[0]) and only that class; a pass or a fail uses the item up; a refused use keeps it. The roll uses only the item's stat.
+const GEAR=window.SOTA_GEAR||null;
+let specialRoll=()=>Math.random();
+function zoneHere(){const p=S.state();return p.zone||+C.zoneOf[p.y*N+p.x]||1;}
+function clsName(k){return R.CLASSES[k]?R.CLASSES[k].name:k;}
+const SPECIAL_WHAT={g_lockpick:"Skips a room's puzzle. If it fails, the door needs two puzzles.",g_crystal:"Shows the way to the nearest tavern, camp or door you have not found. If it fails, this zone's map is forgotten.",
+ g_hide:"No wandering monsters for 5 minutes (monster doors still fight). If it fails, monsters come 3 times as often for 5 minutes.",g_rope:"Takes the party to the last tavern you reached. If it fails, back to the very first square."};
+function specialDesc(id){const g=GEAR&&GEAR.ITEMS[id];if(!g)return "A tool for the road.";const h=live&&live.party[0],mine=!!h&&h.cls===g.cls;
+ return "Special gear for a "+clsName(g.cls)+" hero only. "+SPECIAL_WHAT[id]+" Uses "+GEAR.STAT_NAME[g.stat]+(mine?": "+Math.round(GEAR.chance(GEAR.statOf(h,id))*100)+"% chance now.":".")+" Used up either way.";}
+// shop: every shop lists all four; only the hero's class can buy. The price is the zone's (always above the Tent, the priciest shop item).
+function specialRows(w,t){if(!GEAR||!live)return;const z=zoneHere(),h=live.party[0];w.appendChild(el("div","s4lab","Special gear"));
+ GEAR.IDS.forEach(id=>{const g=GEAR.ITEMS[id],p=GEAR.price(z),mine=!!h&&h.cls===g.cls;shopRow(w,g.icon+" "+g.n+" · "+p+"g"+(mine?"":" · "+clsName(g.cls)+" only"),{buy:id,special:id},()=>riskAsk(id,t),!mine||live.gold<p);});
+ w.appendChild(el("div","s4note dim","Hero only. Used up when used, pass or fail."));}
+function closeRisk(){const p=document.getElementById("s7risk");if(p){p.remove();return true;}return false;}
+// t2758u: the warning shows before any gold is taken; gold moves only on Buy
+function riskAsk(id,t){closeRisk();const g=GEAR&&GEAR.ITEMS[id];if(!g||!live)return null;const p=GEAR.price(zoneHere()),h=live.party[0];
+ if(!h||h.cls!==g.cls){toast("Only a "+clsName(g.cls)+" hero can use this.");return null;}
+ const bg=el("div","s6cmp");bg.id="s7risk";bg.dataset.item=id;bg.setAttribute("role","dialog");bg.setAttribute("aria-modal","true");bg.setAttribute("aria-label","Buy "+g.n+"?");
+ const card=el("div","s6cmpCard");card.appendChild(el("b","s6cmpName",g.icon+" Buy "+g.n+" for "+p+" gold?"));
+ const warn=el("div","s7riskWarn","Use at your own risk");warn.dataset.risk="1";warn.style.cssText="margin:10px 0;padding:8px 10px;border:2px solid #a12119;border-radius:8px;background:#f8e0c8;color:#7a1410;font:700 18px Georgia,serif;text-align:center";card.appendChild(warn);
+ card.appendChild(el("div","s4note",specialDesc(id)));
+ const btns=el("div","s6cmpBtns"),cn=tapBtn("Cancel",()=>closeRisk(),"small"),ok=tapBtn("Buy",()=>{closeRisk();buySpecial(id,t);shopList(t,"craft");},"small");cn.dataset.riskcancel="1";ok.dataset.riskbuy="1";if(live.gold<p)ok.disabled=true;
+ btns.appendChild(cn);btns.appendChild(ok);card.appendChild(btns);card.addEventListener("click",e=>e.stopPropagation());bg.addEventListener("click",e=>{e.preventDefault();closeRisk();});bg.appendChild(card);document.body.appendChild(bg);return bg;}
+function buySpecial(id,t){const g=GEAR&&GEAR.ITEMS[id];if(!g||!live)return false;const h=live.party[0];if(!h||h.cls!==g.cls){toast("Only a "+clsName(g.cls)+" hero can use this.");return false;}
+ const p=GEAR.price(zoneHere());if(live.gold<p){toast("Not enough gold");return false;}const who=addLoot(id);if(!who){toast("Nobody can carry that");return false;}live.gold-=p;toast("Bought "+g.n+" ("+who+")");h6("shop");return true;}
+function nearBoss(){const p=S.state();return Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])<=2;}
+// rope pass target: the last tavern reached (live.lastTav); old saves fall back to the tavern they were saved at; else none
+function ropeTarget(){const L=live&&live.lastTav;if(L&&Number.isInteger(L.t)&&Number.isInteger(L.x)&&Number.isInteger(L.y)&&tavIdx(L.x,L.y)===L.t)return {t:L.t,x:L.x,y:L.y,f:(L.f|0)&3};
+ const a=save&&save.at;if(a&&Number.isInteger(a.x)&&Number.isInteger(a.y)&&tavIdx(a.x,a.y)>=0)return {t:tavIdx(a.x,a.y),x:a.x,y:a.y,f:(a.f|0)&3};return null;}
+// crystal ball: nearest tavern, camp or room door that the map has not found, along real maze edges (through unwalked maze, never through
+// a room door on the way or a tavern archway; zone cap respected)
+function crystalRoute(){if(!GEAR||!S.map||!S.map.isFound||!C.mask||!S.roomAt)return null;const p=S.state(),start=p.y*N+p.x,kinds=new Map(),X=i=>i%N,Y=i=>(i/N)|0;
+ M.camps.forEach(c=>kinds.set(c[1]*N+c[0],"camp"));M.taverns.forEach(c=>kinds.set(c[1]*N+c[0],"tavern"));M.rooms.forEach(r=>kinds.set(r.c[1]*N+r.c[0],"door"));
+ return GEAR.route({N,mask:C.mask,start,kindOf:i=>kinds.get(i),isTarget:i=>kinds.has(i)&&!S.map.isFound(X(i),Y(i)),isRoom:i=>S.roomAt(X(i),Y(i))>=0,
+  noCross:(i,d)=>!!S.archAhead&&S.archAhead(X(i),Y(i),d)>=0,isOpen:i=>!S.contentCap||S.contentCap.isOpen(X(i),Y(i))});}
+function crystalDone(){const r=live&&live.crystal;if(!r||!S.map||!S.map.isFound)return;if(S.map.isFound(r.to%N,(r.to/N)|0)){delete live.crystal;toast("You found it! The crystal ball's path fades.");}}
+function specialWhyNot(id,opt){const g=GEAR&&GEAR.ITEMS[id];if(!g||!live)return "That is not special gear.";if(!live.party.some(c=>c.bag.includes(id)))return "You don't have one.";
+ const why=GEAR.heroCheck(live.party,id);if(why==="class")return "Only a "+clsName(g.cls)+" hero can use this.";if(why==="down")return "Your hero is knocked out.";if(why)return "Only your hero can use this.";
+ if(inFight())return "Not during a fight.";if(S.storyOpen&&S.storyOpen())return "Not now.";
+ if(g.use==="lockpick"){const rid=opt&&opt.room;if(!(rid>=0)||!M.rooms[rid])return "Use it on a puzzle door.";if(C.solvedR[rid])return "That door is already open.";if(live.lockFail&&live.lockFail[rid]>0)return "This lock is jammed. Solve the puzzles.";}
+ if(id==="g_crystal"&&nearBoss())return "It doesn't work on the boss door.";
+ if(id==="g_rope"&&!ropeTarget())return "You haven't reached a tavern yet.";
+ if(id==="g_crystal"&&!crystalRoute())return "There is nothing left to find from here.";
+ if(id==="g_hide"&&GEAR.hideMode(live.hide))return "Hide smell is still working.";
+ return null;}
+function useSpecial(id,opt){const why=specialWhyNot(id,opt);if(why){toast(why);return {ok:false,why};}
+ const g=GEAR.ITEMS[id],h=live.party[0],p=GEAR.chance(GEAR.statOf(h,id)),pass=specialRoll()<p,route=id==="g_crystal"&&pass?crystalRoute():null,tg=id==="g_rope"?ropeTarget():null;
+ takeOne(id);if(g.use!=="lockpick")closeUI();let msg="";
+ if(id==="g_hide"){live.hide={mode:pass?"pass":"fail",left:GEAR.HIDE_MS};msg=pass?"Hide smell worked! No wandering monsters for 5 minutes. Monster doors still fight.":"Hide smell went wrong! Monsters smell you and come 3 times as often for 5 minutes.";}
+ else if(id==="g_rope"){if(pass){S.teleport(tg.x,tg.y,tg.f);/* counts as walking in: heal, companion, save, tavern screen */if(S.onArchBump)S.onArchBump(tg.t);msg="The rope worked! You are at Tavern "+(tg.t+1)+".";}
+  else{S.teleport(M.entrance[0],M.entrance[1],0);msg="The rope snapped! You are back at the very first square.";}}
+ else if(id==="g_crystal"){if(pass){live.crystal={to:route.to,kind:route.kind,path:route.path.slice()};msg="The crystal ball shows the way to the nearest "+(route.kind||"place")+" you have not found. Look at the map.";}
+  else{const z=zoneHere();if(S.wipeZone)S.wipeZone(z);if(live.crystal&&+C.zoneOf[live.crystal.to]===z)delete live.crystal;msg="The crystal ball cracked! Your map of Zone "+z+" is gone. Walk it again to draw it.";}}
+ else if(id==="g_lockpick"){if(!pass){live.lockFail=live.lockFail||{};live.lockFail[opt.room]=GEAR.LOCK_ROUNDS;}msg=pass?"Click! The lockpick opened the door.":"The lockpick broke and jammed the lock! Now you must solve two puzzles.";}
+ toast(msg);updHere();return {ok:true,pass,p};}
+// hide smell: 5 minutes of real play time, counted only while the maze is showing (paused in menus, fights, map, puzzles, talks and while
+// the app is hidden). Kept as time left in live, so a camp or tavern save keeps it and loading that save brings it back.
+let hideAt=null;
+function hideTick(ms){const now=performance.now(),dt=ms!=null?ms:(hideAt==null?0:now-hideAt);hideAt=now;if(!live||!live.hide)return;
+ if(!(live.hide.left>0)||!GEAR||!GEAR.hideMode(live.hide)){delete live.hide;return;}
+ if(ui||F||(S.storyOpen&&S.storyOpen())||(S.mapOpen&&S.mapOpen())||(S.puzzleOpen&&S.puzzleOpen())||(S.panelOpen&&S.panelOpen())||(typeof document!=="undefined"&&document.hidden))return;
+ live.hide.left-=Math.max(0,Math.min(dt,1000));/* a long sleep of the app never eats the timer */if(live.hide.left<=0){delete live.hide;toast("Hide smell wore off.");}}
+setInterval(()=>hideTick(),250);
+S.gearLock={total:GEAR?GEAR.LOCK_ROUNDS:2,rounds:rid=>live&&live.lockFail&&live.lockFail[rid]>0?live.lockFail[rid]|0:0,
+ solvedRound:rid=>{if(live&&live.lockFail&&live.lockFail[rid]>0){live.lockFail[rid]--;if(live.lockFail[rid]<=0)delete live.lockFail[rid];}},
+ can:rid=>!!GEAR&&!!live&&!specialWhyNot("g_lockpick",{room:rid}),use:rid=>useSpecial("g_lockpick",{room:rid})};
 // test and debug hooks (no network, no secrets)
 S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>{keepFinalLocks();return startFight([R.makeBoss(live.diff)],"boss");},live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,spotName,slotName,lossLoad,offerEndSave,endSaveDue,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  gear:GEAR_API,itemInfo:{quick:itemQuick,desc:itemDesc,compare:equipCompare,openCompare:cmpPanel,closeCompare:closeCmp},setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=heroArt(c),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};
+S.rpg.special={buy:buySpecial,ask:riskAsk,closeAsk:closeRisk,use:useSpecial,whyNot:specialWhyNot,route:()=>live&&live.crystal||null,crystalRoute,ropeTarget,tick:hideTick,desc:specialDesc,zoneHere,
+ setRoll:f=>{specialRoll=typeof f==="function"?f:(()=>Math.random());}};
 syncMazeSlots();
 })();
