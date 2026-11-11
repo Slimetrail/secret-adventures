@@ -14,7 +14,7 @@ const NAMES=["Mirror beams","Lights Out","Pipes / Sudoku","Moving blocks","Slidi
 // t2768u: lights = Lights Out (type 1, was levers): n x n, start made by pressing tiles from all-off.
 const DIFF={
  mirror:{n:[0,4,5,6,6,7,7,7],m:[0,3,6,8,10,12,14,16],hit:[0,2,3,4,5,6,7,8],minFlip:[0,1,2,3,4,5,6,7]},
- lights:{n:[0,3,3,4,4,5,5,5],minPress:[0,2,5,6,7,9,11,14]},
+ lights:{n:[0,3,4,4,5,5,5,5],minPress:[0,2,6,7,9,11,12,14]},
  pipes:{n:[0,4,5,6,7,8,9,10],count:[0,2,3,4,5,6,7,8]},
  sudoku:{n:[0,4,6,6,9,9,9,9],bh:[0,2,2,2,3,3,3,3],clues:[0,8,20,16,34,29,26,25]},
  block:{n:[0,4,6,6,6,6,6,6],b:[0,3,6,7,8,9,10,11],minMoves:[0,3,10,13,16,19,22,28]},

@@ -92,8 +92,8 @@ test('old saves load: same save keys, half-solved boss door keeps its solved loc
  const st=read('story.js');a.ok(st.includes('const FINAL_LOCK=window.PUZ.make(1,5,713507,window.PUZ.BOSS_TIER);'));a.ok(st.includes('FINAL_LOCK2=window.PUZ.make(4,5,731117,window.PUZ.BOSS_TIER),FINAL_LOCK3=window.PUZ.make(3,5,731119,window.PUZ.BOSS_TIER);'));
  a.ok(st.indexOf('if(!s.finalLock){box();')<st.indexOf('else if(!s.finalLock2){'));});
 test('VER 107 pins; locked files and the wait text unchanged; story.js changed only in the boss lock puzzle settings',()=>{
- const sw=read('sw.js'),html=read('index.html');a.match(sw,/^const VER="107",/);for(const p of ['puzzles.js?v=17','puzzle-ui.js?v=19','story.js?v=26'])for(const s of [sw,html])a.equal(s.split(p).length-1,1,p);
- for(const p of ['puzzles.js?v=16','puzzle-ui.js?v=18','story.js?v=25'])for(const s of [sw,html])a.ok(!s.includes(p),p);
+ const sw=read('sw.js'),html=read('index.html');a.match(sw,/^const VER="107",/);for(const p of ['puzzles.js?v=18','puzzle-ui.js?v=19','story.js?v=26'])for(const s of [sw,html])a.equal(s.split(p).length-1,1,p);
+ for(const p of ['puzzles.js?v=16','puzzles.js?v=17','puzzle-ui.js?v=18','story.js?v=25'])for(const s of [sw,html])a.ok(!s.includes(p),p);
  a.ok(read('game.js').includes('d.textContent="Please wait for update to continue.";'));const cp=require('node:child_process');let base=null;try{base=cp.execSync('git rev-parse --verify -q e2ad309^{commit}',{cwd:root}).toString().trim();}catch(e){}
  if(base){for(const f of ['story-data.js','art6/seam/tints.json','econ-held-crafts.js'])a.ok(cp.execSync('git show e2ad309:'+f,{cwd:root,maxBuffer:1<<26}).equals(fs.readFileSync(path.join(root,f))),f);
   const cut=t=>{const i=t.indexOf('// Centre lock'),j=t.indexOf(' btns([["‹ Open the door"');a.ok(i>0&&j>i);return t.slice(0,i)+t.slice(j);};

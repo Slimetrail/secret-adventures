@@ -118,12 +118,16 @@ def walk_to(pg,cell,maxsteps=400,until=None):
   return ev(pg,'SOTA.state()')
 SOLVE_JS='''k=>{const P=PUZ,s6=SOTA.rpg.s6;
  if(k===1){const {pz,s}=s6.finalLock();return P.lightsSolve(pz.n,s.g);}/* t2768u Lights Out */
- if(k===2){/* t2766u boss tiles are 5x5: weighted A* (Manhattan, w=3), a real move list, not the shortest */const {pz,s}=s6.finalLock2(),n=pz.n,h=a=>a.reduce((d,v,p)=>v?d+Math.abs((v-1)%n-p%n)+Math.abs(((v-1)/n|0)-(p/n|0)):d,0);
-  const key=a=>a.join(","),seen=new Map([[key(s.a),null]]),open=[[3*h(s.a),s.a,0]];let it=0;
-  while(open.length&&it++<2000000){let bi=0;for(let i=1;i<open.length;i++)if(open[i][0]<open[bi][0])bi=i;const [,a,g]=open[bi];open[bi]=open[open.length-1];open.pop();
-   if(P.solved(pz,{a})){const path=[];let k2=key(a);while(seen.get(k2)){const [pk,mv]=seen.get(k2);path.push(mv);k2=pk;}return path.reverse();}
-   const b0=a.indexOf(0);for(const p of P.tileNb(n,b0)){const t=a.slice();t[b0]=t[p];t[p]=0;const kt=key(t);if(seen.has(kt))continue;seen.set(kt,[key(a),p]);open.push([g+1+3*h(t),t,g+1]);}}return null;}
- const {pz,s}=s6.finalLock3();return P.bfsBlocks(pz,s,3000000);}'''
+ return null;}'''
+# t2766u: boss locks 2/3 are 5x5 tiles / 6x6 blocks at the boss tier; their move lists are worked out in node with the tree's own
+# tools/solver.js (weighted A* for tiles) and puzzles.js (full search for blocks), then tapped in the page like before.
+import json,subprocess
+ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+NODE_SOLVE="const P=require(process.argv[1]+'/puzzles.js'),S=require(process.argv[1]+'/tools/solver.js');const g=JSON.parse(require('fs').readFileSync(0,'utf8'));process.stdout.write(JSON.stringify(g.pz.t===4?S.wastarTiles(g.pz,g.s):P.bfsBlocks(g.pz,{q:g.s.q},3000000)));"
+def node_moves(pg,k):
+  g=ev(pg,'k=>{const s6=SOTA.rpg.s6;return k===2?s6.finalLock2():s6.finalLock3();}',k)
+  r=subprocess.run(['node','-e',NODE_SOLVE,ROOT],input=json.dumps(g),capture_output=True,text=True,timeout=180)
+  T.check(r.returncode==0,f'node solver failed {r.stderr[:300]}');m=json.loads(r.stdout);T.check(m,f'no moves for lock {k}');return m
 SPEND_ALL='''(()=>{const L=SOTA.rpg.live(),M={warrior:"str",rogue:"sta",archer:"sta",mage:"man"};
  L.party.forEach(c=>{while(c.lvl<50)RPG.gainXp(c,RPG.xpNeed(c.lvl),1);let k=0;for(let g=0;g<400;g++){const st=(k++%3===2)?"con":M[c.cls];if(!RPG.raise(c,st)&&!RPG.raise(c,st==="con"?M[c.cls]:"con"))break;}
   while(c.skills.length<RPG.skillSlots(c.lvl)){const k2=RPG.SKILLS[c.cls].find(x=>!c.skills.includes(x.id));if(!k2)break;RPG.learn(c,k2.id);}c.hp=RPG.maxHp(c,1);c.mp=RPG.maxMp(c);});})()'''
@@ -158,11 +162,11 @@ def solve_locks(pg,tag):
   for i in sol:T.ttap(pg,f'[data-s7light="{i}"]');pg.wait_for_timeout(60)
   T.check(ev(pg,'SOTA.rpg.s6.st().finalLock===true'),'lock 1 not solved');T.check(ev(pg,'!!document.querySelector("[data-s7lock=\\"2\\"]")'),'lock 2 did not follow lock 1')
   T.check(opendis() is True,'door opened after 1 lock');shot(pg,f'{tag}-05-boss-door-lock2.png');check_layout(pg,tag,'lock 2')
-  sol=ev(pg,SOLVE_JS,2);say(f'[{tag}] lock 2 (sliding tiles) {len(sol)} taps')
+  sol=node_moves(pg,2);say(f'[{tag}] lock 2 (sliding tiles) {len(sol)} taps')
   for p in sol:T.ttap(pg,f'[data-s7tile="{p}"]');pg.wait_for_timeout(40)
   T.check(ev(pg,'SOTA.rpg.s6.st().finalLock2===true'),'lock 2 not solved');T.check(ev(pg,'!!document.querySelector("[data-s7lock=\\"3\\"]")'),'lock 3 did not follow lock 2');T.check(opendis() is True,'door opened after 2 locks')
   check_layout(pg,tag,'lock 3');shot(pg,f'fix1/{tag}-lock3-layout.png');shot(pg,f'{tag}-05b-boss-door-lock3.png')
-  sol=ev(pg,SOLVE_JS,3);say(f'[{tag}] lock 3 (moving blocks) {len(sol)} moves')
+  sol=node_moves(pg,3);say(f'[{tag}] lock 3 (moving blocks) {len(sol)} moves')
   for (bi,d) in sol:
     T.ttap(pg,f'[data-s7blk="{bi}"]');pg.wait_for_timeout(30);T.ttap(pg,f'[data-s7dir="{d}"]');pg.wait_for_timeout(30)
   T.check(ev(pg,'SOTA.rpg.s6.st().finalLock3===true'),'lock 3 not solved');T.check(opendis() is False,'door still locked after 3 locks')
