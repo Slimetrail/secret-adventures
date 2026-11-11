@@ -3,7 +3,7 @@ sound, the logo holds ~2 s, fades, then the unchanged title flow and title music
 Shows again on every launch, including a service-worker (installed app) launch. The credits badge and its overlap checks are in
 tests/t2393u_credits_browser_test.py.
 Usage: python3 tests/t2386u_splash_browser_test.py <base_url> [screenshot_dir]"""
-import sys,os,time
+import sys,os,time,re
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8825/').rstrip('/')+'/'
 SHOTS=sys.argv[2] if len(sys.argv)>2 else None
@@ -66,8 +66,8 @@ def t_every_launch_and_installed(p):
     if ev(pg,'!!navigator.serviceWorker.controller'):break
     pg.wait_for_timeout(300)
   check(ev(pg,'!!navigator.serviceWorker.controller'),'worker never took over')
-  check(ev(pg,'caches.keys()')==['sota-s1-v100'],'cache is not v100')
-  got=ev(pg,'''(async()=>{const c=await caches.open("sota-s1-v100"),o={};for(const u of ["splash.js?v=1","art-intro/brand/logo3-neon-chosen-v1.jpg","art-intro/brand/logo-sound-3-neon-glow.mp3"]){const r=await c.match(u);if(!r){o[u]=null;continue}const d=await crypto.subtle.digest("SHA-256",await r.arrayBuffer());o[u]=[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}return o})()''')
+  check(ev(pg,'caches.keys()')==['sota-s1-v101'],'cache is not v100')
+  got=ev(pg,'''(async()=>{const c=await caches.open("sota-s1-v101"),o={};for(const u of ["splash.js?v=1","art-intro/brand/logo3-neon-chosen-v1.jpg","art-intro/brand/logo-sound-3-neon-glow.mp3"]){const r=await c.match(u);if(!r){o[u]=null;continue}const d=await crypto.subtle.digest("SHA-256",await r.arrayBuffer());o[u]=[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}return o})()''')
   check(got[IMG]=='66abe8d042db9d5883496066644a786306f60cde3032edd33e322178bcc482b3' and got[SND]=='50bec7765a5bb2206b9c6e9820e124b423fc89c1bf4153a1c138ec5dafc6877f' and got['splash.js?v=1'],f'precache {got}')
   for launch in range(2):
     if launch:c.set_offline(True)

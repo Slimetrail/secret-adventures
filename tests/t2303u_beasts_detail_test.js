@@ -69,17 +69,20 @@ test("detail notes reuse MONSTER_FACTS through caption and firstPerson",()=>{
  a.ok(all(toadBox,"div").some(n=>n.textContent===G.caption(toad)));
 });
 
-test("detail stays on found beasts; zone 3 facts allowed since t2404u, zone 4+ ignored",()=>{
+test("detail stays on found beasts; zone 3 facts allowed since t2404u, zone 4 since t2419u, zone 5 ignored",()=>{
  const intro=read("intro.js");
- a.match(intro,/function beastNote\(name\)\{const G=window\.StoryJournalGenerator,f=G&&G\.MONSTER_FACTS;if\(!f\)return null;return \(f\[1\]\|\|\[\]\)\.concat\(f\[2\]\|\|\[\],f\[3\]\|\|\[\]\)\.find\(m=>m\[0\]===name\)\|\|null;\}/);
+ a.match(intro,/function beastNote\(name\)\{const G=window\.StoryJournalGenerator,f=G&&G\.MONSTER_FACTS;if\(!f\)return null;return \(f\[1\]\|\|\[\]\)\.concat\(f\[2\]\|\|\[\],f\[3\]\|\|\[\],f\[4\]\|\|\[\]\)\.find\(m=>m\[0\]===name\)\|\|null;\}/);
  a.match(intro,/window\.StoryJournalGenerator\.caption\(fact\)/);
- a.equal(intro.includes("f[4]"),false);
+ a.equal(intro.includes("f[5]"),false);
  const missing=load({beasts:["z1-rat"]},"z1-slime");
  a.equal(all(missing.lastPage,"div").some(n=>n.dataset.beastDetail),false);
  a.equal(all(missing.lastPage,"figure").map(f=>f.dataset.beast).join(","),"z1-rat");
  const z3=load({beasts:["z3-wraith","z1-rat"]},"z3-wraith");
  a.equal(all(z3.lastPage,"div").some(n=>n.dataset.beastDetail==="z3-wraith"),true); // t2404u: zone 3 art lock lifted
  a.equal(all(z3.lastPage,"img").some(i=>/z3-wraith/.test(i.src)),true);
+ const z4=load({beasts:["z4-manticore","z1-rat"]},"z4-manticore"); // t2419u: zone 4 sketches and facts
+ a.equal(all(z4.lastPage,"div").some(n=>n.dataset.beastDetail==="z4-manticore"),true);
+ a.equal(all(z4.lastPage,"img").some(i=>/z4-manticore/.test(i.src)),true);
 });
 
 test("t2312u has no Back to Beasts button; the Beasts tab returns to the found-beast grid",()=>{

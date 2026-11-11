@@ -489,7 +489,7 @@ const MONSTERS=[null,
  ["Centaur","Werewolf","Skeleton","Ghoul","Harpy","Dire wolf","Wraith"],
  ["Minotaur","Griffin","Lizard man","Stone gargoyle","Manticore","Ogre warlord","Giant scorpion"],
  ["Basilisk","Dragon","Hydra","Wyvern","Chimera","Salamander","Shadow drake"]];
-const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_TOUGH0={hp:1,atk:1},ZONE_TOUGH={3:{hp:1.2,atk:1.35}}/* t2404u: zone 3 a bit harder (HP and hits only; XP and drops unchanged) */,ZONE_MINLVL=[0,1,10,20,30,40],ZONE_MAXLVL=[0,10,20,30,40,50];
+const ZONE_MUL=[0,1,1.3,1.7,2.2,2.8],ZONE_TOUGH0={hp:1,atk:1},ZONE_TOUGH={3:{hp:1.2,atk:1.35},4:{hp:1,atk:.9}}/* t2404u: zone 3 a bit harder (HP and hits only; XP and drops unchanged). t2419u: zone 4 gets its difficulty from MECH, see above. VER 88 (t2409u content pass): zone 4 plain hits 10% softer, because the new mechanics below now carry more of the difficulty (HP unchanged) */,ZONE_MINLVL=[0,1,10,20,30,40],ZONE_MAXLVL=[0,10,20,30,40,50];
 // Rows align with MONSTERS: role, HP/ATK/DEF multipliers, optional armor penetration.
 const ROLES=[null,
  [["scavenger",.65,.78,.40],["gel tank",1.55,.62,1.30],["shell guard",1.05,.85,1.80],["darting hunter",.70,1.12,.55],["ambusher",.90,1.35,.80],["bulwark",1.35,.80,1.55],["spore caster",.85,1.10,.65,.45]],
@@ -497,6 +497,24 @@ const ROLES=[null,
  [["lancer",1.05,1.15,.85],["ravager",1.25,1.35,.65],["bone guard",.85,.90,1.90],["devourer",1.40,1.05,.75],["winged striker",.75,1.35,.55],["pack hunter",.90,1.45,.70],["spectral caster",.70,1.10,1.30,.65]],
  [["breaker",1.20,1.25,.80],["diver",.95,1.40,.75],["scale guard",1.10,1.00,1.65],["stone tank",1.65,.75,2.00],["barbed ambusher",.85,1.45,.65],["warlord",1.50,1.15,1.20],["pincer guard",1.00,1.10,1.80]],
  [["gaze caster",.90,1.10,1.10,.50],["fire devastator",1.25,1.45,1.20,.25],["many-headed tank",1.80,1.10,.90],["sky assassin",.85,1.55,.70],["hybrid striker",1.15,1.25,1.30],["flame caster",.80,1.30,.85,.60],["shadow hunter",1.00,1.40,1.00,.40]]];
+// Jeremy t2419u/t2409u: zone 4 asks for more strategy, not just more HP. Each kind has one mechanic (index = kind):
+// scales/stone/shell turn plain Attack (skills get through; stone also blunts physical skills, magic is full);
+// venom keeps hurting until someone heals; the war cry makes the others hit harder while the warlord stands (target choice);
+// the charge hits the whole party every third round after a warning (Defend/Rally halve it). Zones 1-3 have no mechanics.
+const MECH={4:["charge","dive","scales","stone","venom","warcry","shell"]},ARMOR={scales:.5,stone:.45,shell:.5},STONE_SKILL=.8,VENOM_PCT=.06,VENOM_ROUNDS=3,WARCRY=1.2,CHARGE=.8;/* VER 88: charge .6 -> .8, so Defend/Rally on the warning matters more */
+// t2409u zone 4 content pass (VER 88), on top of the list above; still zone 4 only, no HP added anywhere:
+// dive: the Griffin always dives at the member with the lowest share of health and hits harder on anyone under half (keep the party healed);
+// scales: the Lizard man's scales also throw spells back: a spell does half and the caster takes some of it (weapon skills work best);
+// warcry: under 30% health the Ogre warlord is enraged and hits much harder (finish it with a strong skill, or Defend);
+// shell: while the Giant scorpion stands, it shields the other monsters from part of every hit (beat the scorpion first).
+const DIVE=1.35,DIVE_LOW=.5,REFLECT_KEEP=.5,REFLECT_BACK=.3,ENRAGE_AT=.3,ENRAGE=1.6,GUARD=.5;
+const MECH_TEXT={scales:"Its scales turn plain blows. Skills get through!",stone:"Stone skin! Plain blows barely scratch it. Magic works best.",shell:"The shell turns plain blows. Skills get through!",
+ reflect:"Its scales throw the spell back! Weapon skills work best.",guarded:"The Giant scorpion shields it. Beat the scorpion first!"};
+// t2409u: is this monster shielded by another living Giant scorpion right now?
+function guarded(F,m){return m.mech!=="shell"&&F.m.some(o=>o!==m&&o.hp>0&&o.mech==="shell");}
+function enraged(m){return m.mech==="warcry"&&m.hp>0&&m.hp<=m.max*ENRAGE_AT;}
+// short status shown next to a zone 4 monster's name in the fight (target list and enemy line); "" for every other monster
+function monTag(F,m){if(!m||m.hp<=0)return "";if(m.mech==="shell"&&F.m.some(o=>o!==m&&o.hp>0))return "shields others";if(F&&guarded(F,m))return "shielded";if(enraged(m))return "enraged";return "";}
 // Jeremy t1968u: toughest fight. Near-max level-50 party wins with ease; a not-maxed party needs Defend on the wind-up, heals and focus. (was hp 23000, atk 255, def 145)
 const BOSS={n:"Iron Golem",role:"crystal sentinel",hp:15000,atk:230,def:600,boss:true};
 function makeBoss(diff){const d=DIFF[diff]||DIFF.normal;return Object.assign({},BOSS,{zone:5,kind:7,lvl:50,max:BOSS.hp,atk:BOSS.atk*d.matk});}
@@ -506,7 +524,7 @@ function partyLevel(party){return Math.round(party.reduce((t,c)=>t+c.lvl,0)/part
 function centreFactor(x,y,n){const h=(n-1)/2;return Math.max(0,1-Math.max(Math.abs(x-h),Math.abs(y-h))/h);}
 function monsterLevel(zone,plvl,cf){return Math.min(ZONE_MAXLVL[zone],Math.max(ZONE_MINLVL[zone],plvl)+Math.round(3*(cf||0)));}
 function makeMonster(zone,idx,plvl,cf,diff){const L=monsterLevel(zone,plvl,cf),m=ZONE_MUL[zone],d=DIFF[diff]||DIFF.normal,k=idx%7,nm=MONSTERS[zone][k],v=ROLES[zone][k];
- const z3=ZONE_TOUGH[zone]||ZONE_TOUGH0,hp=Math.round((16+9*L)*m*v[1]*z3.hp);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*z3.atk*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false};}
+ const z3=ZONE_TOUGH[zone]||ZONE_TOUGH0,hp=Math.round((16+9*L)*m*v[1]*z3.hp);return {n:nm,role:v[0],zone,kind:k,lvl:L,hp,max:hp,atk:Math.round((5+2.1*L)*m*d.matk*v[2]*z3.atk*10)/10,def:Math.round(L*0.7*m*v[3]),pierce:v[4]||0,boss:false,...((MECH[zone]||[])[k]?{mech:MECH[zone][k]}:{})};}
 function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 function encounter(zone,plvl,cf,diff,seed,party){const r=rng(seed),k=1+Math.floor(r()*3),out=[];for(let i=0;i<k;i++)out.push(makeMonster(zone,Math.floor(r()*7),plvl,cf,diff));
  // Jeremy t1965u/t1966u: hallway foes that are weak next to the party's current stats may come as a pack of up to four.
@@ -530,22 +548,39 @@ Fight.prototype.crit=function(c,d){const p=critChance(c);if(p<=0)return [d,false
 Fight.prototype.alive=function(a){return a.filter(x=>x.hp>0);};
 Fight.prototype.act=function(ci,cmd,arg,targ){ // one hero action. returns text
  const c=this.p[ci],r=this.r;if(this.over||!c||c.hp<=0)return "";let t="";const foes=this.alive(this.m);const tg=foes.includes(this.m[targ])?this.m[targ]:foes[0];
- if(cmd==="attack"){const [dmg,cr]=this.crit(c,hit(power(c),tg.def,r()));tg.hp=Math.max(0,tg.hp-dmg);t=c.name+" hits "+tg.n+" for "+dmg+(cr?". Critical hit!":"");}
+ if(cmd==="attack"){let [dmg,cr]=this.crit(c,hit(power(c),tg.def,r()));const ar=ARMOR[tg.mech],gd=guarded(this,tg);if(ar)dmg=Math.max(1,Math.round(dmg*ar));if(gd)dmg=Math.max(1,Math.round(dmg*GUARD));tg.hp=Math.max(0,tg.hp-dmg);t=c.name+" hits "+tg.n+" for "+dmg+(cr?". Critical hit!":"")+(ar?". "+MECH_TEXT[tg.mech]:"")+(gd?". "+MECH_TEXT.guarded:"");}
  else if(cmd==="skill"){const s=SKILLS[c.cls].find(x=>x.id===arg);if(!s||!c.skills.includes(arg)||c.mp<s.mp)return this.act(ci,"attack",null,targ);c.mp-=s.mp;
-  if(s.k==="heal"){const w=this.alive(this.p).sort((a,b)=>a.hp/maxHp(a,this.d.hp)-b.hp/maxHp(b,this.d.hp))[0],h=Math.round(magicPower(c)*s.p);w.hp=Math.min(maxHp(w,this.d.hp),w.hp+h);t=c.name+" casts "+s.n+": +"+h;}
+  if(s.k==="heal"){const w=this.alive(this.p).sort((a,b)=>a.hp/maxHp(a,this.d.hp)-b.hp/maxHp(b,this.d.hp))[0],h=Math.round(magicPower(c)*s.p);w.hp=Math.min(maxHp(w,this.d.hp),w.hp+h);t=c.name+" casts "+s.n+": +"+h+(this.cure(w)?". The venom is gone.":"");}
   else if(s.k==="guard"){this.p.forEach((x,i)=>this.guard.add(i));t=c.name+" uses "+s.n;}
-  else{const list=s.all?foes:[tg],pw=(s.k==="magic"?magicPower(c):power(c))*s.p;let tot=0,crit=false;list.forEach(f=>{let d=hit(pw,f.def,r());if(s.k!=="magic"){const x=this.crit(c,d);d=x[0];crit=crit||x[1];}f.hp=Math.max(0,f.hp-d);tot+=d;});t=c.name+" uses "+s.n+" for "+tot+(crit?". Critical hit!":"");}}
+  else{const list=s.all?foes:[tg],pw=(s.k==="magic"?magicPower(c):power(c))*s.p;let tot=0,crit=false,back=0,gd=false;list.forEach(f=>{let d=hit(pw,f.def,r());if(s.k!=="magic"){const x=this.crit(c,d);d=x[0];crit=crit||x[1];if(f.mech==="stone")d=Math.max(1,Math.round(d*STONE_SKILL));}
+   else if(f.mech==="scales"){back+=Math.round(d*REFLECT_BACK);d=Math.max(1,Math.round(d*REFLECT_KEEP));}
+   if(guarded(this,f)){gd=true;d=Math.max(1,Math.round(d*GUARD));}f.hp=Math.max(0,f.hp-d);tot+=d;});
+  // t2409u: a reflected spell hurts the caster but never knocks them out on its own
+  if(back>0){back=Math.min(back,c.hp-1);if(back>0)c.hp-=back;}
+  t=c.name+" uses "+s.n+" for "+tot+(crit?". Critical hit!":"")+(back>0?". "+MECH_TEXT.reflect+" "+c.name+" takes "+back:"")+(gd?". "+MECH_TEXT.guarded:"");}}
  else if(cmd==="item"){const id=arg,k=c.bag.indexOf(id),it=ITEMS[id];if(it&&it.revive){const tg=this.p[targ];if(k<0||!tg||tg.hp>0)return "";c.bag.splice(k,1);tg.hp=Math.max(1,Math.round(maxHp(tg,this.d.hp)*it.revive));t=c.name+" uses "+it.n+": "+tg.name+" is back up!";}else{const who=this.p[targ!=null&&this.p[targ]&&this.p[targ].hp>0?targ:ci];if(k<0||!it||it.slot!=="use")return "";c.bag.splice(k,1);
-  const h=useEffect(who,it,this.d.hp);t=c.name+" uses "+it.n+(it.heal?": +"+h:"");}}
+  const h=useEffect(who,it,this.d.hp);t=c.name+" uses "+it.n+(it.heal?": +"+h:"")+(it.heal&&this.cure(who)?". The venom is gone.":"");}}
  else if(cmd==="defend"){this.guard.add(ci);t=c.name+" defends";}
  else if(cmd==="run"){if(this.m.some(x=>x.boss)){t="Can't run!";}else if(r()<0.6){this.over="ran";t="The party ran away";}else t="Couldn't get away";}
  this.log.push(t);this.check();return t;};
+Fight.prototype.cure=function(c){const ci=this.p.indexOf(c);if(!this.venom||!this.venom[ci])return false;delete this.venom[ci];return true;};
 Fight.prototype.monstersTurn=function(){this.motionHits=[];if(this.over)return [];const out=[];
+ // t2419u venom ticks first; venom alone never knocks anyone out, and any heal cures it
+ if(this.venom)for(const k of Object.keys(this.venom)){const c=this.p[+k],v=this.venom[k];if(!c||c.hp<=0){delete this.venom[k];continue;}
+  const d=Math.max(1,Math.round(maxHp(c,this.d.hp)*VENOM_PCT));c.hp=Math.max(1,c.hp-d);out.push("Venom burns "+c.name+" for "+d+". Heal to cure it");if(--v.t<=0)delete this.venom[k];}
+ const cry=this.alive(this.m).some(m=>m.mech==="warcry");
+ if(cry&&!this.cried){this.cried=true;out.push("The Ogre warlord roars! The others hit harder while it stands");}
  for(const m of this.alive(this.m)){const tg=this.alive(this.p);if(!tg.length)break;
   // A visible wind-up precedes every third round's party-wide sweep. Defend halves it.
-  const pulse=m.boss&&this.turn%3===2,targets=pulse?tg:[tg[Math.floor(this.r()*tg.length)]];
-  for(const c of targets){const ci=this.p.indexOf(c);let dmg=hit(m.atk*(pulse?.72:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);this.motionHits.push({i:this.m.indexOf(m),hero:ci,pulse,dmg});out.push(m.n+(pulse?" sweeps ":" hits ")+c.name+" for "+dmg);}
-  if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");}
+  const charge=m.mech==="charge"&&this.turn%3===2,pulse=(m.boss&&this.turn%3===2)||charge,dive=m.mech==="dive"&&!pulse;
+  // t2409u: the Griffin dives at whoever has the lowest share of health (no random pick)
+  const targets=pulse?tg:dive?[tg.slice().sort((a,b)=>a.hp/maxHp(a,this.d.hp)-b.hp/maxHp(b,this.d.hp))[0]]:[tg[Math.floor(this.r()*tg.length)]];
+  const rage=enraged(m);if(rage&&!this.enraged){this.enraged=true;out.push("The "+m.n+" is enraged! Finish it fast, or Defend");}
+  const mul=(pulse?(charge?CHARGE:.72):1)*(cry&&m.mech!=="warcry"?WARCRY:1)*(rage?ENRAGE:1);
+  for(const c of targets){const ci=this.p.indexOf(c),low=dive&&c.hp<maxHp(c,this.d.hp)*DIVE_LOW;let dmg=hit(m.atk*mul*(low?DIVE:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);this.motionHits.push({i:this.m.indexOf(m),hero:ci,pulse,dmg});out.push(m.n+(charge?" charges into ":pulse?" sweeps ":dive?" dives at ":" hits ")+c.name+" for "+dmg+(low?". It goes for the weakest. Heal them!":""));
+   if(m.mech==="venom"&&c.hp>0){(this.venom=this.venom||{})[ci]={t:VENOM_ROUNDS};out.push(c.name+" is stung by venom!");}}
+  if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");
+  if(m.mech==="charge"&&this.turn%3===1)out.push("The "+m.n+" lowers its horns. A charge is coming — Defend!");}
  this.guard.clear();this.turn++;this.log.push(...out);this.check();return out;};
 Fight.prototype.check=function(){if(this.over)return;if(!this.alive(this.m).length)this.over="win";else if(!this.alive(this.p).length)this.over="lose";};
 // Jeremy t2219u: zone bands cap combat scaling; XP shrinks only past the zone's ten-level mark.
@@ -574,6 +609,6 @@ function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-
 function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);c.stats.con=Math.max(c.stats.con,c.stats.sta);/* t2360u: free CON = STA keeps companion HP/DEF as before */while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
 const RPG={poisonOf,useEffect,clampPoints,migrateStats,conOf,critChance,CRIT_MUL,CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,lower,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
- ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
+ ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,MECH,ARMOR,MECH_TEXT,DIVE,DIVE_LOW,REFLECT_KEEP,REFLECT_BACK,ENRAGE_AT,ENRAGE,GUARD,guarded,enraged,monTag,ZONE_TOUGH,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);

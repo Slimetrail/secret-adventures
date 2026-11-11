@@ -52,11 +52,20 @@ def t_route_walk(p):
   b,c=ctx(p);pg=page(c);fresh(pg);B=btn(pg);r=MZ['main_route']
   check(len(r)==697,'route len')
   # t2528u: a seam edge is a tavern archway: walking into it bumps (no move); its Zone tab crosses (SOTA.seamExit)
+  # t2667u: zone 4 is open; the walk stops on purpose at the 4-5 archway west of Tavern 4 (step 612 (47,48)->(46,48)): the bump keeps
+  # the party in place, and Tavern 4's Zone 5 tab shows the wait text (zone 5 is still capped).
+  cap=pg.evaluate('SOTA_CONTENT_CAP.DEFAULT.maxZone');lock=next((i for i,c in enumerate(r) if MZ['section_of_cell'][f'{c[0]},{c[1]}']>cap),len(r))
+  if cap==4:check(lock==612 and tuple(r[lock-1])==(47,48) and tuple(r[lock])==(46,48),f'zone 4/5 lock moved: step {lock}')
   SEAM={}
   for sm in pg.evaluate('SOTA.seams?SOTA.seams():[]'):
     a_,b_=sm['prev'],sm['next'];SEAM[(a_['x'],a_['y'],b_['x'],b_['y'])]=(sm['t'],b_['zone']);SEAM[(b_['x'],b_['y'],a_['x'],a_['y'])]=(sm['t'],a_['zone'])
   for i in range(1,len(r)):
     (x0,y0),(x1,y1)=r[i-1],r[i];d=D.index((x1-x0,y1-y0));turn_to(pg,B,d);tap(pg,B,'fwd')
+    if i==lock:
+      s=S(pg);check((s['x'],s['y'])==(x0,y0),f'walked through the zone lock at step {i}: {s}')
+      pg.evaluate('()=>{const r=SOTA.rpg;if(r&&r.closeUI)r.closeUI();}');pg.wait_for_timeout(300)
+      t,z=SEAM.get((x0,y0,x1,y1),(3,5));pg.evaluate(f'SOTA.rpg.s5.leaveTavern({t},{z})');pg.wait_for_timeout(600)
+      check('Please wait for update to continue.' in pg.evaluate('document.body.innerText'),'no wait text at the zone 4/5 lock');b.close();return
     if (x0,y0,x1,y1) in SEAM:
       s=S(pg);check((s['x'],s['y'])==(x0,y0),f'step {i}: archway did not bump {s}')
       pg.evaluate('()=>{const r=SOTA.rpg;if(r&&r.closeUI)r.closeUI();}');pg.wait_for_timeout(300)

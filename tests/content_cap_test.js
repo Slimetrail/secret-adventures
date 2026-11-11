@@ -15,8 +15,9 @@ function engine(x,y,f=0){
  return {s:c.SOTA,el,counts:()=>({steps,after,puzzles}),storage};
 }
 // t2362u step 2: DEFAULT is zones 1-3 with no extra cells (step 1 was maxZone 2 + the zone 3 start tile (19,24)).
-test("step 2 DEFAULT: tavern 2, the zone-3 start tile (19,24), all of zone 3 and tavern 3 are open",()=>{
- a.equal(API.DEFAULT.maxZone,3);a.deepEqual(Array.from(API.DEFAULT.extraCells,c=>Array.from(c)),[]);a.ok(Object.isFrozen(API.DEFAULT));a.ok(Object.isFrozen(API.DEFAULT.extraCells));a.equal(cap.isOpen(51,14),true);a.equal(cap.isOpen(19,23),true);
+// t2419u: DEFAULT is zones 1-4 (zone 4 and Tavern 4 open); the step 2 checks below still hold.
+test("t2419u DEFAULT: tavern 2, the zone-3 start tile (19,24), all of zone 3, tavern 3 and zone 4 are open",()=>{
+ a.equal(API.DEFAULT.maxZone,4);a.deepEqual(Array.from(API.DEFAULT.extraCells,c=>Array.from(c)),[]);a.ok(Object.isFrozen(API.DEFAULT));a.ok(Object.isFrozen(API.DEFAULT.extraCells));a.equal(cap.isOpen(51,14),true);a.equal(cap.isOpen(19,23),true);
  a.deepEqual(Array.from(M.taverns[1]),[18,24]);a.equal(+M.zone[24*M.n+18],2);a.equal(cap.isOpen(18,24),true);
  a.equal(+M.zone[24*M.n+19],3);a.equal(M.rooms.some(r=>r.c[0]===19&&r.c[1]===24),false);a.equal(cap.isOpen(19,24),true);
  const m=parseInt(M.mask[24*M.n+19],16);a.equal(m&1,1);a.equal(m&8,8);a.equal(m&2,0);a.equal(m&4,0);
@@ -25,10 +26,10 @@ test("(19,24) is the only zone-3 cell with a walkable edge into zones 1-2",()=>{
  const found=[];for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)if(+M.zone[y*M.n+x]===3)for(let d=0;d<4;d++)if(parseInt(M.mask[y*M.n+x],16)&(1<<d)){const nx=x+dirs[d][0],ny=y+dirs[d][1];if(+M.zone[ny*M.n+nx]<=2)found.push([x,y]);}
  a.deepEqual(found,[[19,24]]);
 });
-test("(51,15), room 39, tavern 4 and every zone-4/5 cell are closed",()=>{
+test("t2419u: (51,15), room 39 and tavern 4 are open, every zone-4 cell is open and every zone-5 cell is closed",()=>{
  a.equal(+M.zone[23*M.n+19],3);
- for(const c of [[51,15],[47,15],[47,48]])a.equal(cap.isOpen(...c),false);
- for(let i=0;i<M.n*M.n;i++)if(+M.zone[i]===4)a.equal(cap.isOpen(i%M.n,Math.floor(i/M.n)),false);
+ for(const c of [[51,15],[47,15],[47,48]])a.equal(cap.isOpen(...c),true);a.equal(cap.isOpen(46,48),false);a.equal(+M.zone[48*M.n+46],5);
+ for(let i=0;i<M.n*M.n;i++)if(+M.zone[i]===4)a.equal(cap.isOpen(i%M.n,Math.floor(i/M.n)),true);
  const r=M.rooms.find(r=>r.id===39);a.deepEqual(Array.from(r.c),[47,15]);a.equal(r.k,"monster");
  let count=0;for(let i=0;i<M.n*M.n;i++)if(+M.zone[i]===5){count++;a.equal(cap.isOpen(i%M.n,Math.floor(i/M.n)),false);}a.ok(count>0);
 });
@@ -36,8 +37,8 @@ test("all actual zone-1/2 taverns and rooms remain open",()=>{
  a.equal(M.taverns.length,4);let taverns=0;for(const c of M.taverns)if(+M.zone[c[1]*M.n+c[0]]<=2){taverns++;a.equal(cap.isOpen(...c),true);}a.equal(taverns,2);
  for(const z of [1,2]){const rooms=M.rooms.filter(r=>r.z===z);a.ok(rooms.length);for(const r of rooms)a.equal(cap.isOpen(...r.c),true);}
 });
-test("all cells obey only zones 1-3",()=>{
- for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)a.equal(cap.isOpen(x,y),+M.zone[y*M.n+x]>=1&&+M.zone[y*M.n+x]<=3);
+test("all cells obey only zones 1-4",()=>{
+ for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)a.equal(cap.isOpen(x,y),+M.zone[y*M.n+x]>=1&&+M.zone[y*M.n+x]<=4);
 });
 test("a later data-only cap opens zone 3 including tavern 3, not zone 4/5",()=>{
  const next=API.create(M.n,M.zone,{maxZone:3,extraCells:[]});
@@ -55,12 +56,13 @@ test("every physical open-to-closed edge refuses forward and backward before puz
   for(const cmd of ["fwd","back"]){const e=engine(x,y,cmd==="fwd"?d:(d+2)%4),before=e.s.state(),stored=e.storage.get("sota.stage1.save");
    e.s.act(cmd);a.deepEqual(e.s.state(),before);a.deepEqual(e.counts(),{steps:0,after:0,puzzles:0});a.equal(e.s.panelOpen(),false);a.equal(e.s.isVisited(nx,ny),false);a.equal(e.s.visitedCount(),1);a.equal(e.storage.get("sota.stage1.save"),stored);a.equal(e.el("s4toast").textContent,"Please wait for update to continue.");
   }
- }a.deepEqual(edges,[[51,14,2,51,15]]);
+ }a.deepEqual(edges,[[47,48,3,46,48]]); // t2419u: Tavern 4 west into zone 5 (was Tavern 3 south, [51,14,2,51,15])
 });
 test("old closed-cell save can walk back into slice without teleporting, then cannot reenter",()=>{
- a.ok(parseInt(M.mask[15*M.n+51],16)&1);
- const e=engine(51,15,0);a.equal(e.s.state().x,51);a.equal(e.s.state().y,15);e.s.act("fwd");a.equal(e.s.state().x,51);a.equal(e.s.state().y,14);e.s.act("back");a.equal(e.s.state().x,51);a.equal(e.s.state().y,14);a.equal(e.counts().steps,1);a.equal(e.el("s4toast").textContent,"Please wait for update to continue.");
- a.equal(cap.allowsStep(47,48,48,48),true);
+ // t2419u: the closed side is now zone 5 (46,48), west of Tavern 4 (was zone 4 (51,15) below Tavern 3)
+ a.ok(parseInt(M.mask[48*M.n+46],16)&2);
+ const e=engine(46,48,1);a.equal(e.s.state().x,46);a.equal(e.s.state().y,48);e.s.act("fwd");a.equal(e.s.state().x,47);a.equal(e.s.state().y,48);e.s.act("back");a.equal(e.s.state().x,47);a.equal(e.s.state().y,48);a.equal(e.counts().steps,1);a.equal(e.el("s4toast").textContent,"Please wait for update to continue.");
+ a.equal(cap.allowsStep(47,48,48,48),true);a.equal(cap.allowsStep(51,14,51,15),true);
 });
 test("new script loads before engine and is cached with matching engine version",()=>{
  const html=read("index.html"),c={self:{addEventListener(){}}};vm.runInNewContext(read("sw.js")+";globalThis.shell=SHELL;globalThis.version=VER;",c);

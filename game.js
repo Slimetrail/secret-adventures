@@ -21,7 +21,7 @@ M.rooms.forEach(r=>addMark(r.c,r.k));M.camps.forEach(c=>addMark(c,"camp"));
 // Each seam is the one maze edge between a seam tavern cell and the next zone (found from zoneOf, never typed in).
 // The archway is the connector block on that edge (like a puzzle door): never standable, acts as a wall, bumping or tapping it opens the tavern.
 // The maze mask is unchanged, so saved trails stay valid; leaving by a zone tab is one normal step across the edge.
-const SEAM_TAVERNS=[0,1];
+const SEAM_TAVERNS=[0,1,2,3];/* t2667u: seams 3-4 (Tavern 3, 51,14|51,15) and 4-5 (Tavern 4, 47,48|46,48). Zone 5 stays closed: its Zone 5 tab shows the wait text */
 const SEAMS=[],archB=new Int8Array(G*G).fill(-1),seamEdge=new Int8Array(N*N*4).fill(-1),seamSide=new Int8Array(N*N).fill(-1);
 SEAM_TAVERNS.forEach(t=>{const c=M.taverns[t];if(!c)return;const ci=c[1]*N+c[0],m=mask[ci];
  for(let d=0;d<4;d++){if(!(m&BIT[d]))continue;const nx=c[0]+DIRS[d][0],ny=c[1]+DIRS[d][1],ni=ny*N+nx;if(zoneOf[ni]===zoneOf[ci])continue;

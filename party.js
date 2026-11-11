@@ -427,14 +427,16 @@ function moveItems(st,back){if(inFight()){toast("Not during a fight.");return fa
 function addLoot(id){for(const c of live.party)if(R.canCarry(c,id)){c.bag.push(id);return c.name;}return null;}
 // ---------- fights ----------
 let F=null,fx=[],turnI=0,fcv=null,fctx=null,raf=0,motionEnd=0;
-function startFight(mons,why){if(live){if(!Array.isArray(live.beasts))live.beasts=[];(mons||[]).forEach(m=>{const file=MON_FILE[m.n];if(file&&/^z[123]-/.test(file)&&!live.beasts.includes(file))live.beasts.push(file);});}F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;{const q=S.state&&S.state();F.bgv=q?((q.x*7+q.y*13+(why==="room"?3:0))%6+6)%6:fightNo%6;}FIGHT_ART.forEach(u=>spr(u.slice(11,-4)));turnI=0;nextAlive();fx=[];motionEnd=0;openUI("fight");ov.innerHTML="";ov.dataset.result="";
+function startFight(mons,why){if(live){if(!Array.isArray(live.beasts))live.beasts=[];(mons||[]).forEach(m=>{const file=MON_FILE[m.n];if(file&&/^z[1-4]-/.test(file)&&!live.beasts.includes(file))live.beasts.push(file);});}F=new R.Fight(live.party,mons,live.diff,(live.seed+(++fightNo)*7919)|0);F.why=why;{const q=S.state&&S.state();F.bgv=q?((q.x*7+q.y*13+(why==="room"?3:0))%6+6)%6:fightNo%6;}FIGHT_ART.forEach(u=>spr(u.slice(11,-4)));turnI=0;nextAlive();fx=[];motionEnd=0;openUI("fight");ov.innerHTML="";ov.dataset.result="";
  const w=el("div","s4fight");const top=el("div","s4stage");fcv=el("canvas");fcv.id="fcv";top.appendChild(fcv);const log=el("div","s4log","");log.id="flog";top.appendChild(log);w.appendChild(top);
  const bot=el("div","s4fbot");bot.id="fbot";const en=el("div","s4enemies");en.id="fen";bot.appendChild(en);const pr=el("div","s4party");pr.id="fparty";bot.appendChild(pr);const mn=el("div","s4menu");mn.id="fmenu";bot.appendChild(mn);w.appendChild(bot);
  ov.appendChild(w);fctx=fcv.getContext("2d");sizeF();say(mons.map(m=>m.n).join(", ")+" appear!");drawMenu();h6("fightStart");cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
 function sizeF(){const d=Math.min(2,window.devicePixelRatio||1),w=Math.round(fcv.clientWidth*d),h=Math.round(fcv.clientHeight*d);if(w&&h&&(fcv.width!==w||fcv.height!==h)){fcv.width=w;fcv.height=h;}}
 function say(t){const l=$("flog");if(l)l.textContent=displayText(t);}
 function nextAlive(){while(turnI<live.party.length&&live.party[turnI].hp<=0)turnI++;}
-function targets(cmd,arg){return F.m.map((m,i)=>m.hp>0?{t:m.n+" · "+m.hp,fn:()=>doAct(cmd,arg,i),d:{tgt:i}}:null).filter(Boolean);}
+// t2409u VER 88: a zone 4 status word after the name (shields others / shielded / enraged); zones 1-3 show nothing new
+function monTagText(m){const t=R.monTag?R.monTag(F,m):"";return t?" ("+t+")":"";}
+function targets(cmd,arg){return F.m.map((m,i)=>m.hp>0?{t:m.n+" · "+m.hp+monTagText(m),fn:()=>doAct(cmd,arg,i),d:{tgt:i}}:null).filter(Boolean);}
 function heroMenu(anchor){if(!F||F.over)return;const c=live.party[turnI];const sk=c.skills.map(id=>R.SKILLS[c.cls].find(x=>x.id===id)).filter(Boolean);
  const skItem=s=>({t:s.n+" "+s.mp+"MP",off:c.mp<s.mp,d:{sk:s.id},...((s.k==="phys"||s.k==="magic")&&!s.all?{kids:()=>targets("skill",s.id)}:{fn:()=>doAct("skill",s.id,0)})});
  const phys=sk.filter(s=>s.k==="phys"||s.k==="guard"),mag=sk.filter(s=>s.k==="magic"||s.k==="heal");
@@ -449,7 +451,7 @@ function turnOrder(){const n=live.party.length;if(F&&!F.over&&live.party[turnI]&
 function drawParty(){const pr=$("fparty");if(!pr)return;const was=pr.dataset.top;pr.innerHTML="";const ord=turnOrder();pr.dataset.top=ord[0];if(was!==undefined&&was!==String(ord[0])){pr.classList.remove("rot");void pr.offsetWidth;pr.classList.add("rot");}ord.forEach(i=>{const c=live.party[i];const now=i===turnI&&!F.over&&c.hp>0,r=el("div","s4pr"+(now?" now":"")+(c.hp<=0?" dead":""));const mx=R.maxHp(c,hpMul());
  const nb=el("button","s4nl");nb.dataset.hero=i;nb.disabled=!now;const top=el("span","s4nlt");top.appendChild(el("span","s4arrow",now?"‹":""));top.appendChild(el("span","s4nn",c.name));nb.appendChild(top);
  const bars=el("span","s4bars");bars.appendChild(bar(c.hp,mx,"hp"));bars.appendChild(bar(c.mp,R.maxMp(c),"mp"));nb.appendChild(bars);/* t2432u: labelled HP and MP numbers for every member, under the bars */const vals=el("span","s4vals");vals.appendChild(el("span","s4hpv","HP "+c.hp+"/"+mx));vals.appendChild(el("span","s4mpv","MP "+c.mp+"/"+R.maxMp(c)));nb.appendChild(vals);nb.addEventListener("click",e=>{e.preventDefault();if(now)heroMenu(nb);});r.appendChild(nb);pr.appendChild(r);});
- const en=$("fen");if(en){en.textContent=F.m.filter(m=>m.hp>0).map(m=>m.n).join(" · ");}}
+ const en=$("fen");if(en){en.textContent=F.m.filter(m=>m.hp>0).map(m=>m.n+monTagText(m)).join(" · ");}}
 function drawMenu(){drawParty();const mn=$("fmenu");if(!mn)return;mn.innerHTML="";const fw=document.querySelector(".s4fight");if(fw)fw.classList.toggle("over",!!F.over);if(F.over){endFight();return;}const c=live.party[turnI];mn.appendChild(el("div","s4who",c.name+"'s turn - tap the name"));}
 // Presentation events use the engine's actual target indices, never names or a second RNG roll.
 function motionTime(){return Math.max(performance.now(),motionEnd);}

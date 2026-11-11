@@ -24,14 +24,15 @@ const T3=M.taverns[2],CAMPS3=M.camps.map((c,k)=>[c,k]).filter(([c])=>Z(idx(c))==
 const RO={window:{}};vm.createContext(RO);vm.runInContext(read('rules.js'),RO);RO.window.RPG=RO.window.RPG||RO.RPG;vm.runInContext(read('econ.js'),RO);
 const R=RO.window.RPG,X=RO.window.ECON;
 
-test('cap: zones 1-3 open, zones 4-5 closed; Tavern 3 is open and its zone-4 neighbour (51,15) is not',()=>{
- a.deepEqual(plain(API.DEFAULT),{maxZone:3,extraCells:[]});a.ok(Object.isFrozen(API.DEFAULT)&&Object.isFrozen(API.DEFAULT.extraCells));
- for(let i=0;i<N*N;i++)a.equal(cap.isOpen(i%N,Math.floor(i/N)),Z(i)<=3,`cell ${i%N},${Math.floor(i/N)}`);
- a.deepEqual(plain(T3),[51,14]);a.equal(cap.isOpen(51,14),true);a.equal(cap.isOpen(51,15),false);a.equal(cap.isOpen(19,24),true);a.equal(cap.isOpen(19,23),true);
- a.equal(cap.isZoneOpen(3),true);a.equal(cap.isZoneOpen(4),false);a.equal(cap.isZoneOpen(5),false);});
-test('cap: the ONLY walkable edge out of the open area is Tavern 3 south to (51,15)',()=>{const out=[];
+// t2419u: the cap is now zones 1-4; zone 3 checks still hold, and Tavern 3's zone-4 neighbour (51,15) is open.
+test('cap: zones 1-4 open, zone 5 closed; Tavern 3 and its zone-4 neighbour (51,15) are open',()=>{
+ a.deepEqual(plain(API.DEFAULT),{maxZone:4,extraCells:[]});a.ok(Object.isFrozen(API.DEFAULT)&&Object.isFrozen(API.DEFAULT.extraCells));
+ for(let i=0;i<N*N;i++)a.equal(cap.isOpen(i%N,Math.floor(i/N)),Z(i)<=4,`cell ${i%N},${Math.floor(i/N)}`);
+ a.deepEqual(plain(T3),[51,14]);a.equal(cap.isOpen(51,14),true);a.equal(cap.isOpen(51,15),true);a.equal(cap.isOpen(19,24),true);a.equal(cap.isOpen(19,23),true);
+ a.equal(cap.isZoneOpen(3),true);a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),false);});
+test('cap: the ONLY walkable edge out of the open area is Tavern 4 west to (46,48) (t2419u; was Tavern 3 south)',()=>{const out=[];
  for(let i=0;i<N*N;i++)if(cap.isOpen(i%N,Math.floor(i/N)))for(const j of nb(i))if(!cap.isOpen(j%N,Math.floor(j/N)))out.push([i%N,Math.floor(i/N),j%N,Math.floor(j/N)]);
- a.deepEqual(out,[[51,14,51,15]]);});
+ a.deepEqual(out,[[47,48,46,48]]);});
 // live engine (game.js) like content_cap_test: walk tavern 2 -> zone 3; Tavern 3 south refuses with the exact wait text
 function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext(read('maze-data.js'),c);vm.runInContext(read('content-cap.js'),c);
  const els=new Map(),storage=new Map([["sota.stage1.save",JSON.stringify({x,y,f})]]);
@@ -40,8 +41,8 @@ function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext
  Object.assign(c.window,{TEX:{S:32},DOORTEX:{},innerWidth:400,innerHeight:300,addEventListener(){}});vm.runInContext(read('game.js'),c);c.SOTA=c.window.SOTA;return {s:c.window.SOTA,el};}
 test('live walk: Tavern 2 east is the seam archway (t2528u); the Zone 3 side (19,24) then north into zone 3 with no wait toast',()=>{const e=engine(18,24,1);e.s.act('fwd');a.deepEqual(plain(e.s.state()),{x:18,y:24,f:1,zone:2});a.ok(e.s.seamExit(1,3));e.s.act('fwd');
  a.deepEqual(plain(e.s.state()),{x:19,y:23,f:0,zone:3});a.equal(e.el('s4toast').textContent,'');});
-test('live walk: Tavern 3 south refuses (zone 4) with "Please wait for update to continue."',()=>{const e=engine(51,14,2);e.s.act('fwd');
- a.deepEqual(plain(e.s.state()),{x:51,y:14,f:2,zone:3});a.equal(e.el('s4toast').textContent,'Please wait for update to continue.');});
+test('live walk: Tavern 3 south now steps into zone 4 with no wait toast (t2419u; the wait moved to Tavern 4)',()=>{const e=engine(51,14,2);e.s.act('fwd');
+ a.deepEqual(plain(e.s.state()),{x:51,y:15,f:2,zone:4});a.equal(e.el('s4toast').textContent,'');});
 test('a path through zone 3 joins Tavern 2 to Tavern 3 inside the cap with every room/door cell treated as a wall',()=>{
  const rooms=new Set(M.rooms.map(r=>idx(r.c))),seen=new Set([idx(M.taverns[1])]),qq=[idx(M.taverns[1])];
  for(let k=0;k<qq.length;k++)for(const j of nb(qq[k]))if(!rooms.has(j)&&!seen.has(j)&&cap.isOpen(j%N,Math.floor(j/N))){seen.add(j);qq.push(j);}
@@ -49,13 +50,13 @@ test('a path through zone 3 joins Tavern 2 to Tavern 3 inside the cap with every
 // t2370u door rule for zone 3 (the same check is also in tests/t2327u_room_deadends_test.js)
 test('t2370u zone 3 door rule: every zone 3 room is a same-zone dead end, never a hallway gate',()=>{const rooms3=M.rooms.filter(r=>r.z===3);a.equal(rooms3.length,16);
  for(const r of rooms3){const x=nb(idx(r.c));a.equal(x.length,1,`room ${r.id} at ${r.c} is not a dead end`);a.equal(Z(x[0]),3);a.ok(!M.rooms.some(o=>idx(o.c)===x[0]),`room ${r.id} opens onto a room`);}});
-test('Tavern 2 Zone 3 now saves through the 4-slot picker and exits; Tavern 3 Zone 4 plays the wait message and saves nothing',()=>{
+test('Tavern 2 Zone 3 saves through the 4-slot picker and exits; t2419u: Tavern 3 Zone 4 now saves and exits too',()=>{
  const h=harness();Object.assign(h.pos,{x:18,y:24});h.r.s5.tavernScreen(1);h.click(q(h,'[data-hub=2]'));a.equal(h.r.ui(),'save-picker');a.equal(qa(h,'[data-save-slot]').length,4);
  h.click(q(h,'[data-save-slot=1]'));a.equal(h.r.ui(),null);a.equal(JSON.parse(h.storage.get('sota.party.slot1')).at.name,'Tavern 2');a.deepEqual(h.scenes,[]);
  const t=harness();Object.assign(t.pos,{x:51,y:14});t.r.s5.tavernScreen(2);a.deepEqual(qa(t,'[data-hub]').map(b=>b.textContent),['Zone 3','Shop','Zone 4']);
- t.click(q(t,'[data-hub=2]'));a.equal(t.r.ui(),'tavern');a.equal(t.scenes[0].kind,'wait-for-update');a.equal(t.scenes[0].lines[0][2],'Please wait for update to continue.');
- for(let s=0;s<4;s++)a.equal(t.storage.has('sota.party.slot'+s),false);
- t.setStory(false);t.click(q(t,'[data-hub=0]'));a.equal(t.r.ui(),'save-picker','Tavern 3 "Zone 3" (back) still saves');});
+ t.click(q(t,'[data-hub=2]'));a.equal(t.r.ui(),'save-picker','Tavern 3 "Zone 4" saves');a.deepEqual(t.scenes,[]);
+ t.click(q(t,'[data-save-slot=1]'));a.equal(t.r.ui(),null);a.equal(JSON.parse(t.storage.get('sota.party.slot1')).at.name,'Tavern 3');
+ t.r.s5.tavernScreen(2,false);t.setStory(false);t.click(q(t,'[data-hub=0]'));a.equal(t.r.ui(),'save-picker','Tavern 3 "Zone 3" (back) still saves');});
 test('Tavern 3 shop: owner 3 art; sells moonleaf and fowl (zone 3 food) and silk/hide/shard parts; shop stock is not gated',()=>{const h=harness();h.r.live().gold=500;Object.assign(h.pos,{x:51,y:14});
  h.r.s5.shopList(2,'food');a.match(q(h,'.s4page').style.backgroundImage,/owner-3\.webp/);for(const id of ['i_moonleaf','i_fowl','i_cheese','potion','ether','salts'])a.ok(q(h,'[data-buy='+id+']'),'no '+id);
  a.equal(q(h,'[data-buy=i_starfruit]'),null,'tier-4 food sold early');
@@ -115,12 +116,12 @@ const mm=read('tests/maze_music_cap_test.js'),musicFor=eval('('+mm.slice(mm.inde
 test('music: under the DEFAULT cap zone 3 cells play maze_zone3 (real music.js maze picker); the file exists',()=>{
  a.ok(fs.existsSync(path.join(__dirname,'..','music','maze_zone3.mp3')));
  for(const c of [[19,24],[19,23],[30,10],[51,14]])a.equal(musicFor(null,3,c[0],c[1]).maze(),'maze_zone3',String(c));
- a.equal(musicFor(null,2,18,24).maze(),'maze_zone2');a.equal(musicFor(null,4,51,15).maze(),'maze_zone3','zone 4 must not play its music yet');});
+ a.equal(musicFor(null,2,18,24).maze(),'maze_zone2');a.equal(musicFor(null,4,51,15).maze(),'maze_zone4','t2419u: zone 4 is open and plays its own music');a.equal(musicFor(null,5,46,48).maze(),'maze_zone4','zone 5 must not play its music yet');});
 test('t2404u: zone 3 monsters have pencil sketches and a fought zone 3 beast is recorded and listed in Beasts',()=>{
  for(const nm of ['centaur','direwolf','ghoul','harpy','skeleton','werewolf','wraith'])a.equal(fs.existsSync(path.join(__dirname,'..','art-intro','journal','monsters','z3-'+nm+'.webp')),true,'z3 sketch missing: '+nm);
  const h=harness(),L=h.r.live();L.beasts=[];h.r.startFight([h.R.makeMonster(3,0,20,0,'normal'),h.R.makeMonster(1,0,1,0,'normal')],'random');const z3=plain(L.beasts);a.equal(z3.length,2);a.ok(/^z3-/.test(z3[0]),z3.join());a.equal(z3[1],'z1-rat');h.r.forceEnd('ran');h.r.closeUI();
  vm.runInContext(read('intro-art-data.js'),h.c);const i=h.intro();i.openJournal('beasts');const jb=h.document.getElementById('ijour');a.deepEqual(jb.querySelectorAll('[data-beast]').map(f=>f.dataset.beast),['z1-rat',z3[0]]);});
-test('cache pins: content-cap, econ and party moved together with sw VER (>=80), rules.js v20 and match index.html',()=>{const html=read('index.html'),sw=read('sw.js');
+test('cache pins: content-cap, econ and party moved together with sw VER (>=80), rules.js and match index.html (t2419u values)',()=>{const html=read('index.html'),sw=read('sw.js');
  const ver=+sw.match(/^const VER="(\d+)"/)[1];a.ok(ver>=80,'VER '+ver+' (stage1-build is 79)');
- for(const pin of ['content-cap.js?v=6','econ.js?v=17','party.js?v=38','rules.js?v=22'] /* party 38 in VER 100 (gear rework on live 99) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
+ for(const pin of ['content-cap.js?v=7','econ.js?v=17','party.js?v=39','rules.js?v=23'] /* party 38 in VER 100 (gear rework on live 99) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
  for(const old of ['content-cap.js?v=5"','econ.js?v=15"','party.js?v=28"','rules.js?v=19"','rules.js?v=18"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);});

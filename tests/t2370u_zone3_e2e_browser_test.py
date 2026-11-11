@@ -11,7 +11,8 @@ BASE=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8901/'
 sys.argv=[sys.argv[0],BASE]
 import stage4_fix_tests as T
 from playwright.sync_api import sync_playwright
-SHOTS=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','game-export','t2370u-zone3');os.makedirs(SHOTS,exist_ok=True)
+# t2419u: screenshots go inside this tree so a later-zone copy never overwrites the shared zone 3 evidence
+SHOTS=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','game-export','t2370u-zone3');os.makedirs(SHOTS,exist_ok=True)
 passed=failed=0;steps=[];log=[]
 def shot(pg,name):pg.wait_for_timeout(300);p=os.path.abspath(os.path.join(SHOTS,name));pg.screenshot(path=p);steps.append(p)
 def bagn(pg,id):return T.ev(pg,'id=>SOTA.rpg.live().party.flatMap(c=>c.bag).filter(x=>x===id).length',id)
@@ -77,7 +78,7 @@ def buy_tap(pg,id):
 def e2e(p):
   b,c=T.ctx(p);pg=T.fresh(c)
   T.check(T.ui(pg)=='create','creation not open');T.full_create(pg,'Tess','human','warrior')
-  T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==3,'cap is not zones 1-3')
+  T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')>=3,'cap does not open zone 3') # t2419u: zone4-work opens zone 4 too
   # ---- 1. a zone 2 save, made in-game: L20 hero who spent points in STR/CON, Mira from Tavern 1, 2 tents, meat, gold; zone 1 lesson done
   T.ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];while(h.lvl<20)RPG.gainXp(h,RPG.xpNeed(h.lvl),1);
    for(let k=0;k<400;k++){if(!RPG.raise(h,k%3===2?"con":"str")&&!RPG.raise(h,"con"))break;}
@@ -156,12 +157,20 @@ def e2e(p):
   T.ttap(pg,'#s4 .s4back');T.ttap(pg,'[data-tab=done]');T.check(T.ui(pg)=='save-picker','Done did not open the save picker');shot(pg,'13-tavern3-save-picker.png')
   T.ttap(pg,'[data-save-slot="2"]');T.check(T.ui(pg)=='tavern','tavern 3 save did not return to the tavern');sv=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2"))')
   T.check(sv['at']['name']=='Tavern 3' and 'c_stew' in [x for c in sv['party'] for x in c['bag']],'Tavern 3 save wrong')
-  T.ttap(pg,'[data-hub="2"]');pg.wait_for_timeout(2600);T.check(T.ui(pg)=='tavern','Zone 4 left the tavern')
-  T.check(T.ev(pg,'document.body.innerText.includes("Please wait for update to continue.")'),'no wait message on Zone 4');shot(pg,'14-tavern3-zone4-wait.png')
-  T.ev(pg,'SOTA.rpg.closeUI()')
-  # the maze itself refuses zone 4 south of Tavern 3
-  T.ev(pg,'SOTA.teleport(51,14,2)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[51,14],'walked into zone 4')
-  T.check(T.ev(pg,'document.getElementById("s4toast").textContent')=='Please wait for update to continue.','no wait toast at the zone 4 edge');shot(pg,'15-zone4-edge-wait-toast.png')
+  cap=T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')
+  if cap==3:
+    T.ttap(pg,'[data-hub="2"]');pg.wait_for_timeout(2600);T.check(T.ui(pg)=='tavern','Zone 4 left the tavern')
+    T.check(T.ev(pg,'document.body.innerText.includes("Please wait for update to continue.")'),'no wait message on Zone 4');shot(pg,'14-tavern3-zone4-wait.png')
+    T.ev(pg,'SOTA.rpg.closeUI()')
+    # the maze itself refuses zone 4 south of Tavern 3
+    T.ev(pg,'SOTA.teleport(51,14,2)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[51,14],'walked into zone 4')
+    T.check(T.ev(pg,'document.getElementById("s4toast").textContent')=='Please wait for update to continue.','no wait toast at the zone 4 edge');shot(pg,'15-zone4-edge-wait-toast.png')
+  else:  # t2419u: zone 4 is open, so Tavern 3's Zone 4 exit saves (the Tavern 4 Zone 5 wait is in t2419u_zone4_e2e_browser_test.py)
+    T.ttap(pg,'[data-hub="2"]');T.check(T.ui(pg)=='save-picker','Tavern 3 Zone 4 exit did not open the save picker');T.ttap(pg,'[data-save-slot="2"]');T.check(T.ui(pg) is None,'picker did not close')
+    T.ev(pg,'SOTA.teleport(51,14,2)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[51,15] and s['zone']==4,'could not walk into zone 4')
+    T.check(T.ev(pg,'document.getElementById("s4toast").textContent')!='Please wait for update to continue.','wait toast entering zone 4');shot(pg,'14-tavern3-zone4-open.png')
+    if T.ui(pg)=='fight':T.ev(pg,'SOTA.rpg.forceEnd("ran");SOTA.rpg.closeUI()')
+    T.ev(pg,'SOTA.teleport(51,14,0)');pg.wait_for_timeout(200)
   # ---- 9. Moon elixir at Camp 14 next to Tavern 3, if a ghoul fang dropped
   if bagn(pg,'p_fang'):
     t0=bagn(pg,'tent');T.ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")') if t0==0 else None  # bought-tent stand-in so the camp Save can use one

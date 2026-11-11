@@ -80,8 +80,8 @@ test('centre, taverns, camps and each door approach remain accessible',()=>{
 test('the released first slice remains connected with its existing content cap',()=>{
  const capped={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'content-cap.js'),'utf8'),capped);
  const cap=capped.window.SOTA_CONTENT_CAP.create(N,M.zone);
- // t2362u step 2: the released cap is zones 1-3 (was maxZone 2 + the (19,24) doorway in step 1)
- assert.equal(capped.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,3);
+ // t2419u: the released cap is zones 1-4 (t2362u step 2 was zones 1-3; step 1 was maxZone 2 + the (19,24) doorway)
+ assert.equal(capped.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,4);
  assert.deepEqual(JSON.parse(JSON.stringify(capped.window.SOTA_CONTENT_CAP.DEFAULT.extraCells)),[]);
  const seen=new Set([index(M.entrance)]),q=[index(M.entrance)];
  for(let k=0;k<q.length;k++)for(const j of neighbors(q[k]))if(!roomCells.has(j)&&!seen.has(j)&&cap.isOpen(j%N,Math.floor(j/N))){seen.add(j);q.push(j);}
@@ -126,17 +126,35 @@ test('t2370u zone 3: with every room and door cell impassable, all zone 3 hallwa
  for(const r of rooms3){const nb=neighbors(index(r.c));assert.equal(nb.length,1,`door ${r.id} is not on a dead end`);
   assert.ok(!doorCells.has(nb[0]),`door ${r.id} opens onto another room`);assert.ok(seen.has(nb[0]),`door ${r.id} approach unreachable`);assert.equal(+M.zone[nb[0]],3,`door ${r.id} approached from another zone`);
   const old=ORIGINAL.find(o=>o.id===r.id);if(JSON.stringify(old.c)!==JSON.stringify(r.c))console.log(`  zone 3 door ${r.id} (${r.k}) moved ${old.c} -> ${r.c} (dead end)`);}
- // no zone 4/5 cell is reachable inside the cap
- for(const i of seen)assert.ok(+M.zone[i]<=3);
+ // no zone 5 cell is reachable inside the cap (t2419u: zone 4 is open now)
+ for(const i of seen)assert.ok(+M.zone[i]<=4);
  console.log(`  t2370u zone 3: ${got}/${total} hallway cells reached (inside cap); rooms/doors z3: ${rooms3.length}, all dead ends; Tavern 3 + ${fac.length-1} camps reached`);
+});
+// t2419u: the same standing door rule for zone 4, now inside the released cap (zones 1-4).
+test('t2419u zone 4: with every room and door cell impassable, all zone 4 hallway cells, Tavern 4, its camps and door approaches are reachable',()=>{
+ const capped={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'content-cap.js'),'utf8'),capped);
+ const cap=capped.window.SOTA_CONTENT_CAP.create(N,M.zone),open=i=>cap.isOpen(i%N,Math.floor(i/N));
+ const doorCells=new Set(M.rooms.map(r=>index(r.c)));
+ const seen=new Set([index(M.entrance)]),q=[index(M.entrance)];
+ for(let k=0;k<q.length;k++)for(const j of neighbors(q[k]))if(!doorCells.has(j)&&!seen.has(j)&&open(j)){seen.add(j);q.push(j);}
+ let total=0,got=0;const bad=[];
+ for(let i=0;i<N*N;i++){if(+M.zone[i]!==4||doorCells.has(i))continue;assert.ok(open(i),'zone 4 cell closed by the cap');total++;if(seen.has(i))got++;else bad.push([i%N,Math.floor(i/N)]);}
+ assert.deepEqual(bad,[],'zone 4 hallway cells cut off by a door/room: '+JSON.stringify(bad));
+ const fac=[...M.taverns,...M.camps].filter(c=>+M.zone[index(c)]===4);assert.equal(fac.length,13,'Tavern 4 + 12 camps');
+ for(const c of fac)assert.ok(seen.has(index(c)),`unreachable tavern/camp ${c}`);
+ const rooms4=M.rooms.filter(r=>r.z===4);assert.equal(rooms4.length,21);
+ for(const r of rooms4){const nb=neighbors(index(r.c));assert.equal(nb.length,1,`door ${r.id} is not on a dead end`);
+  assert.ok(!doorCells.has(nb[0]),`door ${r.id} opens onto another room`);assert.ok(seen.has(nb[0]),`door ${r.id} approach unreachable`);assert.equal(+M.zone[nb[0]],4,`door ${r.id} approached from another zone`);}
+ for(const i of seen)assert.ok(+M.zone[i]<=4);
+ console.log(`  t2419u zone 4: ${got}/${total} hallway cells reached (inside cap); rooms/doors z4: ${rooms4.length}, all dead ends; Tavern 4 + ${fac.length-1} camps reached`);
 });
 test('maze cache pins advance together without changing combat pins',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/^const VER="100",/); // gear rework rebased on live VER 99
+ assert.match(sw,/^const VER="101",/); // gear rework rebased on live VER 99
  for(const source of [html,sw]){
   assert.ok(source.includes('maze-data.js?v=17'));assert.ok(!source.includes('maze-data.js?v=16'));
-  assert.ok(source.includes("rules.js?v=22"));assert.ok(source.includes("party.js?v=38"));
+  assert.ok(source.includes("rules.js?v=23"));assert.ok(source.includes("party.js?v=39"));
  }
 });
 console.log(`${passed} passed; 0 failed`);

@@ -178,7 +178,9 @@ function itemName(id){return R.ITEMS[id]?R.ITEMS[id].n:id;}
 const JOURNAL_MONSTERS={"cap:1":[["Rat","z1-rat"],["Slime","z1-slime"],["Big bug","z1-bigbug"],["Cave bat","z1-bat"],["Giant spider","z1-spider"],["Mud toad","z1-toad"],["Fungus creeper","z1-fungus"]],"cap:2":[["Goblin","z2-goblin"],["Orc","z2-orc"],["Fairy","z2-fairy"],["Kobold","z2-kobold"],["Wild boar","z2-boar"],["Pixie swarm","z2-pixies"],["Hobgoblin brute","z2-hobgoblin"]]};
 // t2404u: zone 3 pencil sketches for the Beasts tab only (art lock lifted for zone 3 only; journal pages for cap:3 stay text only)
 const BEASTS_Z3=[["Centaur","z3-centaur"],["Werewolf","z3-werewolf"],["Skeleton","z3-skeleton"],["Ghoul","z3-ghoul"],["Harpy","z3-harpy"],["Dire wolf","z3-direwolf"],["Wraith","z3-wraith"]];
-function beastNote(name){const G=window.StoryJournalGenerator,f=G&&G.MONSTER_FACTS;if(!f)return null;return (f[1]||[]).concat(f[2]||[],f[3]||[]).find(m=>m[0]===name)||null;}
+// t2419u: zone 4 pencil sketches, Beasts tab only, same rule as zone 3
+const BEASTS_Z4=[["Minotaur","z4-minotaur"],["Griffin","z4-griffin"],["Lizard man","z4-lizardman"],["Stone gargoyle","z4-gargoyle"],["Manticore","z4-manticore"],["Ogre warlord","z4-ogre"],["Giant scorpion","z4-scorpion"]];
+function beastNote(name){const G=window.StoryJournalGenerator,f=G&&G.MONSTER_FACTS;if(!f)return null;return (f[1]||[]).concat(f[2]||[],f[3]||[],f[4]||[]).find(m=>m[0]===name)||null;}
 function monsterSketches(entry,kind,key){if(kind!=="monster-drawings")return;const g=el("div","ijart ijmonsters");
  (JOURNAL_MONSTERS[key]||[]).forEach(([name,file])=>{const path="journal/monsters/"+file+".webp";if(!has(path))return;const f=el("figure","ijfig"),im=el("img");im.alt=name;im.src=A(path);im.loading="lazy";f.appendChild(im);g.appendChild(f);});if(g.children.length)entry.appendChild(g);}
 function page(pg,l){const t=jTab,E=window.ECON;
@@ -191,7 +193,7 @@ function page(pg,l){const t=jTab,E=window.ECON;
   ids.forEach(id=>{const f=el("figure","ijfig");f.dataset.room=id;const im=el("img");im.alt="";im.src="art6/"+ra[id][1]+".webp";const n=el("figcaption","ijnote ijhw",wallNote(ra[id][1]));f.append(im,n);g.appendChild(f);});
   if(s&&s.seen&&s.seen.boss){const v=letterVar(),f=el("figure","ijfig");f.dataset.room="letter";f.dataset.variant=v;const im=el("img");im.alt="";im.src="art6/letter-note-before-you-enter.webp";f.append(im,el("figcaption","ijnote ijhw",TX.wall["letter-note-before-you-enter#"+v]||""));g.appendChild(f);}pg.appendChild(g);}
  else if(t==="journal"){pg.appendChild(el("h3",null,"Journal"));const h=el("div","ijhand");const es=keyMoments();if(!es.length)h.appendChild(el("div","ijl dim","(nothing written yet)"));es.forEach(([k,t,kind,key])=>{const e=el("div","ijentry ijhw",t);e.dataset.entry=k;monsterSketches(e,kind,key);h.appendChild(e);});pg.appendChild(h);}
- else if(t==="beasts"){pg.appendChild(el("h3",null,"Beasts"));const found=new Set(l.beasts||[]);const all=[].concat(JOURNAL_MONSTERS["cap:1"],JOURNAL_MONSTERS["cap:2"],BEASTS_Z3).filter(([,file])=>found.has(file));
+ else if(t==="beasts"){pg.appendChild(el("h3",null,"Beasts"));const found=new Set(l.beasts||[]);const all=[].concat(JOURNAL_MONSTERS["cap:1"],JOURNAL_MONSTERS["cap:2"],BEASTS_Z3,BEASTS_Z4).filter(([,file])=>found.has(file));
   const pick=(typeof jBeast==="string"&&found.has(jBeast))?all.find(([,file])=>file===jBeast):null,fact=pick&&beastNote(pick[0]);
   if(pick&&fact){const path="journal/monsters/"+pick[1]+".webp",box=el("div","ijbeast");box.dataset.beastDetail=pick[1];
    if(has(path)){const f=el("figure","ijfig ijbeast-lg"),im=el("img");im.alt=pick[0];im.src=A(path);f.appendChild(im);box.appendChild(f);}
