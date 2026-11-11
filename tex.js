@@ -60,5 +60,7 @@ const V=6;const out={S,V,walls:[],floors:[],ceils:[]};
 for(let z=1;z<=5;z++){const P=Z[z];out.walls[z]=[];out.floors[z]=[];out.ceils[z]=[];
  for(let v=0;v<V;v++){const r=rng(z*1000+v*17+3);const t=T();blocks(t,r,P);P.extra(t,r,v);out.walls[z].push(pack(t));}
  for(let v=0;v<2;v++){const r=rng(z*777+v*31+9);let t=T();floorTex(t,r,P);out.floors[z].push(pack(t));t=T();ceilTex(t,r,P);out.ceils[z].push(pack(t));}}
+// t2558u: the zone wall palettes, read by the archway stone tint fallback (game.js) when tints.json is missing
+out.pal=Z.map(p=>p&&{c1:p.c1.slice(),c2:p.c2.slice(),ink:p.ink.slice()});
 window.TEX=out;
 })();

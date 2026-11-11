@@ -44,8 +44,9 @@ test("a later data-only cap opens zone 3 including tavern 3, not zone 4/5",()=>{
  for(let i=0;i<M.n*M.n;i++)a.equal(next.isOpen(i%M.n,Math.floor(i/M.n)),+M.zone[i]>=1&&+M.zone[i]<=3);
  a.equal(next.isOpen(51,14),true);a.equal(next.isOpen(51,15),false);a.equal(next.isOpen(47,48),false);
 });
-test("live movement steps tavern 2 east to (19,24) and back",()=>{
- const e=engine(18,24,1);e.s.act("fwd");a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);e.s.act("back");a.equal(e.s.state().x,18);a.equal(e.s.state().y,24);a.equal(e.counts().steps,2);
+test("live movement: tavern 2 east (19,24) is the seam 2-3 archway; it bumps both ways and the Zone 3 tab crosses (t2528u)",()=>{
+ const e=engine(18,24,1);e.s.act("fwd");a.equal(e.s.state().x,18);a.equal(e.s.state().y,24);a.equal(e.counts().steps,0);
+ a.ok(e.s.seamExit(1,3));a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);e.s.act("right");e.s.act("back");/* facing E, back = W into the arch */a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);
 });
 test("every physical open-to-closed edge refuses forward and backward before puzzles, rooms, visits or saves",()=>{
  const edges=[];

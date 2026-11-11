@@ -38,7 +38,7 @@ function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext
  function el(id){if(!els.has(id))els.set(id,{textContent:"",style:{},classList:{add(){},remove(){}},addEventListener(){},getContext(){return {createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};}};}});return els.get(id);}
  Object.assign(c,{document:{getElementById:el,querySelectorAll:()=>[]},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},performance:{now:()=>1},requestAnimationFrame(){},setTimeout:()=>1,clearTimeout(){}});
  Object.assign(c.window,{TEX:{S:32},DOORTEX:{},innerWidth:400,innerHeight:300,addEventListener(){}});vm.runInContext(read('game.js'),c);c.SOTA=c.window.SOTA;return {s:c.window.SOTA,el};}
-test('live walk: Tavern 2 east to (19,24) then north into zone 3 with no wait toast',()=>{const e=engine(18,24,1);e.s.act('fwd');e.s.act('left');e.s.act('fwd');
+test('live walk: Tavern 2 east is the seam archway (t2528u); the Zone 3 side (19,24) then north into zone 3 with no wait toast',()=>{const e=engine(18,24,1);e.s.act('fwd');a.deepEqual(plain(e.s.state()),{x:18,y:24,f:1,zone:2});a.ok(e.s.seamExit(1,3));e.s.act('fwd');
  a.deepEqual(plain(e.s.state()),{x:19,y:23,f:0,zone:3});a.equal(e.el('s4toast').textContent,'');});
 test('live walk: Tavern 3 south refuses (zone 4) with "Please wait for update to continue."',()=>{const e=engine(51,14,2);e.s.act('fwd');
  a.deepEqual(plain(e.s.state()),{x:51,y:14,f:2,zone:3});a.equal(e.el('s4toast').textContent,'Please wait for update to continue.');});
@@ -122,5 +122,5 @@ test('t2404u: zone 3 monsters have pencil sketches and a fought zone 3 beast is 
  vm.runInContext(read('intro-art-data.js'),h.c);const i=h.intro();i.openJournal('beasts');const jb=h.document.getElementById('ijour');a.deepEqual(jb.querySelectorAll('[data-beast]').map(f=>f.dataset.beast),['z1-rat',z3[0]]);});
 test('cache pins: content-cap, econ and party moved together with sw VER (>=80), rules.js v20 and match index.html',()=>{const html=read('index.html'),sw=read('sw.js');
  const ver=+sw.match(/^const VER="(\d+)"/)[1];a.ok(ver>=80,'VER '+ver+' (stage1-build is 79)');
- for(const pin of ['content-cap.js?v=6','econ.js?v=17','party.js?v=34','rules.js?v=22'] /* t2404u bump; party 32 in VER 83 (t2432u-t2442u) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
+ for(const pin of ['content-cap.js?v=6','econ.js?v=17','party.js?v=35','rules.js?v=22'] /* party 35 in VER 95 (t2528u seams on live 94) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
  for(const old of ['content-cap.js?v=5"','econ.js?v=15"','party.js?v=28"','rules.js?v=19"','rules.js?v=18"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);});

@@ -19,7 +19,7 @@ def setup(p):
   b=p.chromium.launch();c=b.new_context(viewport={'width':390,'height':844},device_scale_factor=2,has_touch=True,is_mobile=True,service_workers='block')
   c.add_init_script("try{localStorage.setItem('sota.dev.nostory','1')}catch(e){}");pg=T.fresh(c);T.full_create(pg,'Tess','human','warrior')
   T.ev(pg,'''(()=>{const L=SOTA.rpg.live();L.party.push(RPG.makeCompanion(RPG.COMPANIONS[0],1),RPG.makeCompanion(RPG.COMPANIONS[1],1));
-    L.party.forEach((c,i)=>{const mx=RPG.maxHp(c,RPG.DIFF[L.diff].hp);c.hp=Math.max(2,mx-3-i*4);c.mp=Math.max(1,RPG.maxMp(c)-1-i);});L.party[2].hp=1;SOTA.teleport(...MAZE.taverns[0],0);})()''')
+    L.party.forEach((c,i)=>{const mx=RPG.maxHp(c,RPG.DIFF[L.diff].hp);c.hp=Math.max(2,mx-3-i*4);c.mp=Math.max(1,RPG.maxMp(c)-1-i);});L.party[2].hp=1;const sm=(SOTA.seams?SOTA.seams():[]).find(s=>s.t===0);SOTA.teleport(MAZE.taverns[0][0],MAZE.taverns[0][1],sm?sm.prev.f:2);})()''')
   T.check(T.ev(pg,'SOTA.rpg.doSave()'),'save failed');return b,pg
 POOLS='JSON.stringify(SOTA.rpg.live().party.map(c=>[c.hp,c.mp]))'
 def pools(pg):return json.loads(T.ev(pg,POOLS))

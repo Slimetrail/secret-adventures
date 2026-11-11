@@ -54,14 +54,14 @@ function buildTitle(){if(tt)return tt;tt=el("div","ititle");tt.id="ititle";tt.da
  document.body.appendChild(tt);return tt;}
 function titleMenu(){const m=$("ititle-menu");if(!m)return;m.replaceChildren();const any=(()=>{try{return S.rpg.saveSlots().some(Boolean);}catch(e){return hasSave();}})();
  const b=(t,id,f)=>{const x=el("button","ink s4b ititle-b",t);x.type="button";x.id=id;x.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();f();});m.appendChild(x);return x;};
- if(hasSave())b("Continue","ititle-cont",()=>{if(tOpen)hideTitle();});
+ if(hasSave())b("Continue","ititle-cont",()=>{if(tOpen){hideTitle();if(S.armMazeQuiet)S.armMazeQuiet();}});
  const lg=b("Load Game","ititle-load",()=>{hideTitle();S.rpg.savePicker("load",null,()=>{S.rpg.closeUI();showTitle();});});if(!any){lg.disabled=true;lg.title="No saved games yet";}
  b("New Game","ititle-new",()=>{if(!hasSave()){shortTap();return;}m.replaceChildren();m.appendChild(el("div","s4note ititle-ask","Start a new game? When you confirm your new hero, it is saved over Slot "+((S.rpg.activeSlot?S.rpg.activeSlot():0)+1)+". Your other slots are kept."));
   b("Yes, new game","ititle-newyes",()=>{titleMenu();shortTap();});b("No","ititle-newno",()=>titleMenu());});}
 function showTitle(){buildTitle().classList.add("on");titleMenu();tOpen=true;document.documentElement.classList.add("ititle-open");}
 function hideTitle(){if(tt)tt.classList.remove("on");tOpen=false;document.documentElement.classList.remove("ititle-open");}
 function shortTap(){if(!tOpen)return;hideTitle();S.rpg.creation();}            // opening creation never writes the save; only Confirm does
-function longPress(){if(!tOpen)return;if(!hasSave()){shortTap();return;}hideTitle();} // continue the existing save as loaded
+function longPress(){if(!tOpen)return;if(!hasSave()){shortTap();return;}hideTitle();if(S.armMazeQuiet)S.armMazeQuiet();} // continue the existing save as loaded
 window.SOTA_INTRO_BOOT=showTitle;
 // ---------- creation / party screen extras ----------
 const ov=$("s4");

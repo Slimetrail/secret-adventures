@@ -51,8 +51,16 @@ def turn_to(pg,B,want):
 def t_route_walk(p):
   b,c=ctx(p);pg=page(c);fresh(pg);B=btn(pg);r=MZ['main_route']
   check(len(r)==697,'route len')
+  # t2528u: a seam edge is a tavern archway: walking into it bumps (no move); its Zone tab crosses (SOTA.seamExit)
+  SEAM={}
+  for sm in pg.evaluate('SOTA.seams?SOTA.seams():[]'):
+    a_,b_=sm['prev'],sm['next'];SEAM[(a_['x'],a_['y'],b_['x'],b_['y'])]=(sm['t'],b_['zone']);SEAM[(b_['x'],b_['y'],a_['x'],a_['y'])]=(sm['t'],a_['zone'])
   for i in range(1,len(r)):
     (x0,y0),(x1,y1)=r[i-1],r[i];d=D.index((x1-x0,y1-y0));turn_to(pg,B,d);tap(pg,B,'fwd')
+    if (x0,y0,x1,y1) in SEAM:
+      s=S(pg);check((s['x'],s['y'])==(x0,y0),f'step {i}: archway did not bump {s}')
+      pg.evaluate('()=>{const r=SOTA.rpg;if(r&&r.closeUI)r.closeUI();}');pg.wait_for_timeout(300)
+      t,z=SEAM[(x0,y0,x1,y1)];pg.evaluate(f'SOTA.seamExit({t},{z})');s=S(pg);check((s['x'],s['y'])==(x1,y1),f'step {i}: seam exit {s}');continue
     s=S(pg);check((s['x'],s['y'])==(x1,y1),f'step {i} at {s} want {x1},{y1}')
     if i%25==0:
       tap(pg,B,'back');s=S(pg);check((s['x'],s['y'],s['f'])==(x0,y0,d),f'back step {i} gave {s}')

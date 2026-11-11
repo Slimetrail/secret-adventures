@@ -55,8 +55,23 @@ def step_into(pg,c):
     if ev(pg,'a=>SOTA.canMove(a[0],a[1],a[2])',[c[0],c[1],d]):
       D=[(0,-1),(1,0),(0,1),(-1,0)][d];nb=[c[0]+D[0],c[1]+D[1]]
       if ev(pg,'a=>SOTA.roomAt(a[0],a[1])',nb)>=0:continue
+      if ev(pg,'a=>SOTA.archAhead?SOTA.archAhead(a[0],a[1],a[2])>=0:false',[nb[0],nb[1],(d+2)%4]):continue  # t2528u: a seam archway bumps, it is not a step
       ev(pg,'a=>SOTA.teleport(a[0],a[1],a[2])',[nb[0],nb[1],(d+2)%4]);tap(pg,'[data-cmd=fwd]');s=ev(pg,'SOTA.state()');check([s['x'],s['y']]==list(c),f'did not step into {c}');return
   raise Fail(f'no way into {c}')
+def enter_tavern(pg, t=None, cell=None):
+  """Arrive at a tavern the way a player does after the seam change: close any open UI, then bump the arch if this tavern sits on a seam (lower-zone / prev side, so a higher-zone intro does not open); otherwise step into the maze cell. Does not require ending on the tavern cell, because an arch bump is not a step."""
+  ev(pg,'(()=>{if(window.SOTA&&SOTA.rpg&&SOTA.rpg.closeUI)SOTA.rpg.closeUI();})()')
+  if t is None:
+    check(cell is not None,'enter_tavern needs t or cell')
+    t=ev(pg,'c=>MAZE.taverns.findIndex(v=>v[0]===c[0]&&v[1]===c[1])',list(cell))
+    check(t>=0,f'not a tavern cell {cell}')
+  sm=ev(pg,'t=>(SOTA.seams?SOTA.seams():[]).find(s=>s.t===t)||null',t)
+  if not sm:
+    step_into(pg, ev(pg,'t=>MAZE.taverns[t]',t));return
+  st=ev(pg,'SOTA.state()');side=sm['prev']
+  if st['x']==sm['next']['x'] and st['y']==sm['next']['y']:side=sm['next']
+  ev(pg,'s=>SOTA.teleport(s.x,s.y,s.toArch)',side);pg.wait_for_timeout(150)
+  tap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(400)
 def finish(pg):
   if ev(pg,'SOTA.rpg.ui()')=='fight':ev(pg,'SOTA.rpg.forceEnd("ran")');tap(pg,'#fdone')
 CAMPS=None
@@ -156,9 +171,9 @@ def t_death_restore(p):
   check(not ev(pg,f'SOTA.isSolved({r})'),'room solved since save kept');check(ev(pg,f'SOTA.isSolved({r0})'),'room solved before save lost');check(r0 in json.loads(ev(pg,'localStorage.getItem("sota.rooms")'))['s'],'restored rooms not stored');check(ev(pg,'SOTA.rpg.live().party[0].hp')>0,'hero dead after restore');b.close()
 def t_companions(p):
   b,c=ctx(p);pg=page(c);create(pg);T=ev(pg,'MAZE.taverns')
-  step_into(pg,T[3]);step_into(pg,T[1]);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of story order')
-  step_into(pg,T[0]);check(len(ev(pg,'SOTA.rpg.live().party'))==2,'no companion at tavern 1');step_into(pg,T[2]);step_into(pg,T[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==2,'joined out of order (skipped tavern 2)')
-  step_into(pg,T[1]);step_into(pg,T[2]);check(len(ev(pg,'SOTA.rpg.live().party'))==3,'someone joined at tavern 3');step_into(pg,T[3])
+  enter_tavern(pg,3);enter_tavern(pg,1);check(len(ev(pg,'SOTA.rpg.live().party'))==1,'joined out of story order')
+  enter_tavern(pg,0);check(len(ev(pg,'SOTA.rpg.live().party'))==2,'no companion at tavern 1');enter_tavern(pg,2);enter_tavern(pg,3);check(len(ev(pg,'SOTA.rpg.live().party'))==2,'joined out of order (skipped tavern 2)')
+  enter_tavern(pg,1);enter_tavern(pg,2);check(len(ev(pg,'SOTA.rpg.live().party'))==3,'someone joined at tavern 3');enter_tavern(pg,3)
   n=ev(pg,'SOTA.rpg.live().party.map(c=>c.name)');check(n==['Jer','Mira','Sorrel','Brunn'],f'party {n}');step_into(pg,T[3]);check(len(ev(pg,'SOTA.rpg.live().party'))==4,'joined twice');b.close()
 def t_random_fights(p):
   b,c=ctx(p);pg=page(c);create(pg);fights=0;steps=0;rooms=0

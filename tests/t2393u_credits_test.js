@@ -3,7 +3,7 @@ const test=require('node:test'),a=require('node:assert'),fs=require('fs'),crypto
 const read=f=>fs.readFileSync(f,'utf8'),sha=f=>crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const BADGE='art-intro/brand/faith-badge-matthew-5-13-16.jpg';
 test('faith badge is the exact chosen bytes and is cached offline once',()=>{a.equal(sha(BADGE),'fb945115ae5b66a7a418c4c8b158d6d5b95988cef7c67c89613b85e1aad1a94d');
- const sw=read('sw.js');a.equal(sw.split('"'+BADGE+'"').length-1,1);for(const p of ['story.js?v=25','intro.js?v=19','music.js?v=20']){a.ok(sw.includes('"'+p+'"'),p);a.ok(read('index.html').includes(p),p);}});
+ const sw=read('sw.js');a.equal(sw.split('"'+BADGE+'"').length-1,1);for(const p of ['story.js?v=25','intro.js?v=20','music.js?v=20']){a.ok(sw.includes('"'+p+'"'),p);a.ok(read('index.html').includes(p),p);}});
 test('credit lines are exactly Credits, title, Music/Art/Game Design: SlimeTrail Production, Thank you for playing.',()=>{const js=read('intro.js');
  a.ok(js.includes('const CREDIT_LINES=["Music: SlimeTrail Production","Art: SlimeTrail Production","Game Design: SlimeTrail Production"];'));
  const body=js.slice(js.indexOf('function credits(b){'),js.indexOf('function dropBadge('));

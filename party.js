@@ -25,10 +25,10 @@ function saveSlots(){const slots=Array.from({length:4},(_,i)=>readSave(SLOT+i));
  if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */wakeLoaded();migrateSaltsBoxes(live);}}
 function hpMul(){return R.DIFF[live.diff].hp;}
 function roomsNow(){const s=[],c=[];for(let i=0;i<C.solvedR.length;i++){if(C.solvedR[i])s.push(i);if(C.clearedR[i])c.push(i);}return {s,c};}
-function placeName(x,y){const t=M.taverns.findIndex(c=>c[0]===x&&c[1]===y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
+function placeName(x,y){const t=tavIdx(x,y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
 // make a save. Only allowed at a camp or tavern (or once, at the very start when the hero is made).
 let tentUndo=null;
-function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>3)return false;tentUndo=null;const p=S.state();if(!start&&!R.isSavePoint(M,p.x,p.y))return false;
+function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>3)return false;tentUndo=null;const p=S.state();if(!start&&!R.isSavePoint(M,p.x,p.y)&&tavIdx(p.x,p.y)<0)return false;/* t2528u: both cells in front of a seam archway save as that tavern */
  if(!start&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!same&&!hasTent())return false;/* t2356u: re-saving where the tent is already pitched uses no tent */if(!same){tentUndo={wear:live.tentWear,bags:live.party.map(c=>c.bag.slice())};live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
  // Camp scene gates observe arrival injuries; seen flags enter this save. Saving never rests.
  if(!start&&tavIdx(p.x,p.y)<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));
@@ -37,7 +37,7 @@ function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>
  tentUndo=null;activeSlot=slot;save=next;return true;}
 function loadSlot(slot){const o=saveSlots()[slot];if(!o)return false;
  try{localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast("Could not load save.");return false;}
- activeSlot=slot;save=clone(o);closeUI();restore();return true;}
+ activeSlot=slot;save=clone(o);closeUI();restore();if(S.armMazeQuiet)S.armMazeQuiet();return true;}
 function savePicker(mode,done,cancel,before){const w=page("save-picker");w.appendChild(head(mode==="load"?"Load a save":"Choose a save slot",cancel||closeUI));
  const slots=saveSlots();slots.forEach((o,i)=>{const b=tapBtn("Slot "+(i+1)+" · "+(o?(o.party[0].name+" · "+(o.at.name||placeName(o.at.x,o.at.y))):"Empty"),()=>{
   if(mode==="load"){if(loadSlot(i)&&done)done();}else{/* t2451u: camp Save refills only when a slot is really written */const undo=before?before():null;if(doSave(false,i)){if(done)done();}else if(undo)undo();}},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
@@ -500,9 +500,11 @@ function loop(t){if(!F||!fcv){return;}sizeF();const t0=performance.now(),g=fctx,
 function zoneAt(x,y){return C.zoneOf[y*N+x];}
 function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.x,p.y,N),pl=R.partyLevel(live.party);startFight((why==="room"?R.roomEncounter:R.encounter)(z,pl,cf,live.diff,(live.seed+fightNo*104729+p.x*65+p.y)>>>0,live.party),why);}
 S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
- if(R.isSavePoint(M,p.x,p.y)){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
+ /* t2528u-t2539u: a seam tavern is entered by bumping its archway (S.onArchBump), never by stepping on a cell */
+ if(R.isSavePoint(M,p.x,p.y)&&seamTav(p.x,p.y)<0){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
   if(t>=0){h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
-  /* t2446u: only a tavern saves on arrival; a camp never saves or uses a tent by itself (Save tab on the camp screen) */const ok=t>=0?doSave(false):false,said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(t>=0?(ok?"Game saved at "+placeName(p.x,p.y)+".":"Could not save at "+placeName(p.x,p.y)+"."):"You reached "+placeName(p.x,p.y)+". Rest, cook, craft or save here (saving uses 1 tent).");if(joined)remind(said);else toast(said);/* t2437u QA: the join + points reminder shows after the join scene */updBtn();updHere();return;}
+  /* t2446u: only a tavern saves on arrival; a camp never saves or uses a tent by itself (Save tab on the camp screen) */const ok=t>=0?doSave(false):false,said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(t>=0?(ok?"Game saved at "+placeName(p.x,p.y)+".":"Could not save at "+placeName(p.x,p.y)+"."):"You reached "+placeName(p.x,p.y)+". Rest, cook, craft or save here (saving uses 1 tent).");if(joined)remind(said);else toast(said);/* t2437u QA: the join + points reminder shows after the join scene */updBtn();updHere();
+  /* t2530u/t2551u: stepping on a camp circle (Safe post) opens the camp tabs; still no auto-save */if(t<0){const k=campIdx(p.x,p.y);if(k>=0&&!ui)campScreen(k);}return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
  const stink=live.stink>0;if(stink)live.stink--; // t2342u failed craft: monsters smell the party
  if(!(stink&&stepsSince>=4)){if(stepsSince<10)return;}if(!roll)roll=R.rng(live.seed>>>0);const r=roll()/(stink?3:1); /* stink: after 4 steps, 3x chance */
@@ -547,7 +549,25 @@ function giveDish(id){const who=addLoot(id);if(who){s5init();(live.fresh[id]=liv
 function freshLeft(id){const q=live.fresh&&live.fresh[id];return q&&q.length?q[0]-live.steps:null;}
 // cooked food spoils: each dish keeps for SPOIL_STEPS steps. Oldest copy goes first.
 function checkSpoil(){s5init();const out=[];for(const id in live.fresh){const q=live.fresh[id];while(q.length&&q[0]<=live.steps){q.shift();for(const c of live.party){const k=c.bag.lastIndexOf(id);if(k>=0){c.bag.splice(k,1);out.push(R.ITEMS[id].n);break;}}}}if(out.length)toast(out.join(", ")+" spoiled");return out;}
-function tavIdx(x,y){return M.taverns.findIndex(c=>c[0]===x&&c[1]===y);}
+function seamTav(x,y){return S.seamTavernAt?S.seamTavernAt(x,y):-1;}
+// t2564u: a tap that ends a talk must not fall through to the tavern buttons under the dialogue box. The talk closes on pointerdown,
+// so the same tap's click lands on whatever is below (Zone 1 / Shop / Zone 2) and kicked the player out to the save picker. Swallow
+// the click of any press that started while a talk was open.
+// The same goes for a maze press (arrow button or archway tap) that opens a screen on pointerdown, e.g. backing into an archway: its click
+// must not land on the tavern's Zone 1 button that now sits under the finger.
+{let downInTalk=false,downNoUi=false,downArmed=false;if(typeof document!=="undefined"&&document.addEventListener){
+ document.addEventListener("pointerdown",()=>{downArmed=true;downInTalk=!!(S.storyOpen&&S.storyOpen());downNoUi=!ui;},true);
+ document.addEventListener("click",e=>{if(!downArmed)return;downArmed=false;const opened=downNoUi&&!!ui,was=downInTalk||opened;downInTalk=downNoUi=false;if(!was)return;const t=e.target;if(t&&t.closest&&t.closest("#s6d"))return;e.preventDefault();e.stopImmediatePropagation();},true);}}
+function tavIdx(x,y){const k=seamTav(x,y);return k>=0?k:M.taverns.findIndex(c=>c[0]===x&&c[1]===y);}
+// t2528u-t2539u: bumping or tapping a seam archway = arriving at that tavern (heal, companion, free save), then the tavern screen
+let archPending=false;
+S.onArchBump=t=>{if(!live||ui||hubBlocked()||archPending)return false;s5init();let joined="";h6("reachedTavern",t);
+ const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}
+ const ok=doSave(false),said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(ok?"Game saved at Tavern "+(t+1)+".":"Could not save at Tavern "+(t+1)+".");if(joined)remind(said);else toast(said);updBtn();
+ let scene=!!(S.storyOpen&&S.storyOpen());
+ archPending=true;const open=()=>{if(S.storyOpen&&S.storyOpen()){scene=true;setTimeout(open,200);return;}archPending=false;
+  /* t2437u: after a join scene, leave the reminder on the maze (same as a live step-in). The here tab opens the tavern (heal + first-visit talk). With no scene, the bump still opens the tavern immediately. */
+  if(!ui&&!scene)tavernScreen(t);};open();return true;};
 function campIdx(x,y){return M.camps.findIndex(c=>c[0]===x&&c[1]===y);}
 function hasTent(){return haveN("tent")>0;}
 function tickBuffs(){live.party.forEach(c=>{if(c.buff){c.buff.f--;if(c.buff.f<=0)delete c.buff;}if(c.poison){c.poison.f--;if(c.poison.f<=0)delete c.poison;}});}
@@ -581,7 +601,7 @@ function buildTent(withJunk){if(!tentNeed().every(x=>x.have>=x.n)){toast("Missin
  if(!live.party.some(c=>R.canCarry(c,"tent")))return false;Object.entries(E.TENT.parts).forEach(([id,n])=>{for(let j=0;j<n;j++)takeOne(id);});pay.parts.forEach(id=>takeOne(id));live.gold-=pay.gold;addLoot("tent");toast("Tent built! Fee: "+pay.gold+" gold"+(pay.parts.length?" + "+pay.parts.length+" junk":""));return true;}
 // ---- the place tab: small "‹ Tavern 2" / "‹ Camp 3" tab while standing there ----
 const here=el("button","ink s5here");here.id="s5here";document.body.appendChild(here);
-function updHere(){const p=S.state&&S.state();let t=-1,k=-1;if(live&&!ui&&p&&!(S.mapOpen&&S.mapOpen())&&!(S.puzzleOpen&&S.puzzleOpen())){t=tavIdx(p.x,p.y);k=t<0?campIdx(p.x,p.y):-1;}const on=t>=0||k>=0;here.style.display=on?"block":"none";if(on){here.textContent="‹ "+(t>=0?"Tavern "+(t+1):"Camp "+(k+1));here.dataset.t=t;here.dataset.k=k;}}
+function updHere(){const p=S.state&&S.state();let t=-1,k=-1;if(live&&!ui&&p&&!(S.mapOpen&&S.mapOpen())&&!(S.puzzleOpen&&S.puzzleOpen())){t=tavIdx(p.x,p.y);k=t<0?campIdx(p.x,p.y):-1;/* here tab on both cells in front of a seam archway, and on every maze tavern cell */}const on=t>=0||k>=0;here.style.display=on?"block":"none";if(on){here.textContent="‹ "+(t>=0?"Tavern "+(t+1):"Camp "+(k+1));here.dataset.t=t;here.dataset.k=k;}}
 here.addEventListener("click",e=>{e.preventDefault();if(ui)return;const t=+here.dataset.t,k=+here.dataset.k;if(t>=0)tavernScreen(t);else if(k>=0)campScreen(k);});
 setInterval(updHere,400);
 // side tabs on a page: each opens a slide tree to its left
@@ -604,6 +624,9 @@ function zoneOpen(z){const cap=S.contentCap;if(cap&&cap.isZoneOpen)return cap.is
 function hubBlocked(){return !!(S.storyOpen&&S.storyOpen());}
 function leaveTavern(t,z){if(hubBlocked())return false;if(!zoneOpen(z)){
  if(S.rpg.s6&&S.rpg.s6.play)S.rpg.s6.play("wait-for-update",[["N","calm",WAIT_UPDATE]],{bg:tavernBg(t)});return false;}
+ if(S.seamExit&&S.seams&&S.seams().some(s=>s.t===t)){/* t2565u: pick a slot, save there (taverns never use a tent), land on that side facing away. Cancel = stay, nothing moves */
+  const before=()=>{const snap=S.mazeSnap?S.mazeSnap():null;S.seamExit(t,z);return ()=>{if(snap&&S.applyMaze)S.applyMaze(snap);};};
+  savePicker("save",closeUI,()=>tavernScreen(t,false),before);return true;}
  savePicker("save",closeUI,()=>tavernScreen(t,false));return true;}
 function tavernScreen(t,arrival=true){s5init();campVisit=null;const w=page("tavern");w.classList.add("s5scene","s5hub");w.style.backgroundImage='url("'+tavernBg(t)+'")';w.appendChild(head("Tavern "+(t+1)));
  const nav=el("div","s5hubnav");tavernLabels(t).forEach((label,i)=>{const b=tapBtn(label,()=>{if(hubBlocked())return;if(i===1)buyScreen(t);else leaveTavern(t,i===0?t+1:t+2);},"small");b.dataset.hub=i;nav.appendChild(b);});w.appendChild(nav);

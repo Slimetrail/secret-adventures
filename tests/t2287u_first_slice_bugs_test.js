@@ -121,9 +121,11 @@ test("walking into a room door bumps; clicking or useFacingDoor opens or enters 
 });
 
 test("tavern and hallway walking is unchanged",()=>{
- const e=engine(18,24,1);
+ // t2528u: tavern 2's east edge is now the seam 2-3 archway (bump, no step); walk the open hallway north and back instead
+ const b=engine(18,24,1);b.s.act("fwd");a.equal(b.s.state().x,18);a.equal(b.s.state().y,24);a.equal(b.counts().steps,0);
+ const e=engine(18,24,0);
  e.s.act("fwd");
- a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);
+ a.equal(e.s.state().x,18);a.equal(e.s.state().y,23);
  e.s.act("back");
  a.equal(e.s.state().x,18);a.equal(e.s.state().y,24);
  a.equal(e.counts().steps,2);a.equal(e.counts().puzzles,0);

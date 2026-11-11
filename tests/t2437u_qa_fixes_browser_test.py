@@ -42,14 +42,13 @@ def t_reminders_story_on(p):
     if S4.ev(pg,'document.getElementById("icave").dataset.titleShown==="1"'):pg.touchscreen.tap(195,600);pg.wait_for_timeout(300);S6.drain(pg)
     pg.wait_for_timeout(100)
   T.check(not S4.ev(pg,'SOTA.intro.caveOpen()'),'cave screen never closed')
-  tv=S4.ev(pg,'MAZE.taverns')[0]
-  for d in (2,3,1,0):  # walk in from a zone 1 side (the north neighbour of tavern 1 is in zone 2 and opens its intro)
-    if not S4.ev(pg,'a=>SOTA.canMove(a[0],a[1],a[2])',[tv[0],tv[1],d]):continue
-    D=[(0,-1),(1,0),(0,1),(-1,0)][d];nb=[tv[0]+D[0],tv[1]+D[1]]
-    if S4.ev(pg,'a=>SOTA.roomAt(a[0],a[1])',nb)>=0:continue
-    S4.ev(pg,'a=>SOTA.teleport(a[0],a[1],a[2])',[nb[0],nb[1],(d+2)%4]);pg.wait_for_timeout(100)
-    if S4.ev(pg,'SOTA.intro.caveOpen()'):continue
-    S4.tap(pg,'[data-cmd=fwd]');break
+  # arrive via the seam arch bump on the zone-1 (prev) side — stepping onto [14,49] from a zone-1 neighbour no longer runs join
+  sm=S4.ev(pg,'(SOTA.seams?SOTA.seams():[]).find(s=>s.t===0)')
+  T.check(sm and sm.get('prev'),'no seam for tavern 1')
+  S4.ev(pg,'(()=>{if(SOTA.rpg.closeUI)SOTA.rpg.closeUI();})()')
+  S4.ev(pg,'s=>SOTA.teleport(s.x,s.y,s.toArch)',sm['prev']);pg.wait_for_timeout(150)
+  T.check(not S4.ev(pg,'SOTA.intro.caveOpen()'),'zone-1 arch approach opened the zone 2 cave')
+  S4.tap(pg,'[data-cmd=fwd]')
   for _ in range(30):
     if S4.ev(pg,'SOTA.storyOpen()'):break
     pg.wait_for_timeout(100)

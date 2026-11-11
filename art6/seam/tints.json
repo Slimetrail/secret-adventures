@@ -1,0 +1,159 @@
+{
+  "what": "per-zone stone tint for archway-tavern-64/128 (engine builds the tinted copies at load time)",
+  "version": "v128-r3",
+  "mask": {
+    "64": "archway-stone-mask-64.png",
+    "128": "archway-stone-mask-128.png",
+    "values": "255 = stone (tint), 0 = keep exactly"
+  },
+  "formula": "if mask==255: out = clamp(round(rgb * mul * lift + add), 0, 255) per channel; else out = rgb",
+  "derivation": "mul = 1 + ms*(base/luma(base) - 1), base = (c1+c2)/2 from tex.js (zone 1: ms=0, neutral texture variation); lift = stone texture contrast; add = target mean colour - mul*lift*stone_mean. r3: zone 1 fit for contrast >= x0.75 and <1% clip at 64 and 128 first (lightness slips), zone 3 fit for mean-colour saturation = wall; zones 2, 4, 5 unchanged from r2. See tools/tints.py.",
+  "stone_mean_rgb_128": [
+    72.09,
+    70.71,
+    69.68
+  ],
+  "source": "/workspace/secret-adventures/zone3-fix/tex.js",
+  "zones": {
+    "1": {
+      "mul": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "lift": 0.78,
+      "add": [
+        136.399,
+        96.575,
+        2.983
+      ],
+      "c1": [
+        205,
+        170,
+        95
+      ],
+      "c2": [
+        235,
+        205,
+        130
+      ],
+      "wall_base": [
+        220.0,
+        187.5,
+        112.5
+      ]
+    },
+    "2": {
+      "mul": [
+        0.9086,
+        1.0858,
+        0.7978
+      ],
+      "lift": 1.3981,
+      "add": [
+        -0.928,
+        0.024,
+        2.483
+      ],
+      "c1": [
+        85,
+        110,
+        80
+      ],
+      "c2": [
+        120,
+        135,
+        100
+      ],
+      "wall_base": [
+        102.5,
+        122.5,
+        90.0
+      ]
+    },
+    "3": {
+      "mul": [
+        0.8113,
+        1.0325,
+        1.3275
+      ],
+      "lift": 1.3,
+      "add": [
+        8.64,
+        23.701,
+        43.612
+      ],
+      "c1": [
+        90,
+        120,
+        160
+      ],
+      "c2": [
+        130,
+        160,
+        200
+      ],
+      "wall_base": [
+        110.0,
+        140.0,
+        180.0
+      ]
+    },
+    "4": {
+      "mul": [
+        1.6293,
+        0.7386,
+        0.6952
+      ],
+      "lift": 0.6091,
+      "add": [
+        94.727,
+        40.829,
+        38.569
+      ],
+      "c1": [
+        170,
+        70,
+        70
+      ],
+      "c2": [
+        205,
+        100,
+        90
+      ],
+      "wall_base": [
+        187.5,
+        85.0,
+        80.0
+      ]
+    },
+    "5": {
+      "mul": [
+        1.1545,
+        0.7993,
+        1.6282
+      ],
+      "lift": 1.0466,
+      "add": [
+        -1.889,
+        0.994,
+        -0.075
+      ],
+      "c1": [
+        80,
+        55,
+        120
+      ],
+      "c2": [
+        115,
+        80,
+        155
+      ],
+      "wall_base": [
+        97.5,
+        67.5,
+        137.5
+      ]
+    }
+  }
+}

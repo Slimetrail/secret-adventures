@@ -3,7 +3,7 @@ import splash_helper as SPL  # t2386u logo splash: tap past it like a player
 import sys,os,json,time
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 import stage4_tests as S4
-from stage4_tests import check,ctx,page,tap,ev,create,step_into,finish,noslide,Fail,ERRS,REQS,ROOT
+from stage4_tests import check,ctx,page,tap,ev,create,step_into,enter_tavern,finish,noslide,Fail,ERRS,REQS,ROOT
 from playwright.sync_api import sync_playwright
 ONLY=sys.argv[2:]
 def setup(p,w=390,h=844):
@@ -135,7 +135,7 @@ def t_tent_rules(p):
   check(ev(pg,'SOTA.rpg.doSave()')==False,'doSave at camp without tent')
   L(pg,'L.party[0].bag.push("tent");');check(ev(pg,'SOTA.rpg.doSave()')==True,'no save with a tent')
   check(L(pg,'return RPG.ITEMS.tent.w')==0,'tent has weight')
-  tv=ev(pg,'MAZE.taverns[0]');ev(pg,'SOTA.rpg.live().gold=5');L(pg,'L.party.forEach(c=>c.bag=c.bag.filter(x=>x!=="tent"))');step_into(pg,tv);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==5,'tavern without tent did not save')
+  tv=ev(pg,'MAZE.taverns[0]');ev(pg,'SOTA.rpg.live().gold=5');L(pg,'L.party.forEach(c=>c.bag=c.bag.filter(x=>x!=="tent"))');enter_tavern(pg,0);sv=json.loads(ev(pg,'localStorage.getItem("sota.party")'));check(sv['gold']==5,'tavern without tent did not save')
   # wear: a tent lasts E.TENT.nights different camps
   n=L(pg,'return E.TENT.nights');L(pg,'L.party[0].bag.push("tent");L.tentWear=0;')
   for i in range(n):
@@ -178,7 +178,7 @@ def t_place_tab(p):
   check(ev(pg,'getComputedStyle(document.getElementById("s5here")).display')=='block','no tavern tab');check('Tavern 1' in ev(pg,'document.getElementById("s5here").textContent'),'tab text')
   tap(pg,'#s5here');check(ev(pg,'SOTA.rpg.ui()')=='tavern','tab did not open tavern');b.close()
 def t_save_keeps_s5(p):
-  b,pg=setup(p);L(pg,'L.recipes.toast="earned";L.party[0].bag.push("tent");');tv=ev(pg,'MAZE.taverns[0]');step_into(pg,tv);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg)
+  b,pg=setup(p);L(pg,'L.recipes.toast="earned";L.party[0].bag.push("tent");');tv=ev(pg,'MAZE.taverns[0]');enter_tavern(pg,0);pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg)
   check(L(pg,'return [L.recipes.toast,X.haveN("tent")]')==['earned',1],'recipes/tent lost over save');b.close()
 def t_fit_s5(p):
   for w,h in[(390,844),(360,800),(412,915)]:

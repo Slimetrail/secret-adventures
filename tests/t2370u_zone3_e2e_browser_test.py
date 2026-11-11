@@ -20,7 +20,7 @@ def st(pg):return T.ev(pg,'SOTA.state()')
 def say(*a):s=' '.join(str(x) for x in a);print('  '+s);log.append(s)
 # BFS on the real maze (game's canMove), room cells are walls, only cells the content cap opens
 PATH_JS='''t=>{const N=SOTA.N,C=SOTA.core,D=C.DIRS,s=SOTA.state(),start=s.y*N+s.x,goal=t[1]*N+t[0],prev=new Map([[start,-1]]),q=[start];
- for(let k=0;k<q.length;k++){const i=q[k];if(i===goal)break;const x=i%N,y=(i/N)|0;for(let d=0;d<4;d++){if(!SOTA.canMove(x,y,d))continue;const nx=x+D[d][0],ny=y+D[d][1],j=ny*N+nx;
+ for(let k=0;k<q.length;k++){const i=q[k];if(i===goal)break;const x=i%N,y=(i/N)|0;for(let d=0;d<4;d++){if(!SOTA.canMove(x,y,d))continue;if(SOTA.archAhead&&SOTA.archAhead(x,y,d)>=0)continue;const nx=x+D[d][0],ny=y+D[d][1],j=ny*N+nx;
   if(prev.has(j)||SOTA.roomAt(nx,ny)>=0||!SOTA.contentCap.isOpen(nx,ny))continue;prev.set(j,[i,d]);q.push(j);}}
  if(!prev.has(goal))return null;const out=[];for(let i=goal;i!==start;){const [p,d]=prev.get(i);out.push(d);i=p;}return out.reverse();}'''
 def fight_by_taps(pg):
@@ -56,7 +56,8 @@ def walk_to(pg,cell,maxsteps=400):
   raise T.Fail(f'walk to {cell} took too long')
 def camp_save(pg):
   """VER 83 t2450u/t2451u: the player saves from the camp Save tab (asks to use a tent unless one is already pitched here), then picks the active slot"""
-  T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=save]')
+  if T.ui(pg)!='camp':T.ttap(pg,'#s5here')
+  T.ttap(pg,'#s4 [data-tab=save]')
   if T.ev(pg,'!!document.querySelector("[data-tentyes]")'):T.ttap(pg,'[data-tentyes]')
   T.check(T.ui(pg)=='save-picker','camp Save did not open the slot picker');T.ttap(pg,'[data-save-slot="'+str(T.ev(pg,'SOTA.rpg.activeSlot()'))+'"]');pg.wait_for_timeout(200)
   T.check(T.ui(pg)=='camp','camp save did not return to the camp')
@@ -91,11 +92,22 @@ def e2e(p):
   s=st(pg);T.check([s['x'],s['y']]==T.ev(pg,'MAZE.camps[5]') and s['zone']==2,f'continue did not load the zone 2 save {s}')
   T.check(T.ev(pg,'SOTA.rpg.live().party.map(c=>c.lvl)')==[20,20],'loaded party wrong');say('loaded zone 2 save at',s)
   # ---- 3. walk by taps to Tavern 2: Sorrel joins; Tavern 2 Zone 3 exit -> 4-slot save picker
-  walk_to(pg,T.ev(pg,'MAZE.taverns[1]'));pg.wait_for_timeout(400)
+  walk_to(pg,T.ev(pg,'MAZE.taverns[1]'));pg.wait_for_timeout(200)
+  # stepping onto [18,24] no longer runs arrival; bump the seam arch (zone-2 / prev side) so Sorrel joins and the tavern saves
+  T.ev(pg,'(()=>{if(SOTA.rpg.closeUI)SOTA.rpg.closeUI();})()')
+  sm=T.ev(pg,'(SOTA.seams?SOTA.seams():[]).find(s=>s.t===1)')
+  T.check(sm and sm.get('prev'),'no seam for tavern 2')
+  T.ev(pg,'s=>SOTA.teleport(s.x,s.y,s.toArch)',sm['prev']);pg.wait_for_timeout(150)
+  T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(400)
   names=T.ev(pg,'SOTA.rpg.live().party.map(c=>c.name+" "+c.cls+" L"+c.lvl)');say('party at Tavern 2:',names);T.check(len(names)==3,'Sorrel did not join at Tavern 2')
   free=T.ev(pg,'SOTA.rpg.live().party.map(c=>RPG.pointsEarned(c.lvl)-c.spent)');say('unspent points after Sorrel joined:',free)
   T.ev(pg,'SOTA.rpg.charScreen(2)');pc=T.ev(pg,'SOTA.rpg.live().party[2].stats.con');T.ttap(pg,'[data-stats="2"]');T.ttap(pg,'[data-raise=con]');T.check(T.ev(pg,'SOTA.rpg.live().party[2].stats.con')==pc+1,'+ CON on Sorrel failed');T.ev(pg,'SOTA.rpg.closeUI()');T.ev(pg,SPEND_JS)
-  T.ttap(pg,'#s5here');T.check(T.ui(pg)=='tavern','Tavern 2 did not open');shot(pg,'02-tavern2.png')
+  if T.ui(pg)!='tavern':
+    for _ in range(20):
+      if T.ev(pg,'document.getElementById("s5here")&&document.getElementById("s5here").style.display==="block"'):break
+      pg.wait_for_timeout(100)
+    T.ttap(pg,'#s5here')
+  T.check(T.ui(pg)=='tavern','Tavern 2 did not open');shot(pg,'02-tavern2.png')
   T.check(T.ev(pg,'[...document.querySelectorAll("[data-hub]")].map(b=>b.textContent)')==['Zone 2','Shop','Zone 3'],'tavern 2 buttons')
   T.ttap(pg,'[data-hub="2"]');T.check(T.ui(pg)=='save-picker' and T.ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'Zone 3 exit did not open the save picker');shot(pg,'03-tavern2-zone3-save-picker.png')
   T.ttap(pg,'[data-save-slot="1"]');T.check(T.ui(pg) is None,'picker did not close');T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot1")).at.name')=='Tavern 2','Tavern 2 save not in slot 2')
@@ -153,7 +165,13 @@ def e2e(p):
   # ---- 9. Moon elixir at Camp 14 next to Tavern 3, if a ghoul fang dropped
   if bagn(pg,'p_fang'):
     t0=bagn(pg,'tent');T.ev(pg,'SOTA.rpg.live().party[0].bag.push("tent")') if t0==0 else None  # bought-tent stand-in so the camp Save can use one
-    step_into(pg,T.ev(pg,'MAZE.camps[13]'));T.ttap(pg,'#s5here');T.ttap(pg,'[data-craftopen]');T.ttap(pg,'#s5craftpop [data-cbox="0"]')
+    step_into(pg,T.ev(pg,'MAZE.camps[13]'))
+    if T.ui(pg)!='camp':
+      for _ in range(20):
+        if T.ev(pg,'document.getElementById("s5here")&&document.getElementById("s5here").style.display==="block"'):break
+        pg.wait_for_timeout(100)
+      T.ttap(pg,'#s5here')
+    T.ttap(pg,'[data-craftopen]');T.ttap(pg,'#s5craftpop [data-cbox="0"]')
     for m in ['i_herbs','i_moonleaf','p_fang']:T.ttap(pg,f'#s5craftpop [data-cpick={m}]')
     T.ttap(pg,'#s5craftpop #s5craft');T.check(bagn(pg,'c_elixir')==1 and T.ev(pg,'document.getElementById("s5craftpic").dataset.result')=='elixir','Moon elixir not crafted');shot(pg,'16-craft-moon-elixir.png')
     T.ttap(pg,'#s5craftpop [data-craftclose]');T.ttap(pg,'#s4 [data-tab=return]');say('crafted Moon elixir at Camp 14')
