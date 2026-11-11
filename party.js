@@ -622,6 +622,13 @@ const tavernLabels=t=>["Zone "+(t+1),"Shop","Zone "+(t+2)];
 function zoneOpen(z){const cap=S.contentCap;if(cap&&cap.isZoneOpen)return cap.isZoneOpen(z);
  return z<=(window.SOTA_CONTENT_CAP?window.SOTA_CONTENT_CAP.DEFAULT.maxZone:5);}
 function hubBlocked(){return !!(S.storyOpen&&S.storyOpen());}
+/* t2517u/t2564u: the tap that ends a talk or cut scene closes the dialogue box on pointerdown, then the browser's click from that same tap
+   lands on the tavern button now under the finger (Zone 1 / Shop / Zone 2) and left the tavern. Remember whether each tap started while a
+   scene was open, and let the tavern buttons ignore every click until 1500 ms have passed, or until a new pointerdown/touchstart begins
+   after the talk has ended. A second synthetic click with no new touch must not open the save picker. */
+let hubTapInStory=false,hubTapAt=0;
+window.addEventListener("pointerdown",()=>{hubTapInStory=hubBlocked();hubTapAt=Date.now();},true);
+function hubGhostClick(){return !!(hubTapInStory&&Date.now()-hubTapAt<1500);}
 function leaveTavern(t,z){if(hubBlocked())return false;if(!zoneOpen(z)){
  if(S.rpg.s6&&S.rpg.s6.play)S.rpg.s6.play("wait-for-update",[["N","calm",WAIT_UPDATE]],{bg:tavernBg(t)});return false;}
  if(S.seamExit&&S.seams&&S.seams().some(s=>s.t===t)){/* t2565u: pick a slot, save there (taverns never use a tent), land on that side facing away. Cancel = stay, nothing moves */
@@ -629,7 +636,7 @@ function leaveTavern(t,z){if(hubBlocked())return false;if(!zoneOpen(z)){
   savePicker("save",closeUI,()=>tavernScreen(t,false),before);return true;}
  savePicker("save",closeUI,()=>tavernScreen(t,false));return true;}
 function tavernScreen(t,arrival=true){s5init();campVisit=null;const w=page("tavern");w.classList.add("s5scene","s5hub");w.style.backgroundImage='url("'+tavernBg(t)+'")';w.appendChild(head("Tavern "+(t+1)));
- const nav=el("div","s5hubnav");tavernLabels(t).forEach((label,i)=>{const b=tapBtn(label,()=>{if(hubBlocked())return;if(i===1)buyScreen(t);else leaveTavern(t,i===0?t+1:t+2);},"small");b.dataset.hub=i;nav.appendChild(b);});w.appendChild(nav);
+ const nav=el("div","s5hubnav");tavernLabels(t).forEach((label,i)=>{const b=tapBtn(label,()=>{if(hubBlocked()||hubGhostClick())return;if(i===1)buyScreen(t);else leaveTavern(t,i===0?t+1:t+2);},"small");b.dataset.hub=i;nav.appendChild(b);});w.appendChild(nav);
  if(arrival){live.party.forEach(c=>{c.hp=R.maxHp(c,hpMul());c.mp=R.maxMp(c);});h6("ownerVisit",t);h6("tavern",t);}}
 function leaveShop(t){savePicker("save",()=>tavernScreen(t,false),()=>buyScreen(t,false));}
 // t2445u/t2452u/t2453u/t2454u scene framing. Story pictures end at the top of the dialogue box (--s6top).
