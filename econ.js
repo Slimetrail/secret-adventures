@@ -73,7 +73,7 @@ const CRAFTS=[{id:"potion",n:"Healing potion",kind:"potion",out:"potion",need:{i
  // had in zone 3: Moon elixir's moonleaf (first sold at Tavern 3; ghoul fang drops in zone 3), Hunter's stew's fowl and wolf pelt (zone 3 drops).
  {id:"elixir",n:"Moon elixir",kind:"potion",out:"c_elixir",need:{i_herbs:1,i_moonleaf:1,p_fang:1}},
  {id:"stew",n:"Hunter's stew",kind:"food",out:"c_stew",need:{i_meat:1,i_fowl:1,p_pelt:1}}];
-Object.assign(I,{c_elixir:{n:"Moon elixir",slot:"use",w:0.5,v:30,heal:0.6,mp:0.6,craft:true},c_stew:{n:"Hunter's stew",slot:"use",w:0.6,v:25,heal:0.35,buff:{str:0,sta:25,f:3},craft:true}});
+Object.assign(I,{c_elixir:{n:"Moon elixir",slot:"use",w:0/* t2734u: a potion, weighs nothing (was 0.5) */,v:30,heal:0.6,mp:0.6,craft:true},c_stew:{n:"Hunter's stew",slot:"use",w:0.6,v:25,heal:0.35,buff:{str:0,sta:25,f:3},craft:true}});
 const STRENGTH={2:"Weak",3:"Medium",4:"Strong"};
 // first zone a material can be had: monster drops (PARTS zones, FOOD per zone) or a tavern shop (Tavern t+1 sits at the end of zone t+1)
 function firstZone(id){const z=[];if(PARTS[id])z.push(...PARTS[id][2]);const k=id.startsWith("i_")?id.slice(2):null;

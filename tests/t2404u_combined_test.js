@@ -22,7 +22,7 @@ for(const how of ['win','ran'])test('t2397u: after a '+(how==='win'?'win':'succe
 test('t2397u: boss win wakes KO\'d members at 1 HP; a whole-party KO is still a loss that reloads the last save',()=>{
  const h=harness(),L=withTwo(h);h.r.doSave();h.r.startBoss();L.party[1].hp=0;h.r.forceEnd('win');a.equal(L.party[1].hp,1);h.r.closeUI();
  const h2=harness(),L2=withTwo(h2);h2.r.doSave();const g=L2.gold;h2.r.startFight(weak(h2));L2.party.forEach(c=>c.hp=0);L2.gold=g+500;h2.r.forceEnd('lose');
- a.equal(h2.ov.dataset.result,'lose');a.ok(L2.party.every(c=>c.hp===0),'no wake on a loss');h2.click(h2.document.getElementById('fdone'));a.equal(h2.r.live().gold,g,'reloaded the last save');});
+ a.equal(h2.ov.dataset.result,'lose');a.ok(L2.party.every(c=>c.hp===0),'no wake on a loss');/* t2731u: a loss opens the Load screen (Return to last save is gone) */h2.r.lossLoad();a.equal(h2.r.ui(),'save-picker');h2.click(h2.ov.querySelector('[data-save-slot="0"]'));a.equal(h2.r.live().gold,g,'reloaded the last save');});
 test('t2397u source: wakeKO runs after the XP loop (win) and on a run, not on a loss',()=>{const p=read('party.js'),e=p.slice(p.indexOf('function endFight'),p.indexOf('drawParty();h6("fightEnd"'));
  a.ok(e.indexOf('wakeKO()')>e.indexOf('R.gainXp'));const lose=e.slice(e.indexOf('how==="lose"'),e.indexOf('else{wakeKO()'));a.equal(lose.includes('wakeKO'),false);a.match(p,/function wakeKO\(\)\{live\.party\.forEach\(c=>\{if\(c\.hp<=0\)c\.hp=1;\}\);\}/);});
 
@@ -70,5 +70,5 @@ test('t2404u: Beasts shows the seven zone 3 pencil sketches (1024x1024 webp) onc
  const Z=['centaur','werewolf','skeleton','ghoul','harpy','direwolf','wraith'];for(const n of Z){const b=fs.readFileSync(path.join(__dirname,'..','art-intro/journal/monsters/z3-'+n+'.webp'));a.equal(b.slice(0,4).toString(),'RIFF');a.equal(b.slice(8,12).toString(),'WEBP');}
  const sw=read('sw.js'),art=read('intro-art-data.js');for(const n of Z){a.equal(sw.split('"art-intro/journal/monsters/z3-'+n+'.webp"').length-1,1);a.ok(art.includes('"journal/monsters/z3-'+n+'.webp"'));}
  a.equal(read('intro.js').includes('"cap:3":'),false,'cap:3 journal page still text only');});
-test('t2404u pins: VER 100 (gear rework on live VER 99) and party v38, rules v22, econ v17, intro v20, intro-art-data v5, game v24, tex v16, map v17, item-icons v4 in both index.html and sw.js',()=>{const h=read('index.html'),s=read('sw.js');a.match(s,/^const VER="104",/);
- for(const p of ['party.js?v=41','rules.js?v=25','econ.js?v=17','intro.js?v=21','intro-art-data.js?v=6','splash.js?v=1','story.js?v=25','music.js?v=20','content-cap.js?v=8','game.js?v=25','tex.js?v=16','map.js?v=17','item-icons.js?v=4'])for(const x of [h,s])a.ok(x.includes(p),p);});
+test('t2404u pins: VER 100 (gear rework on live VER 99) and party v38, rules v22, econ v17, intro v20, intro-art-data v5, game v24, tex v16, map v17, item-icons v4 in both index.html and sw.js',()=>{const h=read('index.html'),s=read('sw.js');a.match(s,/^const VER="105",/);
+ for(const p of ['party.js?v=42','rules.js?v=26','econ.js?v=18','intro.js?v=21','intro-art-data.js?v=6','splash.js?v=1','story.js?v=25','music.js?v=20','content-cap.js?v=8','game.js?v=25','tex.js?v=16','map.js?v=17','item-icons.js?v=4'])for(const x of [h,s])a.ok(x.includes(p),p);});

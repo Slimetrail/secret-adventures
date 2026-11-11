@@ -74,7 +74,10 @@ def fight_by_taps(pg,attack_only=False):
   raise T.Fail('fight did not end')
 def after_fight(pg):
   if T.ev(pg,'!!document.getElementById("s5lvl")'):T.ttap(pg,'#s5lvlok')
-  T.ttap(pg,'#fdone');pg.wait_for_timeout(300)
+  pg.wait_for_timeout(150)
+  if T.ui(pg)=='save-picker':T.ttap(pg,f'[data-save-slot="{T.ev(pg,"SOTA.rpg.activeSlot()")}"]')  # t2731u: a loss opens the Load screen; load the last save
+  else:T.ttap(pg,'#fdone')
+  pg.wait_for_timeout(300)
   if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()')
 fights={'won':0,'lost':0}
 def walk_to(pg,cell,maxsteps=600):
@@ -112,7 +115,7 @@ def e2e(p):
   b,c=T.ctx(p);pg=T.fresh(c);hook(pg)
   T.check(T.ui(pg)=='create','creation not open');T.full_create(pg,'Tess','human','warrior')
   T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5 (t2721u)')
-  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="104"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
+  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="105"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
   # ---- 1. a level 30 party at Tavern 3 (as after zone 3): hero + Mira + Sorrel, points spent, skills learned, kit, tents, gold
   T.ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];while(h.lvl<30)RPG.gainXp(h,RPG.xpNeed(h.lvl),1);
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,30));

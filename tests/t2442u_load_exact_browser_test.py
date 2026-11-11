@@ -1,6 +1,6 @@
 """t2442u: loading a save restores every member's HP and MP exactly as stored at save time.
  a save, fight, take damage and spend MP, then load (save picker and page reload / title Continue): HP/MP equal the saved values
- b the same through the whole-party-loss 'Return to last save' path
+ b the same through the whole-party-loss path (t2731u: the Load screen, loading the last save)
  c an old save (no t2442u marker) with a stored 0 HP loads at 1 HP, every other value unchanged; a new save keeps its stored values
 Usage: python tests/t2442u_load_exact_browser_test.py [base_url]"""
 import sys,os,json
@@ -33,7 +33,7 @@ def t_load_after_fight(p):
   hurt(pg);T.ev(pg,'SOTA.rpg.forceEnd("ran")');T.ttap(pg,'#fdone');reload(pg);T.check(pools(pg)==saved,f'reload/Continue kept fight values {pools(pg)} vs {saved}');b.close()
 def t_loss_reload(p):
   b,pg=setup(p);saved=pools(pg);hurt(pg);T.ev(pg,'SOTA.rpg.live().party.forEach(c=>{c.hp=0;})');T.ev(pg,'SOTA.rpg.forceEnd("lose")');pg.wait_for_timeout(100)
-  T.check('last save' in T.ev(pg,'document.getElementById("fdone").textContent'),'no Return to last save');T.ttap(pg,'#fdone');pg.wait_for_timeout(150)
+  pg.wait_for_timeout(200);T.check(T.ui(pg)=='save-picker','t2731u: a loss opens the Load screen');T.ttap(pg,f'[data-save-slot="{T.ev(pg,"SOTA.rpg.activeSlot()")}"]');pg.wait_for_timeout(150)
   T.check(pools(pg)==saved,f'loss reload kept fight values {pools(pg)} vs saved {saved}');b.close()
 def t_old_zero(p):
   b,pg=setup(p);o=json.loads(T.ev(pg,'localStorage.getItem("sota.party.slot0")'));T.check(o.get('hpv')==1,'new save has no t2442u marker')

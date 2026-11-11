@@ -79,7 +79,10 @@ def run(p,w,h,tag):
   foes=ev(pg,'SOTA.rpg.fight().m.map(m=>m.n+" "+(m.mech||""))');r=fight(pg);say(f'[{tag}] zone 4 fight {foes}: {r}')
   if ev(pg,'!!document.getElementById("s5lvl")'):T.ttap(pg,'#s5lvlok')
   if r=='win':T.ttap(pg,'#fdone');pg.wait_for_timeout(300)
-  else:T.ttap(pg,'#fdone') if ev(pg,'!!document.getElementById("fdone")') else None
+  else:
+    pg.wait_for_timeout(200)
+    if T.ui(pg)=='save-picker':T.ttap(pg,f'[data-save-slot="{ev(pg,"SOTA.rpg.activeSlot()")}"]')  # t2731u: a loss opens the Load screen
+    elif ev(pg,'!!document.getElementById("fdone")'):T.ttap(pg,'#fdone')
   drain(pg);ev(pg,'SOTA.rpg.closeUI()')
   if r!='win':ev(pg,'SOTA.teleport(51,15,2)')
   ev(pg,'SOTA.rpg.live().party.forEach(c=>{c.hp=RPG.maxHp(c,1);c.mp=RPG.maxMp(c);})')

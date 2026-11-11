@@ -61,7 +61,7 @@ test("veil: the Shadow drake shields the others (half damage, own line); beat it
  const sc=R.makeMonster(4,6,38,0,"normal"),mi=R.makeMonster(4,0,38,0,"normal"),G=new R.Fight(P(),[mi,sc],"normal",1);a.match(G.act(0,"attack",null,0),/The Giant scorpion shields it\. Beat the scorpion first!/);
 });
 test("Iron Golem: same fight rules (no run, sweep every third round with a warning) plus iron skin, eye lock and core blaze",()=>{
- const g=R.makeBoss("normal");a.equal(g.n,"Iron Golem");a.equal(g.boss,true);a.equal(g.hp,15000);a.equal(g.max,15000);a.equal(g.mech,"iron");a.equal(g.zone,5);
+ const g=R.makeBoss("normal");a.equal(g.n,"Iron Golem");a.equal(g.boss,true);a.equal(g.hp,21000);a.equal(g.max,21000);/* t2732u: 15000 -> 21000 (skills/spells only; plain Attack chips a share of max HP) */a.equal(g.mech,"iron");a.equal(g.zone,5);
  const p=P(),F=new R.Fight(p,[g],"normal",21);a.equal(F.act(0,"run",null,0),"Can't run!");a.match(F.act(0,"attack",null,0),/Iron skin!/);
  F.monstersTurn();const w=F.monstersTurn();a.ok(w.includes("The Golem raises both fists. A sweeping blow is coming — Defend!"));
  const sw=F.monstersTurn();a.equal(sw.filter(t=>/^Iron Golem sweeps /.test(t)).length,4);const lock=sw.find(t=>/eye locks on/.test(t));a.ok(lock,sw.join("|"));
@@ -73,15 +73,16 @@ test("Iron Golem: defending the eye-locked member halves the smash",()=>{
  const run=def=>{const p=P(),g=R.makeBoss("normal"),F=new R.Fight(p,[g],"normal",77);F.monstersTurn();F.monstersTurn();p.forEach(c=>c.hp=R.maxHp(c,1));F.monstersTurn();const i=F.mark;p.forEach(c=>c.hp=R.maxHp(c,1));if(def)F.guard.add(i);F.monstersTurn();return R.maxHp(p[i],1)-p[i].hp;};
  const open=run(false),guarded=run(true);a.ok(guarded<=Math.ceil(open/2)+1,`${guarded} vs ${open}`);
 });
-test("attack-only never beats the Golem; the boss door locks and endings are wired (story.js untouched)",()=>{
- for(let s=0;s<20;s++){const p=party(R,50),g=R.makeBoss("normal"),F=new R.Fight(p,[g],"normal",s*101+7);for(let r=0;r<80&&!F.over;r++){p.forEach((c,i)=>{if(!F.over&&c.hp>0)F.act(i,"attack",null,0);});if(!F.over)F.monstersTurn();}a.notEqual(F.over,"win");}
+test("attack-only rarely beats the Golem (t2732u: about 5% at L50, tests/t2732u_golem_balance_test.js); the boss door locks and endings are wired (story.js untouched)",()=>{
+ let wins=0;for(let s=0;s<400;s++){const p=party(R,50),g=R.makeBoss("normal"),F=new R.Fight(p,[g],"normal",s*101+7);for(let r=0;r<80&&!F.over;r++){p.forEach((c,i)=>{if(!F.over&&c.hp>0)F.act(i,"attack",null,0);});if(!F.over)F.monstersTurn();}wins+=F.over==="win";}
+ a.ok(wins>=4&&wins<=40,"attack-only wins "+wins+"/400");
  const st=read("story.js");a.ok(st.includes("const FINAL_LOCK=window.PUZ.make(1,5,713507)"));a.ok(st.includes("FINAL_LOCK2=window.PUZ.make(4,5,731117),FINAL_LOCK3=window.PUZ.make(3,5,731119)"));
  a.ok(st.includes("S.rpg.startBoss()"));a.ok(st.includes("H.bossWon=()=>{const s=st();if(s)s.golemDefeated=true;showEnding();}"));
  a.ok(read("party.js").includes('if(bossWon)h6("bossWon")'));
 });
-test("content cap is zones 1-5 and pins advance together (VER 104)",()=>{
+test("content cap is zones 1-5 and pins advance together (VER 105)",()=>{
  const c={window:{}};vm.runInNewContext(read("content-cap.js"),c);a.equal(c.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,5);
- const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="104",/);
- for(const p of ["content-cap.js?v=8","rules.js?v=25","party.js?v=41","game.js?v=25","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
+ const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="105",/);
+ for(const p of ["content-cap.js?v=8","rules.js?v=26","party.js?v=42","game.js?v=25","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
  a.ok(read("party.js").includes('const WAIT_UPDATE="Please wait for update to continue.";'));
 });

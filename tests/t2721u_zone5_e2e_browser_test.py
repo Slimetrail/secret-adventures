@@ -1,5 +1,5 @@
 """Jeremy t2721u: zone 5 end-to-end, story ON, one browser and one page at a time. Sizes 412x891 (phone, touch) and 1280x800.
-Per size: loads with no console/page errors (VER 104, maxZone 5), creates a hero by taps, a L50 hero+Mira+Sorrel party bumps the
+Per size: loads with no console/page errors (VER 105, maxZone 5), creates a hero by taps, a L50 hero+Mira+Sorrel party bumps the
 Tavern 4 archway (Brunn joins), takes Tavern 4's Zone 5 exit through the 4-slot save picker into zone 5 (46,48), walks by taps to a
 zone 5 camp (fights on the way by taps) and saves there, fights a fixed zone 5 pack by taps (Shadow drake veil, Hydra regrow,
 Salamander burn) and checks the zone 5 lines show and the battle backdrop is purple, reloads and continues the zone 5 save
@@ -12,11 +12,13 @@ fix1 (QA on 07111bc): right after the 4-5 seam save at 46,48 the party goes to t
 against the dialogue box and portrait at each lock), opens the door and loses (forced after one round): the loss text and toast name
 "the Zone 5 side of Tavern 4", the locks stay solved after the loss and a reload, and later the door opens at once. After each ending the
 save picker is offered (saved after low and high, declined after mid; no tent); a reload shows Continue and keeps golemDefeated + ending.
-Shots: /workspace/zone5-shots/ and /workspace/zone5-shots/fix1/ (or $Z5SHOTS). Usage: python tests/t2721u_zone5_e2e_browser_test.py http://127.0.0.1:PORT/"""
+fix2 (t2730u/t2731u): after each ending the "End of game save" picker, then the main menu (Continue keeps the win); losses open the Load
+screen (Zone 5 side slot labelled "Tavern 4 (Zone 5 side)"); a zone 1-4 seam cell (14,48) keeps "Back at Tavern 1"; Back on the loss Load
+screen loads the last save and opens the main menu. Shots: /workspace/zone5-shots/, fix1/ and fix2/ (or $Z5SHOTS). Usage: python tests/t2721u_zone5_e2e_browser_test.py http://127.0.0.1:PORT/"""
 import sys,os,time
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 BASE=(sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:19811/').rstrip('/')+'/'
-SHOTS=os.environ.get('Z5SHOTS','/workspace/zone5-shots');os.makedirs(os.path.join(SHOTS,'fix1'),exist_ok=True)
+SHOTS=os.environ.get('Z5SHOTS','/workspace/zone5-shots');os.makedirs(os.path.join(SHOTS,'fix1'),exist_ok=True);os.makedirs(os.path.join(SHOTS,'fix2'),exist_ok=True)
 sys.argv=[sys.argv[0],BASE]
 import stage4_fix_tests as T
 import splash_helper as SPL
@@ -42,7 +44,12 @@ def drain(pg,n=800,stop=None):
     ev(pg,'''(()=>{const d=document.getElementById("s6d");if(!d)return;const b=d.querySelector(".s6btns button:not([disabled])");const t=b||d;t.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));})()''')
     pg.wait_for_timeout(45)
   raise T.Fail('talk did not finish (freeze?)')
-def wait_quiet(pg):pg.wait_for_function('!(SOTA.mazeInputQuiet&&SOTA.mazeInputQuiet())',timeout=4000)
+def wait_quiet(pg):
+  # poll from Python: the page CSP (script-src 'self') blocks Playwright's in-page string predicate once it has to poll
+  for _ in range(20):
+    if pg.evaluate('!(SOTA.mazeInputQuiet&&SOTA.mazeInputQuiet())'):return
+    pg.wait_for_timeout(50)
+  raise AssertionError('maze input still quiet after 1 s')
 # zone 5 sensible player by taps: Defend when the Golem's eye is on you; heal when hurt or burning; beat the veil first, then a Hydra with skills
 PLAN_JS='''()=>{const L=SOTA.rpg.live(),F=SOTA.rpg.fight(),i=SOTA.rpg.turn(),c=L.party[i];if(!c||c.hp<=0)return null;
  const live=F.m.map((m,j)=>[m,j]).filter(x=>x[0].hp>0),pri=m=>(m.mech==="veil"&&live.length>1)?0:m.mech==="regrow"?1:2;
@@ -163,7 +170,7 @@ def run(p,w,h,tag):
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'localStorage.clear()')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'SOTA.setAnim(false)');T.past_title(pg)
   ver=ev(pg,'fetch("sw.js").then(r=>r.text()).then(t=>t.match(/VER="(\\d+)"/)[1])');say(f'[{tag}] loaded in {time.time()-t0:.1f}s; VER {ver}; maxZone',ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone'))
-  T.check(ver=='104','VER is not 104');T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5');T.check(not ERRS,f'errors on load {ERRS}')
+  T.check(ver=='105','VER is not 105');T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5');T.check(not ERRS,f'errors on load {ERRS}')
   T.full_create(pg,'Tess','human','warrior');drain(pg)
   ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];const s=SOTA.rpg.s6.st();
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,45));s.seen.join0=1;s.seen.join1=1;
@@ -189,14 +196,18 @@ def run(p,w,h,tag):
   solve_locks(pg,tag)
   T.ttap(pg,'.s6btns button:not([disabled])');pg.wait_for_timeout(700)
   T.check(T.ui(pg)=='fight' and ev(pg,'SOTA.rpg.fight().m[0].boss===true'),'the door did not start the Iron Golem fight')
-  one_turn(pg);ev(pg,'SOTA.rpg.forceEnd("lose")');pg.wait_for_timeout(300)
-  note=ev(pg,'[...document.querySelectorAll("#s4 .s4note")].map(e=>e.textContent).join(" | ")')
-  say(f'[{tag}] fix1 (b) loss screen: {note}');T.check('You wake at your last save: the Zone 5 side of Tavern 4.' in note,'loss note does not name the Zone 5 side')
-  T.check('Back at Tavern 4' not in ev(pg,'document.body.innerText'),'old Tavern 4 text');shot(pg,f'fix1/{tag}-loss-message.png')
-  T.ttap(pg,'#fdone');pg.wait_for_timeout(250);toast=ev(pg,'document.getElementById("s4toast").textContent')
-  s=ev(pg,'SOTA.state()');say(f'[{tag}] fix1 (b) after the loss: toast "{toast}" at {s}; locks {ev(pg,LOCKS_JS)}')
+  one_turn(pg);ev(pg,'SOTA.rpg.forceEnd("lose")');pg.wait_for_timeout(400)
+  # fix2 t2731u: the loss opens the Load screen (title's Load Game slot list); the Zone 5 side save is labelled "Tavern 4 (Zone 5 side)"
+  act=ev(pg,'SOTA.rpg.activeSlot()');ttl=ev(pg,'(document.querySelector("#s4 .s4title")||{}).textContent||""');note=ev(pg,'(document.getElementById("s4picknote")||{}).textContent||""')
+  lab=ev(pg,f'document.querySelector("[data-save-slot=\\"{act}\\"]").textContent')
+  say(f'[{tag}] fix2 loss -> {T.ui(pg)} "{ttl}"; note "{note}"; slot {act+1}: "{lab}"')
+  T.check(T.ui(pg)=='save-picker' and ttl=='Load a save','the loss did not open the Load screen');T.check(note.startswith('Everyone is knocked out. Pick a save to load.'),'loss note')
+  T.check(lab.endswith('· Tavern 4 (Zone 5 side)'),'slot label for the Zone 5 side');T.check(not ev(pg,'!!document.getElementById("fdone")'),'Return to last save still shown')
+  shot(pg,f'fix2/{tag}-loss-load-screen.png');shot(pg,f'fix2/{tag}-slot-list-label.png')
+  T.ttap(pg,f'[data-save-slot="{act}"]');pg.wait_for_timeout(250);toast=ev(pg,'document.getElementById("s4toast").textContent')
+  s=ev(pg,'SOTA.state()');say(f'[{tag}] fix2 after loading slot {act+1}: toast "{toast}" at {s}; locks {ev(pg,LOCKS_JS)}')
   T.check(toast=='Back at the Zone 5 side of Tavern 4','loss toast');T.check([s['x'],s['y'],s['zone']]==[46,48,5],'not back at 46,48')
-  T.check(ev(pg,LOCKS_JS)==[True,True,True],'locks lost by the loss');shot(pg,f'fix1/{tag}-after-loss-toast.png')
+  T.check(ev(pg,LOCKS_JS)==[True,True,True],'locks lost by the loss');shot(pg,f'fix2/{tag}-after-loss-load-toast.png')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'SOTA.setAnim(false)');T.past_title(pg);pg.wait_for_timeout(800);drain(pg)
   s=ev(pg,'SOTA.state()');say(f'[{tag}] fix1 (b) after the loss + reload + Continue: {s}; locks {ev(pg,LOCKS_JS)}')
   T.check([s['x'],s['y']]==[46,48] and ev(pg,LOCKS_JS)==[True,True,True],'locks lost by the reload')
@@ -258,43 +269,63 @@ def run(p,w,h,tag):
     if expect=='high':shot(pg,f'{tag}-10-ending-{expect}-credits.png')
     T.ttap(pg,'.s6btns button');pg.wait_for_timeout(500);T.check(not story(pg),'Back to the maze did not close the ending')
     T.check(ev(pg,'SOTA.rpg.s6.st().ending')==expect,'ending not stored');return title
+  def cont():
+    T.ttap(pg,'#ititle-cont');pg.wait_for_timeout(700);drain(pg);T.check(not ev(pg,'SOTA.intro.titleOpen()'),'Continue did not close the title')
   def end_save(expect,choice):
-    """fix1 (a): after the credits close, the normal save picker is offered (no tent: end-of-game save at the centre door)"""
+    """fix2 (t2730u): after the credits the "End of game save" picker (no tent), then the main menu whether saved or not"""
     pg.wait_for_timeout(300);T.check(T.ui(pg)=='save-picker' and ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,f'no save offer after the {expect} ending')
+    ttl=ev(pg,'document.querySelector("#s4 .s4title").textContent');T.check(ttl=='End of game save',f'picker heading {ttl}')
     tents0=ev(pg,'SOTA.rpg.live().party.flatMap(c=>c.bag).filter(x=>x==="tent").length');wear0=ev(pg,'SOTA.rpg.live().tentWear')
-    shot(pg,f'fix1/{tag}-ending-{expect}-save-offer.png');act=ev(pg,'SOTA.rpg.activeSlot()');before=ev(pg,f'localStorage.getItem("sota.party.slot{act}")')
+    shot(pg,f'fix2/{tag}-ending-{expect}-end-save-picker.png');act=ev(pg,'SOTA.rpg.activeSlot()');before=ev(pg,f'localStorage.getItem("sota.party.slot{act}")')
     if choice=='save':T.ttap(pg,f'[data-save-slot="{act}"]')
     else:T.ttap(pg,'#s4 .s4back')
-    pg.wait_for_timeout(300);toast=ev(pg,'document.getElementById("s4toast").textContent');o=ev(pg,f'JSON.parse(localStorage.getItem("sota.party.slot{act}"))')
-    say(f'[{tag}] fix1 (a) {expect} ending: offer -> {choice}; toast "{toast}"; slot {act+1} at {o["at"]}, story golemDefeated {o["story"].get("golemDefeated")} ending {o["story"].get("ending")}')
-    T.check(T.ui(pg) is None,'picker still open')
+    pg.wait_for_timeout(400);o=ev(pg,f'JSON.parse(localStorage.getItem("sota.party.slot{act}"))');title=ev(pg,'SOTA.intro.titleOpen()')
+    btns=ev(pg,'[...document.querySelectorAll("#ititle-menu button")].map(b=>b.textContent)')
+    say(f'[{tag}] fix2 {expect} ending: "{ttl}" -> {choice}; main menu {title} {btns}; slot {act+1} at {o["at"]}, story golemDefeated {o["story"].get("golemDefeated")} ending {o["story"].get("ending")}')
+    T.check(T.ui(pg) is None and title,'no main menu after the end-of-game save step');shot(pg,f'fix2/{tag}-title-after-{expect}-{choice}.png')
     T.check(ev(pg,'SOTA.rpg.live().party.flatMap(c=>c.bag).filter(x=>x==="tent").length')==tents0 and ev(pg,'SOTA.rpg.live().tentWear')==wear0,'end save used a tent')
     if choice=='save':
-      T.check(toast=='Game saved. Your win and your ending are kept.','save toast');T.check(o['story'].get('golemDefeated') is True and o['story'].get('ending')==expect,'win/ending not in the save')
-      T.check(o['at']['name']=='the centre door','end save name')
-    else:
-      T.check(toast.startswith('Not saved.'),'decline toast');T.check(ev(pg,f'localStorage.getItem("sota.party.slot{act}")')==before,'declined save wrote the slot')
+      T.check(o['story'].get('golemDefeated') is True and o['story'].get('ending')==expect,'win/ending not in the save');T.check(o['at']['name']=='the centre door','end save name')
+    else:T.check(ev(pg,f'localStorage.getItem("sota.party.slot{act}")')==before,'declined save wrote the slot')
     return o
   titles={'low':ending('low')}
   T.check(ev(pg,'SOTA.rpg.s6.st().golemDefeated===true'),'golemDefeated not stored')
   o=end_save('low','save')
-  # ---- fix1 (a): reload: the title offers Continue (slot label shows the centre door); Continue keeps the win and the ending, no new offer
+  cont();sv=ev(pg,'(()=>{const s=SOTA.rpg.s6.st();return {golemDefeated:s.golemDefeated,ending:s.ending}})()');say(f'[{tag}] fix2 Continue from the main menu: {ev(pg,"SOTA.state()")} {sv}')
+  T.check(sv=={'golemDefeated':True,'ending':'low'},'Continue lost the win');T.check(T.ui(pg) is None,'offer again after Continue')
+  # ---- reload: the title offers Continue (slot label shows the centre door); Continue keeps the win and the ending, no new offer
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'SOTA.setAnim(false)');pg.wait_for_function('SOTA.intro&&SOTA.intro.titleOpen()',timeout=8000)
-  btns=ev(pg,'[...document.querySelectorAll("#ititle-menu button")].map(b=>b.textContent)');lab=ev(pg,'SOTA.rpg.saveSlots().map(o=>o?o.party[0].name+" · "+o.at.name:"Empty")')
-  shot(pg,f'fix1/{tag}-title-after-win.png');say(f'[{tag}] fix1 (a) title after the win: buttons {btns}; slots {lab}')
-  T.check('Continue' in btns,'no Continue on the title');T.ttap(pg,'#ititle-cont');pg.wait_for_timeout(900);drain(pg)
+  btns=ev(pg,'[...document.querySelectorAll("#ititle-menu button")].map(b=>b.textContent)');lab=ev(pg,'SOTA.rpg.saveSlots().map(o=>o?o.party[0].name+" · "+SOTA.rpg.slotName(o.at):"Empty")')
+  shot(pg,f'fix2/{tag}-title-after-reload.png');say(f'[{tag}] fix2 title after the win + reload: buttons {btns}; slots {lab}')
+  T.check('Continue' in btns,'no Continue on the title');cont()
   s=ev(pg,'SOTA.state()');sv=ev(pg,'(()=>{const s=SOTA.rpg.s6.st();return {golemDefeated:s.golemDefeated,ending:s.ending}})()')
-  say(f'[{tag}] fix1 (a) after reload + Continue: {s} story {sv}; ui {T.ui(pg)}; centre door shown {ev(pg,"getComputedStyle(document.getElementById(\"s7door\")).display")}')
+  say(f'[{tag}] fix2 after reload + Continue: {s} story {sv}; ui {T.ui(pg)}; centre door shown {ev(pg,"getComputedStyle(document.getElementById(\"s7door\")).display")}')
   T.check(sv=={'golemDefeated':True,'ending':'low'},'win/ending lost by the reload');T.check([s['x'],s['y']]==[o['at']['x'],o['at']['y']],'not at the end save spot')
-  pg.wait_for_timeout(500);T.check(T.ui(pg) is None,'save offered again after Continue');shot(pg,f'fix1/{tag}-after-reload-continue.png')
+  pg.wait_for_timeout(500);T.check(T.ui(pg) is None,'save offered again after Continue');shot(pg,f'fix2/{tag}-after-reload-continue.png')
   ra=ev(pg,'SOTA.rpg.s6.roomArt()');z305=[k for k,v in ra.items() if v[1].startswith('zone3-05-')]
   for key,walls,choice in [('mid',{z305[0]:1},'decline'),('high',{k:1 for k in ra},'save')]:
     ev(pg,'w=>{const s=SOTA.rpg.s6.st();s.walls=w;s.ending=null;}',walls)
     ev(pg,'SOTA.teleport(MAZE.centre[0],MAZE.centre[1],0)');pg.wait_for_timeout(600)
     T.check(ev(pg,'getComputedStyle(document.getElementById("s7door")).display')=='block','centre door button not shown')
-    T.ttap(pg,'#s7door');pg.wait_for_timeout(300);titles[key]=ending(key);end_save(key,choice)
+    T.ttap(pg,'#s7door');pg.wait_for_timeout(300);titles[key]=ending(key);end_save(key,choice);cont()
+    if choice=='decline':T.check(ev(pg,'SOTA.rpg.s6.st().golemDefeated===true'),'decline + Continue lost the in-memory win')
   say(f'[{tag}] ending titles {titles}')
-  f0=ev(pg,'SOTA.state().f');wait_quiet(pg);T.ttap(pg,'[data-cmd=right]');pg.wait_for_timeout(300);T.check(ev(pg,'SOTA.state().f')==(f0+1)%4,'maze does not turn (freeze?)')
+  # ---- fix2: a zone 1-4 seam cell (Tavern 1's Zone 2 side, 14,48) keeps the live wording; Back on the loss Load screen -> last save + main menu
+  ev(pg,'SOTA.rpg.closeUI();SOTA.teleport(14,48,0)');pg.wait_for_timeout(500);drain(pg);ev(pg,'SOTA.rpg.closeUI()')
+  T.check(ev(pg,'SOTA.rpg.doSave()'),'no save at 14,48');nm=ev(pg,'SOTA.rpg.save().at.name');T.check(nm=='Tavern 1',f'14,48 save name {nm}')
+  for back in (True,False):
+    ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(1,0,1,0,"normal")])');pg.wait_for_timeout(300);ev(pg,'SOTA.rpg.forceEnd("lose")');pg.wait_for_timeout(400)
+    act=ev(pg,'SOTA.rpg.activeSlot()');lab=ev(pg,f'document.querySelector("[data-save-slot=\\"{act}\\"]").textContent');T.check(T.ui(pg)=='save-picker' and lab.endswith('· Tavern 1'),f'seam-cell slot label {lab}')
+    if back:
+      shot(pg,f'fix2/{tag}-seam-cell-loss-load-screen.png');T.ttap(pg,'#s4 .s4back');pg.wait_for_timeout(400);s=ev(pg,'SOTA.state()')
+      say(f'[{tag}] fix2 Back on the loss Load screen: main menu {ev(pg,"SOTA.intro.titleOpen()")}, fight {ev(pg,"!!SOTA.rpg.fight()")}, at {s}')
+      T.check(ev(pg,'SOTA.intro.titleOpen()') and not ev(pg,'!!SOTA.rpg.fight()') and [s['x'],s['y']]==[14,48],'Back did not load the last save + main menu')
+      shot(pg,f'fix2/{tag}-loss-back-title.png');cont()
+    else:
+      T.ttap(pg,f'[data-save-slot="{act}"]');pg.wait_for_timeout(250);toast=ev(pg,'document.getElementById("s4toast").textContent');say(f'[{tag}] fix2 zone 1-4 seam cell loss toast "{toast}"')
+      T.check(toast=='Back at Tavern 1','zone 1-4 seam-cell loss text is not the live text');shot(pg,f'fix2/{tag}-seam-cell-loss-text.png')
+  # after a load the maze ignores input for 750 ms and until a fresh pointerdown (the turn tap itself), so wait out the timer only
+  f0=ev(pg,'SOTA.state().f');pg.wait_for_timeout(800);T.ttap(pg,'[data-cmd=right]');pg.wait_for_timeout(300);T.check(ev(pg,'SOTA.state().f')==(f0+1)%4,'maze does not turn (freeze?)')
   b.close();return titles
 def main():
   passed=failed=0

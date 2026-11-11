@@ -48,18 +48,34 @@ function loadSlot(slot){const o=saveSlots()[slot];if(!o)return false;
    auto-save (t2446u). */
 let endSaveMode=false,endSeen=false;
 function endSaveDue(){const s=live&&live.story;if(!s||s.golemDefeated!==true||!s.ending)return false;const v=save&&save.story;return !(v&&v.golemDefeated===true&&v.ending===s.ending);}
-function offerEndSave(){if(ui!==null||!endSaveDue()||(S.storyOpen&&S.storyOpen()))return false;endSaveMode=true;
- savePicker("save",()=>{endSaveMode=false;closeUI();toast("Game saved. Your win and your ending are kept.");},()=>{endSaveMode=false;closeUI();toast("Not saved. Tap ‹ Centre door to see the ending again and save it.");});return true;}
+/* t2730u fix2: after the ending and credits the game goes to the main menu (title). The end-of-game save picker comes first when the
+   win/ending is not saved yet; saving or Back both go on to the title. Back writes nothing: the title's Continue resumes this game as it
+   is in memory (as "Return to main menu" does), a reload continues the last save, and the centre door replays the ending and offers the
+   save again. */
+function toTitle(){closeUI();if(S.intro&&S.intro.showTitle)S.intro.showTitle();}
+function offerEndSave(){if(ui!==null||(S.storyOpen&&S.storyOpen()))return false;if(!endSaveDue()){toTitle();return false;}endSaveMode=true;
+ savePicker("save",()=>{endSaveMode=false;toTitle();},()=>{endSaveMode=false;toTitle();},null,{title:"End of game save",note:"Save your win and your ending, or tap Back to go to the main menu without saving."});return true;}
 /* t2721u fix1: solved final locks are kept in the last save when the door opens, so a lost Golem fight or a reload does not ask for
    all three locks again (same in-place save patch as ensureVseed). Nothing else in the save changes. */
 function keepFinalLocks(){const ls=live&&live.story;if(!save||!ls)return;const k=["finalLock","finalLock2","finalLock3"].filter(x=>ls[x]===true);if(!k.length)return;
  if(!save.story||typeof save.story!=="object")save.story={v:1};k.forEach(x=>{save.story[x]=true;});
  try{localStorage.setItem(SLOT+activeSlot,JSON.stringify(save));if(Number(localStorage.getItem(ACTIVE)||0)===activeSlot)localStorage.setItem(SAVE,JSON.stringify(save));}catch(e){}}
-/* t2721u fix1: a seam save on the far side of a tavern (Tavern 4's Zone 5 exit at 46,48) is named by where the party really stands */
-function spotName(at){if(!at)return "?";const t=tavIdx(at.x,at.y),c=t>=0?M.taverns[t]:null;
- if(c&&!(c[0]===at.x&&c[1]===at.y)){const z=+M.zone[at.y*N+at.x],zt=+M.zone[c[1]*N+c[0]];if(z&&zt&&z!==zt)return "the Zone "+z+" side of Tavern "+(t+1);}return at.name||placeName(at.x,at.y);}
-function savePicker(mode,done,cancel,before){const w=page("save-picker");w.appendChild(head(mode==="load"?"Load a save":"Choose a save slot",cancel||closeUI));
- const slots=saveSlots();slots.forEach((o,i)=>{const b=tapBtn("Slot "+(i+1)+" · "+(o?(o.party[0].name+" · "+(o.at.name||placeName(o.at.x,o.at.y))):"Empty"),()=>{
+/* t2721u fix1/fix2: only the Zone 5 side of Tavern 4 (the 4-5 seam cell, 46,48) gets its own wording; every zone 1-4 seam keeps the save's
+   own name exactly as live ("Tavern 1" etc.). The slot list shows that one spot as "Tavern 4 (Zone 5 side)"; it is worked out from the
+   saved cell, so old saves need no change. */
+function z5Side(at){if(!at)return false;const t=tavIdx(at.x,at.y),c=t===3?M.taverns[3]:null;return !!(c&&!(c[0]===at.x&&c[1]===at.y)&&+M.zone[at.y*N+at.x]===5);}
+function spotName(at){if(!at)return "?";return z5Side(at)?"the Zone 5 side of Tavern 4":at.name;}
+function slotName(at){if(!at)return "?";return z5Side(at)?"Tavern 4 (Zone 5 side)":(at.name||placeName(at.x,at.y));}
+/* t2731u fix2: every lost fight (one shared path: endFight) goes straight to the Load screen, the same slot list as the title's Load Game.
+   Loading a slot plays on from it. Back loads the last save (as "Return to last save" did) and opens the main menu, so nothing is stuck.
+   Solved final locks carry over when the loaded save is the same adventure (same seed); they are kept in that save (keepFinalLocks). */
+function lossLoad(){const ls=live&&live.story,seed=live?live.seed:null,locks=ls?["finalLock","finalLock2","finalLock3"].filter(x=>ls[x]===true):[];F=null;
+ const carry=()=>{if(locks.length&&live&&live.seed===seed){if(!live.story||typeof live.story!=="object")live.story={v:1};locks.forEach(x=>{live.story[x]=true;});keepFinalLocks();}};
+ savePicker("load",()=>{carry();toast("Back at "+spotName(save.at));},()=>{if(save){restore();carry();}toTitle();},null,{title:"Load a save",kind:"loss",note:"Everyone is knocked out. Pick a save to load. Back loads your last save and opens the main menu."});
+ ov.dataset.result="lose";return true;}
+function savePicker(mode,done,cancel,before,opt){const w=page("save-picker");w.appendChild(head(opt&&opt.title?opt.title:mode==="load"?"Load a save":"Choose a save slot",cancel||closeUI));
+ if(opt&&opt.title)w.dataset.pick=opt.kind||"end";if(opt&&opt.note){const n=el("div","s4note",opt.note);n.id="s4picknote";w.appendChild(n);}
+ const slots=saveSlots();slots.forEach((o,i)=>{const b=tapBtn("Slot "+(i+1)+" · "+(o?(o.party[0].name+" · "+slotName(o.at)):"Empty"),()=>{
   if(mode==="load"){if(loadSlot(i)&&done)done();}else{/* t2451u: camp Save refills only when a slot is really written */const undo=before?before():null;if(doSave(false,i)){if(done)done();}else if(undo)undo();}},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
 
 // death: everything goes back to the last save
@@ -497,8 +513,7 @@ function endFight(){const aftermath=live.party.map(c=>({hp:c.hp,maxHp:R.maxHp(c,
   const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return {id,t:R.ITEMS[id].n+(who?"":" (no room, left behind)")};});
   mn.appendChild(el("div","s4win","Victory!"));const bossWon=F.m.some(m=>m.boss);const b=tapBtn("Continue",()=>{F=null;closeUI();if(bossWon)h6("bossWon");else h6("fightContinue",aftermath);},"s4go small");b.id="fdone";mn.appendChild(b);
   {const nt=el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: ":""));/* t2476u: each found item with its icon; same text as before */jn.forEach((x,k)=>{const sp=el("span","s4loot",x.t+(k<jn.length-1?", ":""));sp.dataset.loot=x.id;withIc(sp,x.id);nt.appendChild(sp);});mn.appendChild(nt);}if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
- else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+spotName(save.at)+". Everything since then is lost."));
-  const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+spotName(save.at));},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
+ else if(how==="lose"){ov.dataset.result="lose";setTimeout(()=>{if(F&&F.over==="lose")lossLoad();},0);}
  else{wakeKO();const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);tickBuffs();ov.dataset.result="ran";}
  drawParty();h6("fightEnd",how);}
 // ---- fight drawing t1962u: side view, original pixel sprites (art6/fight), big foes left, small party right, maze backdrops in zone colour (t1963u/t1964u) ----
@@ -998,7 +1013,7 @@ html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-b
 if(typeof MutationObserver==="function"&&document.body){new MutationObserver(ms=>{for(const m of ms)if(m.target&&m.target.dataset&&m.target.dataset.endScreen==="credits")endSeen=true;}).observe(document.body,{subtree:true,attributes:true,attributeFilter:["data-end-screen"]});
  new MutationObserver(()=>{if(endSeen&&!document.documentElement.classList.contains("s6open")){endSeen=false;setTimeout(offerEndSave,0);}}).observe(document.documentElement,{attributes:true,attributeFilter:["class"]});}
 // test and debug hooks (no network, no secrets)
-S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>{keepFinalLocks();return startFight([R.makeBoss(live.diff)],"boss");},live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,spotName,offerEndSave,endSaveDue,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>{keepFinalLocks();return startFight([R.makeBoss(live.diff)],"boss");},live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,spotName,slotName,lossLoad,offerEndSave,endSaveDue,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  gear:GEAR_API,itemInfo:{quick:itemQuick,desc:itemDesc,compare:equipCompare,openCompare:cmpPanel,closeCompare:closeCmp},setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=heroArt(c),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};

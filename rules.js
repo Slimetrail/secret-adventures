@@ -78,7 +78,7 @@ function useEffect(who,it,hpMul){const mh=maxHp(who,hpMul),mm=maxMp(who);let h=0
 function learn(c,id){if(c.skills.length>=skillSlots(c.lvl))return false;const s=SKILLS[c.cls].find(x=>x.id===id);if(!s||c.skills.includes(id))return false;c.skills.push(id);return true;}
 // items: slot, w weight (kg), a armor class 1-3, t weapon type, stats; junk has v value; potions use
 const ITEMS={
- potion:{n:"Healing potion",slot:"use",w:0.5,heal:0.45,v:8},ether:{n:"Mana potion",slot:"use",w:0.5,mana:0.5,v:10},salts:{n:"Smelling salts",slot:"use",w:0.2,revive:0.25,battle:true,v:12}/* t2398u/t2399u: in battle only, 25% max HP */,
+ potion:{n:"Healing potion",slot:"use",w:0/* t2734u: potions weigh nothing (was 0.5) */,heal:0.45,v:8},ether:{n:"Mana potion",slot:"use",w:0/* t2734u (was 0.5) */,mana:0.5,v:10},salts:{n:"Smelling salts",slot:"use",w:0.2,revive:0.25,battle:true,v:12}/* t2398u/t2399u: in battle only, 25% max HP */,
  sword:{n:"Iron sword",slot:"weapon",t:"sword",w:4,atk:6},axe:{n:"Hand axe",slot:"weapon",t:"axe",w:5,atk:7},mace:{n:"Mace",slot:"weapon",t:"mace",w:5,atk:6},
  dagger:{n:"Dagger",slot:"weapon",t:"dagger",w:1,atk:4},bow:{n:"Short bow",slot:"weapon",t:"bow",w:2,atk:5},staff:{n:"Oak staff",slot:"weapon",t:"staff",w:2,atk:2,mag:5},
  buckler:{n:"Buckler",slot:"offhand",a:2,w:3,def:2},towershield:{n:"Tower shield",slot:"offhand",a:3,w:8,def:5},tome:{n:"Rune tome",slot:"offhand",a:1,w:1,mag:3},
@@ -513,23 +513,33 @@ const DIVE=1.35,DIVE_LOW=.5,REFLECT_KEEP=.5,REFLECT_BACK=.3,ENRAGE_AT=.3,ENRAGE=
 // regrow (Hydra): heals each round unless a skill or spell hit it that round (plain Attack cannot keep up);
 // dive (Wyvern): the zone 4 Griffin rule; hide (Chimera): plain blows do half, skills get through;
 // burn (Salamander): like venom, keeps burning until someone heals; veil (Shadow drake): shields the others like the Giant scorpion (beat it first).
-// Iron Golem (boss, t2721u): iron skin halves plain Attack; after each sweep it locks its eye on the member with the lowest DEF and smashes them
+// Iron Golem (boss, t2721u; retuned t2732u, see golemChip/golemBlow): iron skin, so a plain Attack only chips a fixed share of its max HP; after each sweep it locks its eye on the member with the lowest DEF and smashes them
 // the next round (that member should Defend, or be healed); under 30% health its core blazes and it hits harder (strong skills, crafted buffs).
-const GAZE=.75,BREATH=.8,REGROW=.1,BURN_PCT=.07,BURN_ROUNDS=3,GOLEM_FOCUS=1.55,GOLEM_RAGE_AT=.3,GOLEM_RAGE=1.3;/* tuned with tests/t2721u_playtest_zone5.js: Golem 95.2% sensible with a final-fight kit, 0% attack-only; zone 5 attack-only 23.8% (zone 4 27.4%) */
+const GAZE=.75,BREATH=.8,REGROW=.1,BURN_PCT=.07,BURN_ROUNDS=3,GOLEM_FOCUS=1.55,GOLEM_RAGE_AT=.3,GOLEM_RAGE=1.3,GOLEM_CHIP=.0304,GOLEM_HIT=.25,GOLEM_SWEEP=.16,GOLEM_SMASH=.9;/* t2732u (VER 105): hp 15000 -> 21000; plain Attack chips GOLEM_CHIP of max HP; blows take GOLEM_HIT/SWEEP/SMASH of the target's max HP (GOLEM_FOCUS kept
+ for old callers, no longer used). tests/t2732u_golem_balance_sim.js: attack-only at L50 with best zone 5 gear 4.1-6.3% for all 56 party mixes (2000 fights each, mean 5.0%).
+ tests/t2721u_playtest_zone5.js: Golem 95.2% sensible with a final-fight kit (was 95.2%), 63.7% --no-kit (was 32.8%); zone 5 attack-only 23.8% (zone 4 27.4%), unchanged */
 const MECH_TEXT={scales:"Its scales turn plain blows. Skills get through!",stone:"Stone skin! Plain blows barely scratch it. Magic works best.",shell:"The shell turns plain blows. Skills get through!",
  reflect:"Its scales throw the spell back! Weapon skills work best.",guarded:"The Giant scorpion shields it. Beat the scorpion first!",
- hide:"Its thick hide turns plain blows. Skills get through!",iron:"Iron skin! Plain blows barely dent it. Use skills!",veiled:"The Shadow drake's veil shields it. Beat the drake first!"};
+ hide:"Its thick hide turns plain blows. Skills get through!",iron:"Iron skin! Plain blows only chip it. Use skills!",veiled:"The Shadow drake's veil shields it. Beat the drake first!"};
 const SHIELDS={shell:1,veil:1};
 // t2409u: is this monster shielded by another living Giant scorpion right now?
 function guarded(F,m){return !SHIELDS[m.mech]&&F.m.some(o=>o!==m&&o.hp>0&&SHIELDS[o.mech]);}
 // which line to show for a shielded hit (zone 4 text unchanged)
 function guardText(F,m){return F.m.some(o=>o!==m&&o.hp>0&&o.mech==="shell")?MECH_TEXT.guarded:MECH_TEXT.veiled;}
+// Jeremy t2732u: iron skin. A plain Attack on the Golem only knocks a chip off its iron: a small share of its max HP (+-15%), the same
+// for every level-50 hero whatever their power (less below level 50: x level/50), and it never crits. Skills and spells hit as before. Attack-only is ~5% at L50 for every party mix.
+function golemChip(m,c,r){return Math.max(1,Math.round(m.max*GOLEM_CHIP*Math.min(1,c.lvl/50)*(0.85+0.3*r)));}
+// Jeremy t2732u: crushing blows. Each Golem blow takes a share of the target's max HP (+-15%), whatever their DEF or race:
+// a plain hit GOLEM_HIT, the warned sweep GOLEM_SWEEP on everyone, the smash on the member its eye locked on GOLEM_SMASH (an
+// undefended smash nearly knocks anyone out). Enraged blows x GOLEM_RAGE. Defend halves a blow, as before.
+// Below level 50 a blow hurts more (x 50/level: the Golem is level 50). Share of the base (Normal) max HP, scaled by the difficulty's monster attack, so Story (x2 HP, x0.5 attack) and Hard (x1.5) keep their gap.
+function golemBlow(c,share,rage,r){return Math.max(1,Math.round(maxHp(c,1)*share*Math.max(1,50/Math.max(1,c.lvl))*(rage?GOLEM_RAGE:1)*(0.85+0.3*r)));}
 function golemRage(m){return !!(m&&m.boss&&m.hp>0&&m.hp<=m.max*GOLEM_RAGE_AT);}
 function enraged(m){return m.mech==="warcry"&&m.hp>0&&m.hp<=m.max*ENRAGE_AT;}
 // short status shown next to a zone 4 monster's name in the fight (target list and enemy line); "" for every other monster
 function monTag(F,m){if(!m||m.hp<=0)return "";if(SHIELDS[m.mech]&&F.m.some(o=>o!==m&&o.hp>0))return "shields others";if(F&&guarded(F,m))return "shielded";if(enraged(m)||golemRage(m))return "enraged";return "";}
 // Jeremy t1968u: toughest fight. Near-max level-50 party wins with ease; a not-maxed party needs Defend on the wind-up, heals and focus. (was hp 23000, atk 255, def 145)
-const BOSS={n:"Iron Golem",role:"crystal sentinel",hp:15000,atk:230,def:600,boss:true};
+const BOSS={n:"Iron Golem",role:"crystal sentinel",hp:21000,atk:230,def:600,boss:true};
 function makeBoss(diff){const d=DIFF[diff]||DIFF.normal;return Object.assign({},BOSS,{zone:5,kind:7,lvl:50,max:BOSS.hp,atk:BOSS.atk*d.matk,mech:"iron"});}
 const DIFF={story:{hp:2,matk:0.5,name:"Story"},normal:{hp:1,matk:1,name:"Normal"},hard:{hp:1,matk:1.5,name:"Hard"}};
 function partyLevel(party){return Math.round(party.reduce((t,c)=>t+c.lvl,0)/party.length);}
@@ -561,7 +571,7 @@ Fight.prototype.crit=function(c,d){const p=critChance(c);if(p<=0)return [d,false
 Fight.prototype.alive=function(a){return a.filter(x=>x.hp>0);};
 Fight.prototype.act=function(ci,cmd,arg,targ){ // one hero action. returns text
  const c=this.p[ci],r=this.r;if(this.over||!c||c.hp<=0)return "";let t="";const foes=this.alive(this.m);const tg=foes.includes(this.m[targ])?this.m[targ]:foes[0];
- if(cmd==="attack"){let [dmg,cr]=this.crit(c,hit(power(c),tg.def,r()));const ar=ARMOR[tg.mech],gd=guarded(this,tg);if(ar)dmg=Math.max(1,Math.round(dmg*ar));if(gd)dmg=Math.max(1,Math.round(dmg*GUARD));tg.hp=Math.max(0,tg.hp-dmg);t=c.name+" hits "+tg.n+" for "+dmg+(cr?". Critical hit!":"")+(ar?". "+MECH_TEXT[tg.mech]:"")+(gd?". "+guardText(this,tg):"");}
+ if(cmd==="attack"){let [dmg,cr]=tg.mech==="iron"?[golemChip(tg,c,r()),false]:this.crit(c,hit(power(c),tg.def,r()));const iron=tg.mech==="iron",ar=iron?0:ARMOR[tg.mech],gd=guarded(this,tg);if(ar)dmg=Math.max(1,Math.round(dmg*ar));if(gd)dmg=Math.max(1,Math.round(dmg*GUARD));tg.hp=Math.max(0,tg.hp-dmg);t=c.name+" hits "+tg.n+" for "+dmg+(cr?". Critical hit!":"")+(ar||iron?". "+MECH_TEXT[tg.mech]:"")+(gd?". "+guardText(this,tg):"");}
  else if(cmd==="skill"){const s=SKILLS[c.cls].find(x=>x.id===arg);if(!s||!c.skills.includes(arg)||c.mp<s.mp)return this.act(ci,"attack",null,targ);c.mp-=s.mp;
   if(s.k==="heal"){const w=this.alive(this.p).sort((a,b)=>a.hp/maxHp(a,this.d.hp)-b.hp/maxHp(b,this.d.hp))[0],h=Math.round(magicPower(c)*s.p);w.hp=Math.min(maxHp(w,this.d.hp),w.hp+h);t=c.name+" casts "+s.n+": +"+h+this.cureText(w);}
   else if(s.k==="guard"){this.p.forEach((x,i)=>this.guard.add(i));t=c.name+" uses "+s.n;}
@@ -594,7 +604,7 @@ Fight.prototype.monstersTurn=function(){this.motionHits=[];if(this.over)return [
   const grage=golemRage(m);if(grage&&!this.grage){this.grage=true;out.push("The Golem's core blazes! It hits harder now. Finish it!");}
   const rage=enraged(m);if(rage&&!this.enraged){this.enraged=true;out.push("The "+m.n+" is enraged! Finish it fast, or Defend");}
   const mul=(pulse?(charge?CHARGE:blast?(m.mech==="gaze"?GAZE:BREATH):.72):1)*(cry&&m.mech!=="warcry"?WARCRY:1)*(rage?ENRAGE:1)*(mk?GOLEM_FOCUS:1)*(grage?GOLEM_RAGE:1);
-  for(const c of targets){const ci=this.p.indexOf(c),low=dive&&c.hp<maxHp(c,this.d.hp)*DIVE_LOW;let dmg=hit(m.atk*mul*(low?DIVE:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);this.motionHits.push({i:this.m.indexOf(m),hero:ci,pulse,dmg});out.push(m.n+(charge?" charges into ":blast?(m.mech==="gaze"?" stares down ":" breathes fire on "):pulse?" sweeps ":mk?" smashes ":dive?" dives at ":" hits ")+c.name+" for "+dmg+(low?". It goes for the weakest. Heal them!":""));
+  for(const c of targets){const ci=this.p.indexOf(c),low=dive&&c.hp<maxHp(c,this.d.hp)*DIVE_LOW;let dmg=m.mech==="iron"?golemBlow(c,(mk?GOLEM_SMASH:pulse?GOLEM_SWEEP:GOLEM_HIT)*m.atk/BOSS.atk,grage,this.r()):hit(m.atk*mul*(low?DIVE:1),defense(c)*(1-(m.pierce||0)),this.r());if(this.guard.has(ci))dmg=Math.max(1,Math.round(dmg/2));c.hp=Math.max(0,c.hp-dmg);this.motionHits.push({i:this.m.indexOf(m),hero:ci,pulse,dmg});out.push(m.n+(charge?" charges into ":blast?(m.mech==="gaze"?" stares down ":" breathes fire on "):pulse?" sweeps ":mk?" smashes ":dive?" dives at ":" hits ")+c.name+" for "+dmg+(low?". It goes for the weakest. Heal them!":""));
    if(m.mech==="venom"&&c.hp>0){(this.venom=this.venom||{})[ci]={t:VENOM_ROUNDS};out.push(c.name+" is stung by venom!");}
    if(m.mech==="burn"&&c.hp>0){(this.venom=this.venom||{})[ci]={t:BURN_ROUNDS,k:"burn"};out.push(c.name+" catches fire!");}}
   if(m.boss&&this.turn%3===1)out.push("The Golem raises both fists. A sweeping blow is coming — Defend!");
@@ -632,6 +642,6 @@ function companionFor(tIdx,party,plan){const nx=(plan||COMPANIONS)[party.length-
 function makeCompanion(def,lvl){const c=newChar(def.name,def.race,def.cls,def.alloc,def.skill);c.stats.con=Math.max(c.stats.con,c.stats.sta);/* t2360u: free CON = STA keeps companion HP/DEF as before */while(c.lvl<lvl){c.lvl++;}c.hp=maxHp(c,1);c.mp=maxMp(c);c.companion=true;c.role=def.role;
  const kit={rogue:["dagger","leather"],mage:["staff","robe"],warrior:["sword","cap"],archer:["bow","leather"]}[def.cls];kit.forEach(id=>{c.bag.push(id);if(canEquip(c,id,ITEMS[id].slot))equip(c,id,ITEMS[id].slot);});return c;}
 const RPG={poisonOf,useEffect,clampPoints,migrateStats,conOf,critChance,CRIT_MUL,CAP,START_POINTS,cost,spendCost,CLASSES,RACES,allowed,armorCap,SKILLS,skillSlots,pointsEarned,xpNeed,newChar,raise,lower,maxHp,maxMp,power,magicPower,defense,carryLimit,bagWeight,canCarry,gainXp,learn,
- ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,MECH,ARMOR,MECH_TEXT,DIVE,DIVE_LOW,REFLECT_KEEP,REFLECT_BACK,ENRAGE_AT,ENRAGE,GUARD,guarded,enraged,monTag,GAZE,BREATH,REGROW,BURN_PCT,BURN_ROUNDS,GOLEM_FOCUS,GOLEM_RAGE_AT,GOLEM_RAGE,guardText,golemRage,ZONE_TOUGH,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
+ ITEMS,CHEST_GEAR,CHEST_JEWELS,treasure,SLOTS,canEquip,equip,unequip,MONSTERS,MECH,ARMOR,MECH_TEXT,DIVE,DIVE_LOW,REFLECT_KEEP,REFLECT_BACK,ENRAGE_AT,ENRAGE,GUARD,guarded,enraged,monTag,GAZE,BREATH,REGROW,BURN_PCT,BURN_ROUNDS,GOLEM_FOCUS,GOLEM_RAGE_AT,GOLEM_RAGE,GOLEM_CHIP,GOLEM_HIT,GOLEM_SWEEP,GOLEM_SMASH,golemChip,golemBlow,guardText,golemRage,ZONE_TOUGH,ZONE_MUL,ZONE_MINLVL,ZONE_MAXLVL,ROLES,BOSS,makeBoss,DIFF,partyLevel,overlevelExpMul,centreFactor,monsterLevel,makeMonster,rng,encounter,roomEncounter,loot,hit,Fight,simulate,isSavePoint,COMPANIONS,companionFor,makeCompanion,planParty,companionRace,START_KIT};
 if(typeof module!=="undefined"&&module.exports)module.exports=RPG;else root.RPG=RPG;
 })(typeof window!=="undefined"?window:this);
