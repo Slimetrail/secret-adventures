@@ -32,16 +32,32 @@ function roomsNow(){const s=[],c=[];for(let i=0;i<C.solvedR.length;i++){if(C.sol
 function placeName(x,y){const t=tavIdx(x,y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
 // make a save. Only allowed at a camp or tavern (or once, at the very start when the hero is made).
 let tentUndo=null;
-function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>3)return false;tentUndo=null;const p=S.state();if(!start&&!R.isSavePoint(M,p.x,p.y)&&tavIdx(p.x,p.y)<0)return false;/* t2528u: both cells in front of a seam archway save as that tavern */
- if(!start&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!same&&!hasTent())return false;/* t2356u: re-saving where the tent is already pitched uses no tent */if(!same){tentUndo={wear:live.tentWear,bags:live.party.map(c=>c.bag.slice())};live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
+function doSave(start,slot=activeSlot){if(!Number.isInteger(slot)||slot<0||slot>3)return false;tentUndo=null;const p=S.state(),endOk=!start&&endSaveMode&&endSaveDue();/* t2721u fix1: the end-of-game save */if(!start&&!endOk&&!R.isSavePoint(M,p.x,p.y)&&tavIdx(p.x,p.y)<0)return false;/* t2528u: both cells in front of a seam archway save as that tavern */
+ if(!start&&!endOk&&tavIdx(p.x,p.y)<0){s5init();const same=save&&save.at&&save.at.x===p.x&&save.at.y===p.y;if(!same&&!hasTent())return false;/* t2356u: re-saving where the tent is already pitched uses no tent */if(!same){tentUndo={wear:live.tentWear,bags:live.party.map(c=>c.bag.slice())};live.tentWear++;if(live.tentWear>=E.TENT.nights){takeOne("tent");live.tentWear=0;}}}
  // Camp scene gates observe arrival injuries; seen flags enter this save. Saving never rests.
- if(!start&&tavIdx(p.x,p.y)<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));
- syncMazeSlots();live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];live.hpv=1;/* t2442u: save made with exact-HP loading */const next=clone(live);
+ if(!start&&!endOk&&tavIdx(p.x,p.y)<0)h6("camp",M.camps.findIndex(c=>c[0]===p.x&&c[1]===p.y));
+ syncMazeSlots();live.at={x:p.x,y:p.y,f:p.f,name:start?"the start":endOk?"the centre door":placeName(p.x,p.y)};live.rooms=roomsNow();if(S.mazeSnap)live.maze=S.mazeSnap();if(!Array.isArray(live.beasts))live.beasts=[];live.hpv=1;/* t2442u: save made with exact-HP loading */const next=clone(live);
  try{localStorage.setItem(SLOT+slot,JSON.stringify(next));localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(next));}catch(e){/* t2451u all-or-nothing: a failed write uses no tent */if(tentUndo){live.tentWear=tentUndo.wear;live.party.forEach((c,j)=>{if(tentUndo.bags[j])c.bag=tentUndo.bags[j];});}tentUndo=null;toast("Could not save. Storage may be full.");return false;}
  tentUndo=null;activeSlot=slot;save=next;return true;}
 function loadSlot(slot){const o=saveSlots()[slot];if(!o)return false;
  try{localStorage.setItem(ACTIVE,String(slot));localStorage.setItem(SAVE,JSON.stringify(o));}catch(e){toast("Could not load save.");return false;}
  activeSlot=slot;save=clone(o);closeUI();restore();if(S.armMazeQuiet)S.armMazeQuiet();return true;}
+/* t2721u fix1 (QA on 07111bc): the Golem win and the ending were only in the live game, so a reload lost them. After the ending's
+   credits close ("Back to the maze") the normal save picker opens once; this end-of-game save is allowed at the centre door and uses
+   no tent (it is not a camp). Declining keeps playing; the centre door replays the ending and offers the save again. Camps still never
+   auto-save (t2446u). */
+let endSaveMode=false,endSeen=false;
+function endSaveDue(){const s=live&&live.story;if(!s||s.golemDefeated!==true||!s.ending)return false;const v=save&&save.story;return !(v&&v.golemDefeated===true&&v.ending===s.ending);}
+function offerEndSave(){if(ui!==null||!endSaveDue()||(S.storyOpen&&S.storyOpen()))return false;endSaveMode=true;
+ savePicker("save",()=>{endSaveMode=false;closeUI();toast("Game saved. Your win and your ending are kept.");},()=>{endSaveMode=false;closeUI();toast("Not saved. Tap ‹ Centre door to see the ending again and save it.");});return true;}
+/* t2721u fix1: solved final locks are kept in the last save when the door opens, so a lost Golem fight or a reload does not ask for
+   all three locks again (same in-place save patch as ensureVseed). Nothing else in the save changes. */
+function keepFinalLocks(){const ls=live&&live.story;if(!save||!ls)return;const k=["finalLock","finalLock2","finalLock3"].filter(x=>ls[x]===true);if(!k.length)return;
+ if(!save.story||typeof save.story!=="object")save.story={v:1};k.forEach(x=>{save.story[x]=true;});
+ try{localStorage.setItem(SLOT+activeSlot,JSON.stringify(save));if(Number(localStorage.getItem(ACTIVE)||0)===activeSlot)localStorage.setItem(SAVE,JSON.stringify(save));}catch(e){}}
+/* t2721u fix1: a seam save on the far side of a tavern (Tavern 4's Zone 5 exit at 46,48) is named by where the party really stands */
+function spotName(at){if(!at)return "?";const t=tavIdx(at.x,at.y),c=t>=0?M.taverns[t]:null;
+ if(c&&!(c[0]===at.x&&c[1]===at.y)){const z=+M.zone[at.y*N+at.x],zt=+M.zone[c[1]*N+c[0]];if(z&&zt&&z!==zt)return "the Zone "+z+" side of Tavern "+(t+1);}return at.name||placeName(at.x,at.y);}
 function savePicker(mode,done,cancel,before){const w=page("save-picker");w.appendChild(head(mode==="load"?"Load a save":"Choose a save slot",cancel||closeUI));
  const slots=saveSlots();slots.forEach((o,i)=>{const b=tapBtn("Slot "+(i+1)+" · "+(o?(o.party[0].name+" · "+(o.at.name||placeName(o.at.x,o.at.y))):"Empty"),()=>{
   if(mode==="load"){if(loadSlot(i)&&done)done();}else{/* t2451u: camp Save refills only when a slot is really written */const undo=before?before():null;if(doSave(false,i)){if(done)done();}else if(undo)undo();}},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
@@ -481,8 +497,8 @@ function endFight(){const aftermath=live.party.map(c=>({hp:c.hp,maxHp:R.maxHp(c,
   const jn=rw.junk.concat(E.drops(F.m[0].zone,(live.seed^fightNo*131)>>>0)).map(id=>{const who=addLoot(id);return {id,t:R.ITEMS[id].n+(who?"":" (no room, left behind)")};});
   mn.appendChild(el("div","s4win","Victory!"));const bossWon=F.m.some(m=>m.boss);const b=tapBtn("Continue",()=>{F=null;closeUI();if(bossWon)h6("bossWon");else h6("fightContinue",aftermath);},"s4go small");b.id="fdone";mn.appendChild(b);
   {const nt=el("div","s4note","+"+rw.xp+" XP   +"+rw.gold+" gold"+(jn.length?"   Found: ":""));/* t2476u: each found item with its icon; same text as before */jn.forEach((x,k)=>{const sp=el("span","s4loot",x.t+(k<jn.length-1?", ":""));sp.dataset.loot=x.id;withIc(sp,x.id);nt.appendChild(sp);});mn.appendChild(nt);}if(ups.length){mn.appendChild(el("div","s4note glowt",ups.join(". ")));lvlPopup(ups);}tickBuffs();ov.dataset.result="win";}
- else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+(save.at.name||"?")+". Everything since then is lost."));
-  const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+save.at.name);},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
+ else if(how==="lose"){mn.appendChild(el("div","s4lose","Everyone is knocked out"));mn.appendChild(el("div","s4note","You wake at your last save: "+spotName(save.at)+". Everything since then is lost."));
+  const b=tapBtn("Return to last save",()=>{F=null;closeUI();restore();toast("Back at "+spotName(save.at));},"s4go small");b.id="fdone";mn.appendChild(b);ov.dataset.result="lose";}
  else{wakeKO();const b=tapBtn("Continue",()=>{F=null;closeUI();},"s4go small");b.id="fdone";mn.appendChild(el("div","s4note","You got away."));mn.appendChild(b);tickBuffs();ov.dataset.result="ran";}
  drawParty();h6("fightEnd",how);}
 // ---- fight drawing t1962u: side view, original pixel sprites (art6/fight), big foes left, small party right, maze backdrops in zone colour (t1963u/t1964u) ----
@@ -970,10 +986,19 @@ html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-b
 @keyframes s5hlp{from{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px rgba(255,224,138,.5)}to{box-shadow:0 0 0 4px #ffe08a,0 0 22px 8px rgba(255,224,138,.9)}}
 #s4.save-picker{z-index:70}
 #s4.save-picker button[data-save-slot]{min-height:64px}
+/* t2721u fix1: final locks. The letter ends above the dialogue box (--s6top); on a tall phone the speaker portrait steps aside while a
+   lock is open; on a wide screen the letter sits left and the talk with the lock sits right. The lock's arrow buttons keep their size. */
+#s6d:has(.s7lock) .s6wall{max-width:88vw;max-height:calc(var(--s6top,50vh) - 18px - env(safe-area-inset-top))}
+#s6d .s7lock{align-items:flex-start}
+@media(max-aspect-ratio:1/1){#s6d:has(.s7lock) .s6pf{display:none}}
+@media(min-aspect-ratio:1/1){#s6d:has(.s7lock) .s6box{left:calc(50% + 8px);right:12px}#s6d:has(.s7lock) .s6wall{left:25%;max-width:calc(50vw - 28px);max-height:calc(100vh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
 @media(max-width:480px){.s5shop .s4head{font-size:14px}.s5camp>.s4note{margin-right:166px}.s5hubnav{gap:6px}}
 `;document.head.appendChild(sceneCSS);
+/* t2721u fix1: watch for the ending's credits, then offer the end-of-game save once the story box closes */
+if(typeof MutationObserver==="function"&&document.body){new MutationObserver(ms=>{for(const m of ms)if(m.target&&m.target.dataset&&m.target.dataset.endScreen==="credits")endSeen=true;}).observe(document.body,{subtree:true,attributes:true,attributeFilter:["data-end-screen"]});
+ new MutationObserver(()=>{if(endSeen&&!document.documentElement.classList.contains("s6open")){endSeen=false;setTimeout(offerEndSave,0);}}).observe(document.documentElement,{attributes:true,attributeFilter:["class"]});}
 // test and debug hooks (no network, no secrets)
-S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>{keepFinalLocks();return startFight([R.makeBoss(live.diff)],"boss");},live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,spotName,offerEndSave,endSaveDue,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  gear:GEAR_API,itemInfo:{quick:itemQuick,desc:itemDesc,compare:equipCompare,openCompare:cmpPanel,closeCompare:closeCmp},setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=heroArt(c),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};

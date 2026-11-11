@@ -74,8 +74,8 @@ test("sick-dad intro and the 3 endings are unchanged from live "+BASE.slice(0,7)
  for(const f of ["game.js","party.js"]){const old=cp.execFileSync("git",["show",BASE+":"+f],{cwd:root}).toString(),n=(t)=>(t.match(/Please wait for update to continue\./g)||[]).length;a.ok(n(old)>0);a.equal(n(read(f)),n(old),"wait text "+f);}
 });
 test("pins: VER 102, new and changed files pinned in index.html and sw.js",()=>{
- const h=read("index.html"),s=read("sw.js");a.match(s,/^const VER="103",/);
- for(const p of ["party.js?v=40","batch1-talks.js?v=6","package-dialogue.js?v=6","package-rooms.js?v=5","zone4-banter.js?v=2","dialogue-variants.js?v=1","variety.js?v=1"]){a.ok(h.includes(p),"html "+p);a.ok(s.includes('"'+p+'"'),"sw "+p);}
+ const h=read("index.html"),s=read("sw.js");a.match(s,/^const VER="104",/);
+ for(const p of ["party.js?v=41","batch1-talks.js?v=6","package-dialogue.js?v=6","package-rooms.js?v=5","zone4-banter.js?v=2","dialogue-variants.js?v=1","variety.js?v=1"]){a.ok(h.includes(p),"html "+p);a.ok(s.includes('"'+p+'"'),"sw "+p);}
  a.ok(h.indexOf("story.js?v=25")<h.indexOf("variety.js?v=1")&&h.indexOf("variety.js?v=1")<h.indexOf("batch1-talks.js"),"variety.js loads after story.js, before batch1");
  const v=read("dialogue-variants.js");a.ok(!v.includes("variants-source"),"variants-source.md must not be installed");
 });

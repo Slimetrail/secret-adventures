@@ -39,8 +39,8 @@ test("gaze/breath: warned on round 2, party-wide on round 3; Defend halves it",(
 });
 test("regrow: a Hydra heals each round unless a skill or spell hit it that round",()=>{
  const h=R.makeMonster(5,2,48,0,"normal"),p=P(),F=new R.Fight(p,[h],"normal",9);h.hp=Math.round(h.max*.5);
- F.act(0,"attack",null,0);const a1=h.hp;const o1=F.monstersTurn();a.ok(o1.some(t=>/grows a head back/.test(t)));a.equal(h.hp,Math.min(h.max,a1+Math.round(h.max*R.REGROW)));
- F.act(0,"skill",p[0].skills.find(id=>R.SKILLS.warrior.find(s=>s.id===id).k==="phys"),0);const a2=h.hp;const o2=F.monstersTurn();a.ok(!o2.some(t=>/grows a head back/.test(t)));a.equal(h.hp,a2);
+ F.act(0,"attack",null,0);const a1=h.hp;const o1=F.monstersTurn();a.ok(o1.some(t=>/grows back a head/.test(t)));a.equal(h.hp,Math.min(h.max,a1+Math.round(h.max*R.REGROW)));
+ F.act(0,"skill",p[0].skills.find(id=>R.SKILLS.warrior.find(s=>s.id===id).k==="phys"),0);const a2=h.hp;const o2=F.monstersTurn();a.ok(!o2.some(t=>/grows back a head/.test(t)));a.equal(h.hp,a2);
 });
 test("hide: plain Attack does half on a Chimera and says so; skills are full",()=>{
  const c=R.makeMonster(5,4,48,0,"normal"),p=P(),F=new R.Fight(p,[c],"normal",3);const t=F.act(0,"attack",null,0);a.match(t,/thick hide/);
@@ -79,9 +79,9 @@ test("attack-only never beats the Golem; the boss door locks and endings are wir
  a.ok(st.includes("S.rpg.startBoss()"));a.ok(st.includes("H.bossWon=()=>{const s=st();if(s)s.golemDefeated=true;showEnding();}"));
  a.ok(read("party.js").includes('if(bossWon)h6("bossWon")'));
 });
-test("content cap is zones 1-5 and pins advance together (VER 103)",()=>{
+test("content cap is zones 1-5 and pins advance together (VER 104)",()=>{
  const c={window:{}};vm.runInNewContext(read("content-cap.js"),c);a.equal(c.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,5);
- const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="103",/);
- for(const p of ["content-cap.js?v=8","rules.js?v=24","party.js?v=40","game.js?v=25","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
+ const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="104",/);
+ for(const p of ["content-cap.js?v=8","rules.js?v=25","party.js?v=41","game.js?v=25","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
  a.ok(read("party.js").includes('const WAIT_UPDATE="Please wait for update to continue.";'));
 });

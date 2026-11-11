@@ -128,11 +128,11 @@ test('Beasts: a fought zone 4 beast is recorded on the save, listed with its pen
  h.click(jb.querySelector('[data-beast=z4-manticore]'));const d=h.document.getElementById('ijour').querySelector('[data-beast-detail=z4-manticore]');a.ok(d,'no detail');const every=n=>[n].concat(...(n.children||[]).map(every));a.ok(every(d).some(e=>/barbs that land ugly/.test(e.textContent||'')),'zone 4 note missing');a.ok(every(d).some(e=>e.tagName==='IMG'&&/z4-manticore\.webp/.test(e.src)),'sketch missing in detail');
  L.beasts=Z4.map(z=>z[1]);i.openJournal('inventory');i.openJournal('beasts');a.deepEqual(h.document.getElementById('ijour').querySelectorAll('[data-beast]').map(f=>f.dataset.beast),Z4.map(z=>z[1]));});
 test('offline: both manifests and the precache list each zone 4 sketch once; pins VER 88 (zone 4 content pass on the VER 87 port of live 9f392ea), content-cap v7, rules v23, party v35, intro v21, intro-art-data v6',()=>{
- const sw=read('sw.js'),art=read('intro-art-data.js'),html=read('index.html');a.match(sw,/^const VER="103",/);
+ const sw=read('sw.js'),art=read('intro-art-data.js'),html=read('index.html');a.match(sw,/^const VER="104",/);
  const c={window:{},self:{addEventListener(){}}};vm.runInNewContext(art,c);vm.runInNewContext(sw+';this.shell=SHELL;',c);
  for(const [,f] of Z4){a.equal(c.window.INTRO_ART.filter(p=>p==='journal/monsters/'+f+'.webp').length,1,f);a.equal(c.shell.filter(p=>p==='art-intro/journal/monsters/'+f+'.webp').length,1,f);}
  a.equal(new Set(c.shell).size,c.shell.length,'SHELL has duplicates');
- for(const p of ['content-cap.js?v=8','rules.js?v=24','party.js?v=40','intro.js?v=21','intro-art-data.js?v=6','econ.js?v=17','splash.js?v=1','story.js?v=25','music.js?v=20'])for(const s of [html,sw])a.ok(s.includes(p),p);
+ for(const p of ['content-cap.js?v=8','rules.js?v=25','party.js?v=41','intro.js?v=21','intro-art-data.js?v=6','econ.js?v=17','splash.js?v=1','story.js?v=25','music.js?v=20'])for(const s of [html,sw])a.ok(s.includes(p),p);
  for(const old of ['content-cap.js?v=6"','rules.js?v=21"','party.js?v=30"','intro.js?v=17"','intro-art-data.js?v=5"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);
  for(const m of html.matchAll(/<script src="([^"]+\?v=\d+)"/g))a.ok(c.shell.includes(m[1]),m[1]);});
 test('save keys unchanged: party slots, legacy party key and maze save are the same names',()=>{const p=read('party.js'),g=read('game.js');

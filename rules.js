@@ -601,9 +601,9 @@ Fight.prototype.monstersTurn=function(){this.motionHits=[];if(this.over)return [
   if(m.mech==="charge"&&this.turn%3===1)out.push("The "+m.n+" lowers its horns. A charge is coming — Defend!");
   if(m.mech==="gaze"&&this.turn%3===1)out.push("The "+m.n+"'s eyes start to glow. A stare is coming — Defend!");
   if(m.mech==="breath"&&this.turn%3===1)out.push("The "+m.n+" breathes in. Fire is coming — Defend!");
-  if(m.boss&&this.turn%3===2){const al=this.alive(this.p);if(al.length){const w=al.slice().sort((a,b)=>defense(a)-defense(b)||this.p.indexOf(a)-this.p.indexOf(b))[0];this.mark=this.p.indexOf(w);out.push("The Golem's eye locks on "+w.name+". It will smash "+w.name+" next — "+w.name+" should Defend!");}}}
+  if(m.boss&&this.turn%3===2){const al=this.alive(this.p);if(al.length){const w=al.slice().sort((a,b)=>defense(a)-defense(b)||this.p.indexOf(a)-this.p.indexOf(b))[0];this.mark=this.p.indexOf(w);out.push("The Golem's eye locks on "+w.name+". Defend!");}}}
  // t2721u: a Hydra that no skill or spell hit this round grows back
- for(const m of this.alive(this.m)){if(m.mech!=="regrow")continue;if(!m.cut&&m.hp<m.max){const h=Math.min(m.max-m.hp,Math.round(m.max*REGROW));m.hp+=h;out.push("The "+m.n+" grows a head back (+"+h+"). Hit it with a skill!");}m.cut=0;}
+ for(const m of this.alive(this.m)){if(m.mech!=="regrow")continue;if(!m.cut&&m.hp<m.max){const h=Math.min(m.max-m.hp,Math.round(m.max*REGROW));m.hp+=h;out.push("The "+m.n+" grows back a head (+"+h+"). Hit it with a skill!");}m.cut=0;}
  this.guard.clear();this.turn++;this.log.push(...out);this.check();return out;};
 Fight.prototype.check=function(){if(this.over)return;if(!this.alive(this.m).length)this.over="win";else if(!this.alive(this.p).length)this.over="lose";};
 // Jeremy t2219u: zone bands cap combat scaling; XP shrinks only past the zone's ten-level mark.
