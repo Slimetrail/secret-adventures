@@ -13,6 +13,10 @@ function tapBtn(label,fn,cls){const b=el("button","ink s4b"+(cls?" "+cls:""),lab
 // ---------- state ----------
 // live: what you have now. save: the active slot snapshot used for death restore.
 let save=null,live=null,ui=null,stepsSince=99,fightNo=0,roll=null;
+// t2670u/t2675u: per-save dialogue value (separate from the combat seed). New game = fresh value; old saves get one once on load, then saved.
+function freshVseed(){try{const a=new Uint32Array(1);(window.crypto||{}).getRandomValues(a);if(a[0])return a[0];}catch(e){}return ((Math.random()*4294967295)>>>0)||1;}
+function ensureVseed(){if(!live||(live.vseed>>>0))return false;live.vseed=freshVseed();if(!live.vpools||typeof live.vpools!=="object")live.vpools={};if(!live.vpick||typeof live.vpick!=="object")live.vpick={};
+ if(save&&!(save.vseed>>>0)){save.vseed=live.vseed;save.vpools=save.vpools||{};save.vpick=save.vpick||{};try{localStorage.setItem(SLOT+activeSlot,JSON.stringify(save));if(Number(localStorage.getItem(ACTIVE)||0)===activeSlot)localStorage.setItem(SAVE,JSON.stringify(save));}catch(e){}}return true;}
 function validSave(o){try{return o&&o.v===1&&Array.isArray(o.party)&&o.party.length>=1&&o.party.length<=4&&o.party.every(c=>R.allowed(c.race,c.cls)&&c.lvl>=1&&c.lvl<=R.CAP)&&R.DIFF[o.diff]&&o.at&&o.at.x>=0&&o.at.x<N&&o.at.y>=0&&o.at.y<N&&o.rooms&&Array.isArray(o.rooms.s)&&Array.isArray(o.rooms.c);}catch(e){return false;}}
 // Four independent saves; active points at the last written/loaded slot. SAVE mirrors it for older builds.
 const SLOT=SAVE+".slot",ACTIVE=SAVE+".active";
@@ -22,7 +26,7 @@ function saveSlots(){const slots=Array.from({length:4},(_,i)=>readSave(SLOT+i));
  if(!slots.some(Boolean)){const old=readSave(SAVE);if(old){slots[0]=old;try{localStorage.setItem(SLOT+0,JSON.stringify(old));}catch(e){}}}return slots;}
 {const slots=saveSlots();let i=0;try{i=Number(localStorage.getItem(ACTIVE)||0);}catch(e){}
  activeSlot=Number.isInteger(i)&&i>=0&&i<4&&slots[i]?i:Math.max(0,slots.findIndex(Boolean));
- if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */wakeLoaded();migrateSaltsBoxes(live);}}
+ if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */wakeLoaded();migrateSaltsBoxes(live);ensureVseed();}}
 function hpMul(){return R.DIFF[live.diff].hp;}
 function roomsNow(){const s=[],c=[];for(let i=0;i<C.solvedR.length;i++){if(C.solvedR[i])s.push(i);if(C.clearedR[i])c.push(i);}return {s,c};}
 function placeName(x,y){const t=tavIdx(x,y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
@@ -43,7 +47,7 @@ function savePicker(mode,done,cancel,before){const w=page("save-picker");w.appen
   if(mode==="load"){if(loadSlot(i)&&done)done();}else{/* t2451u: camp Save refills only when a slot is really written */const undo=before?before():null;if(doSave(false,i)){if(done)done();}else if(undo)undo();}},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
 
 // death: everything goes back to the last save
-function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */wakeLoaded();if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
+function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */wakeLoaded();ensureVseed();if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
  if(S.applyMaze)S.applyMaze(save.maze||{x:save.at.x,y:save.at.y,f:save.at.f});else S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
 // t2404u: while the craft pop-up is open, the toast ("You made ...!") goes where it covers neither the "Tap a box" hints
 // (the pop-up's own hint and the camp lesson box) nor the pop-up's buttons: above the pop-up, else just under it, else at the bottom.
@@ -199,7 +203,7 @@ function ccConfirm(){const nmEl=$("ccname");if(nmEl)cc.name=nmEl.value;if(!cc.na
  if(left>0&&!cc.warned){cc.warned=true;cc.err="You still have "+left+" stat point"+(left>1?"s":"")+" left. Spend them, or tap Confirm anyway.";creation();return;}
  const h=R.newChar(cc.name.trim(),cc.race,cc.cls,cc.add,cc.skill);
  const kit={warrior:["sword","leather"],rogue:["dagger","leather"],archer:["bow","leather"],mage:["staff","robe"]}[cc.cls];kit.forEach(id=>{if(id==="leather"&&!R.canEquip(h,id,"chest"))id="robe";h.bag.push(id);R.equip(h,id,R.ITEMS[id].slot);});h.bag.push("potion","potion","potion","ether","ether");/* t2372s8806: kit is exactly 3 Healing + 2 Mana (ether) + 3 hide + 3 silk */h.bag.push("p_hide","p_hide","p_hide","p_silk","p_silk","p_silk");/* t2356u: tent parts for the first-camp craft lesson */
- live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0,steps:0,fresh:{},recipes:{},tentWear:0,beasts:[]};live.party[0].hp=R.maxHp(h,hpMul());if(S.resetRun)S.resetRun();doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");h6("created");}
+ live={v:1,party:[h],gold:20,diff:cc.diff,seed:(Math.random()*1e9)|0,vseed:freshVseed(),vpools:{},vpick:{},steps:0,fresh:{},recipes:{},tentWear:0,beasts:[]};live.party[0].hp=R.maxHp(h,hpMul());if(S.resetRun)S.resetRun();doSave(true);cc.warned=false;cc.err="";closeUI();toast("Welcome, "+h.name+"! Your hero is in the party. Game saved.");h6("created");}
 // ---- party screen: portrait + panel cards; tap anywhere on a card for the character sheet ----
 function gearText(c){const n=s=>c.equip[s]&&R.ITEMS[c.equip[s]].n;const a=[n("weapon"),n("offhand")].filter(Boolean),b=[n("helmet"),n("chest"),n("gloves"),n("boots"),n("acc1"),n("acc2")].filter(Boolean);return [a.join(", ")||"No weapon",b.join(", ")||"No armor"];}
 function partyScreen(){const w=page("party");w.appendChild(head("Party",closeUI));

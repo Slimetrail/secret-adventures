@@ -2,7 +2,7 @@
 Starts from a real zone 2 camp save (made in-game, then the page is reloaded and the save continued from the title), walks by taps
 to Tavern 2 (Sorrel joins), takes Tavern 2's Zone 3 exit (4-slot save picker), walks by taps into zone 3, fights zone 3 monsters by
 taps until wolf pelt + fowl drop, walks into a zone 3 camp (tent save), crafts the medium Hunter's stew at the camp's Craft button,
-reaches Tavern 3, shops (moonleaf), saves, checks the Zone 4 exit waits, crafts Moon elixir if a ghoul fang dropped, and loads the
+reaches Tavern 3, shops (moonleaf), saves, checks the Zone 4 tab crosses the 3-4 archway (or waits if the cap is still 3), crafts Moon elixir if a ghoul fang dropped, and loads the
 Tavern 3 save from the journal. Long trips between places use the teleport hook; the last steps into camps/taverns are taps.
 Screenshots: ../../game-export/t2370u-zone3/. Usage: python tests/t2370u_zone3_e2e_browser_test.py [base]"""
 import sys,os
@@ -165,11 +165,15 @@ def e2e(p):
     # the maze itself refuses zone 4 south of Tavern 3
     T.ev(pg,'SOTA.teleport(51,14,2)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[51,14],'walked into zone 4')
     T.check(T.ev(pg,'document.getElementById("s4toast").textContent')=='Please wait for update to continue.','no wait toast at the zone 4 edge');shot(pg,'15-zone4-edge-wait-toast.png')
-  else:  # t2419u: zone 4 is open, so Tavern 3's Zone 4 exit saves (the Tavern 4 Zone 5 wait is in t2419u_zone4_e2e_browser_test.py)
+  else:  # t2419u/t2667u: zone 4 is open; Tavern 3's Zone 4 tab saves and crosses the 3-4 archway (fwd no longer walks through)
     T.ttap(pg,'[data-hub="2"]');T.check(T.ui(pg)=='save-picker','Tavern 3 Zone 4 exit did not open the save picker');T.ttap(pg,'[data-save-slot="2"]');T.check(T.ui(pg) is None,'picker did not close')
-    T.ev(pg,'SOTA.teleport(51,14,2)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[51,15] and s['zone']==4,'could not walk into zone 4')
+    s=st(pg);T.check([s['x'],s['y']]==[51,15] and s['zone']==4,'Zone 4 tab did not land on the zone 4 side of the arch')
     T.check(T.ev(pg,'document.getElementById("s4toast").textContent')!='Please wait for update to continue.','wait toast entering zone 4');shot(pg,'14-tavern3-zone4-open.png')
     if T.ui(pg)=='fight':T.ev(pg,'SOTA.rpg.forceEnd("ran");SOTA.rpg.closeUI()')
+    # fwd at the arch bumps and stays; it does not walk through or toast (the wait moved to Tavern 4's Zone 5 tab)
+    T.ev(pg,'SOTA.rpg.closeUI()');T.ev(pg,'SOTA.teleport(51,14,2)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[51,14],'walked through the 3-4 archway')
+    T.check(T.ev(pg,'document.getElementById("s4toast").textContent')!='Please wait for update to continue.','wait toast on the open 3-4 arch');shot(pg,'15-zone4-arch-bump.png')
+    if T.ui(pg)=='tavern':T.ev(pg,'SOTA.rpg.closeUI()')
     T.ev(pg,'SOTA.teleport(51,14,0)');pg.wait_for_timeout(200)
   # ---- 9. Moon elixir at Camp 14 next to Tavern 3, if a ghoul fang dropped
   if bagn(pg,'p_fang'):
@@ -190,8 +194,12 @@ def e2e(p):
   # ---- 10. journal: Hunter's stew known; Beasts tab (zone 3 sketches since t2404u: found ones listed with art)
   T.ev(pg,'SOTA.rpg.closeUI();SOTA.intro.openJournal("recipes")');T.check(T.ev(pg,'!!document.querySelector("#ijour [data-craft=stew]")'),'stew not in journal');shot(pg,'17-journal-recipes-crafts.png')
   T.ev(pg,'SOTA.intro.openJournal("beasts")');bs=T.ev(pg,'[...document.querySelectorAll("#ijour [data-beast]")].map(f=>f.dataset.beast)');say('journal Beasts tab lists',bs);pg.wait_for_function('()=>[...document.querySelectorAll("#ijour [data-beast] img")].every(i=>i.complete&&i.naturalWidth>0)',timeout=8000);T.check(all(w>0 for _,w in T.ev(pg,'[...document.querySelectorAll("#ijour [data-beast]")].map(f=>[f.dataset.beast,(f.querySelector("img")||{}).naturalWidth||0])')),'z3 beasts listed without art')  # t2404u (in live 6de0e16) added zone 3 sketches; found ones are listed with their art;shot(pg,'18-journal-beasts-z3-sketches.png')
-  # ---- 11. step back into Tavern 3 (arrival auto-saves to the active slot), wander off unsaved, then load that save from the journal
-  T.ev(pg,'SOTA.intro.closeJournal()');step_into(pg,T.ev(pg,'MAZE.taverns[2]'));T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 3','Tavern 3 arrival did not save')
+  # ---- 11. bump the 3-4 arch at Tavern 3 (stepping onto the cell no longer auto-saves), wander off unsaved, then load that save from the journal
+  T.ev(pg,'SOTA.intro.closeJournal()');T.ev(pg,'(()=>{if(SOTA.rpg.closeUI)SOTA.rpg.closeUI();})()')
+  sm=T.ev(pg,'(SOTA.seams?SOTA.seams():[]).find(s=>s.t===2)');T.check(sm and sm.get('prev'),'no seam for tavern 3')
+  T.ev(pg,'s=>SOTA.teleport(s.x,s.y,s.toArch)',sm['prev']);pg.wait_for_timeout(150);T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(400)
+  if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()')
+  T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 3','Tavern 3 arch arrival did not save')
   want={k:bagn(pg,k) for k in ['c_stew','c_elixir','i_moonleaf','p_fang']};say('bag at the Tavern 3 save',want)
   T.ev(pg,'SOTA.rpg.closeUI();SOTA.teleport(19,23,0)');T.ev(pg,'SOTA.rpg.live().gold=1')
   T.ev(pg,'SOTA.intro.openJournal("settings")');T.ttap(pg,'[data-setting=load]');T.check(T.ui(pg)=='save-picker','no load picker');shot(pg,'19-load-picker.png')

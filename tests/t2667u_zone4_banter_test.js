@@ -53,6 +53,6 @@ test("validate rejects absent speakers, bad context, bad gate, bad PLACE, duplic
   {id:"g",context:"camp",speakers:["Q"],lines:[["N","calm","{S} t"]]}]);
  a.deepEqual(v.entries.map(e=>e.id),["e"]);a.equal(v.rejected.length,7);});
 test("index.html and sw.js: batch14 after batch13 and before package-dialogue; zone4-banter last; pins match",()=>{const h=read("index.html"),s=read("sw.js");
- for(const x of [h,s]){a.equal(x.split("batch14-talks.js?v=1").length-1,1);a.equal(x.split("zone4-banter.js?v=1").length-1,1);}
+ for(const x of [h,s]){a.equal(x.split("batch14-talks.js?v=1").length-1,1);a.equal(x.split("zone4-banter.js?v=2").length-1,1);}
  a.ok(h.indexOf("batch13-talks.js?v=")<h.indexOf("batch14-talks.js")&&h.indexOf("batch14-talks.js")<h.indexOf("package-dialogue.js?v="));
- const srcs=[...h.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);a.equal(srcs[srcs.length-1],"zone4-banter.js?v=1");a.match(s,/^const VER="101",/);});
+ const srcs=[...h.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);a.equal(srcs[srcs.length-1],"zone4-banter.js?v=2");a.match(s,/^const VER="102",/);});

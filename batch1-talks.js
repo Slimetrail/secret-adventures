@@ -380,10 +380,16 @@ function install(S,R,H){
   const eligible=entries.filter(({t,key,gate})=>t.context===context&&(repeat||!s.seen[key])&&t.speakers.every(c=>api.who(c))&&(!api.talkPresent||api.talkPresent(t.lines,[].concat(t.need||[])))&&
    (gate?gate(t,s,l,snapshot):(!t.gate||(t.gate==="cooked"?s.lastMeal==="cooked":t.gate==="hurt"?l.party.some(c=>c.hp<R.maxHp(c,R.DIFF[l.diff].hp)):
     t.gate==="close"?!!snapshot&&badlyHurt(snapshot):!!snapshot&&!badlyHurt(snapshot)))));
+  // t2670u/t2675u: with a per-save value the order is a per-save shuffle (root.Variety); same eligibility, conditional scenes still first.
+  const V=root.Variety;if(V&&V.active()&&eligible.length){const ok=new Set(eligible.map(e=>e.key)),all=entries.filter(e=>e.t.context===context);
+   const pre=!repeat&&eligible.some(e=>e.t.gate),list=pre?all.filter(e=>e.t.gate):all,vkey=(repeat?"seq-r:":pre?"seq-g:":"seq:")+context,ids=list.map(e=>e.key);
+   const k=V.peek(vkey,ids,i=>ok.has(i));const e=k&&entries.find(x=>x.key===k);if(e){lastPick={t:e.t,vkey,ids,key:k};return e.t;}}
   // Conditional scenes across ALL batches first, retaining batch/file order.
   const e=repeat?eligible[Math.floor(Math.random()*eligible.length)]:eligible.find(e=>e.t.gate)||eligible[0];return e?e.t:null;
  }
- function run(context,snapshot,opt,repeat){const t=select(context,snapshot,repeat);if(!t)return false;
+ let lastPick=null;
+ function run(context,snapshot,opt,repeat){lastPick=null;const t=select(context,snapshot,repeat);if(!t)return false;
+  if(lastPick&&lastPick.t===t&&root.Variety)root.Variety.commitId(lastPick.vkey,lastPick.ids,lastPick.key);
   api.st().seen[entries.find(e=>e.t===t).key]=1;const visual=root.DialogueArt;const options=context==="camp"?Object.assign({},opt,{bg:S.rpg.s5.campBg(t)}):opt||{bg:null};
   api.play(context,t.lines,context!=="camp"&&visual?visual.sceneOptions(t,options):options);return true;}
  const sequential={select,run,add:(talks,key,gate)=>talks.forEach(t=>entries.push({t,key:key(t.id),gate}))};

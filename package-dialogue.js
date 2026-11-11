@@ -14,7 +14,11 @@ function gate(row,ev={}){const s=state(),l=live(),c=row.condition;if(!s||!l||!pr
  if(c==='Fight start'||c.includes('Fight start +'))return ev.phase==='start';if(c==='Fight end'||c.includes('Fight end +'))return ev.phase==='end'&&row.id!=='30';if(c==='After fight'||c.includes('After fight +'))return ev.phase==='after';
  // Unobserved meal favoritism/bar tabs/high-count definitions are not invented.
  return false;}
-function pick(pool,ev){const s=state();if(!s)return null;const eligible=pools[pool].filter(r=>r.layer==='A'&&gate(r,ev));return eligible.find(r=>!s.seen['pool-'+pool+'-'+r.id])||eligible[Math.floor(Math.random()*eligible.length)];}
+function pick(pool,ev){const s=state();if(!s)return null;const eligible=pools[pool].filter(r=>r.layer==='A'&&gate(r,ev));
+ // t2670u/t2675u: per-save shuffled order (unseen first, then repeat cycles) instead of file order + Math.random. Same gates.
+ const V=root.Variety;if(V&&V.active()&&eligible.length){const all=pools[pool].filter(r=>r.layer==='A').map(r=>String(r.id)),ok=new Set(eligible.map(r=>String(r.id))),unseen=new Set(eligible.filter(r=>!s.seen['pool-'+pool+'-'+r.id]).map(r=>String(r.id)));
+  const id=unseen.size?V.walk('pool:'+pool,all,i=>unseen.has(i)):V.walk('pool-r:'+pool,all,i=>ok.has(i));const row=id!=null&&eligible.find(r=>String(r.id)===id);if(row)return row;}
+ return eligible.find(r=>!s.seen['pool-'+pool+'-'+r.id])||eligible[Math.floor(Math.random()*eligible.length)];}
 function sayRow(pool,row,opt){if(!row)return false;state().seen['pool-'+pool+'-'+row.id]=1;api.play(pool,[[code[row.speaker],'calm',row.text]],opt||{bg:null});return true;}
 function pool(pool,ev,opt){return sayRow(pool,pick(pool,ev),opt);}
 // Sequential fallback already calls oldCamp; replace that older unapproved fallback only when no sequential is eligible.
@@ -23,12 +27,12 @@ H.tavern=t=>{const s=state(),l=live();if(!s||!l)return;const key=t+':'+l.steps;i
  if(api.sequential.select('tavern'))return oldTavern(t);s.visit=key;s.shopN=0;pool('tavern',{t},{bg:S.rpg.s5.tavernBg(t)});};
 H.craft=(kind,t)=>{if(!['food','armor','ore','weapons'].includes(kind)||!Number.isInteger(t)||t<0)return;if(api.sequential.select('craft-wait'))return oldCraft(kind,t);return pool('tavern',{craft:true,t},{bg:S.rpg.s5.tavernBg(t)});};
 H.joined=(c,t)=>{const s=state();if(!s)return;if(t!==3)return oldJoined(c,t);if(!s.brunnJoin)s.brunnJoin=api.brunnJoinVersion();s.seen['join'+t]=1;
- const ids=s.brunnJoin==='save'?['82','84']:['83','85'];const lines=ids.map(id=>pools.tavern.find(r=>r.id===id)).filter(present).map(r=>[code[r.speaker],'calm',r.text]);api.play('join',lines,{bg:S.rpg.s5.tavernBg(3)});};
+ const ids=s.brunnJoin==='save'?['82','84']:['83','85'];let lines=ids.map(id=>pools.tavern.find(r=>r.id===id)).filter(present).map(r=>[code[r.speaker],'calm',r.text]);if(root.Variety&&root.Variety.variantFor){const v=root.Variety.variantFor('join-brunn-'+s.brunnJoin,lines);if(!v.base)lines=v.lines.filter(l=>l[0]==='H'||l[0]==='N'||api.who(l[0])).map(l=>[l[0],'calm',l[2]]);}api.play('join',lines,{bg:S.rpg.s5.tavernBg(3)});};
 // Fight-end overlays are silent; one post-victory slot is due every 5..10 wins, persisted in save.
 H.fightEnd=()=>{};
 H.fightContinue=snapshot=>{const s=state();if(!s)return false;if(!Number.isInteger(s.afterGap))s.afterGap=rand();s.afterCount=(s.afterCount|0)+1;if(s.afterCount<s.afterGap)return false;s.afterCount=0;const prev=s.afterGap;do{s.afterGap=rand();}while(s.afterGap===prev);
  if(api.sequential.run('after-fight',snapshot))return true;
- const unused=pools['post-combat'].filter(r=>gate(r,{phase:'after'})&&!s.seen['pool-post-combat-'+r.id]);if(unused.length)return sayRow('post-combat',unused[0]);
+ const unused=pools['post-combat'].filter(r=>gate(r,{phase:'after'})&&!s.seen['pool-post-combat-'+r.id]);if(unused.length){const V=root.Variety,r=V&&V.active()?pick('post-combat',{phase:'after'}):null;return sayRow('post-combat',r&&unused.includes(r)?r:unused[0]);}
  if(api.sequential.run('after-fight',snapshot,null,true))return true;return pool('post-combat',{phase:'after'});};
 // Start uses the checked short pool. The existing portrait overlay renderer reads D.fight.
 for(const c of ['Q','S','A'])for(const tone of ['fun','dark']){const rows=pools['post-combat'].filter(r=>code[r.speaker]===c&&r.condition.startsWith('Fight start'));if(rows.length)root.STORY.fight.start[c][tone]=rows.map(r=>r.text);}

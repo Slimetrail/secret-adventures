@@ -10,6 +10,6 @@ function lines(id,pc,s,rooms,who,brunnVer){const meta=rooms[id];if(!meta)return 
  let piece=num;
  if(z===5&&num==='08'&&s.walls[84]&&(!s.order||!s.order.includes(80)||s.order.indexOf(84)<s.order.indexOf(80))) piece+='p';
  if(z===5&&num==='09'&&s.walls[80]&&s.order&&s.order.indexOf(80)<(s.order.includes(84)?s.order.indexOf(84):Infinity)) piece+='p';
- const rows=root.PACKAGE_STORY.art,output=[];for(const suf of suffixes){const t=rows.find(t=>t.id===`AR${z}-${piece}-${suf}`);if(t&&t.lines.every(l=>l[0]==='H'||who(l[0])))output.push(...t.lines);}return output;}
+ const rows=root.PACKAGE_STORY.art,output=[];for(const suf of suffixes){const t=rows.find(t=>t.id===`AR${z}-${piece}-${suf}`);if(t&&t.lines.every(l=>l[0]==='H'||who(l[0])))output.push(...(root.Variety&&root.Variety.arPiece&&z<5?root.Variety.arPiece(t.id,t.lines,s,id):t.lines));/* t2675u: presence-talk variant (one pick per room; zone 5 stays static) */}return output;}
 root.PackageRooms={lines};if(typeof module!=='undefined')module.exports={lines};
 })(typeof window!=='undefined'?window:globalThis);

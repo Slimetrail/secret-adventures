@@ -38,10 +38,11 @@ function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext
  function el(id){if(!els.has(id))els.set(id,{textContent:"",style:{},classList:{add(){},remove(){}},addEventListener(){},getContext(){return {createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};}};}});return els.get(id);}
  Object.assign(c,{document:{getElementById:el,querySelectorAll:()=>[]},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},performance:{now:()=>1},requestAnimationFrame(){},setTimeout:()=>1,clearTimeout(){}});
  Object.assign(c.window,{TEX:{S:32},DOORTEX:{},innerWidth:400,innerHeight:300,addEventListener(){}});vm.runInContext(read('game.js'),c);c.SOTA=c.window.SOTA;return {s:c.window.SOTA,el,storage};}
-test('live walk: Tavern 3 south into zone 4 with no wait toast; Tavern 4 west refuses with the exact wait text and saves nothing',()=>{
- const e=engine(51,14,2);e.s.act('fwd');a.deepEqual(plain(e.s.state()),{x:51,y:15,f:2,zone:4});a.equal(e.el('s4toast').textContent,'');
+test('live walk: Tavern 3 south is the 3-4 archway (Zone 4 tab crosses, no wait toast); Tavern 4 west is the 4-5 archway (bump stays, no toast; wait is the Zone 5 tab)',()=>{
+ const e=engine(51,14,2);e.s.act('fwd');a.deepEqual(plain(e.s.state()),{x:51,y:14,f:2,zone:3});a.equal(e.el('s4toast').textContent,'');
+ a.ok(e.s.seamExit(2,4));a.deepEqual(plain(e.s.state()),{x:51,y:15,f:2,zone:4});a.equal(e.el('s4toast').textContent,'');
  const w=engine(47,48,3),before=w.storage.get('sota.stage1.save');w.s.act('fwd');a.deepEqual(plain(w.s.state()),{x:47,y:48,f:3,zone:4});
- a.equal(w.el('s4toast').textContent,'Please wait for update to continue.');a.equal(w.storage.get('sota.stage1.save'),before);});
+ a.equal(w.el('s4toast').textContent,'');a.equal(w.storage.get('sota.stage1.save'),before);a.ok(w.s.archAhead(47,48,3)>=0);});
 test('path check: Tavern 3 reaches Tavern 4 through zone 4 with every room/door cell as a wall; all zone 4 hallway cells, camps and door approaches reached',()=>{
  const rooms=new Set(M.rooms.map(r=>idx(r.c))),seen=new Set([idx(M.taverns[2])]),qq=[idx(M.taverns[2])];
  for(let k=0;k<qq.length;k++)for(const j of nb(qq[k]))if(!rooms.has(j)&&!seen.has(j)&&cap.isOpen(j%N,Math.floor(j/N))){seen.add(j);qq.push(j);}
@@ -127,11 +128,11 @@ test('Beasts: a fought zone 4 beast is recorded on the save, listed with its pen
  h.click(jb.querySelector('[data-beast=z4-manticore]'));const d=h.document.getElementById('ijour').querySelector('[data-beast-detail=z4-manticore]');a.ok(d,'no detail');const every=n=>[n].concat(...(n.children||[]).map(every));a.ok(every(d).some(e=>/barbs that land ugly/.test(e.textContent||'')),'zone 4 note missing');a.ok(every(d).some(e=>e.tagName==='IMG'&&/z4-manticore\.webp/.test(e.src)),'sketch missing in detail');
  L.beasts=Z4.map(z=>z[1]);i.openJournal('inventory');i.openJournal('beasts');a.deepEqual(h.document.getElementById('ijour').querySelectorAll('[data-beast]').map(f=>f.dataset.beast),Z4.map(z=>z[1]));});
 test('offline: both manifests and the precache list each zone 4 sketch once; pins VER 88 (zone 4 content pass on the VER 87 port of live 9f392ea), content-cap v7, rules v23, party v35, intro v21, intro-art-data v6',()=>{
- const sw=read('sw.js'),art=read('intro-art-data.js'),html=read('index.html');a.match(sw,/^const VER="101",/);
+ const sw=read('sw.js'),art=read('intro-art-data.js'),html=read('index.html');a.match(sw,/^const VER="102",/);
  const c={window:{},self:{addEventListener(){}}};vm.runInNewContext(art,c);vm.runInNewContext(sw+';this.shell=SHELL;',c);
  for(const [,f] of Z4){a.equal(c.window.INTRO_ART.filter(p=>p==='journal/monsters/'+f+'.webp').length,1,f);a.equal(c.shell.filter(p=>p==='art-intro/journal/monsters/'+f+'.webp').length,1,f);}
  a.equal(new Set(c.shell).size,c.shell.length,'SHELL has duplicates');
- for(const p of ['content-cap.js?v=7','rules.js?v=23','party.js?v=39','intro.js?v=21','intro-art-data.js?v=6','econ.js?v=17','splash.js?v=1','story.js?v=25','music.js?v=20'])for(const s of [html,sw])a.ok(s.includes(p),p);
+ for(const p of ['content-cap.js?v=7','rules.js?v=23','party.js?v=40','intro.js?v=21','intro-art-data.js?v=6','econ.js?v=17','splash.js?v=1','story.js?v=25','music.js?v=20'])for(const s of [html,sw])a.ok(s.includes(p),p);
  for(const old of ['content-cap.js?v=6"','rules.js?v=21"','party.js?v=30"','intro.js?v=17"','intro-art-data.js?v=5"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);
  for(const m of html.matchAll(/<script src="([^"]+\?v=\d+)"/g))a.ok(c.shell.includes(m[1]),m[1]);});
 test('save keys unchanged: party slots, legacy party key and maze save are the same names',()=>{const p=read('party.js'),g=read('game.js');

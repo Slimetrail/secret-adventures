@@ -3,7 +3,7 @@ A level 30 party (hero + Mira + Sorrel, points spent 2 main : 1 CON, all skill s
 Zone 4 exit (4-slot save picker), walks by taps into zone 4 and on to Camp 15 (tent save), fights zone 4 monsters by taps with a
 sensible player (heal when hurt, skills when MP allows, else Attack; lowest-HP target) until moonleaf drops, checks the zone 4
 mechanics show in the fight log, walks by taps from Camp 22 into Tavern 4 (Brunn joins), shops, saves, checks Tavern 4's Zone 5 exit
-and the maze edge both show exactly "Please wait for update to continue.", opens the Beasts tab (zone 4 pencil sketches + detail),
+shows exactly "Please wait for update to continue." and the 4-5 archway west of Tavern 4 bumps without that toast, opens the Beasts tab (zone 4 pencil sketches + detail),
 opens the map, then reloads and continues the Tavern 4 save from the title, then loses on purpose (Attack only at low HP)
 three times: two zone 4 packs and one walk fight, and checks the loss returns to the last save. Every page error and console
 error is kept with its stack trace (game-export/t2419u-zone4/page-errors.txt); a "reading 'update'" error is also written to update-error.txt. Long trips use the teleport hook; arrivals are taps.
@@ -26,7 +26,7 @@ def bag(pg):return T.ev(pg,'SOTA.rpg.live().party.flatMap(c=>c.bag)')
 def st(pg):return T.ev(pg,'SOTA.state()')
 def say(*a):s=' '.join(str(x) for x in a);print('  '+s,flush=True);log.append(s)
 PATH_JS='''t=>{const N=SOTA.N,C=SOTA.core,D=C.DIRS,s=SOTA.state(),start=s.y*N+s.x,goal=t[1]*N+t[0],prev=new Map([[start,-1]]),q=[start];
- for(let k=0;k<q.length;k++){const i=q[k];if(i===goal)break;const x=i%N,y=(i/N)|0;for(let d=0;d<4;d++){if(!SOTA.canMove(x,y,d))continue;const nx=x+D[d][0],ny=y+D[d][1],j=ny*N+nx;
+ for(let k=0;k<q.length;k++){const i=q[k];if(i===goal)break;const x=i%N,y=(i/N)|0;for(let d=0;d<4;d++){if(!SOTA.canMove(x,y,d))continue;if(SOTA.archAhead&&SOTA.archAhead(x,y,d)>=0)continue;const nx=x+D[d][0],ny=y+D[d][1],j=ny*N+nx;
   if(prev.has(j)||SOTA.roomAt(nx,ny)>=0||!SOTA.contentCap.isOpen(nx,ny))continue;prev.set(j,[i,d]);q.push(j);}}
  if(!prev.has(goal))return null;const out=[];for(let i=goal;i!==start;){const [p,d]=prev.get(i);out.push(d);i=p;}return out.reverse();}'''
 # the same simple sensible player as tests/t2370u_playtest_zone3.js, played by taps: heal a hurt ally, else the strongest skill
@@ -40,18 +40,32 @@ PLAN_JS='''()=>{const L=SOTA.rpg.live(),F=SOTA.rpg.fight(),i=SOTA.rpg.turn(),c=L
  if(dmg&&(c.cls==="mage"||c.mp>=dmg.mp*2))return {who:i,menu:dmg.k==="magic"?"spells":"skill",sk:dmg.id,tgt:dmg.all?null:tg};
  return {who:i,menu:"attack",sk:null,tgt:tg};}'''
 use={'skill':0,'heal':0,'attack':0};mech_lines=set()
+def ftap(pg,sel,tries=20):
+  """real touch tap for fight buttons; T.ttap first, then tap the box even if a canvas/log is on top"""
+  try:T.ttap(pg,sel,tries=6);return
+  except T.Fail:pass
+  for _ in range(tries):
+    T.noslide(pg)
+    loc=pg.locator(sel).first
+    if loc.count()==0:pg.wait_for_timeout(80);continue
+    b=loc.bounding_box()
+    if not b or b['width']<1 or b['height']<1:pg.wait_for_timeout(80);continue
+    x=min(max(b['x']+b['width']/2,1),389);y=min(max(b['y']+b['height']/2,1),843)
+    pg.touchscreen.tap(x,y);T.noslide(pg);return
+  raise T.Fail('could not reach '+sel+' by touch swiping')
 def fight_by_taps(pg,attack_only=False):
   for _ in range(200):
+    if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()');pg.wait_for_timeout(80)
     r=T.ev(pg,'document.getElementById("s4").dataset.result||""')
     if r:return r
     p=T.ev(pg,PLAN_JS)
     if p is None:pg.wait_for_timeout(200);continue
     if attack_only:p['menu']='attack'
-    T.ttap(pg,f'#fparty [data-hero="{p["who"]}"]')
-    if p['menu']=='attack':T.ttap(pg,'#s4br [data-cmd4=attack]');T.ttap(pg,f'#s4br [data-tgt="{p["tgt"]}"]');use['attack']+=1
+    ftap(pg,f'#fparty [data-hero="{p["who"]}"]')
+    if p['menu']=='attack':ftap(pg,'#s4br [data-cmd4=attack]');pg.wait_for_timeout(80);ftap(pg,f'#s4br [data-tgt="{p["tgt"]}"]');use['attack']+=1
     else:
-      T.ttap(pg,f'#s4br [data-cmd4={p["menu"]}]');T.ttap(pg,f'#s4br [data-sk={p["sk"]}]')
-      if p['tgt'] is not None:T.ttap(pg,f'#s4br [data-tgt="{p["tgt"]}"]')
+      ftap(pg,f'#s4br [data-cmd4={p["menu"]}]');ftap(pg,f'#s4br [data-sk={p["sk"]}]')
+      if p['tgt'] is not None:pg.wait_for_timeout(80);ftap(pg,f'#s4br [data-tgt="{p["tgt"]}"]')
       use['heal' if p['sk']=='mend' else 'skill']+=1
     pg.wait_for_timeout(250)
     for t in T.ev(pg,'SOTA.rpg.fight()?SOTA.rpg.fight().log.slice(-8):[]'):
@@ -78,7 +92,7 @@ def walk_to(pg,cell,maxsteps=600):
     T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(60)
   raise T.Fail(f'walk to {cell} took too long')
 def step_into(pg,cell):
-  T.ev(pg,'''c=>{SOTA.rpg.closeUI();const D=SOTA.core.DIRS;for(let d=0;d<4;d++){if(!SOTA.canMove(c[0],c[1],d))continue;const nx=c[0]+D[d][0],ny=c[1]+D[d][1];if(SOTA.roomAt(nx,ny)>=0||!SOTA.contentCap.isOpen(nx,ny))continue;SOTA.teleport(nx,ny,(d+2)%4);return;}}''',list(cell))
+  T.ev(pg,'''c=>{SOTA.rpg.closeUI();const D=SOTA.core.DIRS;for(let d=0;d<4;d++){if(!SOTA.canMove(c[0],c[1],d))continue;if(SOTA.archAhead&&SOTA.archAhead(c[0],c[1],d)>=0)continue;const nx=c[0]+D[d][0],ny=c[1]+D[d][1];if(SOTA.roomAt(nx,ny)>=0||!SOTA.contentCap.isOpen(nx,ny))continue;SOTA.teleport(nx,ny,(d+2)%4);return;}}''',list(cell))
   pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(500);s=st(pg);T.check([s['x'],s['y']]==list(cell),f'did not step into {cell}: {s}')
 SPEND_JS='''()=>{const M={warrior:"str",rogue:"sta",archer:"sta",mage:"man"};SOTA.rpg.live().party.forEach(c=>{let k=0;for(let g=0;g<400;g++){const st=(k++%3===2)?"con":M[c.cls];if(!RPG.raise(c,st)&&!RPG.raise(c,st==="con"?M[c.cls]:"con"))break;}
  while(c.skills.length<RPG.skillSlots(c.lvl)){const s=RPG.SKILLS[c.cls].find(x=>!c.skills.includes(x.id));if(!s)break;RPG.learn(c,s.id);}});}'''
@@ -88,12 +102,17 @@ def buy_tap(pg,id):
     pg.wait_for_timeout(400);T.ttap(pg,f'[data-buy={id}]');pg.wait_for_timeout(200)
     if bagn(pg,id)>n0:return T.ev(pg,'document.getElementById("s4toast").textContent')
   raise T.Fail('could not buy '+id)
-def rest(pg):T.ttap(pg,'#s5here');T.ttap(pg,'#s4 [data-tab=rest]');T.ttap(pg,'#s4 [data-tab=return]')
+def rest(pg):
+  if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()')
+  if T.ui(pg)!='camp':T.ttap(pg,'#s5here')
+  T.check(T.ui(pg)=='camp','rest: camp did not open')
+  T.ttap(pg,'#s4 [data-tab=rest]');T.ttap(pg,'#s4 [data-tab=return]')
+
 def e2e(p):
   b,c=T.ctx(p);pg=T.fresh(c);hook(pg)
   T.check(T.ui(pg)=='create','creation not open');T.full_create(pg,'Tess','human','warrior')
   T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==4,'cap is not zones 1-4')
-  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="101"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
+  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="102"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
   # ---- 1. a level 30 party at Tavern 3 (as after zone 3): hero + Mira + Sorrel, points spent, skills learned, kit, tents, gold
   T.ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];while(h.lvl<30)RPG.gainXp(h,RPG.xpNeed(h.lvl),1);
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,30));
@@ -112,7 +131,9 @@ def e2e(p):
   T.check(T.ev(pg,'document.getElementById("hud").textContent').startswith('Zone 4'),'HUD not zone 4');shot(pg,'02-zone4-first-hall.png')
   cell=T.ev(pg,'MAZE.camps[14]');t0=bagn(pg,'tent');walk_to(pg,cell)
   T.check(bagn(pg,'tent')==t0,'zone 4 camp arrival used a tent')
-  T.ttap(pg,'#s5here');T.check(T.ui(pg)=='camp','Camp 15 did not open')
+  if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()')
+  if T.ui(pg)!='camp':T.ttap(pg,'#s5here')
+  T.check(T.ui(pg)=='camp','Camp 15 did not open')
   T.ttap(pg,'[data-tab=save]');T.ttap(pg,'[data-tentyes]');T.check(T.ui(pg)=='save-picker','Camp 15 Save did not open the slot picker')
   slot=T.ev(pg,'SOTA.rpg.activeSlot()');T.ttap(pg,f'[data-save-slot="{slot}"]');pg.wait_for_timeout(150)
   T.check(bagn(pg,'tent')==t0-1,'zone 4 camp save did not use a tent')
@@ -123,6 +144,7 @@ def e2e(p):
   wins=loss=0;seen=set();hp=[];drops={}
   for i in range(40):
     if bagn(pg,'i_moonleaf')>=2 and wins>=4:break
+    if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()') or T.ui(pg) not in (None,'fight'):T.ev(pg,'SOTA.rpg.closeUI()')
     T.ev(pg,'(()=>{const L=SOTA.rpg.live(),p=SOTA.state();SOTA.rpg.startFight(RPG.encounter(p.zone,RPG.partyLevel(L.party),RPG.centreFactor(p.x,p.y,SOTA.N),L.diff,(L.seed+L.steps*7919+Date.now())>>>0,L.party))})()')
     T.check(T.ui(pg)=='fight','no fight');foes=T.ev(pg,'SOTA.rpg.fight().m.map(m=>m.n+" L"+m.lvl+" z"+m.zone+" "+m.mech)');T.check(all(' z4 ' in f for f in foes),f'not zone 4 foes {foes}');seen.update(f.split(' L')[0] for f in foes)
     if i==0:pg.wait_for_timeout(700);shot(pg,'03-zone4-fight.png')
@@ -141,27 +163,35 @@ def e2e(p):
   # (the random packs above use Date.now() seeds, so a short run can end before any mechanic line appears)
   T.ev(pg,'SOTA.rpg.startFight([RPG.makeMonster(4,0,32,0,"normal"),RPG.makeMonster(4,6,32,0,"normal")],"random")');pg.wait_for_timeout(700)
   fen=T.ev(pg,'document.getElementById("fen").textContent');T.check(fen=='Minotaur (shielded) · Giant scorpion (shields others)',f'status words {fen}')
-  who=T.ev(pg,'SOTA.rpg.turn()');T.ttap(pg,f'#fparty [data-hero="{who}"]');T.ttap(pg,'#s4br [data-cmd4=attack]')
-  tl=T.ev(pg,'[...document.querySelectorAll("#s4br [data-tgt]")].map(b=>b.textContent)');T.check(any('(shielded)' in t for t in tl),f'target list {tl}');T.ttap(pg,'#s4br [data-tgt="0"]');pg.wait_for_timeout(300)
+  who=T.ev(pg,'SOTA.rpg.turn()');ftap(pg,f'#fparty [data-hero="{who}"]');ftap(pg,'#s4br [data-cmd4=attack]');pg.wait_for_timeout(80)
+  tl=T.ev(pg,'[...document.querySelectorAll("#s4br [data-tgt]")].map(b=>b.textContent)');T.check(any('(shielded)' in t for t in tl),f'target list {tl}');ftap(pg,'#s4br [data-tgt="0"]');pg.wait_for_timeout(300)
   lg=T.ev(pg,'SOTA.rpg.fight().log.join(" | ")');T.check('shields it' in lg,'shielded hit not in the log: '+lg);mech_lines.add('shields it');shot(pg,'04b-zone4-shield-by-taps.png')
   T.ev(pg,'SOTA.rpg.forceEnd("ran")');T.ev(pg,'SOTA.rpg.closeUI()');pg.wait_for_timeout(300);say('VER 88 shield pack by taps:',fen,'|',lg[-120:])
   T.check(len(mech_lines)>=1,'no zone 4 mechanic showed in the fight log')
   # ---- 4. long trip by the teleport hook to Camp 22, then walk by taps into Tavern 4: Brunn joins
   T.ev(pg,'SOTA.rpg.closeUI()');step_into(pg,T.ev(pg,'MAZE.camps[21]'));rest(pg)
-  walk_to(pg,T.ev(pg,'MAZE.taverns[3]'));pg.wait_for_timeout(500);s=st(pg);T.check([s['x'],s['y']]==[47,48] and s['zone']==4,f'not at Tavern 4 {s}')
+  walk_to(pg,T.ev(pg,'MAZE.taverns[3]'));pg.wait_for_timeout(200)
+  # stepping onto [47,48] no longer runs arrival; bump the 4-5 arch (zone-4 / prev side) so Brunn joins and the tavern saves
+  T.ev(pg,'(()=>{if(SOTA.rpg.closeUI)SOTA.rpg.closeUI();})()')
+  sm=T.ev(pg,'(SOTA.seams?SOTA.seams():[]).find(s=>s.t===3)');T.check(sm and sm.get('prev'),'no seam for tavern 4')
+  T.ev(pg,'s=>SOTA.teleport(s.x,s.y,s.toArch)',sm['prev']);pg.wait_for_timeout(150);T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(400)
+  if T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()'):T.ev(pg,'SOTA.rpg.closeUI()')
+  s=st(pg);T.check([s['x'],s['y']]==[47,48] and s['zone']==4,f'not at Tavern 4 {s}')
   names=T.ev(pg,'SOTA.rpg.live().party.map(c=>c.name+" "+c.cls+" L"+c.lvl)');say('party at Tavern 4:',names);T.check(len(names)==4 and names[3].startswith('Brunn'),'Brunn did not join at Tavern 4')
-  T.ttap(pg,'#s5here');T.check(T.ui(pg)=='tavern','Tavern 4 did not open')
+  if T.ui(pg)!='tavern':T.ttap(pg,'#s5here')
+  T.check(T.ui(pg)=='tavern','Tavern 4 did not open')
   T.check(T.ev(pg,'[...document.querySelectorAll("[data-hub]")].map(b=>b.textContent)')==['Zone 4','Shop','Zone 5'],'tavern 4 buttons');shot(pg,'05-tavern4.png')
   T.ttap(pg,'[data-hub="1"]');T.ttap(pg,'[data-tab=food]');say('Tavern 4 shop:',buy_tap(pg,'potion'));shot(pg,'06-tavern4-shop.png')
   T.ttap(pg,'#s4 .s4back');T.ttap(pg,'[data-tab=done]');T.check(T.ui(pg)=='save-picker','Done did not open the save picker');T.ttap(pg,'[data-save-slot="2"]')
   T.check(T.ui(pg)=='tavern','save did not return to Tavern 4');sv=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2"))');T.check(sv['at']['name']=='Tavern 4' and len(sv['party'])==4,'Tavern 4 save wrong')
   slots=T.ev(pg,'Object.keys(localStorage).filter(k=>k.startsWith("sota.")).sort()');say('save keys:',slots)
-  # ---- 5. Tavern 4 Zone 5 waits with the exact text; the maze edge west of Tavern 4 refuses too
+  # ---- 5. Tavern 4 Zone 5 waits with the exact text; west of Tavern 4 is the 4-5 archway (fwd bumps and stays, no wait toast)
   T.ttap(pg,'[data-hub="2"]');pg.wait_for_timeout(2600);T.check(T.ui(pg)=='tavern','Zone 5 left the tavern')
   T.check(T.ev(pg,f'document.body.innerText.includes("{WAIT}")'),'no wait message on Zone 5');shot(pg,'07-tavern4-zone5-wait.png')
   T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 4','Zone 5 wait changed the save')
   T.ev(pg,'SOTA.rpg.closeUI()');T.ev(pg,'SOTA.teleport(47,48,3)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[47,48],'walked into zone 5')
-  T.check(T.ev(pg,'document.getElementById("s4toast").textContent')==WAIT,'no wait toast at the zone 5 edge');shot(pg,'08-zone5-edge-wait-toast.png')
+  T.check(T.ev(pg,'document.getElementById("s4toast").textContent')!=WAIT,'wait toast on the 4-5 archway (wait is the Zone 5 tab)');shot(pg,'08-zone5-arch-bump.png')
+  if T.ui(pg)=='tavern' or (T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()')):T.ev(pg,'SOTA.rpg.closeUI()')
   # ---- 6. Beasts tab: meet the other zone 4 beasts (a fight starts, the party runs), then the tab lists the zone 4 pencil sketches
   for k in range(7):
     T.ev(pg,'k=>{SOTA.rpg.closeUI();SOTA.rpg.startFight([RPG.makeMonster(4,k,30,0,"normal")],"random");SOTA.rpg.forceEnd("ran");SOTA.rpg.closeUI();}',k)

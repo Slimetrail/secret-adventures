@@ -61,12 +61,20 @@ function note(slot,tier,id){last.played.push({slot,tier,id,zone:zone()});if(last
 const kind=slot=>slot==="after-fight"?"after-fight":slot==="camp"?"camp":"tavern";
 // 1. shadowed story-data zone 4 talks (same picker rule as story.js seenFirst)
 function storyFirst(pool,s){return (pool||[]).find(sc=>!s.seen[sc.id]&&(!sc.need||api.who(sc.need))&&api.talkPresent(sc.lines,sc.need)&&(!sc.after||s.revealed));}
-function playStory(slot,pool,opt){const s=api.st();if(!s)return false;const sc=storyFirst(pool,s);if(!sc)return false;s.seen[sc.id]=1;note(slot,"story",sc.id);return api.play(kind(slot),sc.lines,opt(sc))!==false;}
+function playStory(slot,pool,opt){const s=api.st();if(!s)return false;const V=root.Variety,vk=pool===(D.camp&&D.camp.dark)?"story:camp:dark":pool===(D.tavern&&D.tavern[3])?"story:tavern:3":"z4story:"+slot;
+ const vs=V&&V.storyPick?V.storyPick(vk,pool,s):undefined;const sc=vs===undefined?storyFirst(pool,s):vs;if(!sc)return false;s.seen[sc.id]=1;note(slot,"story",sc.id);return api.play(kind(slot),sc.lines,opt(sc))!==false;}
 // 2. batch 14 by party mix
-function playZ4(slot,party,opt){const s=api.st();if(!s)return false;const p=pick(entries(),slot,party,s.seen);if(!p)return false;
+// t2670u/t2675u: same tiers (exact mix, then smaller mixes, then hero-only) and gates; inside a tier the order is a per-save shuffle.
+function shuffledPick(list,slot,party,seen){const V=root.Variety;if(!V||!V.active())return undefined;const mk=mixKey(party);
+ for(const k of subsetKeys(party)){const cand=list.filter(x=>x.slot===slot&&x.key===k),ok=new Set(cand.filter(x=>!seen[seenKey(x.id)]&&!(x.gate==="zone4-preA"&&keyIds(mk).includes("brunn"))).map(x=>x.id));
+  if(!ok.size)continue;const id=V.walk("z4:"+slot+":"+k,cand.map(x=>x.id),i=>ok.has(i));const e=id&&cand.find(x=>x.id===id);
+  if(e)return {tier:k===mk?"exact":k==="hero"?"hero":"subset",key:k,entry:e};}return null;}
+function playZ4(slot,party,opt){const s=api.st();if(!s)return false;const sp=shuffledPick(entries(),slot,party,s.seen);const p=sp===undefined?pick(entries(),slot,party,s.seen):sp;if(!p)return false;
  s.seen[seenKey(p.entry.id)]=1;note(slot,p.tier,p.entry.id);return api.play(kind(slot),p.entry.lines,opt(p.entry))!==false;}
 // 4. generic existing line
-function playGeneric(slot,party,opt){const s=api.st();if(!s)return false;s.z4bTurn=(s.z4bTurn|0)+1;const g=generic(D,root.PACKAGE_POOLS,slot,party,s.z4bTurn);if(!g.lines.length)return false;
+function playGeneric(slot,party,opt){const s=api.st();if(!s)return false;s.z4bTurn=(s.z4bTurn|0)+1;let turn=s.z4bTurn;const V=root.Variety;
+ if(V&&V.active()){const refs=GENERIC[slot]||GENERIC.camp,ref=V.walk("z4g:"+slot,refs,r=>generic(D,root.PACKAGE_POOLS,slot,party,refs.indexOf(r)).ref===r);if(ref)turn=refs.indexOf(ref);}
+ const g=generic(D,root.PACKAGE_POOLS,slot,party,turn);if(!g.lines.length)return false;
  note(slot,"generic",g.ref);return api.play(kind(slot),g.lines,opt({lines:g.lines}))!==false;}
 const campOpt=t=>({bg:S.rpg.s5.campBg(t)}),tavOpt=t=>()=>({bg:S.rpg.s5.tavernBg(t)}),plainOpt=()=>({bg:null});
 const oldCamp=H.camp;H.camp=function(k){if(zone()!==4)return oldCamp.apply(this,arguments);const party=partyNow(false);

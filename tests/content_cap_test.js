@@ -49,20 +49,23 @@ test("live movement: tavern 2 east (19,24) is the seam 2-3 archway; it bumps bot
  const e=engine(18,24,1);e.s.act("fwd");a.equal(e.s.state().x,18);a.equal(e.s.state().y,24);a.equal(e.counts().steps,0);
  a.ok(e.s.seamExit(1,3));a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);e.s.act("right");e.s.act("back");/* facing E, back = W into the arch */a.equal(e.s.state().x,19);a.equal(e.s.state().y,24);
 });
-test("every physical open-to-closed edge refuses forward and backward before puzzles, rooms, visits or saves",()=>{
+test("every physical open-to-closed edge is the Tavern 4 west 4-5 archway; forward and backward bump it and never toast, visit or save (t2667u)",()=>{
  const edges=[];
  for(let y=0;y<M.n;y++)for(let x=0;x<M.n;x++)if(cap.isOpen(x,y))for(let d=0;d<4;d++){
   const nx=x+dirs[d][0],ny=y+dirs[d][1];if(!(parseInt(M.mask[y*M.n+x],16)&(1<<d))||cap.isOpen(nx,ny))continue;edges.push([x,y,d,nx,ny]);
   for(const cmd of ["fwd","back"]){const e=engine(x,y,cmd==="fwd"?d:(d+2)%4),before=e.s.state(),stored=e.storage.get("sota.stage1.save");
-   e.s.act(cmd);a.deepEqual(e.s.state(),before);a.deepEqual(e.counts(),{steps:0,after:0,puzzles:0});a.equal(e.s.panelOpen(),false);a.equal(e.s.isVisited(nx,ny),false);a.equal(e.s.visitedCount(),1);a.equal(e.storage.get("sota.stage1.save"),stored);a.equal(e.el("s4toast").textContent,"Please wait for update to continue.");
+   a.ok(e.s.archAhead(x,y,d)>=0);
+   e.s.act(cmd);a.deepEqual(e.s.state(),before);a.deepEqual(e.counts(),{steps:0,after:0,puzzles:0});a.equal(e.s.panelOpen(),false);a.equal(e.s.isVisited(nx,ny),false);a.equal(e.s.visitedCount(),1);a.equal(e.storage.get("sota.stage1.save"),stored);a.equal(e.el("s4toast").textContent,"");
   }
- }a.deepEqual(edges,[[47,48,3,46,48]]); // t2419u: Tavern 4 west into zone 5 (was Tavern 3 south, [51,14,2,51,15])
+ }a.deepEqual(edges,[[47,48,3,46,48]]); // mask still has Tavern 4 west; act() hits the arch first, so the wait toast never fires here (the Zone 5 tab in party.js does)
 });
-test("old closed-cell save can walk back into slice without teleporting, then cannot reenter",()=>{
- // t2419u: the closed side is now zone 5 (46,48), west of Tavern 4 (was zone 4 (51,15) below Tavern 3)
+test("old closed-cell save cannot walk through the 4-5 arch; the Zone 4 tab steps back into the slice, then walking cannot reenter",()=>{
+ // t2419u/t2667u: the closed side is zone 5 (46,48), west of Tavern 4. The edge is now an archway, so fwd no longer walks through.
  a.ok(parseInt(M.mask[48*M.n+46],16)&2);
- const e=engine(46,48,1);a.equal(e.s.state().x,46);a.equal(e.s.state().y,48);e.s.act("fwd");a.equal(e.s.state().x,47);a.equal(e.s.state().y,48);e.s.act("back");a.equal(e.s.state().x,47);a.equal(e.s.state().y,48);a.equal(e.counts().steps,1);a.equal(e.el("s4toast").textContent,"Please wait for update to continue.");
- a.equal(cap.allowsStep(47,48,48,48),true);a.equal(cap.allowsStep(51,14,51,15),true);
+ const e=engine(46,48,1);a.ok(e.s.archAhead(46,48,1)>=0);a.equal(e.s.state().x,46);a.equal(e.s.state().y,48);e.s.act("fwd");a.equal(e.s.state().x,46);a.equal(e.s.state().y,48);a.equal(e.el("s4toast").textContent,"");
+ a.ok(e.s.seamExit(3,4));a.equal(e.s.state().x,47);a.equal(e.s.state().y,48);a.equal(e.s.state().zone,4);a.equal(e.counts().steps,1);
+ e.s.act("back");a.equal(e.s.state().x,47);a.equal(e.s.state().y,48);a.equal(e.el("s4toast").textContent,"");
+ a.equal(cap.allowsStep(47,48,48,48),true);a.equal(cap.allowsStep(51,14,51,15),true);a.equal(cap.allowsStep(47,48,46,48),false);
 });
 test("new script loads before engine and is cached with matching engine version",()=>{
  const html=read("index.html"),c={self:{addEventListener(){}}};vm.runInNewContext(read("sw.js")+";globalThis.shell=SHELL;globalThis.version=VER;",c);

@@ -33,7 +33,7 @@ test('cap: zones 1-4 open, zone 5 closed; Tavern 3 and its zone-4 neighbour (51,
 test('cap: the ONLY walkable edge out of the open area is Tavern 4 west to (46,48) (t2419u; was Tavern 3 south)',()=>{const out=[];
  for(let i=0;i<N*N;i++)if(cap.isOpen(i%N,Math.floor(i/N)))for(const j of nb(i))if(!cap.isOpen(j%N,Math.floor(j/N)))out.push([i%N,Math.floor(i/N),j%N,Math.floor(j/N)]);
  a.deepEqual(out,[[47,48,46,48]]);});
-// live engine (game.js) like content_cap_test: walk tavern 2 -> zone 3; Tavern 3 south refuses with the exact wait text
+// live engine (game.js) like content_cap_test: walk tavern 2 -> zone 3 through the 2-3 arch; Tavern 3 south is the 3-4 arch (Zone 4 tab crosses)
 function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext(read('maze-data.js'),c);vm.runInContext(read('content-cap.js'),c);
  const els=new Map(),storage=new Map([["sota.stage1.save",JSON.stringify({x,y,f})]]);
  function el(id){if(!els.has(id))els.set(id,{textContent:"",style:{},classList:{add(){},remove(){}},addEventListener(){},getContext(){return {createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};}};}});return els.get(id);}
@@ -41,8 +41,9 @@ function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext
  Object.assign(c.window,{TEX:{S:32},DOORTEX:{},innerWidth:400,innerHeight:300,addEventListener(){}});vm.runInContext(read('game.js'),c);c.SOTA=c.window.SOTA;return {s:c.window.SOTA,el};}
 test('live walk: Tavern 2 east is the seam archway (t2528u); the Zone 3 side (19,24) then north into zone 3 with no wait toast',()=>{const e=engine(18,24,1);e.s.act('fwd');a.deepEqual(plain(e.s.state()),{x:18,y:24,f:1,zone:2});a.ok(e.s.seamExit(1,3));e.s.act('fwd');
  a.deepEqual(plain(e.s.state()),{x:19,y:23,f:0,zone:3});a.equal(e.el('s4toast').textContent,'');});
-test('live walk: Tavern 3 south now steps into zone 4 with no wait toast (t2419u; the wait moved to Tavern 4)',()=>{const e=engine(51,14,2);e.s.act('fwd');
- a.deepEqual(plain(e.s.state()),{x:51,y:15,f:2,zone:4});a.equal(e.el('s4toast').textContent,'');});
+test('live walk: Tavern 3 south is the seam 3-4 archway (t2667u); the Zone 4 tab crosses with no wait toast (the wait is at Tavern 4)',()=>{const e=engine(51,14,2);e.s.act('fwd');
+ a.deepEqual(plain(e.s.state()),{x:51,y:14,f:2,zone:3});a.equal(e.el('s4toast').textContent,'');
+ a.ok(e.s.seamExit(2,4));a.deepEqual(plain(e.s.state()),{x:51,y:15,f:2,zone:4});a.equal(e.el('s4toast').textContent,'');});
 test('a path through zone 3 joins Tavern 2 to Tavern 3 inside the cap with every room/door cell treated as a wall',()=>{
  const rooms=new Set(M.rooms.map(r=>idx(r.c))),seen=new Set([idx(M.taverns[1])]),qq=[idx(M.taverns[1])];
  for(let k=0;k<qq.length;k++)for(const j of nb(qq[k]))if(!rooms.has(j)&&!seen.has(j)&&cap.isOpen(j%N,Math.floor(j/N))){seen.add(j);qq.push(j);}
@@ -123,5 +124,5 @@ test('t2404u: zone 3 monsters have pencil sketches and a fought zone 3 beast is 
  vm.runInContext(read('intro-art-data.js'),h.c);const i=h.intro();i.openJournal('beasts');const jb=h.document.getElementById('ijour');a.deepEqual(jb.querySelectorAll('[data-beast]').map(f=>f.dataset.beast),['z1-rat',z3[0]]);});
 test('cache pins: content-cap, econ and party moved together with sw VER (>=80), rules.js and match index.html (t2419u values)',()=>{const html=read('index.html'),sw=read('sw.js');
  const ver=+sw.match(/^const VER="(\d+)"/)[1];a.ok(ver>=80,'VER '+ver+' (stage1-build is 79)');
- for(const pin of ['content-cap.js?v=7','econ.js?v=17','party.js?v=39','rules.js?v=23'] /* party 38 in VER 100 (gear rework on live 99) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
+ for(const pin of ['content-cap.js?v=7','econ.js?v=17','party.js?v=40','rules.js?v=23'] /* party 38 in VER 100 (gear rework on live 99) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
  for(const old of ['content-cap.js?v=5"','econ.js?v=15"','party.js?v=28"','rules.js?v=19"','rules.js?v=18"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);});
