@@ -326,12 +326,26 @@ const STAFF_FIX={z3_bone_staff:["skull",0,0,0],z4_glyph_staff:["tablet",0,0,1,3]
  w_staff:["flame",0,0,1,6],z3_moon_staff:["crescent",0,1,0,3],z5_heart_crystal_staff:["heart",1,1,0],relic2_staff:["leaf",1,1,1],
  z5_deep_crystal_rod:["hex",1,1,0,13],z5_prism_staff:["prism",0,0,0,5],z2_bark_staff:["burl",0,0,0],z2_moss_wrapped_staff:["moss",1,0,0],
  z3_silvered_staff:["halo",0,1,0],z4_sigil_staff:["eye",0,0,1,3],z5_glow_staff:["sun",1,1,1,3],z1_knotted_walking_staff:["knob",0,0,1],z5_core_staff:["burst",1,0,1,3]};
+// t2648u colour variety (no new shapes): TINT[id]=[hue degrees, saturation x, lightness +] recolours only the material colours L/M/D of the
+// item's existing 8-bit shape (outline, accent, gem, wood and string stay). An item's own data field it.tint=[h,s,l] wins over this table.
+// A missing or malformed tint gives the plain icon. Built once per item inside build() (cached in BUILT), never per repaint.
+// Table made by gear-run/tools/gen_item_tints.js: gear whose family and material colours match an earlier item id (sorted) gets the next shift.
+const TINT={tome:[28,1,0],z1_bent_short_bow:[28,1,0],z1_cloth_wraps:[28,1,0],z1_iron_rim_shield:[28,1,0],z1_knotted_walking_staff:[28,1,0],z1_mage_moon_ring:[28,1,0],z1_mage_travel_charm:[28,1,0],z1_notch_dagger:[28,1,0],z1_riveted_plate:[28,1,0],z1_trail_leather:[28,1,0],z1_warrior_ember_necklace:[28,1,0],z1_warrior_iron_band:[28,1,0],z2_archer_leaf_necklace:[28,1,0],z2_bark_staff:[28,1,0],z2_barkcloth_robe:[28,1,0],z2_forest_leather:[28,1,0],z2_greenweave_robe:[28,1,0],z2_greenwood_staff:[28,1,0],z2_hunt_leather:[28,1,0],z2_leaf_stitched_leather:[-28,1,0],z2_leaf_string_bow:[28,1,0],z2_mage_greenwood_ring:[28,1,0],z2_meadow_tome:[28,1,0],z2_moss_iron_plate:[28,1,0],z2_quiet_blade:[28,1,0],z2_trail_boots:[28,1,0],z2_yew_bow:[28,1,0],z3_archer_wolf_sinew_pendant:[28,1,0],z3_ash_staff:[28,1,0],z3_ashen_robe:[28,1,0],z3_bone_laced_jerkin:[28,1,0],z3_moon_hide_vest:[28,1,0],z3_moonsteel_plate:[28,1,0],z3_moonsteel_sword:[28,1,0],z3_rib_dagger:[28,1,0],z3_rib_stitched_vest:[-28,1,0],z3_rogue_moon_pendant:[28,1,0],z3_rogue_rib_charm:[28,1,0],z3_silent_leather:[28,1,0],z3_strider_boots:[28,1,0],z3_warrior_moonsteel_ring:[28,1,0],z3_warrior_silvered_ring:[28,1,0],z3_wolf_hide_jerkin:[-28,1,0],z3_wolf_sinew_bow:[28,1,0],z3_wolffang_vest:[56,1,0],z4_archer_runic_pendant:[28,1,0],z4_griffin_hide_vest:[28,1,0],z4_heavy_runic_blade:[28,1,0],z4_heavy_runic_plate:[28,1,0],z4_horn_bound_plate:[28,1,0],z4_horn_vest:[28,1,0],z4_long_runic_bow:[28,1,0],z4_mage_griffin_bone_ring:[28,1,0],z4_mage_runic_ring:[28,1,0],z4_rogue_horn_ring:[28,1,0],z4_rogue_runic_pendant:[-28,1,0],z4_rune_etched_axe:[28,1,0],z4_rune_etched_plate:[-28,1,0],z4_rune_rod:[28,1,0],z4_rune_stitched_robe:[28,1,0],z4_runic_boots:[28,1,0],z4_runic_bow:[-28,1,0],z4_runic_jerkin:[28,1,0],z4_runic_knife:[28,1,0],z4_runic_leather:[-28,1,0],z4_runic_plate:[56,1,0],z4_runic_robe:[-28,1,0],z4_runic_staff:[-28,1,0],z4_runic_sword:[-28,1,0],z4_runic_tower_shield:[28,1,0],z4_runic_war_mace:[28,1,0],z4_runic_wraps:[28,1,0],z4_scale_stitched_jerkin:[28,1,0],z4_scale_stitched_vest:[-28,1,0],z4_scale_vest:[56,1,0],z4_shadow_horn_blade:[28,1,0],z4_shadow_scale_vest:[-56,1,0],z4_short_runic_sword:[56,1,0],z4_warrior_rune_etched_charm:[28,1,0],z4_warrior_runic_ring:[-28,1,0],z4_warrior_stone_necklace:[28,1,0],z5_archer_crystal_ring:[28,1,0],z5_core_hide_jerkin:[28,1,0],z5_core_staff:[28,1,0],z5_crystal_axe:[28,1,0],z5_crystal_boots:[28,1,0],z5_crystal_bow:[28,1,0],z5_crystal_edge_plate:[28,1,0],z5_crystal_edge_sword:[28,1,0],z5_crystal_fang:[28,1,0],z5_crystal_jerkin:[28,1,0],z5_crystal_mace:[28,1,0],z5_crystal_plate:[-28,1,0],z5_crystal_short_sword:[-28,1,0],z5_crystal_staff:[28,1,0],z5_crystal_thread_robe:[28,1,0],z5_crystal_tome:[28,1,0],z5_crystal_tower_shield:[28,1,0],z5_crystal_vest:[-28,1,0],z5_crystal_wraps:[28,1,0],z5_drakehide_vest:[28,1,0],z5_facet_vest:[28,1,0],z5_light_string_bow:[28,1,0],z5_light_well_robe:[28,1,0],z5_light_well_staff:[28,1,0],z5_mage_core_charm:[28,1,0],z5_mage_crystal_ring:[-28,1,0],z5_mage_deep_crystal_necklace:[28,1,0],z5_mage_facet_band:[28,1,0],z5_mage_glow_pendant:[28,1,0],z5_mage_light_well_ring:[28,1,0],z5_prism_vest:[28,1,0],z5_rogue_core_charm:[-28,1,0],z5_rogue_crystal_fang_ring:[56,1,0],z5_rogue_facet_ring:[-28,1,0],z5_rogue_prism_necklace:[28,1,0],z5_rogue_shard_pendant:[28,1,0],z5_shard_leather:[28,1,0],z5_warrior_crystal_edge_ring:[-56,1,0],z5_warrior_crystal_ring:[90,1,0],z5_warrior_prism_necklace:[-28,1,0]};
+function tintOk(t){return Array.isArray(t)&&t.length===3&&t.every(x=>typeof x==="number"&&isFinite(x));}
+function hexHsl(h){const r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let hh=0,s=0;
+ if(mx!==mn){const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);hh=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60;}return [hh,s,l];}
+function hslHex(h,s,l){h=((h%360)+360)%360/360;const f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;return t<1/6?p+(q-p)*6*t:t<1/2?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};let r,g,b;
+ if(!s){r=g=b=l;}else{const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=f(p,q,h+1/3);g=f(p,q,h);b=f(p,q,h-1/3);}
+ return "#"+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(1,v))*255).toString(16).padStart(2,"0")).join("");}
+function tintPal(pal,t){const out=Object.assign({},pal);for(const k of ["L","M","D"]){const c=pal[k];if(typeof c!=="string"||!/^#[0-9a-f]{6}$/i.test(c))continue;const [h,s,l]=hexHsl(c);
+ out[k]=hslHex(h+t[0],Math.max(0,Math.min(1,s*t[1])),Math.max(0,Math.min(1,l+t[2])));}return out;}
+function tintFor(id,it){const t=it&&it.tint!=null?it.tint:TINT[id];return tintOk(t)?t:null;}
 function look(id,it,salt){
  if(BOT[id])return {rows:BOTTLE.split("|"),pal:BOT[id],bottle:id};
  const m=MISC[id];if(m)return {rows:T[m[0]].split("|"),pal:{K,L:m[1],M:m[2],D:m[3],A:m[4]||m[2],W:m[5]||WOOD,G:m[6]||m[1]},salt:0,tpl:m[0]};
  const k=kind(id,it);if(!FAM[k])return {rows:T[k].split("|"),pal:{K,L:"#e8e0d0",M:"#b0a890",D:"#6a6450",A:"#c8a050",W:WOOD,G:GEMS[hash(id)%16]},salt,tpl:k};
  const w=(id+" "+(it.n||"")).toLowerCase(),h=hash(id),c=PICK[id];let v=c!=null?Math.floor(c/16):h%FAM[k].n,gi=c!=null?c%16:(h>>>8)%16;
- if(salt){v+=salt*7;gi+=salt;}const L=gear(k,w,v,gi);L.salt=salt;
+ if(salt){v+=salt*7;gi+=salt;}const L=gear(k,w,v,gi);L.salt=salt;const tn=tintFor(id,it);if(tn){L.pal=tintPal(L.pal,tn);L.tint=tn;}
  const sf=k==="staff"&&STAFF_FIX[id];if(sf){const sc=L.pal[sf[2]?"A":"W"].replace("#",""),lum=(0.299*parseInt(sc.slice(0,2),16)+0.587*parseInt(sc.slice(2,4),16)+0.114*parseInt(sc.slice(4,6),16))/255;
   L.rows=FAM.staff.x(sf[0],sf[1],sf[2],sf[3],lum<0.3);if(sf[4]!=null)L.pal.G=GEMS[(sf[4]+salt)%GEMS.length];}return L;}
 function rects(rows,pal){let r="";rows.forEach((row,y)=>{let x=0;while(x<row.length){const ch=row[x],c=pal[ch];if(!c||ch==="."){x++;continue;}let e=x+1;while(e<row.length&&row[e]===ch)e++;r+='<rect x="'+x+'" y="'+y+'" width="'+(e-x)+'" height="1" fill="'+c+'"/>';x=e;}});return r;}
@@ -339,13 +353,13 @@ let BUILT=null;
 function build(){const R=root.RPG;if(!R||!R.ITEMS)return null;const out={},seen=new Map();
  for(const id of Object.keys(R.ITEMS).sort()){const it=R.ITEMS[id];let salt=0,L,body;
   for(;;){L=look(id,it,salt);body=rects(L.rows,L.pal);if(!seen.has(body)||salt>60)break;salt++;}
-  seen.set(body,id);out[id]={body,w:L.rows[0].length,h:L.rows.length,tpl:L.bottle?"bottle":L.tpl,bottle:L.bottle};}
+  seen.set(body,id);out[id]={body,w:L.rows[0].length,h:L.rows.length,tpl:L.bottle?"bottle":L.tpl,bottle:L.bottle,tint:L.tint||null};}
  return out;}
 function get(id){if(!BUILT||(root.RPG&&root.RPG.ITEMS&&Object.keys(root.RPG.ITEMS).length!==BUILT.n)){const b=build();if(!b)return null;BUILT={map:b,n:Object.keys(b).length};}return BUILT.map[id]||null;}
 function svg(id){const g=get(id);if(!g)return "";
- return '<svg class="iic-svg" data-icon-id="'+id+'" data-icon-kind="'+g.tpl+'" viewBox="0 0 '+g.w+' '+g.h+'" shape-rendering="crispEdges" aria-hidden="true" focusable="false">'+g.body+'</svg>';}
+ return '<svg class="iic-svg" data-icon-id="'+id+'" data-icon-kind="'+g.tpl+'"'+(g.tint?' data-icon-tint="'+g.tint.join(",")+'"':'')+' viewBox="0 0 '+g.w+' '+g.h+'" shape-rendering="crispEdges" aria-hidden="true" focusable="false">'+g.body+'</svg>';}
 function all(){get("potion");return BUILT?Object.assign({},BUILT.map):{};}
 // _dev is only for the offline optimizer/measure tools (no game code uses it)
-const API={svg,has:id=>!!get(id),all,TEMPLATES:T,MISC,_dev:{FAM,GEMS,kind,gear,rects,PICK,reset:()=>{BUILT=null;}}};
+const API={svg,has:id=>!!get(id),all,TEMPLATES:T,MISC,_dev:{FAM,GEMS,kind,gear,rects,PICK,TINT,tintPal,tintFor,reset:()=>{BUILT=null;}}};
 root.SOTA_ICONS=API;if(typeof module!=="undefined"&&module.exports)module.exports=API;
 })(typeof window!=="undefined"?window:globalThis);

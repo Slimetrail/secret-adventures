@@ -191,7 +191,7 @@ def t_equip_bag_ui(p):
   ev(pg,'SOTA.rpg.live().party[0].bag.push("plate","robe","ring")');tap(pg,'#partyb');tap(pg,'[data-equip="0"]');tap(pg,'[data-slot=chest]')
   check('not allowed' in pg.inner_text('[data-opt=plate]'),'plate shown as allowed for cat');tap(pg,'[data-opt=plate]');check(ev(pg,'SOTA.rpg.live().party[0].equip.chest')=='robe','cat wore plate')
   check(ev(pg,'RPG.canEquip(SOTA.rpg.live().party[0],"robe","chest")'),'robe not allowed')
-  tap(pg,'[data-slot=acc2]');tap(pg,'[data-opt=ring]');check(ev(pg,'SOTA.rpg.live().party[0].equip.acc2')=='ring','ring')
+  tap(pg,'[data-slot=acc2]');tap(pg,'[data-opt=ring]');tap(pg,'[data-cmpconfirm]');check(ev(pg,'SOTA.rpg.live().party[0].equip.acc2')=='ring','ring')  # t2657u: slot list opens the compare, Confirm equips
   check(ev(pg,'document.querySelectorAll("#s4 [data-slot]").length')==8,'not 8 slots')
   tap(pg,'.s4back');tap(pg,'[data-bag="0"]');t=pg.inner_text('#s4');check(re.search(r'Weight [\d.]+ / \d+ kg',t),'no weight line');b.close()
 def t_ui_fit(p):

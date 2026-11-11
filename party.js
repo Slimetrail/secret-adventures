@@ -62,7 +62,7 @@ function closeUI(){lockStats();campVisit=null;ui=null;document.documentElement.c
 S.uiOpen=()=>!!ui;
 function head(title,back){const h=el("div","s4head");h.appendChild(el("div","s4title",title));if(back)h.appendChild(tapBtn("Back",back,"s4back"));return h;}
 // typing in a stage 4 screen must never reach the walk/map keys (w a s d m and arrows were eaten before = fix round 1)
-window.addEventListener("keydown",e=>{const t=e.target&&e.target.tagName;if(ui||t==="INPUT"||t==="TEXTAREA")e.stopImmediatePropagation();},true);
+window.addEventListener("keydown",e=>{if(e.key==="Escape"&&closeCmp()){e.preventDefault();e.stopImmediatePropagation();return;}/* t2657u: Escape cancels the Equip compare */const t=e.target&&e.target.tagName;if(ui||t==="INPUT"||t==="TEXTAREA")e.stopImmediatePropagation();},true);
 // re-render a page but keep where it was scrolled to
 function page(kind){const top=ui===kind?ov.scrollTop:0;openUI(kind);ov.innerHTML="";const w=el("div","s4page");ov.appendChild(w);requestAnimationFrame(()=>{ov.scrollTop=top;});ov.scrollTop=top;return w;}
 // ---- Maze item shortcuts: bindings belong to this party save; bags own every copy. ----
@@ -110,7 +110,7 @@ function tapMazeSlot(i,back=false){if(!live||!Number.isInteger(i)||i<0||i>3)retu
 const PCACHE=new Map();
 // t2437u QA: a portrait drawn before its sprite has loaded was cached as a plain dark square for good. Only cache a drawn portrait;
 // until then hand back the dark card and redraw the <img> when the sprite arrives.
-function portrait(c,onReady){const k=c.race+"|"+c.cls;if(PCACHE.has(k))return PCACHE.get(k);const sk=heroKey(c),ready=!!spr(sk);const cv=document.createElement("canvas");cv.width=cv.height=96;const g=cv.getContext("2d");
+function portrait(c,onReady){const k=c.race+"|"+c.cls+"|"+gearLookOf(c);if(PCACHE.has(k))return PCACHE.get(k);const sk=heroKey(c),ready=!!spr(sk);const cv=document.createElement("canvas");cv.width=cv.height=96;const g=cv.getContext("2d");
  const bgc={warrior:"#3a1620",rogue:"#1a1f2c",archer:"#14281c",mage:"#1e1840"}[c.cls],rg=g.createRadialGradient(40,30,4,48,48,70);rg.addColorStop(0,bgc);rg.addColorStop(1,"#07040e");g.fillStyle=rg;g.fillRect(0,0,96,96);
  drawHero(g,Object.assign({},c,{hp:1}),56,150,150,0,false);const u=cv.toDataURL();if(ready)PCACHE.set(k,u);else if(onReady&&SPR[sk]&&SPR[sk].addEventListener)SPR[sk].addEventListener("load",()=>onReady(portrait(c)),{once:true});return u;}
 function pimg(c,cls){const i=el("img",cls||"s4por");i.src=portrait(c,u=>{i.src=u;});i.alt="";return i;}
@@ -241,20 +241,123 @@ function withIc(b,id){const v=itemIc(id);if(v&&b&&typeof b.insertBefore==="funct
 function statLine(c){return {atk:Math.round(R.power(c)),mag:Math.round(R.magicPower(c)),def:Math.round(R.defense(c)),hp:R.maxHp(c,hpMul())};}
 function diffText(a,b){const out=[];for(const[k,n]of[["atk","ATK"],["mag","MAG"],["def","DEF"],["hp","HP"]]){const d=b[k]-a[k];if(d)out.push((d>0?"+":"")+d+" "+n);}return out;}
 function fits(id,s){const t=R.ITEMS[id];return t&&(t.slot===s||(s.startsWith("acc")&&t.slot==="acc"));}
-function figure(c){const cv=document.createElement("canvas");cv.className="s4fig";cv.width=240;cv.height=300;const g=cv.getContext("2d");
+// ---- t2645u/t2650u hero looks: three palette swaps of the existing 8-bit fight sprite art6/fight/p-<race>-<cls>.png ----
+// cloth = the sprite unchanged; leather = outfit pixels moved onto a brown ramp; metal = outfit pixels moved onto a steel-grey ramp.
+// The worn chest piece picks the look; no chest = cloth. Material: item.mat/material if set ("cloth|leather|metal" or "robe|vest|plate"),
+// else armour class item.a (1 cloth, 2 leather, 3 metal), else the chest kind from the item name (robe/vest/plate).
+// Outfit pixels = the sprite's listed outfit colours (o) outside its keep boxes (k: face, weapon, hair, tail, inclusive x0,y0,x1,y1).
+// Skin colours (s), face, hair and weapon pixels are never changed. Each look is built once per sprite from the already-loaded sprite
+// and cached; there is no extra network request and none of the separate gear layer art is drawn. Item stats, slots and bag icons are untouched.
+const GEAR_SLOT_FAMS={helmet:["hood","helm"],chest:["robe","vest","plate"],gloves:["wraps","gauntlet"],boots:["softboot","boot"],weapon:["sword","dagger","axe","mace","staff","bow"],offhand:["buckler","tower","tome","dagger"]};
+const GEAR_FAM_FALLBACK={helmet:"helm",chest:"vest",gloves:"wraps",boots:"boot",weapon:"sword",offhand:"buckler"};
+const GEAR_LOOKS=["cloth","leather","metal"];
+const GEAR_MAT_LOOK={cloth:"cloth",leather:"leather",metal:"metal",robe:"cloth",vest:"leather",plate:"metal"},GEAR_A_LOOK={1:"cloth",2:"leather",3:"metal"};
+function gearKind(id,it){const n=((it&&it.n)||"").toLowerCase(),s=it&&it.slot;
+ if((s==="weapon"||s==="offhand")&&/dagger|knife|splinter|stiletto|fang|talon/.test(n))return "dagger";
+ if(window.SOTA_ICONS&&window.SOTA_ICONS._dev&&window.SOTA_ICONS._dev.kind)return window.SOTA_ICONS._dev.kind(id,it);
+ if(s==="weapon")return /bow/.test(n)?"bow":/staff|rod|wand/.test(n)?"staff":/axe/.test(n)?"axe":/mace|hammer|club|maul/.test(n)?"mace":"sword";
+ if(s==="offhand")return /tome|book/.test(n)?"tome":/tower/.test(n)?"tower":"buckler";
+ if(s==="helmet")return /hood|cap|cowl/.test(n)?"hood":"helm";
+ if(s==="chest")return /robe/.test(n)?"robe":/plate|armor|mail/.test(n)?"plate":"vest";
+ if(s==="gloves")return /gauntlet/.test(n)?"gauntlet":"wraps";
+ if(s==="boots")return /soft|trail|strider|sandal/.test(n)?"softboot":"boot";
+ return null;}
+function gearFamily(id,slot){const it=R.ITEMS[id];if(!it)return null;const k=gearKind(id,it);const use=slot||it.slot;
+ if(k==="dagger"&&(use==="offhand"||it.slot==="offhand"||it.slot==="weapon"))return "dagger";
+ const allowed=GEAR_SLOT_FAMS[use]||GEAR_SLOT_FAMS[it.slot];if(!allowed)return null;
+ if(allowed.includes(k))return k;return GEAR_FAM_FALLBACK[use]||GEAR_FAM_FALLBACK[it.slot]||null;}
+function gearMaterial(id){const it=id&&R.ITEMS[id];if(!it||it.slot!=="chest")return null;
+ const m=String(it.mat||it.material||"").toLowerCase();if(GEAR_MAT_LOOK[m])return GEAR_MAT_LOOK[m];
+ if(GEAR_A_LOOK[it.a])return GEAR_A_LOOK[it.a];
+ return GEAR_MAT_LOOK[gearFamily(id,"chest")]||"cloth";}
+function gearLookOf(c){const id=c&&c.equip&&c.equip.chest;return gearMaterial(id)||"cloth";}
+const HERO_LOOK_DATA={
+ "human-warrior":{o:"49535d 202324 5d6c6c 2c443c 868a8e 94a0a0 827e78 d8d5d0 0e1309 0f2012 213325",k:[[0,23,14,36,"weapon"]],s:""},
+ "human-mage":{o:"3e34a2 262377 1b1c5e 101342 181959 0d1024 121839 232040 473787 1a2057 342858 2e2766 3c3274",k:[[0,11,12,57,"weapon"],[16,11,26,26,"face"]],s:"7b524b ad766f e2ad91"},
+ "human-rogue":{o:"5e5f63 3c3a3c 262729 221710 2e3436 4e3a2f 3c291e 0c140e 33271f 2d1f16 475c50 141c18 18241b 16120f 231e19 0c0a09 181716 092609 304d36 0f370f 4c7b4c",k:[[13,10,20,19,"face"]],s:"59514f a99a8c"},
+ "human-archer":{o:"304c1a 181806 263914 5f7827 3b631d 24300f 26250b 56481e 103409 0d2506 6c6533 17480e",k:[[0,0,15,46,"weapon"],[22,9,33,25,"face"]],s:"9b6630 e7b57e ba874e"},
+ "elf-warrior":{o:"787673 b6a789 ae2920 831715 ebe0c3 40442f 393721 544d36 665536 391f16 121b0e 3d0b07 95805c",k:[[0,35,17,48,"weapon"],[16,10,25,20,"face"]],s:""},
+ "elf-mage":{o:"f8f1e5 278da3 b7b2a9 808674 d4cabb 2e6e7c 57a9af 31515c",k:[[0,0,10,57,"weapon"],[15,9,24,20,"face"]],s:"f6de9d"},
+ "elf-rogue":{o:"383345 111119 22212d 151521 1a1923 1d1c27 322e3a 2c2529 423632 221c20 0b0d11 07090b 141720 0a1410 0c1b12 091011 07230a 162f16",k:[[0,24,14,41,"weapon"],[8,8,25,23,"face"]],s:"a38859 e5bb7f"},
+ "elf-archer":{o:"586a26 0e290d 224617 0e1706 1b3813 48461f 25240e 1e2f11 2f641f 88ac4d",k:[[0,0,19,46,"weapon"],[22,10,31,22,"face"]],s:"f2c66f f9d984"},
+ "dwarf-warrior":{o:"4b4748 2e1811 625d5b 65251a 90766a 403b3b b2a092 333030 421f19 1e1816 2b2120 2d292a 160d0d 250d12 452d26 785f55 5c473f 86442c 3a0a1d",k:[[0,26,14,46,"weapon"],[18,10,29,17,"face"]],s:""},
+ "dwarf-rogue":{o:"4e382a 352318 2a1c13 472e22 1c110b 5a3c2b 644835 39261a 281810 432c20 735445 20130c 22170f 3b2a1f 291115 34171c 301918 1d0a10 542e2c 42112d",k:[[0,23,14,29,"weapon"],[12,8,22,19,"face"]],s:"b0958d"},
+ "dwarf-archer":{o:"341e0e 502e17 61311d 472a16 764225 150e09 7f5331 28180e 24140b 573e2c 986640 3d1c14 210f0a 451d14 0d0706 1e0614 34062a 321513 5b1839 650455",k:[[0,19,23,31,"weapon"],[20,9,31,22,"face"]],s:"c88e59"},
+ "cat-warrior":{o:"4a2918 744023 321515 71584d c75313 732917 b2450b 57372b 8b310f 996336 9e3d0b e3681a d26119 965024 4e151f 731725 6d003f",k:[[0,21,16,41,"weapon"],[16,13,25,25,"face"],[10,0,46,21,"hair"],[39,22,55,52,"tail"]],s:"c19373 ad7953 eed4ba daaf85"},
+ "cat-mage":{o:"184eb4 052b71 0f3d95 02225b 08327f 031d31 042c4a 011327 0d1318 163650 42617f 314b6a 0e477a",k:[[0,9,11,53,"weapon"],[15,15,23,27,"face"]],s:"cbbca0"},
+ "cat-rogue":{o:"322f35 221517 141011 171619 28262a 221e1f 0a090b 2c182a 200c1c 392428 150a13 3e322f 302425 2c0a24 3a0b2f 532638 540d47",k:[[10,3,22,20,"face"]],s:"a79088"}};
+const HERO_LOOK_RAMP={leather:["#24130a", "#3d2414", "#5a3720", "#7a4e2c", "#9a683c", "#bb8a58", "#d6ad7c"],metal:["#1c2126", "#353d45", "#525c66", "#727e89", "#98a3ad", "#bfc8cf", "#e2e7eb"]};
+const HERO_LOOKS=new Map(),HERO_LOOK_STATS={builds:0,fails:0};
+function heroLookHex(h){h=h.replace("#","");return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function heroLookLum(r,g,b){return (0.299*r+0.587*g+0.114*b)/255;}
+function heroLookRamp(Rm,t){t=Math.max(0,Math.min(1,t))*(Rm.length-1);const i=Math.min(Math.floor(t),Rm.length-2),f=t-i,a=heroLookHex(Rm[i]),b=heroLookHex(Rm[i+1]);return [0,1,2].map(j=>Math.round(a[j]+(b[j]-a[j])*f));}
+function heroLookKept(D,x,y){return D.k.some(r=>x>=r[0]&&x<=r[2]&&y>=r[1]&&y<=r[3]);}
+function heroLookPixels(d,w,h,pose,look){const D=HERO_LOOK_DATA[pose],Rm=HERO_LOOK_RAMP[look];if(!D||!Rm)return 0;const set=new Set(D.o.split(" "));let lo=1,hi=0;
+ set.forEach(x=>{const c=heroLookHex(x),L=heroLookLum(c[0],c[1],c[2]);if(L<lo)lo=L;if(L>hi)hi=L;});
+ let n=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(!d[i+3])continue;const hx=((1<<24)|(d[i]<<16)|(d[i+1]<<8)|d[i+2]).toString(16).slice(1);
+  if(!set.has(hx)||heroLookKept(D,x,y))continue;const L=heroLookLum(d[i],d[i+1],d[i+2]),nrm=hi>lo?(L-lo)/(hi-lo):.5,c=heroLookRamp(Rm,0.06+0.86*(0.55*nrm+0.45*Math.min(1,L*2.2)));
+  d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];n++;}return n;}
+// one cached canvas per sprite+look, made from the loaded p- sprite; failures fall back to the plain sprite (cached, never retried)
+function heroLook(k,look,im){const key=k+"|"+look;if(HERO_LOOKS.has(key))return HERO_LOOKS.get(key);let cv=null;
+ try{const w=im.naturalWidth,h=im.naturalHeight;cv=document.createElement("canvas");cv.width=w;cv.height=h;const g=cv.getContext("2d");g.imageSmoothingEnabled=false;g.drawImage(im,0,0);
+  const id=g.getImageData(0,0,w,h);heroLookPixels(id.data,w,h,k.replace(/^p-/,""),look);g.putImageData(id,0,0);cv.naturalWidth=w;cv.naturalHeight=h;cv.dataset.look=look;cv.dataset.src="art6/fight/"+k+".png";HERO_LOOK_STATS.builds++;}
+ catch(e){cv=null;HERO_LOOK_STATS.fails++;}HERO_LOOKS.set(key,cv);return cv;}
+function heroArt(c){const k=heroKey(c),im=spr(k);if(!im)return null;const look=gearLookOf(c);return look==="cloth"?im:(heroLook(k,look,im)||im);}
+const GEAR_API={looks:GEAR_LOOKS,material:gearMaterial,lookOf:gearLookOf,family:gearFamily,kind:gearKind,heroArt,heroKey:c=>heroKey(c),lookCanvas:(k,look)=>{const im=spr(k);return im?(look==="cloth"?im:heroLook(k,look,im)):null;},
+ data:HERO_LOOK_DATA,ramp:HERO_LOOK_RAMP,lookPixels:heroLookPixels,stats:()=>Object.assign({cached:HERO_LOOKS.size},HERO_LOOK_STATS)};
+function figure(c){const cv=document.createElement("canvas");cv.className="s4fig";cv.width=240;cv.height=300;cv.dataset.look=gearLookOf(c);const g=cv.getContext("2d");
  const rg=g.createRadialGradient(120,110,10,120,150,190);rg.addColorStop(0,"#3a2a4a");rg.addColorStop(1,"#0a0610");g.fillStyle=rg;g.fillRect(0,0,240,300);
  const tg=g.createRadialGradient(40,40,2,40,40,160);tg.addColorStop(0,"rgba(255,170,80,.35)");tg.addColorStop(1,"rgba(255,170,80,0)");g.fillStyle=tg;g.fillRect(0,0,240,300);
  g.fillStyle="rgba(0,0,0,.45)";g.beginPath();g.ellipse(120,282,62,10,0,0,7);g.fill();drawHero(g,Object.assign({},c,{hp:1}),120,286,175,0,false);
  g.strokeStyle="rgba(200,160,90,.5)";g.lineWidth=2;g.strokeRect(3,3,234,294);return cv;}
+// ---- t2657u tap an item: its short description and quick stats show right away in the info box (no extra button). ----
+const ITEM_SLOT_NAME={weapon:"Weapon",offhand:"Off-hand",helmet:"Helmet",chest:"Chest armour",gloves:"Gloves",boots:"Boots",acc:"Ring or charm",use:"Potion",dish:"Meal",ing:"Ingredient",part:"Monster part",junk:"Junk",gear:"Tool",craft:"Crafted item"};
+function itemQuick(id){const it=R.ITEMS[id];if(!it)return [];const o=[["Type",ITEM_SLOT_NAME[it.slot]||it.slot]];
+ for(const [k,n] of [["atk","ATK"],["mag","MAG"],["def","DEF"],["hp","HP"]])if(it[k]&&typeof it[k]==="number")o.push([n,(it[k]>0?"+":"")+it[k]]);
+ if(it.a)o.push(["Armour",["","Light","Medium","Heavy"][it.a]||String(it.a)]);
+ if(it.slot==="chest"){const m=gearMaterial(id);o.push(["Look",{cloth:"Cloth",leather:"Leather",metal:"Metal"}[m]||"Cloth"]);}
+ if(it.heal)o.push(["Heals",it.heal>=1?"full":Math.round(it.heal*100)+"% HP"]);if(it.mana)o.push(["Mana",Math.round(it.mana*100)+"% MP"]);if(it.mp&&it.slot!=="acc")o.push(["Mana",it.mp>=1?"full":Math.round(it.mp*100)+"% MP"]);
+ if(it.revive)o.push(["Revives",Math.round(it.revive*100)+"% HP"]);
+ o.push(["Weight",it.w+" kg"]);const sp=E.sellPrice?E.sellPrice(id):it.v;if(sp)o.push(["Sells for",sp+" gold"]);return o;}
+function itemDesc(id,c){const it=R.ITEMS[id];if(!it)return "";const n=(it.n||"").toLowerCase(),A=["","Light","Medium","Heavy"][it.a]||"";let t="";
+ if(it.slot==="weapon"){const who=Object.keys(R.CLASSES).filter(k=>R.CLASSES[k].weapons.includes(it.t)).map(k=>R.CLASSES[k].name);t="A "+(it.t||"weapon")+" for your main hand."+(who.length?" Used by: "+who.join(", ")+".":"");}
+ else if(it.slot==="offhand")t=/tome|book/.test(n)?"A spell book for your off hand. It adds magic.":/dagger|knife|fang|talon/.test(n)?"A second blade for your off hand.":"A shield for your off hand. It blocks hits.";
+ else if(it.slot==="chest"){const m=gearMaterial(id);t=(A?A+" ":"")+"armour for your body. Your hero wears the "+m+" look with it.";}
+ else if(it.slot==="helmet"||it.slot==="gloves"||it.slot==="boots")t=(A?A+" ":"")+"armour for your "+(it.slot==="helmet"?"head":it.slot==="gloves"?"hands":"feet")+".";
+ else if(it.slot==="acc")t="A ring or charm. Each hero can wear two.";
+ else if(it.slot==="use")t=(it.revive?"Brings a fallen hero back. Use it in battle.":"Use it to feel better: "+(E.useText?E.useText(id):"")).replace(/: $/,".");
+ else if(it.slot==="dish")t="A cooked meal: "+(E.fxText&&E.dish&&E.dish(it.dish)?E.fxText(E.dish(it.dish).fx):"food")+".";
+ else if(it.slot==="ing")t="Used for cooking. It never spoils.";
+ else if(it.slot==="part")t="A monster part. Use it for crafting, or sell it.";
+ else if(it.slot==="junk")t="Junk. Sell it in a shop.";
+ else if(it.slot==="gear")t=it.tent?"A tent. You need it to save at a camp.":"A tool for the road.";
+ else if(it.slot==="craft")t=E.badText?E.badText(id):"A crafted item.";
+ if(it.worn)t+=" It is old and worn.";
+ if(c&&["weapon","offhand","helmet","chest","gloves","boots","acc"].includes(it.slot)){const s=it.slot==="acc"?"acc1":it.slot;t+=R.canEquip(c,id,s)?" "+c.name+" can use this.":" "+c.name+" can't use this.";}
+ return t;}
+// ---- t2657u Equip = compare first: what is in that slot now (or Nothing equipped) and every stat that would change; Confirm equips, Cancel changes nothing ----
+function cmpLine(c){return {atk:Math.round(R.power(c)),mag:Math.round(R.magicPower(c)),def:Math.round(R.defense(c)),hp:R.maxHp(c,hpMul()),mp:R.maxMp(c)};}
+function equipCompare(c,id,slot){const cur=c.equip[slot]||null,a0=cmpLine(c),t=clone(c);const ok=R.equip(t,id,slot),a1=ok?cmpLine(t):a0,rows=[];
+ for(const [k,n] of [["atk","ATK"],["mag","MAG"],["def","DEF"],["hp","HP"],["mp","MP"]]){const d=a1[k]-a0[k];if(d)rows.push({k,n,d,from:a0[k],to:a1[k],txt:(d>0?"+":"")+d+" "+n});}
+ return {ok,cur,curName:cur?R.ITEMS[cur].n:"Nothing equipped",rows};}
+function closeCmp(){const p=document.getElementById("s6cmp");if(p){p.remove();return true;}return false;}
+function cmpPanel(c,i,id,slot){closeCmp();const it=R.ITEMS[id];if(!it)return null;const cm=equipCompare(c,id,slot);
+ const bg=el("div","s6cmp");bg.id="s6cmp";bg.dataset.item=id;bg.dataset.slot=slot;bg.setAttribute("role","dialog");bg.setAttribute("aria-modal","true");bg.setAttribute("aria-label","Equip "+it.n+"?");
+ const card=el("div","s6cmpCard");const top=el("div","s6cmpTop");const ic=itemIc(id,"big");if(ic)top.appendChild(ic);top.appendChild(el("b","s6cmpName","Equip "+it.n+"?"));card.appendChild(top);
+ const now=el("div","s6cmpNow");now.appendChild(el("span","s4k",(SLN[slot]||slot)+" now: "));const nv=el("span","s4v",cm.curName);nv.dataset.cmpcur=cm.cur||"";now.appendChild(nv);card.appendChild(now);
+ const list=el("div","s6cmpRows");if(!cm.rows.length){const r=el("div","s6cmpRow same","No stat changes");r.dataset.cmp="none";list.appendChild(r);}
+ cm.rows.forEach(r=>{const row=el("div","s6cmpRow "+(r.d>0?"up":"down"));row.dataset.cmp=r.k;row.dataset.d=r.d;row.appendChild(el("b","",r.txt));row.appendChild(el("span","s6cmpFT",r.n+" "+r.from+" → "+r.to));list.appendChild(row);});card.appendChild(list);
+ const btns=el("div","s6cmpBtns");const cf=tapBtn("Confirm",()=>{closeCmp();tryEquip(c,i,id,slot);},"small");cf.dataset.cmpconfirm="1";const cn=tapBtn("Cancel",()=>closeCmp(),"small");cn.dataset.cmpcancel="1";
+ btns.appendChild(cn);btns.appendChild(cf);card.appendChild(btns);card.addEventListener("click",e=>e.stopPropagation());bg.addEventListener("click",e=>{e.preventDefault();closeCmp();});bg.appendChild(card);document.body.appendChild(bg);return bg;}
 let sheetSel=null; // {slot} or {bag:index}
-function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};const w=page("equip");w.classList.add("sheet");w.appendChild(head(c.name,()=>{sheetSel=null;partyScreen();}));
+function charScreen(i,pick){closeCmp();const c=live.party[i];if(pick)sheetSel={slot:pick};const w=page("equip");w.classList.add("sheet");w.appendChild(head(c.name,()=>{sheetSel=null;partyScreen();}));
  const strip=el("div","s4pick");live.party.forEach((m,k)=>{const b=el("button","s4pk"+(k===i?" sel":""));b.dataset.pick=k;b.appendChild(pimg(m,"s4pkp"));const t=el("span","s4pkt");t.appendChild(el("b","",m.name));t.appendChild(el("span","",R.CLASSES[m.cls].name+" Lv "+m.lvl));b.appendChild(t);b.addEventListener("click",e=>{e.preventDefault();sheetSel=null;charScreen(k);});strip.appendChild(b);});w.appendChild(strip);
  const sl=statLine(c),sel=sheetSel,selItem=sel&&sel.bag!=null?c.bag[sel.bag]:null;
  const colA=el("div","s4colA"),colB=el("div","s4colB");
  // figure with slot squares down both sides
  const doll=el("div","s4doll");const L=el("div","s4slc"),Rr=el("div","s4slc");
  const mk=s=>{const it=c.equip[s]&&R.ITEMS[c.equip[s]],ok=selItem&&fits(selItem,s),b=el("button","s4sq"+(it?" full":"")+(sel&&sel.slot===s?" sel":"")+(ok?(R.canEquip(c,selItem,s)?" ok":" no"):""));b.dataset.slot=s;b.appendChild((it&&itemIc(c.equip[s],"big"))||icon(s));b.appendChild(el("span","s4sqn",it?it.n:SLN[s]));b.setAttribute("aria-label",SLN[s]+": "+(it?it.n:"empty"));
-  b.addEventListener("click",e=>{e.preventDefault();if(selItem!=null&&fits(selItem,s)){tryEquip(c,i,selItem,s);return;}sheetSel=sel&&sel.slot===s?null:{slot:s};charScreen(i);});return b;};
+  b.addEventListener("click",e=>{e.preventDefault();if(selItem!=null&&fits(selItem,s)){/* t2657u: a glowing slot opens the same compare as Equip */if(R.canEquip(c,selItem,s))cmpPanel(c,i,selItem,s);else tryEquip(c,i,selItem,s);return;}sheetSel=sel&&sel.slot===s?null:{slot:s};charScreen(i);});return b;};
  ["helmet","chest","gloves","boots"].forEach(s=>L.appendChild(mk(s)));["weapon","offhand","acc1","acc2"].forEach(s=>Rr.appendChild(mk(s)));
  const pot=el("div","s4sq belt");pot.appendChild(icon("use"));pot.appendChild(el("span","s4sqn","Potions "+c.bag.filter(x=>R.ITEMS[x].slot==="use").length));Rr.appendChild(pot);
  doll.appendChild(L);doll.appendChild(figure(c));doll.appendChild(Rr);colA.appendChild(doll);
@@ -270,16 +373,17 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
   const opts=[...new Set(c.bag)].filter(id=>fits(id,s));if(!opts.length)info.appendChild(el("div","s4note","Nothing in the backpack fits here."));
   opts.forEach(id=>{const ok=R.canEquip(c,id,s);let pv=[];if(ok){const t=clone(c);R.equip(t,id,s);pv=diffText(sl,statLine(t));}
    const o=el("button","s4opt"+(ok?"":" off"));o.dataset.opt=id;withIc(o,id);o.appendChild(el("span","s4on",R.ITEMS[id].n+(ok?"":" (not allowed)")));const pe=el("span","s4pv");pv.forEach(x=>pe.appendChild(el("span",x[0]==="+"?"up":"down",x)));o.appendChild(pe);
-   o.addEventListener("click",e=>{e.preventDefault();tryEquip(c,i,id,s);});info.appendChild(o);});
+   o.addEventListener("click",e=>{e.preventDefault();if(ok)cmpPanel(c,i,id,s);else tryEquip(c,i,id,s);});info.appendChild(o);});
   if(cur){const o=el("button","s4opt","Take off "+R.ITEMS[cur].n);o.dataset.unequip=s;withIc(o,cur);o.addEventListener("click",e=>{e.preventDefault();if(!R.unequip(c,s))toast("Backpack too heavy");capVitals(c);sheetSel=null;charScreen(i);});info.appendChild(o);}}
  else if(selItem){const it=R.ITEMS[selItem];const cnt=c.bag.filter(x=>x===selItem).length,fl=it.slot==="dish"?freshLeft(selItem):null;info.appendChild(el("div","s4k",it.n+(cnt>1?" ×"+cnt:"")+" · "+it.w+" kg"+(it.slot==="junk"||it.slot==="part"?" · "+(it.slot==="part"?"monster part":"junk")+", sells for "+it.v+" gold":"")+(it.slot==="ing"?" · ingredient, never spoils":"")));
+  const tq=el("div","s6tap");tq.dataset.tap=selItem;const tqs=el("div","s6tapStats");itemQuick(selItem).forEach(([k,v])=>{const r=el("div","s6tapRow");r.appendChild(el("span","s4k",k));r.appendChild(el("span","s4v",String(v)));tqs.appendChild(r);});tq.appendChild(tqs);tq.appendChild(el("div","s6tapDesc",itemDesc(selItem,c)));info.appendChild(tq);
   if(it.slot==="dish")info.appendChild(el("div","s4sub",E.fxText(E.dish(it.dish).fx)+(fl!=null?" · spoils in "+fl+" steps":"")));
-  const slots=R.SLOTS.filter(s=>fits(selItem,s));if(slots.length){const s=slots.find(x=>!c.equip[x])||slots[0],ok=R.canEquip(c,selItem,s);
+  let eqSlot=null;const slots=R.SLOTS.filter(s=>fits(selItem,s));if(slots.length){const s=slots.find(x=>!c.equip[x])||slots[0],ok=R.canEquip(c,selItem,s);if(ok)eqSlot=s;
    if(ok){const t=clone(c);R.equip(t,selItem,s);const pe=el("div","s4pv");pe.dataset.preview="1";const d=diffText(sl,statLine(t));(d.length?d:["no change"]).forEach(x=>pe.appendChild(el("span",x[0]==="+"?"up":x[0]==="-"?"down":"",x)));info.appendChild(pe);
-    info.appendChild(el("div","s4note","Tap a glowing slot to equip."));}else info.appendChild(el("div","s4note bad","Your race or class can't use this."));}
+    info.appendChild(el("div","s4note","Tap Equip or a glowing slot to compare."));}else info.appendChild(el("div","s4note bad","Your race or class can't use this."));}
   if(it.craft){const ut=el("div","s4sub",E.useText(selItem));ut.dataset.usetext=selItem;info.appendChild(ut);}
   if(it.slot==="craft"){const bt=el("div","s4sub",E.badText(selItem));bt.dataset.badtext=selItem;info.appendChild(bt);}
-  const row=el("div","s4row s5rowR");if(it.slot==="craft"&&it.poison){const pb=tapBtn("Apply to weapon",()=>{if(!c.equip.weapon){toast("Equip a weapon first");return;}c.bag.splice(sel.bag,1);c.poison={f:E.POISON_FIGHTS,b:E.POISON_BONUS};sheetSel=null;toast(c.name+"'s "+R.ITEMS[c.equip.weapon].n+" is poisoned for "+E.POISON_FIGHTS+" fights");charScreen(i);},"small");pb.dataset.applypoison="1";row.appendChild(pb);}
+  const row=el("div","s4row s5rowR");if(eqSlot){const eb=tapBtn("Equip",()=>cmpPanel(c,i,selItem,eqSlot),"small");eb.dataset.equipcmp=eqSlot;row.appendChild(eb);}if(it.slot==="craft"&&it.poison){const pb=tapBtn("Apply to weapon",()=>{if(!c.equip.weapon){toast("Equip a weapon first");return;}c.bag.splice(sel.bag,1);c.poison={f:E.POISON_FIGHTS,b:E.POISON_BONUS};sheetSel=null;toast(c.name+"'s "+R.ITEMS[c.equip.weapon].n+" is poisoned for "+E.POISON_FIGHTS+" fights");charScreen(i);},"small");pb.dataset.applypoison="1";row.appendChild(pb);}
   if(it.slot==="craft"&&it.food){const eb=tapBtn("Eat",()=>{eatFrom(c,sel.bag);sheetSel=null;charScreen(i);},"small");eb.dataset.eat="1";row.appendChild(eb);}
   if(it.slot==="use"&&it.revive)row.appendChild(el("span","s4note","Use in battle")); /* t2398u: salts only in battle */
   if(it.slot==="use"&&!it.revive)row.appendChild(tapBtn("Use",()=>{c.bag.splice(sel.bag,1);R.useEffect(c,it,hpMul());sheetSel=null;charScreen(i);},"small"));
@@ -290,7 +394,7 @@ function charScreen(i,pick){const c=live.party[i];if(pick)sheetSel={slot:pick};c
  else info.appendChild(el("div","s4note dim","Tap a slot or a backpack item. Then tap the other to equip."));
  const wt=R.bagWeight(c),lim=R.carryLimit(c);colB.appendChild(el("div","s4lab","Backpack · Weight "+(Math.round(wt*10)/10)+" / "+lim+" kg"));colB.appendChild(bar(wt,lim,"wt"));
  const grid=el("div","s4bag"),stk=E.stacks(c.bag);stk.forEach(({id,n})=>{const k=c.bag.indexOf(id),it=R.ITEMS[id],fitsSel=sel&&sel.slot&&fits(id,sel.slot),b=el("button","s4sq"+(sel&&sel.bag===k?" sel":"")+(fitsSel?(R.canEquip(c,id,sel.slot)?" ok":" no"):""));b.dataset.bagi=k;b.dataset.item=id;
-  b.dataset.n=n;b.appendChild(itemIc(id,"big")||icon(it.slot));b.appendChild(el("span","s4sqn",it.n));if(n>1)b.appendChild(el("span","s5cnt","×"+n));b.addEventListener("click",e=>{e.preventDefault();if(sel&&sel.slot&&fits(id,sel.slot)){tryEquip(c,i,id,sel.slot);return;}sheetSel=sel&&sel.bag===k?null:{bag:k};charScreen(i);});grid.appendChild(b);});
+  b.dataset.n=n;b.appendChild(itemIc(id,"big")||icon(it.slot));b.appendChild(el("span","s4sqn",it.n));if(n>1)b.appendChild(el("span","s5cnt","×"+n));b.addEventListener("click",e=>{e.preventDefault();if(sel&&sel.slot&&fits(id,sel.slot)){/* t2657u: a glowing bag item after picking a slot opens the same compare */if(R.canEquip(c,id,sel.slot))cmpPanel(c,i,id,sel.slot);else tryEquip(c,i,id,sel.slot);return;}sheetSel=sel&&sel.bag===k?null:{bag:k};charScreen(i);});grid.appendChild(b);});
  for(let k=stk.length;k<Math.max(12,Math.ceil(stk.length/6)*6);k++)grid.appendChild(el("div","s4sq empty"));
  colB.appendChild(info);colB.appendChild(grid);const wrap=el("div","s4cols");wrap.appendChild(colA);wrap.appendChild(colB);w.appendChild(wrap);}
 // t2437u Skeptic: taking off (or swapping out) HP gear at full HP left HP above the new max (223/218). Cap HP and MP after any gear change.
@@ -423,7 +527,7 @@ function drawMon(g,m,i,W,H,t,flash){const q=monPose(i,W,H,t),{r,dx,dy,rot,sx,sy}
  g.save();g.translate(r.x+dx,r.y+dy);g.rotate(rot);g.scale(sx,sy);g.translate(-r.x,-r.y);
  if(m.boss)drawSprite(g,im,r.x,r.y+bob,r.w,r.h,flash);else drawSprite(g,im,r.x,r.y+bob,r.w,r.h,flash,r.y);
  if(m.boss){g.save();g.globalCompositeOperation="lighter";const p=0.5+0.5*Math.sin(t/300),cx=r.x+r.w*0.0,cy=r.y-r.h*0.72,rg=g.createRadialGradient(cx,cy,1,cx,cy,r.w*0.22);rg.addColorStop(0,"rgba(190,120,255,"+(0.35*p+0.15)+")");rg.addColorStop(1,"rgba(120,60,255,0)");g.fillStyle=rg;g.fillRect(cx-r.w*.3,cy-r.w*.3,r.w*.6,r.w*.6);g.restore();}g.restore();return r;}
-function drawHero(g,c,x,y,hh,t,act,i){const im=spr(heroKey(c)),dead=c.hp<=0,hit=fx.find(e=>e.k==="enemy"&&e.hero===i&&t>=e.t0&&t<e.t0+e.dur),p=hit?(t-hit.t0)/hit.dur:0,impact=hit&&p>.38&&p<.8;
+function drawHero(g,c,x,y,hh,t,act,i){const im=heroArt(c),dead=c.hp<=0,hit=fx.find(e=>e.k==="enemy"&&e.hero===i&&t>=e.t0&&t<e.t0+e.dur),p=hit?(t-hit.t0)/hit.dur:0,impact=hit&&p>.38&&p<.8;
  const action=fx.find(e=>e.hero===i&&e.k!=="enemy"&&t>=e.t0&&t<e.t0+e.dur);g.save();if(dead&&!hit){g.globalAlpha=0.5;g.translate(x,y);g.rotate(-1.35);g.translate(-x,-y);}
  const lunge=action?-hh*.3*Math.sin((t-action.t0)/action.dur*Math.PI):act?-hh*.18:0;
  if(!dead&&F&&!F.over){x+=Math.sin(t/570+i)*hh*.025;y+=Math.sin(t/430+i)*hh*.018;}if(impact)x+=hh*.13*Math.sin(p*25);
@@ -819,6 +923,13 @@ pb.addEventListener("click",e=>{e.preventDefault();if(S.mapOpen&&S.mapOpen())ret
 if(save)restore();
 updBtn();if(localStorage.getItem(DEV_NOFIGHT)!=="1"){const boot=()=>{if(window.SOTA_INTRO_BOOT)window.SOTA_INTRO_BOOT();else if(!live)creation();};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();}/* t2103u: intro.js shows the title-only menu first */window.addEventListener("resize",()=>{if(fcv&&ui==="fight")sizeF();closeBranch();});
 const sceneCSS=el("style");sceneCSS.textContent=`
+.s6tap{display:flex;flex-direction:column;gap:4px;padding:4px 0}.s6tapStats{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}.s6tapRow{display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(200,160,90,.22);font-size:14px}.s6tapDesc{font-size:15px;line-height:1.35}
+.s6cmp{position:fixed;inset:0;z-index:45;background:rgba(5,2,12,.62);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.s6cmpCard{width:100%;max-width:360px;max-height:calc(100vh - 48px);overflow-y:auto;box-sizing:border-box;background:#1c1230;border:2px solid #c8a05a;border-radius:12px;padding:12px 14px;color:#efe0b8;font:16px/1.35 Georgia,serif;box-shadow:0 8px 30px rgba(0,0,0,.7)}
+.s6cmpTop{display:flex;align-items:center;gap:10px;margin-bottom:8px}.s6cmpName{flex:1;font-size:19px;line-height:1.2}.s6cmpNow{margin:2px 0 8px}
+.s6cmpRows{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}.s6cmpRow{display:flex;justify-content:space-between;gap:8px;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.05);font-size:17px}
+.s6cmpRow.up b{color:#7dff8a}.s6cmpRow.down b{color:#ff8a7a}.s6cmpRow.same{color:#c8b890}.s6cmpFT{color:#c8b890;font-size:14px}
+.s6cmpBtns{display:flex;gap:10px}.s6cmpBtns .s4b{flex:1;min-height:48px}
 #s4 .s5scene{box-sizing:border-box;max-width:none;min-height:100%;background-position:center;background-size:cover;background-repeat:no-repeat;padding-bottom:100px}
 #s4 .s5scene.s5hub{background-size:contain;background-position:center}
 .s5scene .s4head,.s5scene .s4note,.s5scene .s4opt{background-color:rgba(12,8,18,.88);border-radius:8px;padding:10px;color:#efe0b8}
@@ -857,8 +968,8 @@ html:has(.s5craftpop) #s4toast{top:auto;bottom:calc(12px + env(safe-area-inset-b
 `;document.head.appendChild(sceneCSS);
 // test and debug hooks (no network, no secrets)
 S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>startFight([R.makeBoss(live.diff)],"boss"),live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
- setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
+ gear:GEAR_API,itemInfo:{quick:itemQuick,desc:itemDesc,compare:equipCompare,openCompare:cmpPanel,closeCompare:closeCmp},setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
-  return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=spr(heroKey(c)),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};
+  return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=heroArt(c),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};
 syncMazeSlots();
 })();

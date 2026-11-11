@@ -30,10 +30,10 @@ function rowBtns(h,k){
 
 test('t2615u pins: VER 94, party v34, rules v22 in index.html and sw.js; wait wording unchanged',()=>{
   const html=read('index.html'),sw=read('sw.js'),party=read('party.js');
-  a.match(sw,/^const VER="99",CACHE="sota-s1-v"\+VER/);
-  for(const p of ['party.js?v=37','rules.js?v=22'])for(const s of [html,sw])a.ok(s.includes(p),p);
-  a.equal(html.includes('party.js?v=36'),false);
-  a.equal(sw.includes('party.js?v=36'),false);
+  a.match(sw,/^const VER="100",CACHE="sota-s1-v"\+VER/);
+  for(const p of ['party.js?v=38','rules.js?v=22'])for(const s of [html,sw])a.ok(s.includes(p),p);
+  a.equal(html.includes('party.js?v=37'),false);
+  a.equal(sw.includes('party.js?v=37'),false);
   a.equal(html.includes('rules.js?v=21'),false);
   a.equal(sw.includes('rules.js?v=21'),false);
   a.ok(party.includes('const WAIT_UPDATE="Please wait for update to continue.";'));

@@ -1,0 +1,1026 @@
+{
+ "canvas": 64,
+ "poses": {
+  "human-warrior": {
+   "head": [
+    29,
+    8
+   ],
+   "torso": [
+    32,
+    34
+   ],
+   "handMain": [
+    18,
+    42
+   ],
+   "handOff": [
+    42,
+    43
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     -2,
+     0
+    ],
+    "chest": [
+     0,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    22,
+    61
+   ],
+   "footR": [
+    42,
+    61
+   ]
+  },
+  "human-rogue": {
+   "head": [
+    22,
+    19
+   ],
+   "torso": [
+    32,
+    45
+   ],
+   "handMain": [
+    14,
+    38
+   ],
+   "handOff": [
+    42,
+    46
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     -9,
+     11
+    ],
+    "chest": [
+     0,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    20,
+    60
+   ],
+   "footR": [
+    45,
+    61
+   ],
+   "crouch": true
+  },
+  "human-archer": {
+   "head": [
+    33,
+    6
+   ],
+   "torso": [
+    34,
+    35
+   ],
+   "handMain": [
+    9,
+    29
+   ],
+   "handOff": [
+    46,
+    21
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     2,
+     -2
+    ],
+    "chest": [
+     2,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    25,
+    60
+   ],
+   "footR": [
+    40,
+    61
+   ]
+  },
+  "human-mage": {
+   "head": [
+    30,
+    12
+   ],
+   "torso": [
+    34,
+    38
+   ],
+   "handMain": [
+    18,
+    36
+   ],
+   "handOff": [
+    37,
+    47
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     -2,
+     4
+    ],
+    "chest": [
+     1,
+     4
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    27,
+    59
+   ],
+   "footR": [
+    38,
+    61
+   ]
+  },
+  "elf-mage": {
+   "head": [
+    33,
+    6
+   ],
+   "torso": [
+    33,
+    34
+   ],
+   "handMain": [
+    21,
+    35
+   ],
+   "handOff": [
+    36,
+    45
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     4,
+     -3
+    ],
+    "chest": [
+     -1,
+     2
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    27,
+    60
+   ],
+   "footR": [
+    36,
+    61
+   ]
+  },
+  "elf-archer": {
+   "head": [
+    32,
+    7
+   ],
+   "torso": [
+    35,
+    37
+   ],
+   "handMain": [
+    10,
+    31
+   ],
+   "handOff": [
+    46,
+    38
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     3,
+     -1
+    ],
+    "chest": [
+     2,
+     2
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    24,
+    61
+   ],
+   "footR": [
+    41,
+    60
+   ]
+  },
+  "elf-rogue": {
+   "head": [
+    23,
+    12
+   ],
+   "torso": [
+    30,
+    43
+   ],
+   "handMain": [
+    13,
+    38
+   ],
+   "handOff": [
+    40,
+    45
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     -6,
+     3
+    ],
+    "chest": [
+     -1,
+     1
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    22,
+    61
+   ],
+   "footR": [
+    42,
+    60
+   ],
+   "crouch": true
+  },
+  "elf-warrior": {
+   "head": [
+    30,
+    7
+   ],
+   "torso": [
+    33,
+    35
+   ],
+   "handMain": [
+    22,
+    41
+   ],
+   "handOff": [
+    39,
+    43
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "armourOffsets": {
+    "helmet": [
+     2,
+     -2
+    ],
+    "chest": [
+     4,
+     4
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "heldRotation": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "footL": [
+    26,
+    61
+   ],
+   "footR": [
+    39,
+    60
+   ]
+  },
+  "dwarf-warrior": {
+   "head": [
+    28,
+    6
+   ],
+   "torso": [
+    32,
+    34
+   ],
+   "handMain": [
+    17,
+    40
+   ],
+   "handOff": [
+    42,
+    46
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "footL": [
+    24,
+    59
+   ],
+   "footR": [
+    40,
+    60
+   ],
+   "armourOffsets": {
+    "helmet": [
+     0,
+     0
+    ],
+    "chest": [
+     0,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "rotMain": 0,
+   "rotOff": 0
+  },
+  "dwarf-rogue": {
+   "head": [
+    22,
+    19
+   ],
+   "torso": [
+    31,
+    42
+   ],
+   "handMain": [
+    11,
+    44
+   ],
+   "handOff": [
+    46,
+    45
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "footL": [
+    20,
+    60
+   ],
+   "footR": [
+    44,
+    60
+   ],
+   "crouch": true,
+   "armourOffsets": {
+    "helmet": [
+     -6,
+     13
+    ],
+    "chest": [
+     0,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "rotMain": 1,
+   "rotOff": 0
+  },
+  "dwarf-archer": {
+   "head": [
+    29,
+    7
+   ],
+   "torso": [
+    31,
+    35
+   ],
+   "handMain": [
+    7,
+    30
+   ],
+   "handOff": [
+    43,
+    33
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "footL": [
+    23,
+    59
+   ],
+   "footR": [
+    40,
+    60
+   ],
+   "armourOffsets": {
+    "helmet": [
+     1,
+     1
+    ],
+    "chest": [
+     -1,
+     -2
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "variants": [
+    "chest-plate"
+   ]
+  },
+  "cat-mage": {
+   "head": [
+    30,
+    9
+   ],
+   "torso": [
+    32,
+    41
+   ],
+   "handMain": [
+    16,
+    41
+   ],
+   "handOff": [
+    36,
+    48
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "footL": [
+    26,
+    61
+   ],
+   "footR": [
+    39,
+    61
+   ],
+   "armourOffsets": {
+    "helmet": [
+     3,
+     2
+    ],
+    "chest": [
+     0,
+     1
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "rotMain": 0,
+   "rotOff": 0
+  },
+  "cat-rogue": {
+   "head": [
+    25,
+    14
+   ],
+   "torso": [
+    32,
+    41
+   ],
+   "handMain": [
+    14,
+    45
+   ],
+   "handOff": [
+    45,
+    49
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "footL": [
+    19,
+    59
+   ],
+   "footR": [
+    45,
+    61
+   ],
+   "crouch": true,
+   "armourOffsets": {
+    "helmet": [
+     -4,
+     5
+    ],
+    "chest": [
+     0,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "rotMain": 0,
+   "rotOff": 0,
+   "variants": [
+    "helmet-hood"
+   ]
+  },
+  "cat-warrior": {
+   "head": [
+    27,
+    9
+   ],
+   "torso": [
+    31,
+    40
+   ],
+   "handMain": [
+    18,
+    43
+   ],
+   "handOff": [
+    40,
+    43
+   ],
+   "feet": [
+    32,
+    63
+   ],
+   "footL": [
+    23,
+    61
+   ],
+   "footR": [
+    41,
+    61
+   ],
+   "armourOffsets": {
+    "helmet": [
+     0,
+     0
+    ],
+    "chest": [
+     0,
+     0
+    ]
+   },
+   "weaponZ": "front",
+   "weaponZByFamily": {},
+   "rotMain": 0,
+   "rotOff": 0
+  }
+ },
+ "held": {
+  "sword": {
+   "gripX": 20,
+   "gripY": 10,
+   "rot": 0,
+   "gripR90X": 21,
+   "gripR90Y": 20
+  },
+  "dagger": {
+   "gripX": 17,
+   "gripY": 14,
+   "rot": 0,
+   "gripR90X": 17,
+   "gripR90Y": 17
+  },
+  "axe": {
+   "gripX": 26,
+   "gripY": 9,
+   "rot": 0,
+   "gripR90X": 22,
+   "gripR90Y": 26
+  },
+  "mace": {
+   "gripX": 23,
+   "gripY": 8,
+   "rot": 0,
+   "gripR90X": 23,
+   "gripR90Y": 23
+  },
+  "staff": {
+   "gripX": 17,
+   "gripY": 21,
+   "rot": 0
+  },
+  "bow": {
+   "gripX": 9,
+   "gripY": 23,
+   "rot": 0
+  },
+  "buckler": {
+   "gripX": 15,
+   "gripY": 15,
+   "rot": 0
+  },
+  "tower": {
+   "gripX": 15,
+   "gripY": 15,
+   "rot": 0
+  },
+  "tome": {
+   "gripX": 15,
+   "gripY": 20,
+   "rot": 0
+  }
+ },
+ "heldProvisional": {
+  "status": "PROVISIONAL - Graphics Lead 2026-11-10: per-pose handMain/handOff below were eyeballed on art6/fight/p-*.png; where poses.<pose> now has real anchors from Character Sheet Artist, those win. weaponZ/heldRotation suggestions to copy into poses.<pose>: heldRotation 90 = rot 1 (uses the r90 file).",
+  "held.gripX/gripY/rot": "FINAL - measured on the drawn art (piece-canvas px, art rotation 0). bow canvas is 32x48 (held-bow-32x48.png); gripR90X/gripR90Y are in the held-<family>-r90-32.png canvas.",
+  "rotationConvention": "SPEC Addendum A: 90-degree steps only, CLOCKWISE on screen, around the GRIP point (not the canvas centre); the grip lands exactly on the hand anchor (handMain for weapons, handOff for buckler/tower/tome; the rogue offhand reuses held-dagger as-is). When rot=1 and held-<family>-r90-32.png exists (sword, dagger, axe, mace) the engine draws that file at gripR90X/gripR90Y instead of rotating. Diagonal weapons are drawn tip down-left, grip up-right; staff and bow upright; shields and tome face front.",
+  "poses": {
+   "human-warrior": {
+    "handMain": [
+     21,
+     48
+    ],
+    "handOff": [
+     35,
+     42
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "human-rogue": {
+    "handMain": [
+     13,
+     44
+    ],
+    "handOff": [
+     37,
+     50
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "human-archer": {
+    "handMain": [
+     16,
+     30
+    ],
+    "handOff": [
+     52,
+     25
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "human-mage": {
+    "handMain": [
+     16,
+     37
+    ],
+    "handOff": [
+     40,
+     46
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "elf-mage": {
+    "handMain": [
+     22,
+     37
+    ],
+    "handOff": [
+     40,
+     38
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "elf-archer": {
+    "handMain": [
+     12,
+     30
+    ],
+    "handOff": [
+     30,
+     30
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "elf-rogue": {
+    "handMain": [
+     14,
+     42
+    ],
+    "handOff": [
+     45,
+     33
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "elf-warrior": {
+    "handMain": [
+     27,
+     45
+    ],
+    "handOff": [
+     40,
+     40
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "dwarf-warrior": {
+    "handMain": [
+     24,
+     44
+    ],
+    "handOff": [
+     44,
+     38
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {
+     "sword": 90,
+     "dagger": 90,
+     "axe": 90,
+     "mace": 90
+    },
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "dwarf-rogue": {
+    "handMain": [
+     17,
+     45
+    ],
+    "handOff": [
+     42,
+     40
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "dwarf-archer": {
+    "handMain": [
+     21,
+     35
+    ],
+    "handOff": [
+     47,
+     34
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "cat-mage": {
+    "handMain": [
+     13,
+     39
+    ],
+    "handOff": [
+     28,
+     40
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "cat-rogue": {
+    "handMain": [
+     13,
+     47
+    ],
+    "handOff": [
+     46,
+     50
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {},
+    "rotMain": 0,
+    "rotOff": 0
+   },
+   "cat-warrior": {
+    "handMain": [
+     21,
+     45
+    ],
+    "handOff": [
+     36,
+     42
+    ],
+    "weaponZ": "front",
+    "weaponZByFamily": {},
+    "heldRotation": {
+     "sword": 90,
+     "dagger": 90,
+     "axe": 90,
+     "mace": 90
+    },
+    "rotMain": 0,
+    "rotOff": 0
+   }
+  },
+  "rotFields": "Game Builder 2026-11-10: engine reads 'rot'. held.<family>.rot is the fallback (0-3, clockwise 90-degree steps around the grip). poses.<pose>.rotMain (main-hand piece) and rotOff (off-hand piece, incl. rogue offhand dagger) override it per pose, 0-3 clockwise. All set to 0 = pieces as drawn in p-*.png poses; rot 1 uses the r90 file where one exists. Older heldRotation {} is unused."
+ },
+ "armour": {
+  "hm": {
+   "boot-L-boot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-L-softboot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-R-boot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-R-softboot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "glove-main-gauntlet": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-main-wraps": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-off-gauntlet": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-off-wraps": {
+    "anchorX": 32,
+    "anchorY": 32
+   }
+  },
+  "dw": {
+   "boot-L-boot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-L-softboot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-R-boot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-R-softboot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "glove-main-gauntlet": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-main-wraps": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-off-gauntlet": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-off-wraps": {
+    "anchorX": 32,
+    "anchorY": 32
+   }
+  },
+  "cat": {
+   "boot-L-boot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-L-softboot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-R-boot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "boot-R-softboot": {
+    "anchorX": 32,
+    "anchorY": 60
+   },
+   "glove-main-gauntlet": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-main-wraps": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-off-gauntlet": {
+    "anchorX": 32,
+    "anchorY": 32
+   },
+   "glove-off-wraps": {
+    "anchorX": 32,
+    "anchorY": 32
+   }
+  }
+ }
+}

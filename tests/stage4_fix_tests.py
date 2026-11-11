@@ -238,12 +238,12 @@ def t_sheet_equip(p):
     if w>h:check(ev(pg,'(()=>{const a=document.querySelector(".s4colA").getBoundingClientRect(),b=document.querySelector(".s4colB").getBoundingClientRect();return b.left>=a.right-1})()'),'landscape sheet not two columns')
     # item then slot
     ttap(pg,'#s4 .s4bag [data-item=robe]');pv=ev(pg,'(document.querySelector("[data-preview]")||{}).textContent||""');check(re.search(r'[+-]\d+ (DEF|HP|ATK|MAG)|no change',pv),'no preview for robe: '+pv)
-    check(ev(pg,'document.querySelector(".s4doll [data-slot=chest]").classList.contains("ok")'),'chest slot not lit for robe');ttap(pg,'.s4doll [data-slot=chest]');check(ev(pg,'SOTA.rpg.live().party[0].equip.chest')=='robe','item-then-slot equip failed')
+    check(ev(pg,'document.querySelector(".s4doll [data-slot=chest]").classList.contains("ok")'),'chest slot not lit for robe');ttap(pg,'.s4doll [data-slot=chest]');ttap(pg,'[data-cmpconfirm]');check(ev(pg,'SOTA.rpg.live().party[0].equip.chest')=='robe','item-then-slot equip failed')  # t2657u: glowing slot opens the compare
     # race limit: cat can't wear plate
     ttap(pg,'#s4 .s4bag [data-item=plate]');check('can' in ev(pg,'document.getElementById("s4info").textContent'),'no limit message');ttap(pg,'.s4doll [data-slot=chest]');check(ev(pg,'SOTA.rpg.live().party[0].equip.chest')=='robe','cat wore plate')
     # slot then item
     ev(pg,'SOTA.rpg.charScreen(0)');ttap(pg,'.s4doll [data-slot=acc2]');check(ev(pg,'document.querySelector(".s4bag [data-item=ring]").classList.contains("ok")'),'ring not lit for ring slot')
-    ttap(pg,'#s4 .s4bag [data-item=ring]');check(ev(pg,'SOTA.rpg.live().party[0].equip.acc2')=='ring','slot-then-item equip failed')
+    ttap(pg,'#s4 .s4bag [data-item=ring]');ttap(pg,'[data-cmpconfirm]');check(ev(pg,'SOTA.rpg.live().party[0].equip.acc2')=='ring','slot-then-item equip failed')  # t2657u: glowing bag item opens the compare
     ttap(pg,'.s4doll [data-slot=acc2]');ttap(pg,'[data-unequip=acc2]');check(ev(pg,'SOTA.rpg.live().party[0].equip.acc2') is None,'take off failed');b.close()
 def t_fight_layout(p):
   for w,h in SIZES:
