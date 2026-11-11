@@ -25,14 +25,14 @@ const RO={window:{}};vm.createContext(RO);vm.runInContext(read('rules.js'),RO);R
 const R=RO.window.RPG,X=RO.window.ECON;
 
 // t2419u: the cap is now zones 1-4; zone 3 checks still hold, and Tavern 3's zone-4 neighbour (51,15) is open.
-test('cap: zones 1-4 open, zone 5 closed; Tavern 3 and its zone-4 neighbour (51,15) are open',()=>{
- a.deepEqual(plain(API.DEFAULT),{maxZone:4,extraCells:[]});a.ok(Object.isFrozen(API.DEFAULT)&&Object.isFrozen(API.DEFAULT.extraCells));
- for(let i=0;i<N*N;i++)a.equal(cap.isOpen(i%N,Math.floor(i/N)),Z(i)<=4,`cell ${i%N},${Math.floor(i/N)}`);
+test('cap: zones 1-5 open (t2721u; was zones 1-4); Tavern 3 and its zone-4 neighbour (51,15) are open',()=>{
+ a.deepEqual(plain(API.DEFAULT),{maxZone:5,extraCells:[]});a.ok(Object.isFrozen(API.DEFAULT)&&Object.isFrozen(API.DEFAULT.extraCells));
+ for(let i=0;i<N*N;i++)a.equal(cap.isOpen(i%N,Math.floor(i/N)),Z(i)>=1&&Z(i)<=5,`cell ${i%N},${Math.floor(i/N)}`);
  a.deepEqual(plain(T3),[51,14]);a.equal(cap.isOpen(51,14),true);a.equal(cap.isOpen(51,15),true);a.equal(cap.isOpen(19,24),true);a.equal(cap.isOpen(19,23),true);
- a.equal(cap.isZoneOpen(3),true);a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),false);});
-test('cap: the ONLY walkable edge out of the open area is Tavern 4 west to (46,48) (t2419u; was Tavern 3 south)',()=>{const out=[];
+ a.equal(cap.isZoneOpen(3),true);a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),true);});
+test('cap: no walkable edge leads out of the open area (t2721u; was Tavern 4 west to (46,48), t2419u; before that Tavern 3 south)',()=>{const out=[];
  for(let i=0;i<N*N;i++)if(cap.isOpen(i%N,Math.floor(i/N)))for(const j of nb(i))if(!cap.isOpen(j%N,Math.floor(j/N)))out.push([i%N,Math.floor(i/N),j%N,Math.floor(j/N)]);
- a.deepEqual(out,[[47,48,46,48]]);});
+ a.deepEqual(out,[]);});
 // live engine (game.js) like content_cap_test: walk tavern 2 -> zone 3 through the 2-3 arch; Tavern 3 south is the 3-4 arch (Zone 4 tab crosses)
 function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext(read('maze-data.js'),c);vm.runInContext(read('content-cap.js'),c);
  const els=new Map(),storage=new Map([["sota.stage1.save",JSON.stringify({x,y,f})]]);
@@ -117,12 +117,12 @@ const mm=read('tests/maze_music_cap_test.js'),musicFor=eval('('+mm.slice(mm.inde
 test('music: under the DEFAULT cap zone 3 cells play maze_zone3 (real music.js maze picker); the file exists',()=>{
  a.ok(fs.existsSync(path.join(__dirname,'..','music','maze_zone3.mp3')));
  for(const c of [[19,24],[19,23],[30,10],[51,14]])a.equal(musicFor(null,3,c[0],c[1]).maze(),'maze_zone3',String(c));
- a.equal(musicFor(null,2,18,24).maze(),'maze_zone2');a.equal(musicFor(null,4,51,15).maze(),'maze_zone4','t2419u: zone 4 is open and plays its own music');a.equal(musicFor(null,5,46,48).maze(),'maze_zone4','zone 5 must not play its music yet');});
+ a.equal(musicFor(null,2,18,24).maze(),'maze_zone2');a.equal(musicFor(null,4,51,15).maze(),'maze_zone4','t2419u: zone 4 is open and plays its own music');a.equal(musicFor(null,5,46,48).maze(),'maze_zone5','t2721u: zone 5 is open and plays its own music');});
 test('t2404u: zone 3 monsters have pencil sketches and a fought zone 3 beast is recorded and listed in Beasts',()=>{
  for(const nm of ['centaur','direwolf','ghoul','harpy','skeleton','werewolf','wraith'])a.equal(fs.existsSync(path.join(__dirname,'..','art-intro','journal','monsters','z3-'+nm+'.webp')),true,'z3 sketch missing: '+nm);
  const h=harness(),L=h.r.live();L.beasts=[];h.r.startFight([h.R.makeMonster(3,0,20,0,'normal'),h.R.makeMonster(1,0,1,0,'normal')],'random');const z3=plain(L.beasts);a.equal(z3.length,2);a.ok(/^z3-/.test(z3[0]),z3.join());a.equal(z3[1],'z1-rat');h.r.forceEnd('ran');h.r.closeUI();
  vm.runInContext(read('intro-art-data.js'),h.c);const i=h.intro();i.openJournal('beasts');const jb=h.document.getElementById('ijour');a.deepEqual(jb.querySelectorAll('[data-beast]').map(f=>f.dataset.beast),['z1-rat',z3[0]]);});
 test('cache pins: content-cap, econ and party moved together with sw VER (>=80), rules.js and match index.html (t2419u values)',()=>{const html=read('index.html'),sw=read('sw.js');
  const ver=+sw.match(/^const VER="(\d+)"/)[1];a.ok(ver>=80,'VER '+ver+' (stage1-build is 79)');
- for(const pin of ['content-cap.js?v=7','econ.js?v=17','party.js?v=40','rules.js?v=23'] /* party 38 in VER 100 (gear rework on live 99) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
+ for(const pin of ['content-cap.js?v=8','econ.js?v=17','party.js?v=40','rules.js?v=24'] /* party 38 in VER 100 (gear rework on live 99) */)for(const s of [html,sw])a.ok(s.includes(pin),'missing '+pin);
  for(const old of ['content-cap.js?v=5"','econ.js?v=15"','party.js?v=28"','rules.js?v=19"','rules.js?v=18"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);});

@@ -24,15 +24,15 @@ const Z4=[["Minotaur","z4-minotaur"],["Griffin","z4-griffin"],["Lizard man","z4-
 function hero(cls,lvl){const c=R.newChar('H','human',cls,K[cls].alloc,K[cls].skill);c.lvl=lvl;c.hp=R.maxHp(c,1);c.mp=R.maxMp(c);return c;}
 function mon(k,lvl=30){return R.makeMonster(4,k,lvl,0,'normal');}
 
-test('cap: zones 1-4 open, zone 5 closed; Tavern 4 (47,48) open and its zone-5 neighbour (46,48) closed',()=>{
- a.deepEqual(plain(API.DEFAULT),{maxZone:4,extraCells:[]});a.ok(Object.isFrozen(API.DEFAULT)&&Object.isFrozen(API.DEFAULT.extraCells));
- for(let i=0;i<N*N;i++)a.equal(cap.isOpen(i%N,Math.floor(i/N)),Z(i)<=4,`cell ${i%N},${Math.floor(i/N)}`);
- a.deepEqual(plain(T4),[47,48]);a.equal(Z(idx(T4)),4);a.equal(cap.isOpen(47,48),true);a.equal(cap.isOpen(46,48),false);a.equal(Z(idx([46,48])),5);
- a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),false);
- let z5=0;for(let i=0;i<N*N;i++)if(Z(i)===5){z5++;a.equal(cap.isOpen(i%N,Math.floor(i/N)),false);}a.equal(z5,716,'every zone 5 cell stays closed');});
-test('cap: the ONLY walkable edge out of the open area is Tavern 4 west to (46,48)',()=>{const out=[];
+test('cap: zones 1-5 open (t2721u; was zone 5 closed); Tavern 4 (47,48) and its zone-5 neighbour (46,48) open',()=>{
+ a.deepEqual(plain(API.DEFAULT),{maxZone:5,extraCells:[]});a.ok(Object.isFrozen(API.DEFAULT)&&Object.isFrozen(API.DEFAULT.extraCells));
+ for(let i=0;i<N*N;i++)a.equal(cap.isOpen(i%N,Math.floor(i/N)),Z(i)>=1&&Z(i)<=5,`cell ${i%N},${Math.floor(i/N)}`);
+ a.deepEqual(plain(T4),[47,48]);a.equal(Z(idx(T4)),4);a.equal(cap.isOpen(47,48),true);a.equal(cap.isOpen(46,48),true);a.equal(Z(idx([46,48])),5);
+ a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),true);
+ let z5=0;for(let i=0;i<N*N;i++)if(Z(i)===5){z5++;a.equal(cap.isOpen(i%N,Math.floor(i/N)),true);}a.equal(z5,716,'every zone 5 cell is open (t2721u)');});
+test('cap: no walkable edge leads out of the open area (t2721u; was Tavern 4 west to (46,48))',()=>{const out=[];
  for(let i=0;i<N*N;i++)if(cap.isOpen(i%N,Math.floor(i/N)))for(const j of nb(i))if(!cap.isOpen(j%N,Math.floor(j/N)))out.push([i%N,Math.floor(i/N),j%N,Math.floor(j/N)]);
- a.deepEqual(out,[[47,48,46,48]]);});
+ a.deepEqual(out,[]);});
 function engine(x,y,f=0){const c={window:{}};vm.createContext(c);vm.runInContext(read('maze-data.js'),c);vm.runInContext(read('content-cap.js'),c);
  const els=new Map(),storage=new Map([["sota.stage1.save",JSON.stringify({x,y,f})]]);
  function el(id){if(!els.has(id))els.set(id,{textContent:"",style:{},classList:{add(){},remove(){}},addEventListener(){},getContext(){return {createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};}};}});return els.get(id);}
@@ -128,19 +128,19 @@ test('Beasts: a fought zone 4 beast is recorded on the save, listed with its pen
  h.click(jb.querySelector('[data-beast=z4-manticore]'));const d=h.document.getElementById('ijour').querySelector('[data-beast-detail=z4-manticore]');a.ok(d,'no detail');const every=n=>[n].concat(...(n.children||[]).map(every));a.ok(every(d).some(e=>/barbs that land ugly/.test(e.textContent||'')),'zone 4 note missing');a.ok(every(d).some(e=>e.tagName==='IMG'&&/z4-manticore\.webp/.test(e.src)),'sketch missing in detail');
  L.beasts=Z4.map(z=>z[1]);i.openJournal('inventory');i.openJournal('beasts');a.deepEqual(h.document.getElementById('ijour').querySelectorAll('[data-beast]').map(f=>f.dataset.beast),Z4.map(z=>z[1]));});
 test('offline: both manifests and the precache list each zone 4 sketch once; pins VER 88 (zone 4 content pass on the VER 87 port of live 9f392ea), content-cap v7, rules v23, party v35, intro v21, intro-art-data v6',()=>{
- const sw=read('sw.js'),art=read('intro-art-data.js'),html=read('index.html');a.match(sw,/^const VER="102",/);
+ const sw=read('sw.js'),art=read('intro-art-data.js'),html=read('index.html');a.match(sw,/^const VER="103",/);
  const c={window:{},self:{addEventListener(){}}};vm.runInNewContext(art,c);vm.runInNewContext(sw+';this.shell=SHELL;',c);
  for(const [,f] of Z4){a.equal(c.window.INTRO_ART.filter(p=>p==='journal/monsters/'+f+'.webp').length,1,f);a.equal(c.shell.filter(p=>p==='art-intro/journal/monsters/'+f+'.webp').length,1,f);}
  a.equal(new Set(c.shell).size,c.shell.length,'SHELL has duplicates');
- for(const p of ['content-cap.js?v=7','rules.js?v=23','party.js?v=40','intro.js?v=21','intro-art-data.js?v=6','econ.js?v=17','splash.js?v=1','story.js?v=25','music.js?v=20'])for(const s of [html,sw])a.ok(s.includes(p),p);
+ for(const p of ['content-cap.js?v=8','rules.js?v=24','party.js?v=40','intro.js?v=21','intro-art-data.js?v=6','econ.js?v=17','splash.js?v=1','story.js?v=25','music.js?v=20'])for(const s of [html,sw])a.ok(s.includes(p),p);
  for(const old of ['content-cap.js?v=6"','rules.js?v=21"','party.js?v=30"','intro.js?v=17"','intro-art-data.js?v=5"'])a.ok(!html.includes(old)&&!sw.includes(old),'stale '+old);
  for(const m of html.matchAll(/<script src="([^"]+\?v=\d+)"/g))a.ok(c.shell.includes(m[1]),m[1]);});
 test('save keys unchanged: party slots, legacy party key and maze save are the same names',()=>{const p=read('party.js'),g=read('game.js');
  a.match(p,/const SAVE="sota\.party",/);a.match(p,/const SLOT=SAVE\+"\.slot",ACTIVE=SAVE\+"\.active";/);a.ok(/sota\.stage1\.save/.test(g));
  const h=harness(),L=h.r.live();Object.assign(h.pos,{x:47,y:48,f:3});L.gold=55;h.r.s5.leaveShop(3);h.click(q(h,'[data-save-slot=2]'));a.ok(h.storage.has('sota.party.slot2'));
  Object.assign(h.pos,{x:0,y:64,f:0});L.gold=1;a.equal(h.r.loadSlot(2),true);a.deepEqual([h.pos.x,h.pos.y],[47,48]);a.equal(h.r.live().gold,55);});
-test('music: zone 4 plays maze_zone4 under the default cap; zone 5 falls back to zone 4',()=>{const mm=read('tests/maze_music_cap_test.js'),musicFor=eval('('+mm.slice(mm.indexOf('function musicFor'),mm.indexOf('\ntest('))+'\n)');
- a.ok(fs.existsSync(path.join(__dirname,'..','music','maze_zone4.mp3')));a.equal(musicFor(null,4,51,15).maze(),'maze_zone4');a.equal(musicFor(null,4,47,48).maze(),'maze_zone4');a.equal(musicFor(null,5,46,48).maze(),'maze_zone4');});
+test('music: zone 4 plays maze_zone4 under the default cap; zone 5 plays maze_zone5 (t2721u; was falls back to zone 4)',()=>{const mm=read('tests/maze_music_cap_test.js'),musicFor=eval('('+mm.slice(mm.indexOf('function musicFor'),mm.indexOf('\ntest('))+'\n)');
+ a.ok(fs.existsSync(path.join(__dirname,'..','music','maze_zone4.mp3')));a.equal(musicFor(null,4,51,15).maze(),'maze_zone4');a.equal(musicFor(null,4,47,48).maze(),'maze_zone4');a.equal(musicFor(null,5,46,48).maze(),'maze_zone5');});
 test('art locks: fight sprites, camp/tavern/dialog art and occupancy fixtures are untouched; only zone 4 sketches are new images',()=>{
  const {execFileSync}=require('node:child_process'),root=path.join(__dirname,'..');
  const st=execFileSync('git',['-C',root,'status','--porcelain','--','art6','art-dialogue','art-intro'],{encoding:'utf8'}).split('\n').filter(Boolean).map(l=>l.slice(3));

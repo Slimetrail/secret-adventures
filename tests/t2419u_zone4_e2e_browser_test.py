@@ -3,7 +3,7 @@ A level 30 party (hero + Mira + Sorrel, points spent 2 main : 1 CON, all skill s
 Zone 4 exit (4-slot save picker), walks by taps into zone 4 and on to Camp 15 (tent save), fights zone 4 monsters by taps with a
 sensible player (heal when hurt, skills when MP allows, else Attack; lowest-HP target) until moonleaf drops, checks the zone 4
 mechanics show in the fight log, walks by taps from Camp 22 into Tavern 4 (Brunn joins), shops, saves, checks Tavern 4's Zone 5 exit
-shows exactly "Please wait for update to continue." and the 4-5 archway west of Tavern 4 bumps without that toast, opens the Beasts tab (zone 4 pencil sketches + detail),
+opens the save picker (t2721u: zone 5 is open; it used to show exactly "Please wait for update to continue.") and the 4-5 archway west of Tavern 4 bumps without that toast, opens the Beasts tab (zone 4 pencil sketches + detail),
 opens the map, then reloads and continues the Tavern 4 save from the title, then loses on purpose (Attack only at low HP)
 three times: two zone 4 packs and one walk fight, and checks the loss returns to the last save. Every page error and console
 error is kept with its stack trace (game-export/t2419u-zone4/page-errors.txt); a "reading 'update'" error is also written to update-error.txt. Long trips use the teleport hook; arrivals are taps.
@@ -111,8 +111,8 @@ def rest(pg):
 def e2e(p):
   b,c=T.ctx(p);pg=T.fresh(c);hook(pg)
   T.check(T.ui(pg)=='create','creation not open');T.full_create(pg,'Tess','human','warrior')
-  T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==4,'cap is not zones 1-4')
-  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="102"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
+  T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5 (t2721u)')
+  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="103"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
   # ---- 1. a level 30 party at Tavern 3 (as after zone 3): hero + Mira + Sorrel, points spent, skills learned, kit, tents, gold
   T.ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];while(h.lvl<30)RPG.gainXp(h,RPG.xpNeed(h.lvl),1);
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,30));
@@ -185,10 +185,11 @@ def e2e(p):
   T.ttap(pg,'#s4 .s4back');T.ttap(pg,'[data-tab=done]');T.check(T.ui(pg)=='save-picker','Done did not open the save picker');T.ttap(pg,'[data-save-slot="2"]')
   T.check(T.ui(pg)=='tavern','save did not return to Tavern 4');sv=T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2"))');T.check(sv['at']['name']=='Tavern 4' and len(sv['party'])==4,'Tavern 4 save wrong')
   slots=T.ev(pg,'Object.keys(localStorage).filter(k=>k.startsWith("sota.")).sort()');say('save keys:',slots)
-  # ---- 5. Tavern 4 Zone 5 waits with the exact text; west of Tavern 4 is the 4-5 archway (fwd bumps and stays, no wait toast)
-  T.ttap(pg,'[data-hub="2"]');pg.wait_for_timeout(2600);T.check(T.ui(pg)=='tavern','Zone 5 left the tavern')
-  T.check(T.ev(pg,f'document.body.innerText.includes("{WAIT}")'),'no wait message on Zone 5');shot(pg,'07-tavern4-zone5-wait.png')
-  T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 4','Zone 5 wait changed the save')
+  # ---- 5. t2721u: Tavern 4 Zone 5 is open now: it opens the 4-slot save picker (no wait text); closing the picker saves nothing.
+  #      West of Tavern 4 is still the 4-5 archway (fwd bumps and stays, no wait toast). (was: Zone 5 waits with the exact text)
+  T.ttap(pg,'[data-hub="2"]');pg.wait_for_timeout(600);T.check(T.ui(pg)=='save-picker' and T.ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'Tavern 4 Zone 5 exit did not open the save picker')
+  T.check(not T.ev(pg,f'document.body.innerText.includes("{WAIT}")'),'Tavern 4 Zone 5 still waits');shot(pg,'07-tavern4-zone5-save-picker.png')
+  T.check(T.ev(pg,'JSON.parse(localStorage.getItem("sota.party.slot2")).at.name')=='Tavern 4','opening the Zone 5 picker changed the save')
   T.ev(pg,'SOTA.rpg.closeUI()');T.ev(pg,'SOTA.teleport(47,48,3)');pg.wait_for_timeout(200);T.ttap(pg,'[data-cmd=fwd]');s=st(pg);T.check([s['x'],s['y']]==[47,48],'walked into zone 5')
   T.check(T.ev(pg,'document.getElementById("s4toast").textContent')!=WAIT,'wait toast on the 4-5 archway (wait is the Zone 5 tab)');shot(pg,'08-zone5-arch-bump.png')
   if T.ui(pg)=='tavern' or (T.ev(pg,'SOTA.storyOpen&&SOTA.storyOpen()')):T.ev(pg,'SOTA.rpg.closeUI()')

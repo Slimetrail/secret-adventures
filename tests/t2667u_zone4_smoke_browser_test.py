@@ -3,7 +3,7 @@ Per size: loads with no console/page errors, creates a hero by taps, a L30 hero+
 (seam 3-4), takes Zone 4 by the save picker, fights one zone 4 fight by taps, plays the zone 4 camp talk (STORY.camp.dark) at a
 zone 4 camp, checks the party-mix picker with 1-companion and multi-companion parties (TEST talks injected through the test hook
 only), checks a zone 1-3 camp talk still plays, bumps the Tavern 4 archway (seam 4-5, Brunn joins), plays the zone 4 tavern talk
-(STORY.tavern[3] t3a), checks Zone 5 plays exactly the wait text, then reloads and continues the Tavern 4 save (save/load) and
+(STORY.tavern[3] t3a), checks Zone 5 opens the save picker (t2721u; it used to play exactly the wait text), then reloads and continues the Tavern 4 save (save/load) and
 checks the maze still runs (no freeze). Sizes: 412x891 portrait, 1024x768 landscape; plus 891x412 (phone sideways notice only).
 Usage: python tests/t2667u_zone4_smoke_browser_test.py http://127.0.0.1:PORT/"""
 import sys,os,json,time
@@ -59,7 +59,7 @@ def run(p,w,h,tag):
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg&&window.Z4Banter');SPL.pass_splash(pg);ev(pg,'localStorage.clear()')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg&&window.Z4Banter');SPL.pass_splash(pg);ev(pg,'SOTA.setAnim(false)');T.past_title(pg)
   say(f'[{tag}] loaded in {time.time()-t0:.1f}s; VER',ev(pg,'fetch("sw.js").then(r=>r.text()).then(t=>t.match(/VER="(\\d+)"/)[1])'),'maxZone',ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone'),'seams',len(ev(pg,'SOTA.seams()')))
-  T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==4,'cap not 4');T.check(len(ev(pg,'SOTA.seams()'))==4,'not 4 seams')
+  T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap not 5 (t2721u)');T.check(len(ev(pg,'SOTA.seams()'))==4,'not 4 seams')
   T.full_create(pg,'Tess','human','warrior');drain(pg)
   ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];while(h.lvl<30)RPG.gainXp(h,RPG.xpNeed(h.lvl),1);const s=SOTA.rpg.s6.st();
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,30));s.seen.join0=1;s.seen.join1=1;
@@ -128,7 +128,9 @@ def run(p,w,h,tag):
   T.check(any(e['slot']=='tavern' and e['id']=='t3a' for e in tv),f'zone 4 tavern talk t3a did not play {tv}')
   T.check(T.ui(pg)=='tavern','Tavern 4 not open');labels=ev(pg,'[...document.querySelectorAll("[data-hub]")].map(b=>b.textContent)');T.check(labels==['Zone 4','Shop','Zone 5'],f'tavern 4 hub {labels}')
   pg.wait_for_timeout(1600);T.ttap(pg,'[data-hub="2"]');pg.wait_for_timeout(300);wl=drain(pg);say(f'[{tag}] Zone 5 tab: {wl}')
-  T.check(wl and wl[0][2]==WAIT,'Zone 5 tab is not exactly the wait text');T.check(ev(pg,'SOTA.state().zone')==4,'left zone 4')
+  # t2721u: zone 5 is open, so the Zone 5 tab opens the 4-slot save picker (no wait text); closing it stays in zone 4 (was: exactly the wait text)
+  T.check(not any(x[2]==WAIT for x in (wl or [])) and WAIT not in ev(pg,'document.body.innerText'),'Zone 5 tab still shows the wait text')
+  T.check(T.ui(pg)=='save-picker' and ev(pg,'document.querySelectorAll("[data-save-slot]").length')==4,'Zone 5 tab did not open the save picker');T.check(ev(pg,'SOTA.state().zone')==4,'left zone 4')
   ev(pg,'SOTA.rpg.closeUI()');ev(pg,f'SOTA.teleport({cell[0]},{cell[1]},0)');pg.wait_for_timeout(400);ev(pg,'Z4Banter.test.reset()')
   T.check(resave(pg),'full-party camp save failed');mb=last(pg);lb=drain(pg)
   say(f'[{tag}] Mix B camp (full party, Brunn in): {mb} speakers {[x[1] for x in lb]}; first line {lb[0][2][:60] if lb else ""}')

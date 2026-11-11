@@ -104,7 +104,8 @@ test("maze picker still follows the content cap",()=>{
     return sandbox.window.SOTA.music.maze();
   }
   // t2362u step 2: the default cap now opens zone 3, so the zone 3 doorway plays zone 3 music; zone 4 still falls back
-  // t2419u: the default cap now opens zone 4 too; zone 5 still falls back to zone 4
-  a.equal(load(API.create(M.n,M.zone),3),"maze_zone3");a.equal(load(API.create(M.n,M.zone),4),"maze_zone4");a.equal(load(API.create(M.n,M.zone),5),"maze_zone4");
+  // t2419u: the default cap now opens zone 4 too; t2721u: zone 5 is open and plays its own cue
+  a.equal(load(API.create(M.n,M.zone),3),"maze_zone3");a.equal(load(API.create(M.n,M.zone),4),"maze_zone4");a.equal(load(API.create(M.n,M.zone),5),"maze_zone5");
+  a.equal(load(API.create(M.n,M.zone,{maxZone:4,extraCells:[]}),5),"maze_zone4");
   a.equal(load(API.create(M.n,M.zone,{maxZone:3,extraCells:[]}),3),"maze_zone3");
 });

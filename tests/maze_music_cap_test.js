@@ -30,7 +30,7 @@ function musicFor(capOpts,zone,x=19,y=24){
 // t2419u: DEFAULT is zones 1-4, so zone 4 plays maze_zone4 and zone 5 falls back to zone 4
 test("DEFAULT t2419u cap: doorway (19,24) is zone 3 and music is maze_zone3; zone 4 plays maze_zone4; zone 5 still falls back to zone 4",()=>{
   const {maze,cap,M,API}=musicFor(null,3,19,24);
-  a.equal(API.DEFAULT.maxZone,4);
+  a.equal(API.DEFAULT.maxZone,5);
   a.deepEqual(Array.from(API.DEFAULT.extraCells,c=>Array.from(c)),[]);
   a.equal(M.n,65);
   a.deepEqual(Array.from(M.taverns[1]),[18,24]);
@@ -38,9 +38,9 @@ test("DEFAULT t2419u cap: doorway (19,24) is zone 3 and music is maze_zone3; zon
   a.equal(+M.zone[24*M.n+19],3);
   a.equal(cap.isOpen(19,24),true);
   a.equal(cap.isZoneOpen(3),true);
-  a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),false);
+  a.equal(cap.isZoneOpen(4),true);a.equal(cap.isZoneOpen(5),true);
   a.equal(maze(),"maze_zone3");
-  a.equal(musicFor(null,4,51,15).maze(),"maze_zone4");a.equal(musicFor(null,5,46,48).maze(),"maze_zone4");
+  a.equal(musicFor(null,4,51,15).maze(),"maze_zone4");a.equal(musicFor(null,5,46,48).maze(),"maze_zone5");/* t2721u: zone 5 open, plays its own cue */
 });
 test("zone 1 and tavern 2 keep their own maze cues",()=>{
   a.equal(musicFor(null,1,0,64).maze(),"maze_zone1");

@@ -27,7 +27,7 @@ function png(file){const b=fs.readFileSync(path.join(root,file));let p=8,w,h,bd,
 const hex=(d,i)=>((1<<24)|(d[i]<<16)|(d[i+1]<<8)|d[i+2]).toString(16).slice(1);
 
 test("VER 100, party.js?v=40 and item-icons.js?v=4 pinned; the offline cache lists nothing from art6/gear",()=>{
- a.match(sw,/^const VER="102",/);for(const s of [html,sw]){a.ok(s.includes("party.js?v=40"));a.ok(s.includes("item-icons.js?v=4"));a.ok(!s.includes("item-icons.js?v=3"));a.ok(!s.includes("party.js?v=37"));}
+ a.match(sw,/^const VER="103",/);for(const s of [html,sw]){a.ok(s.includes("party.js?v=40"));a.ok(s.includes("item-icons.js?v=4"));a.ok(!s.includes("item-icons.js?v=3"));a.ok(!s.includes("party.js?v=37"));}
  a.equal(sw.includes("art6/gear"),false);a.equal(html.includes("art6/gear"),false);
 });
 test("per-piece layering and the gearImg repaint path are gone; nothing in party.js points at art6/gear or arm-* files",()=>{

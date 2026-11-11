@@ -84,7 +84,7 @@ test("archway texture: 128 preferred with 64 fallback, glow mask, stone mask, ti
  const c={window:{}};vm.createContext(c);vm.runInContext(read("tex.js"),c);a.equal(c.window.TEX.S,64);a.ok(c.window.TEX.pal[1].c1&&c.window.TEX.pal[5].ink);
  a.ok(read("party.js").includes('S.onArchBump='));
  const sw=read("sw.js");for(const f of fs.readdirSync(path.join(root,"art6/seam")))a.equal(sw.split('"art6/seam/'+f+'"').length-1,1,"sw cache "+f);
- a.match(sw,/^const VER="102",/);for(const p of ["game.js?v=25","tex.js?v=16","party.js?v=40"])for(const s of [sw,read("index.html")])a.ok(s.includes(p),p);
+ a.match(sw,/^const VER="103",/);for(const p of ["game.js?v=25","tex.js?v=16","party.js?v=40"])for(const s of [sw,read("index.html")])a.ok(s.includes(p),p);
  a.ok(read("index.html").indexOf("Please wait for update to continue.")>=0||read("party.js").includes('"Please wait for update to continue."'));
 });
 
@@ -93,7 +93,7 @@ test("t2667u: seams 3-4 (51,14|51,15) and 4-5 (47,48|46,48) are archways; zone 5
  a.deepEqual([s[2].t,s[2].prev.x,s[2].prev.y,s[2].prev.zone,s[2].next.x,s[2].next.y,s[2].next.zone],[2,51,14,3,51,15,4]);
  a.deepEqual([s[3].t,s[3].prev.x,s[3].prev.y,s[3].prev.zone,s[3].next.x,s[3].next.y,s[3].next.zone],[3,47,48,4,46,48,5]);
  a.equal(E.S.seamTavernAt(51,15),2);a.equal(E.S.seamTavernAt(47,48),3);
- a.equal(E.S.contentCap.isZoneOpen(4),true);a.equal(E.S.contentCap.isZoneOpen(5),false);
+ a.equal(E.S.contentCap.isZoneOpen(4),true);a.equal(E.S.contentCap.isZoneOpen(5),true);
  // bump from the zone 4 side of Tavern 3 and from Tavern 4 toward zone 5: no step, one bump each
  const g=engine(51,15,0);g.S.act("fwd");a.deepEqual(pos(g.S),[51,15,0]);a.deepEqual(g.bumps.map(b=>b[0]),[2]);
  const h=engine(47,48,3);h.S.act("fwd");a.deepEqual(pos(h.S),[47,48,3]);a.deepEqual(h.bumps.map(b=>b[0]),[3]);
