@@ -1,10 +1,10 @@
 """Jeremy t2721u: zone 5 end-to-end, story ON, one browser and one page at a time. Sizes 412x891 (phone, touch) and 1280x800.
-Per size: loads with no console/page errors (VER 106, maxZone 5), creates a hero by taps, a L50 hero+Mira+Sorrel party bumps the
+Per size: loads with no console/page errors (VER 107, maxZone 5), creates a hero by taps, a L50 hero+Mira+Sorrel party bumps the
 Tavern 4 archway (Brunn joins), takes Tavern 4's Zone 5 exit through the 4-slot save picker into zone 5 (46,48), walks by taps to a
 zone 5 camp (fights on the way by taps) and saves there, fights a fixed zone 5 pack by taps (Shadow drake veil, Hydra regrow,
 Salamander burn) and checks the zone 5 lines show and the battle backdrop is purple, reloads and continues the zone 5 save
 (save/load in zone 5), walks by taps to the centre: the boss note (letter) plays, then the 3 locks are solved IN ORDER by taps
-(lever lock FINAL_LOCK, sliding tiles, moving blocks), the door opens the Iron Golem fight, real rounds are played by taps
+(Lights Out lock FINAL_LOCK, sliding tiles, moving blocks), the door opens the Iron Golem fight, real rounds are played by taps
 (iron skin, sweep warning, eye lock lines checked); after 6 real rounds the Golem's HP is set low and the fight is finished by taps
 (time), the ending plays to its title and credits; the other two endings are then opened from the centre door with the wall-art
 sets that select them (low: none, mid: zone3-05 only, high: all 28 art rooms). Finally the maze still turns (no freeze), 0 errors.
@@ -117,11 +117,13 @@ def walk_to(pg,cell,maxsteps=400,until=None):
     T.ttap(pg,'[data-cmd=fwd]');pg.wait_for_timeout(60)
   return ev(pg,'SOTA.state()')
 SOLVE_JS='''k=>{const P=PUZ,s6=SOTA.rpg.s6;
- if(k===1){const {pz,s}=s6.finalLock();for(let m=0;m<(1<<pz.L);m++){let x=s;for(let i=0;i<pz.L;i++)if(m>>i&1)x=P.apply(pz,x,i);if(P.solved(pz,x))return [...Array(pz.L).keys()].filter(i=>m>>i&1);}return null;}
- if(k===2){const {pz,s}=s6.finalLock2(),n=pz.n,h=x=>x.reduce((d,v,p)=>v?d+Math.abs((v-1)%n-p%n)+Math.abs(((v-1)/n|0)-(p/n|0)):d,0);const pp=[];
-  const dfs=(x,g,lim,prev)=>{const f=g+h(x.a);if(f>lim)return f;if(P.solved(pz,x))return true;let mn=1e9;for(const p of P.tileNb(n,x.a.indexOf(0))){if(p===prev)continue;pp.push(p);const r=dfs(P.apply(pz,x,p),g+1,lim,x.a.indexOf(0));if(r===true)return true;pp.pop();mn=Math.min(mn,r);}return mn;};
-  let lim=h(s.a);for(let i=0;i<80;i++){const r=dfs(s,0,lim,-1);if(r===true)return pp.slice();lim=r;}return null;}
- const {pz,s}=s6.finalLock3();return P.bfsBlocks(pz,s,300000);}'''
+ if(k===1){const {pz,s}=s6.finalLock();return P.lightsSolve(pz.n,s.g);}/* t2768u Lights Out */
+ if(k===2){/* t2766u boss tiles are 5x5: weighted A* (Manhattan, w=3), a real move list, not the shortest */const {pz,s}=s6.finalLock2(),n=pz.n,h=a=>a.reduce((d,v,p)=>v?d+Math.abs((v-1)%n-p%n)+Math.abs(((v-1)/n|0)-(p/n|0)):d,0);
+  const key=a=>a.join(","),seen=new Map([[key(s.a),null]]),open=[[3*h(s.a),s.a,0]];let it=0;
+  while(open.length&&it++<2000000){let bi=0;for(let i=1;i<open.length;i++)if(open[i][0]<open[bi][0])bi=i;const [,a,g]=open[bi];open[bi]=open[open.length-1];open.pop();
+   if(P.solved(pz,{a})){const path=[];let k2=key(a);while(seen.get(k2)){const [pk,mv]=seen.get(k2);path.push(mv);k2=pk;}return path.reverse();}
+   const b0=a.indexOf(0);for(const p of P.tileNb(n,b0)){const t=a.slice();t[b0]=t[p];t[p]=0;const kt=key(t);if(seen.has(kt))continue;seen.set(kt,[key(a),p]);open.push([g+1+3*h(t),t,g+1]);}}return null;}
+ const {pz,s}=s6.finalLock3();return P.bfsBlocks(pz,s,3000000);}'''
 SPEND_ALL='''(()=>{const L=SOTA.rpg.live(),M={warrior:"str",rogue:"sta",archer:"sta",mage:"man"};
  L.party.forEach(c=>{while(c.lvl<50)RPG.gainXp(c,RPG.xpNeed(c.lvl),1);let k=0;for(let g=0;g<400;g++){const st=(k++%3===2)?"con":M[c.cls];if(!RPG.raise(c,st)&&!RPG.raise(c,st==="con"?M[c.cls]:"con"))break;}
   while(c.skills.length<RPG.skillSlots(c.lvl)){const k2=RPG.SKILLS[c.cls].find(x=>!c.skills.includes(x.id));if(!k2)break;RPG.learn(c,k2.id);}c.hp=RPG.maxHp(c,1);c.mp=RPG.maxMp(c);});})()'''
@@ -152,8 +154,8 @@ def approach_centre(pg,tag):
 def solve_locks(pg,tag):
   shot(pg,f'{tag}-04-boss-door-lock1.png');check_layout(pg,tag,'lock 1')
   T.check(opendis() is True,'Open the door is not locked before the 3 locks')
-  sol=ev(pg,SOLVE_JS,1);say(f'[{tag}] lock 1 (levers) taps {sol}')
-  for i in sol:T.ttap(pg,f'[data-s7lever="{i}"]');pg.wait_for_timeout(60)
+  sol=ev(pg,SOLVE_JS,1);say(f'[{tag}] lock 1 (Lights Out) taps {sol}')
+  for i in sol:T.ttap(pg,f'[data-s7light="{i}"]');pg.wait_for_timeout(60)
   T.check(ev(pg,'SOTA.rpg.s6.st().finalLock===true'),'lock 1 not solved');T.check(ev(pg,'!!document.querySelector("[data-s7lock=\\"2\\"]")'),'lock 2 did not follow lock 1')
   T.check(opendis() is True,'door opened after 1 lock');shot(pg,f'{tag}-05-boss-door-lock2.png');check_layout(pg,tag,'lock 2')
   sol=ev(pg,SOLVE_JS,2);say(f'[{tag}] lock 2 (sliding tiles) {len(sol)} taps')
@@ -170,7 +172,7 @@ def run(p,w,h,tag):
   pg.goto(BASE+'index.html');pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'localStorage.clear()')
   pg.reload();pg.wait_for_function('window.SOTA&&SOTA.rpg');SPL.pass_splash(pg);ev(pg,'SOTA.setAnim(false)');T.past_title(pg)
   ver=ev(pg,'fetch("sw.js").then(r=>r.text()).then(t=>t.match(/VER="(\\d+)"/)[1])');say(f'[{tag}] loaded in {time.time()-t0:.1f}s; VER {ver}; maxZone',ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone'))
-  T.check(ver=='106','VER is not 106');T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5');T.check(not ERRS,f'errors on load {ERRS}')
+  T.check(ver=='107','VER is not 107');T.check(ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5');T.check(not ERRS,f'errors on load {ERRS}')
   T.full_create(pg,'Tess','human','warrior');drain(pg)
   ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];const s=SOTA.rpg.s6.st();
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,45));s.seen.join0=1;s.seen.join1=1;

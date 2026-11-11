@@ -115,7 +115,7 @@ def e2e(p):
   b,c=T.ctx(p);pg=T.fresh(c);hook(pg)
   T.check(T.ui(pg)=='create','creation not open');T.full_create(pg,'Tess','human','warrior')
   T.check(T.ev(pg,'SOTA_CONTENT_CAP.DEFAULT.maxZone')==5,'cap is not zones 1-5 (t2721u)')
-  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="106"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
+  T.check(T.ev(pg,'navigator.serviceWorker?true:true') and 'const VER="107"' in T.ev(pg,'fetch("sw.js").then(r=>r.text())'),'sw VER is not 88')
   # ---- 1. a level 30 party at Tavern 3 (as after zone 3): hero + Mira + Sorrel, points spent, skills learned, kit, tents, gold
   T.ev(pg,'''(()=>{const L=SOTA.rpg.live(),h=L.party[0];while(h.lvl<30)RPG.gainXp(h,RPG.xpNeed(h.lvl),1);
    for(const d of [RPG.COMPANIONS[0],RPG.COMPANIONS[1]])L.party.push(RPG.makeCompanion(d,30));

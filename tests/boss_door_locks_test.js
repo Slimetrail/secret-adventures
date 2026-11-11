@@ -3,16 +3,14 @@ require('./t2103u_unpatch.js');
 const test=require('node:test'),a=require('assert'),fs=require('fs'),cp=require('child_process'),crypto=require('crypto'),P=require('../puzzles.js');
 process.chdir(require('path').join(__dirname,'..'));
 const src=fs.readFileSync('story.js','utf8'),old=cp.execFileSync('git',['show','1958731:story.js'],{encoding:'utf8'});
-test('FINAL_LOCK stays the zone-5 lever, seed 713507',()=>{a.ok(src.includes('const FINAL_LOCK=window.PUZ.make(1,5,713507);'));a.ok(src.includes('"Final lock: light every lamp with the levers."'));
+test('FINAL_LOCK stays the zone-5 lever, seed 713507',()=>{a.ok(src.includes('const FINAL_LOCK=window.PUZ.make(1,5,713507,window.PUZ.BOSS_TIER);'));a.ok(src.includes('"Final lock: Lights Out. Tap a light to flip it and the lights next to it. Turn every light off."'));/* t2766u/t2768u */
  a.ok(src.includes('finalLock:()=>({pz:window.PUZ.clone(FINAL_LOCK.pz),s:window.PUZ.clone(lockState)})'));});
-test('locks 2/3 are sliding tiles and moving blocks at zone 5 with fixed seeds, solvable',()=>{a.ok(src.includes('FINAL_LOCK2=window.PUZ.make(4,5,731117),FINAL_LOCK3=window.PUZ.make(3,5,731119)'));
+test('locks 2/3 are sliding tiles and moving blocks at zone 5 with fixed seeds, solvable',()=>{a.ok(src.includes('FINAL_LOCK2=window.PUZ.make(4,5,731117,window.PUZ.BOSS_TIER),FINAL_LOCK3=window.PUZ.make(3,5,731119,window.PUZ.BOSS_TIER)'));
  for(const s of [731117,731119]){a.notEqual(s,713507);for(let id=0;id<85;id++)for(let z=1;z<=5;z++)a.notEqual(s,(id+1)*9973+17*z);}
- const t=P.make(4,5,731117),b=P.make(3,5,731119);a.equal(t.pz.t,4);a.equal(t.pz.zone,5);a.equal(b.pz.t,3);a.equal(b.pz.zone,5);a.ok(!P.solved(t.pz,t.s)&&!P.solved(b.pz,b.s));
+ const t=P.make(4,5,731117,P.BOSS_TIER),b=P.make(3,5,731119,P.BOSS_TIER);a.equal(t.pz.t,4);a.equal(t.pz.zone,5);a.equal(b.pz.t,3);a.equal(b.pz.zone,5);a.ok(!P.solved(t.pz,t.s)&&!P.solved(b.pz,b.s));
  const path=P.bfsBlocks(b.pz,b.s,300000);a.ok(path&&path.length>0);let s=b.s;for(const m of path)s=P.apply(b.pz,s,m);a.ok(P.solved(b.pz,s));
- // tiles: even permutation parity with blank on last cell => solvable by the existing engine; also solve via IDA*
- const n=t.pz.n,h=x=>x.reduce((d,v,p)=>v?d+Math.abs((v-1)%n-p%n)+Math.abs(((v-1)/n|0)-(p/n|0)):d,0);let st=t.s,pp=[];
- const dfs=(x,g,lim,prev)=>{const f=g+h(x.a);if(f>lim)return f;if(P.solved(t.pz,x))return true;let mn=1e9;for(const p of P.tileNb(n,x.a.indexOf(0))){if(p===prev)continue;pp.push(p);const r=dfs(P.apply(t.pz,x,p),g+1,lim,x.a.indexOf(0));if(r===true)return true;pp.pop();mn=Math.min(mn,r);}return mn;};
- let lim=h(st.a),ok=false;for(let k=0;k<60&&!ok;k++){const r=dfs(st,0,lim,-1);if(r===true)ok=true;else lim=r;}a.ok(ok);for(const p of pp)st=P.apply(t.pz,st,p);a.ok(P.solved(t.pz,st));});
+ // tiles (t2766u: boss tier is 5x5, too big for optimal IDA*): weighted A* from tools/solver.js finds a real move list; replay it
+ const pp=require('../tools/solver.js').wastarTiles(t.pz,t.s);a.ok(pp);let st=t.s;for(const p of pp)st=P.apply(t.pz,st,p);a.ok(P.solved(t.pz,st));});
 test('Open the door requires all three locks, in order',()=>{const cond='!(s.finalLock&&s.finalLock2&&s.finalLock3)';
  a.ok(src.includes('["‹ Open the door",()=>{if('+cond+')return;finish();S.rpg.startBoss();},"open",'+cond+']'));a.ok(!src.includes('"open",!s.finalLock]'));
  const i1=src.indexOf('if(!s.finalLock){box();'),i2=src.indexOf('else if(!s.finalLock2){'),i3=src.indexOf('else if(!s.finalLock3){');a.ok(i1>0&&i2>i1&&i3>i2);

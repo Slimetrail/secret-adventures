@@ -124,7 +124,7 @@ test("occupancy, sick-dad, and journal-monster files were not rewritten",()=>{
  const names=fs.readdirSync(mon).filter(n=>n.endsWith(".webp")&&!n.startsWith("z3-")&&!n.startsWith("z4-")).sort(); // t2404u: new zone 3 sketches; t2419u: zone 4
  a.equal(names.length,14);
  for(const n of names){const f="art-intro/journal/monsters/"+n;const old=execFileSync("git",["-C",root,"show","HEAD:"+f]);a.equal(sha(f),crypto.createHash("sha256").update(old).digest("hex"));}
- a.equal(sha("story.js"),"9396d7638836095ba7eefb9e48b281369dd3cf87c32b74ccc817cd15ae5a0c30"); // t2404u: story.js changed only for the t2393u review→credits split
+ a.equal(sha("story.js"),"7c40396bf41d87ffffd7dad50c37cb482bd1bfca3008e66bb939af432fadc6d0"); /* t2766u/t2768u: boss lock puzzle settings only (no story text), see t2766u_puzzle_tiers_test.js */ // t2404u: story.js changed only for the t2393u review→credits split
 });
 
 test("t2317u/t2318u painted book art is locked to seven labels and five matching open variants",()=>{

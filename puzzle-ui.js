@@ -4,7 +4,7 @@
 "use strict";
 const S=window.SOTA,P=window.PUZ,M=window.MAZE;
 const el=document.getElementById("puz"),board=document.getElementById("pboard"),info=document.getElementById("pinfo"),stat=document.getElementById("pstat"),ttl=document.getElementById("ptitle"),enter=document.getElementById("penter");
-const INS=["Turn the mirrors so the light reaches the gem.","Pull levers until every lamp is lit.","Connect the matching pipe outlets.","Slide the blocks so the gold block leaves on the right.","Slide the tiles into order, 1 first, gap last."];
+const INS=["Turn the mirrors so the light reaches the gem.","Tap a light to flip it and the lights next to it. Turn every light off.","Connect the matching pipe outlets.","Slide the blocks so the gold block leaves on the right.","Slide the tiles into order, 1 first, gap last."];
 const INS_PIPES="Tap a tile to turn it. Join each numbered pipe’s two outlets with no leaks.";
 const INS_SUDOKU="Tap an empty square, then a number. Each row, column, and bold box needs every number once.";
 const ZC=[null,"#c9a24a","#7f9a55","#6c8fb5","#b8636a","#8f6db5"];
@@ -36,10 +36,9 @@ function render(){const t0=performance.now();const {pz,s}=cur,done=P.solved(pz,s
   const gx=pad+(Math.min(n-1,Math.max(0,tx))+.5)*c+(tx<0?-c*.55:tx>=n?c*.55:0),gy=pad+(Math.min(n-1,Math.max(0,ty))+.5)*c+(ty<0?-c*.55:ty>=n?c*.55:0),gr=c*.24;
   ln+=`<path d="M${gx} ${gy-gr} L${gx+gr} ${gy} L${gx} ${gy+gr} L${gx-gr} ${gy} Z" fill="${done?"#ffe680":"#3aa0a0"}" stroke="#2b1a0e" stroke-width="2.5"/>`;
   h=`<div class="pgrid" style="width:${W}px;height:${W}px;background:${ZC[pz.zone]}33">${h}${svg(W,W,ln)}</div>`;}
- else if(pz.t===1){const lit=P.lamps(pz,s),L=pz.L,c=Math.min(64,Math.max(44,Math.floor((layout().aw-8*L)/L)));
-  h+=`<div class="prow">`;for(let i=0;i<L;i++){const on=lit>>i&1;h+=`<div class="plamp ${on?"on":""}" data-lamp="${i}" style="width:${c}px;height:${c}px"><svg viewBox="0 0 40 40" width="100%" height="100%"><path d="M14 8 L26 8 L29 30 L11 30 Z" fill="${on?"#ffd860":"#6b5a44"}" stroke="#2b1a0e" stroke-width="2.5"/><path d="M12 33 L28 33 M20 3 L20 8" stroke="#2b1a0e" stroke-width="3"/></svg></div>`;}
-  h+=`</div><div class="prow">`;for(let i=0;i<L;i++){const up=s.p[i];h+=btn("plever",`data-mv="${i}" aria-label="Lever ${i+1}"`,`<svg viewBox="0 0 40 60" width="70%" height="80%"><rect x="8" y="44" width="24" height="10" fill="#5a3418" stroke="#2b1a0e" stroke-width="2.5"/><path d="M20 46 L${up?30:10} 12" stroke="#2b1a0e" stroke-width="5" stroke-linecap="round"/><circle cx="${up?30:10}" cy="12" r="6" fill="#b8402a" stroke="#2b1a0e" stroke-width="2.5"/></svg>`,`width:${c}px;height:${Math.round(c*1.4)}px`);}
-  h+=`</div>`;}
+ else if(pz.t===1){/* t2768u Lights Out: square light-up buttons; a tap flips it and its 4 neighbours */const n=pz.n,c=Math.min(72,cellSize(n,0.6)),W=n*c;
+  s.g.forEach((v,i)=>{const x=i%n,y=(i/n)|0;h+=btn("plight"+(v?" on":""),`data-mv="${i}" aria-label="Light row ${y+1}, column ${x+1}, ${v?"on":"off"}"`,"",`left:${x*c+3}px;top:${y*c+3}px;width:${c-6}px;height:${c-6}px`);});
+  h=`<div class="pgrid plights" style="width:${W}px;height:${W}px;background:#2b1a0e">${h}</div><div class="plcount">Lights on: ${s.g.filter(Boolean).length}</div>`;}
  else if(pz.t===2&&pz.mode==='pipes'){const n=pz.n,c=Math.max(32,Math.min(52,Math.floor(Math.min(layout().aw,layout().ah)/(n+1)))),pad=Math.round(c*.5),W=n*c+2*pad,colors=['#276b97','#a2372e','#3b7336','#745195','#8a5b10'];
   for(let i=0;i<s.a.length;i++){const color=colors[pz.pipe[i]],mask=s.a[i];let paths='';[[c/2,0],[c,c/2],[c/2,c],[0,c/2]].forEach(([x,y],d)=>{if(mask&(1<<d))paths+=`M${c/2} ${c/2} L${x} ${y} `;});
    h+=btn('ppipe',`data-mv="${i}" aria-label="Turn pipe ${pz.pipe[i]+1}, row ${(i/n|0)+1}, column ${i%n+1}"`,`<svg viewBox="0 0 ${c} ${c}" width="100%" height="100%"><path d="${paths}" fill="none" stroke="${color}" stroke-width="${c*.18}"/><circle cx="${c/2}" cy="${c/2}" r="${c*.21}" fill="#f3e2b5"/><text x="${c/2}" y="${c*.62}" text-anchor="middle" font-size="${c*.32}" fill="${color}">${pz.pipe[i]+1}</text></svg>`,`left:${pad+i%n*c}px;top:${pad+(i/n|0)*c}px;width:${c}px;height:${c}px`);}
@@ -70,7 +69,8 @@ board.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!
  if(b.dataset.blk!==undefined){sel=+b.dataset.blk;render();return;}
  if(b.dataset.dir!==undefined){if(sel>=0)move([sel,+b.dataset.dir]);return;}
  if(b.dataset.mv!==undefined){const v=b.dataset.mv;move(v==="clr"?"clr":+v);}});
-function open(id,cmd){const g=gen(id);cur={id,cmd,pz:g.pz,s:kept.get(gk(id))||P.clone(g.s),start:g.s};sel=cur.pz.t===3?0:-1;sudokuCell=-1;openFlag=true;el.classList.add("open");
+function open(id,cmd){const g=gen(id);const ks=kept.get(gk(id));/* t2768u: a kept state that does not fit this puzzle (e.g. old lever presses) starts fresh */if(ks&&!P.fits(g.pz,ks))kept.delete(gk(id));
+ cur={id,cmd,pz:g.pz,s:ks&&P.fits(g.pz,ks)?ks:P.clone(g.s),start:g.s};sel=cur.pz.t===3?0:-1;sudokuCell=-1;openFlag=true;el.classList.add("open");
  ttl.textContent=(cur.pz.t===2?(cur.pz.mode==="pipes"?"Pipe connections":"Sudoku"):P.NAMES[cur.pz.t])+" \u00B7 Zone "+cur.pz.zone;info.textContent=cur.pz.t===2?(cur.pz.mode==="pipes"?INS_PIPES:INS_SUDOKU):INS[cur.pz.t];
  const L=rounds(id);if(L>0)ttl.textContent+=" \u00B7 Double ("+(GL().total-L+1)+" of "+GL().total+")";el.dataset.double=L;lockBtn();render();}
 // t2759u Rogue's lockpick on this door: only a rogue hero carrying one, on a normal (not doubled, not solved) room door. Never the boss door
@@ -99,6 +99,9 @@ const css=document.createElement("style");css.textContent=`
 .pskey{width:44px;height:44px;font-size:22px;border-radius:6px}
 #puz.land.content2 #pboard{flex-direction:row;align-items:center;gap:8px}
 #puz.land.content2 .pskeys{grid-template-columns:repeat(2,44px)}
+.plight{position:absolute;box-sizing:border-box;border-radius:6px;background:#4a3a2a;border:2px solid #1a0f06;box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)}
+.plight.on{background:radial-gradient(circle at 50% 45%,#fff6c0,#ffd040 55%,#e09a10);border-color:#7a4a00;box-shadow:0 0 12px 3px rgba(255,210,80,.75)}
+.plcount{margin-top:6px;font:700 16px Georgia,serif;text-align:center}
 `;document.head.appendChild(css);
 S.puzzleOpen=()=>openFlag;S.openPuzzle=open;S.puzzleRefresh=()=>{if(cur)lockBtn();};
 S.puzzle={open:id=>open(id,null),close,state:()=>cur?{id:cur.id,type:cur.pz.t,solved:P.solved(cur.pz,cur.s)}:null,frameTimes:()=>ft.slice(),renderOnce:()=>{const t=performance.now();render();return performance.now()-t;}};

@@ -76,13 +76,13 @@ test("Iron Golem: defending the eye-locked member halves the smash",()=>{
 test("attack-only rarely beats the Golem (t2732u: about 5% at L50, tests/t2732u_golem_balance_test.js); the boss door locks and endings are wired (story.js untouched)",()=>{
  let wins=0;for(let s=0;s<400;s++){const p=party(R,50),g=R.makeBoss("normal"),F=new R.Fight(p,[g],"normal",s*101+7);for(let r=0;r<80&&!F.over;r++){p.forEach((c,i)=>{if(!F.over&&c.hp>0)F.act(i,"attack",null,0);});if(!F.over)F.monstersTurn();}wins+=F.over==="win";}
  a.ok(wins>=4&&wins<=40,"attack-only wins "+wins+"/400");
- const st=read("story.js");a.ok(st.includes("const FINAL_LOCK=window.PUZ.make(1,5,713507)"));a.ok(st.includes("FINAL_LOCK2=window.PUZ.make(4,5,731117),FINAL_LOCK3=window.PUZ.make(3,5,731119)"));
+ const st=read("story.js");a.ok(st.includes("const FINAL_LOCK=window.PUZ.make(1,5,713507,window.PUZ.BOSS_TIER)"));a.ok(st.includes("FINAL_LOCK2=window.PUZ.make(4,5,731117,window.PUZ.BOSS_TIER),FINAL_LOCK3=window.PUZ.make(3,5,731119,window.PUZ.BOSS_TIER)"));/* t2766u boss tier */
  a.ok(st.includes("S.rpg.startBoss()"));a.ok(st.includes("H.bossWon=()=>{const s=st();if(s)s.golemDefeated=true;showEnding();}"));
  a.ok(read("party.js").includes('if(bossWon)h6("bossWon")'));
 });
 test("content cap is zones 1-5 and pins advance together (VER 105)",()=>{
  const c={window:{}};vm.runInNewContext(read("content-cap.js"),c);a.equal(c.window.SOTA_CONTENT_CAP.DEFAULT.maxZone,5);
- const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="106",/);
- for(const p of ["content-cap.js?v=8","rules.js?v=26","party.js?v=43","game.js?v=26","story.js?v=25"])for(const s of [sw,html])a.ok(s.includes(p),p);
+ const sw=read("sw.js"),html=read("index.html");a.match(sw,/^const VER="107",/);
+ for(const p of ["content-cap.js?v=8","rules.js?v=26","party.js?v=43","game.js?v=26","story.js?v=26"])for(const s of [sw,html])a.ok(s.includes(p),p);
  a.ok(read("party.js").includes('const WAIT_UPDATE="Please wait for update to continue.";'));
 });

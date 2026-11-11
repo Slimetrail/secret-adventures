@@ -124,24 +124,25 @@ H.wall=id=>{const s=st(),r=M.rooms[id];if(!s||!r||!WALLS.includes(r))return;if(!
  if(G.namingHeld(id,ROOM_ART)){showArtOnly(id);return;}
  play("wall",pi>=DAD_FROM?lines:withMem(lines),{wall:wallArt(id)});if(window.PackageDialogue&&S.rpg.s6.packageDialogue)S.rpg.s6.packageDialogue.pool("wall-art",{zone:r.z,id},{wall:wallArt(id)});if(added.length)play("art-room",added,{wall:wallArt(id)});};
 H.step=()=>{const s=st();if(!s||s.seen.boss)return;const p=S.state();if(Math.abs(p.x-M.centre[0])+Math.abs(p.y-M.centre[1])>2)return;s.seen.boss=1;bossNote();};
-// Centre lock reuses Stage 3's existing zone-5 lever rules. It is not an 86th room.
-const FINAL_LOCK=window.PUZ.make(1,5,713507);let lockState=window.PUZ.clone(FINAL_LOCK.s);
+// Centre lock: type 1 (t2768u Lights Out, was levers) at the boss tier (t2766u). It is not an 86th room.
+const FINAL_LOCK=window.PUZ.make(1,5,713507,window.PUZ.BOSS_TIER);let lockState=window.PUZ.clone(FINAL_LOCK.s);
 // Boss door locks 2 and 3 reuse existing Stage 3 types at zone 5 (no new type, no room, no markSolved).
 // Fixed seeds: 731117 (sliding tiles) and 731119 (moving blocks); both differ from 713507 and from every room seed (id+1)*9973+17*z.
-const FINAL_LOCK2=window.PUZ.make(4,5,731117),FINAL_LOCK3=window.PUZ.make(3,5,731119);let lockState2=window.PUZ.clone(FINAL_LOCK2.s),lockState3=window.PUZ.clone(FINAL_LOCK3.s),lockSel3=0;
+const FINAL_LOCK2=window.PUZ.make(4,5,731117,window.PUZ.BOSS_TIER),FINAL_LOCK3=window.PUZ.make(3,5,731119,window.PUZ.BOSS_TIER);let lockState2=window.PUZ.clone(FINAL_LOCK2.s),lockState3=window.PUZ.clone(FINAL_LOCK3.s),lockSel3=0;
 function bossChoices(){const s=st(),P=window.PUZ;let lock=q(".s7lock");if(lock)lock.remove();
  const box=()=>{lock=el("div","s7lock");lock.style.cssText="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap";q(".s6t").appendChild(lock);return lock;};
  const tap=(b,f)=>b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();f();bossChoices();});
  if(!s.finalLock){box();
-  lock.appendChild(el("div","","Final lock: light every lamp with the levers."));const lit=P.lamps(FINAL_LOCK.pz,lockState);
-  for(let i=0;i<FINAL_LOCK.pz.L;i++){const b=el("button","ink s4b small",(lit>>i&1?"●":"○")+" Lever "+(i+1));b.dataset.s7lever=i;b.style.cssText="min-height:44px;min-width:80px";
-   b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();lockState=P.apply(FINAL_LOCK.pz,lockState,i);if(P.solved(FINAL_LOCK.pz,lockState))s.finalLock=true;bossChoices();});lock.appendChild(b);}}
- else if(!s.finalLock2){box();const pz=FINAL_LOCK2.pz,n=pz.n,c=44;
+  lock.appendChild(el("div","","Final lock: Lights Out. Tap a light to flip it and the lights next to it. Turn every light off."));const pz=FINAL_LOCK.pz,n=pz.n,c=50;if(!P.fits(pz,lockState))lockState=P.clone(FINAL_LOCK.s);
+  const g=el("div","pgrid plights");g.dataset.s7lock="1";g.style.cssText=`width:${n*c}px;height:${n*c}px;background:#2b1a0e;flex-basis:100%;max-width:${n*c}px`;
+  lockState.g.forEach((v,i)=>{const b=el("button","plight"+(v?" on":""),"");b.dataset.s7light=i;b.setAttribute("aria-label","Light "+(i+1)+(v?", on":", off"));b.style.cssText=`left:${i%n*c+3}px;top:${((i/n)|0)*c+3}px;width:${c-6}px;height:${c-6}px`;
+   b.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();lockState=P.apply(pz,lockState,i);if(P.solved(pz,lockState))s.finalLock=true;bossChoices();});g.appendChild(b);});lock.appendChild(g);}
+ else if(!s.finalLock2){box();const pz=FINAL_LOCK2.pz,n=pz.n,c=52;
   lock.appendChild(el("div","","Second lock: sliding tiles. Slide the tiles into order, 1 first, gap last."));
   const g=el("div","pgrid");g.dataset.s7lock="2";g.style.cssText=`width:${n*c}px;height:${n*c}px;background:#8f6db555;flex-basis:100%;max-width:${n*c}px`;
   lockState2.a.forEach((v,p)=>{if(!v)return;const b=el("button","ptile",String(v));b.dataset.s7tile=p;b.style.cssText=`left:${p%n*c+2}px;top:${((p/n)|0)*c+2}px;width:${c-4}px;height:${c-4}px;font-size:${Math.round(c*.42)}px`;
    tap(b,()=>{lockState2=P.apply(pz,lockState2,p);if(P.solved(pz,lockState2))s.finalLock2=true;});g.appendChild(b);});lock.appendChild(g);}
- else if(!s.finalLock3){box();const pz=FINAL_LOCK3.pz,n=pz.n,c=40,W=n*c;
+ else if(!s.finalLock3){box();const pz=FINAL_LOCK3.pz,n=pz.n,c=48,W=n*c;
   lock.appendChild(el("div","","Third lock: moving blocks. Slide the blocks so the gold block leaves on the right."));
   const g=el("div","pgrid pblocks");g.dataset.s7lock="3";g.style.cssText=`width:${W}px;height:${W}px;background-size:${c}px ${c}px;background-color:#8f6db533`;
   pz.blk.forEach((bk,i)=>{const[x,y]=lockState3.q[i];const b=el("button","pblk"+(i===0?" key":"")+(lockSel3===i?" sel":""),"");b.dataset.s7blk=i;b.setAttribute("aria-label","Block "+i);

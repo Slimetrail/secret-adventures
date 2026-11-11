@@ -171,7 +171,7 @@ test('t2721u zone 5: with every room and door cell impassable, all zone 5 hallwa
 test('maze cache pins advance together without changing combat pins',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/^const VER="106",/); // gear rework rebased on live VER 99
+ assert.match(sw,/^const VER="107",/); // gear rework rebased on live VER 99
  for(const source of [html,sw]){
   assert.ok(source.includes('maze-data.js?v=17'));assert.ok(!source.includes('maze-data.js?v=16'));
   assert.ok(source.includes("rules.js?v=26"));assert.ok(source.includes("party.js?v=43"));

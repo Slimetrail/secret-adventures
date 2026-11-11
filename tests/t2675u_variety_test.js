@@ -69,14 +69,15 @@ test("sick-dad intro and the 3 endings are unchanged from live "+BASE.slice(0,7)
  const sha=b=>crypto.createHash("sha256").update(b).digest("hex");
  for(const f of ["story-data.js","story.js","intro.js","intro-art-data.js","t2103u-text.js","package-story-data.js","story-gates.js","tints.json"]){
   let old;try{old=cp.execFileSync("git",["show",BASE+":"+f],{cwd:root});}catch(e){if(f==="tints.json")continue;throw e;}
+  if(f==="story.js"){/* t2766u/t2768u: only the boss lock puzzle settings changed (no story text) */const cut=t=>{t=String(t);const i=t.indexOf("// Centre lock"),j=t.indexOf(' btns([["‹ Open the door"');return t.slice(0,i)+t.slice(j);};a.equal(cut(fs.readFileSync(path.join(root,f))),cut(old),f+" changed outside the boss lock settings");continue;}
   a.equal(sha(fs.readFileSync(path.join(root,f))),sha(old),f+" changed");}
  const v=read("variety.js");a.ok(!/H\.created\s*=/.test(v)&&!/showEnding|endingLines|H\.bossWon/.test(v.replace(/\/\*[\s\S]*?\*\//,"")),"variety.js must not touch the intro or endings");
  for(const f of ["game.js","party.js"]){const old=cp.execFileSync("git",["show",BASE+":"+f],{cwd:root}).toString(),n=(t)=>(t.match(/Please wait for update to continue\./g)||[]).length;a.ok(n(old)>0);a.equal(n(read(f)),n(old),"wait text "+f);}
 });
 test("pins: VER 102, new and changed files pinned in index.html and sw.js",()=>{
- const h=read("index.html"),s=read("sw.js");a.match(s,/^const VER="106",/);
+ const h=read("index.html"),s=read("sw.js");a.match(s,/^const VER="107",/);
  for(const p of ["party.js?v=43","batch1-talks.js?v=6","package-dialogue.js?v=6","package-rooms.js?v=5","zone4-banter.js?v=2","dialogue-variants.js?v=1","variety.js?v=1"]){a.ok(h.includes(p),"html "+p);a.ok(s.includes('"'+p+'"'),"sw "+p);}
- a.ok(h.indexOf("story.js?v=25")<h.indexOf("variety.js?v=1")&&h.indexOf("variety.js?v=1")<h.indexOf("batch1-talks.js"),"variety.js loads after story.js, before batch1");
+ a.ok(h.indexOf("story.js?v=26")<h.indexOf("variety.js?v=1")&&h.indexOf("variety.js?v=1")<h.indexOf("batch1-talks.js"),"variety.js loads after story.js, before batch1");
  const v=read("dialogue-variants.js");a.ok(!v.includes("variants-source"),"variants-source.md must not be installed");
 });
 test("installed variants equal Eve-approved voice-variants-z1z2-joins.md Part 1 line for line (28 pieces; v1 untouched)",()=>{
