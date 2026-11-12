@@ -11,7 +11,7 @@ test('splash markup is the first thing in <body> and loads after intro.js',()=>{
  const s=[...h.matchAll(/<script src="([^"?]+)\?v=(\d+)"/g)].map(m=>m[1]);a.ok(s.indexOf('splash.js')>s.indexOf('intro.js')&&s.indexOf('splash.js')>s.indexOf('party.js'));
  a.match(h,/#isplash img\{[^}]*object-fit:contain/);a.match(h,/#isplash\{[^}]*position:fixed;inset:0;z-index:100001;background:#000;overflow:hidden/);});
 test('offline worker v81 precaches splash.js and both brand files once; pins match index.html',()=>{const sw=read('sw.js'),h=read('index.html');
- a.match(sw,/^const VER="108"/);for(const f of ['splash.js?v=1',IMG,SND,'music.js?v=20'])a.equal(sw.split('"'+f+'"').length-1,1,f);
+ a.match(sw,/^const VER="109"/);for(const f of ['splash.js?v=1',IMG,SND,'music.js?v=20'])a.equal(sw.split('"'+f+'"').length-1,1,f);
  for(const m of h.matchAll(/<script src="([^"]+\?v=\d+)"/g))a.ok(sw.includes('"'+m[1]+'"'),m[1]);});
 test('music.js plays nothing while the splash is open',()=>{a.match(read('music.js'),/function want\(\)\{\n if\(S\.splash&&S\.splash\.open\(\)\)return \[null,0,0\];/);});
 function harness(){let now=0;const timers=[];const L={},W={};const cls=new Set();let played=0;

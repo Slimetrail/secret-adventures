@@ -838,7 +838,7 @@ function shopList(t,kind){s5init();const st=E.stock(t),w=shopPage("shop-"+kind,t
   l.forEach(id=>{const d=E.dish(id);shopRow(w,d.n+" · "+E.RECIPE_PRICE[d.tier]+"g",{recipe:id},()=>{buyRecipe(id);shopList(t,kind);},live.gold<E.RECIPE_PRICE[d.tier]);});}
  else if(kind==="food"){["ration","potion","ether","salts"].concat(st.ing).forEach(item);}
  else{w.appendChild(el("div","s4lab","Tent"));item("tent");shopRow(w,"‹ Build a tent from parts",{tentb:"1"},()=>tentScreen(t)).querySelector(".s4on").classList.add("s5more");
-  w.appendChild(el("div","s4lab","Gear"));["lockpick","rope"].concat(st.gear).forEach(item);
+  w.appendChild(el("div","s4lab","Gear"));st.gear.forEach(item);/* t2793u: plain lockpick/rope off the shelf; worn gear stays */
   specialRows(w,t);
   if(st.parts.length){w.appendChild(el("div","s4lab","Parts"));st.parts.forEach(item);}
   w.appendChild(el("div","s4note dim","Dead warriors' gear is cheap but worse than new."));}}

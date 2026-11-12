@@ -98,7 +98,7 @@ def t_dead_warrior_gear(p):
   check(L(pg,'return RPG.ITEMS.w_sword.atk<RPG.ITEMS.sword.atk&&RPG.ITEMS.w_leather.def<=RPG.ITEMS.leather.def'),'worn gear not worse than new')
   check(L(pg,'return [0,1,2,3].every(t=>E.stock(t).gear.every(id=>RPG.ITEMS[id].worn))'),'shops sell non-worn gear');b.close()
 def t_gear_items(p):
-  b,pg=setup(p);check(L(pg,'return [0,1,2,3].every(t=>E.stock(t).basic.includes("lockpick")&&E.stock(t).basic.includes("rope"))'),'lockpicks/rope not sold');b.close()
+  b,pg=setup(p);check(L(pg,'return [0,1,2,3].every(t=>!E.stock(t).basic.includes("lockpick")&&!E.stock(t).basic.includes("rope"))'),'plain lockpicks/rope still sold');b.close()
 def t_cook_learn(p):
   b,pg=setup(p);L(pg,'L.party[0].bag.push("i_bread","i_butter","i_bread","i_herbs");')
   ev(pg,'SOTA.rpg.s5.cookbook()');check(ev(pg,'document.querySelectorAll(".s5rc").length')==20,'guide does not have 20 slots');check(ev(pg,'document.querySelectorAll(".s5rc.known").length')==0,'recipes shown before learning')

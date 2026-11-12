@@ -51,7 +51,7 @@ function price(id){return PRICE[id]||0;}
 function sellPrice(id){const it=I[id];if(!it)return 0;if(it.tent||it.slot==="junk"||it.slot==="part"||it.slot==="dish"||it.slot==="ing")return it.v||0;return Math.max(1,Math.floor((PRICE[id]||it.v||(it.atk||it.def||it.mag?16:2))/2));}
 // ---- tavern shops (index 0-3 = Tavern 1-4). Taverns 3 and 4 also sell tent parts ----
 const KEEPERS=[{name:"Brannoc",look:"dwarf",tag:"Stout dwarf, braided beard"},{name:"Wynn",look:"human",tag:"Blond human, quick smile"},{name:"Sylvaine",look:"elf",tag:"Silver-haired elf, calm"},{name:"Miso",look:"cat",tag:"White-haired cat-folk, sharp eyes"}];
-function stock(t){const s=["ration","potion","ether","lockpick","rope","tent"];
+function stock(t){const s=["ration","potion","ether","tent"];/* t2793u: plain lockpick/rope kept in I/PRICE for old saves, not sold */
  const gear=[["w_dagger","w_sword","w_buckler"],["w_bow","w_staff","w_leather"],["w_sword","w_helm","w_leather","w_bow"],["w_sword","w_helm","w_leather","w_staff","w_buckler"]][t];
  const ing=Object.keys(ING).filter(k=>ING[k][1]>=1&&ING[k][1]<=t+1).map(k=>"i_"+k);
  const parts=t>=2?["p_silk","p_hide","p_shard"]:[];return {basic:s,gear,ing,parts};}

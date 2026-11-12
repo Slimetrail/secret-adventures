@@ -30,8 +30,8 @@ function rowBtns(h,k){
 
 test('t2615u pins: VER 94, party v34, rules v22 in index.html and sw.js; wait wording unchanged',()=>{
   const html=read('index.html'),sw=read('sw.js'),party=read('party.js');
-  a.match(sw,/^const VER="108",CACHE="sota-s1-v"\+VER/);
-  for(const p of ['party.js?v=44','rules.js?v=27'])for(const s of [html,sw])a.ok(s.includes(p),p);
+  a.match(sw,/^const VER="109",CACHE="sota-s1-v"\+VER/);
+  for(const p of ['party.js?v=45','rules.js?v=27'])for(const s of [html,sw])a.ok(s.includes(p),p);
   a.equal(html.includes('party.js?v=37'),false);
   a.equal(sw.includes('party.js?v=37'),false);
   a.equal(html.includes('rules.js?v=21'),false);
