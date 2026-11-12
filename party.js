@@ -26,7 +26,7 @@ function saveSlots(){const slots=Array.from({length:4},(_,i)=>readSave(SLOT+i));
  if(!slots.some(Boolean)){const old=readSave(SAVE);if(old){slots[0]=old;try{localStorage.setItem(SLOT+0,JSON.stringify(old));}catch(e){}}}return slots;}
 {const slots=saveSlots();let i=0;try{i=Number(localStorage.getItem(ACTIVE)||0);}catch(e){}
  activeSlot=Number.isInteger(i)&&i>=0&&i<4&&slots[i]?i:Math.max(0,slots.findIndex(Boolean));
- if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */wakeLoaded();migrateSaltsBoxes(live);ensureVseed();}}
+ if(slots[activeSlot]){save=slots[activeSlot];live=clone(save);live.party.forEach(R.clampPoints);/* t2358u/t2360u old saves */wakeLoaded();migrateMealBuffs(live);/* t2778u */migrateSaltsBoxes(live);ensureVseed();}}
 function hpMul(){return R.DIFF[live.diff].hp;}
 function roomsNow(){const s=[],c=[];for(let i=0;i<C.solvedR.length;i++){if(C.solvedR[i])s.push(i);if(C.clearedR[i])c.push(i);}return {s,c};}
 function placeName(x,y){const t=tavIdx(x,y);if(t>=0)return "Tavern "+(t+1);const k=M.camps.findIndex(c=>c[0]===x&&c[1]===y);return k>=0?"Camp "+(k+1):"the start";}
@@ -79,7 +79,7 @@ function savePicker(mode,done,cancel,before,opt){const w=page("save-picker");w.a
   if(mode==="load"){if(loadSlot(i)&&done)done();}else{/* t2451u: camp Save refills only when a slot is really written */const undo=before?before():null;if(doSave(false,i)){if(done)done();}else if(undo)undo();}},"wide");b.dataset.saveSlot=i;b.disabled=mode==="load"&&!o;w.appendChild(b);});}
 
 // death: everything goes back to the last save
-function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */wakeLoaded();ensureVseed();if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
+function restore(){if(!save)return false;campVisit=null;live=clone(save);syncMazeSlots();live.party.forEach(R.clampPoints);/* t2358u old saves */migrateMealBuffs(live);/* t2778u */wakeLoaded();ensureVseed();if(!Array.isArray(live.beasts))live.beasts=[];const r=save.rooms;C.solvedR.fill(0);C.clearedR.fill(0);r.s.forEach(i=>C.solvedR[i]=1);r.c.forEach(i=>C.clearedR[i]=1);S.saveRooms();
  if(S.applyMaze)S.applyMaze(save.maze||{x:save.at.x,y:save.at.y,f:save.at.f});else S.teleport(save.at.x,save.at.y,save.at.f);stepsSince=0;}
 // t2404u: while the craft pop-up is open, the toast ("You made ...!") goes where it covers neither the "Tap a box" hints
 // (the pop-up's own hint and the camp lesson box) nor the pop-up's buttons: above the pop-up, else just under it, else at the bottom.
@@ -645,7 +645,7 @@ function fightHere(why){const p=S.state(),z=zoneAt(p.x,p.y),cf=R.centreFactor(p.
 S.afterStep=rid=>{if(!live)return;s5init();live.steps++;checkSpoil();updHere();crystalDone();h6("step");if(localStorage.getItem(DEV_NOFIGHT)==="1")return;const p=S.state();stepsSince++;
  /* t2528u-t2539u: a seam tavern is entered by bumping its archway (S.onArchBump), never by stepping on a cell */
  if(R.isSavePoint(M,p.x,p.y)&&seamTav(p.x,p.y)<0){const t=M.taverns.findIndex(c=>c[0]===p.x&&c[1]===p.y);let joined="";
-  if(t>=0){live.lastTav={t,x:p.x,y:p.y,f:p.f};/* t2759u rope */h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
+  if(t>=0){live.lastTav={t,x:p.x,y:p.y,f:p.f};/* t2759u rope */clearMealBuffs();/* t2778u */h6("reachedTavern",t);const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}}
   /* t2446u: only a tavern saves on arrival; a camp never saves or uses a tent by itself (Save tab on the camp screen) */const ok=t>=0?doSave(false):false,said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(t>=0?(ok?"Game saved at "+placeName(p.x,p.y)+".":"Could not save at "+placeName(p.x,p.y)+"."):"You reached "+placeName(p.x,p.y)+". Rest, cook, craft or save here (saving uses 1 tent).");if(joined)remind(said);else toast(said);/* t2437u QA: the join + points reminder shows after the join scene */updBtn();updHere();
   /* t2530u/t2551u: stepping on a camp circle (Safe post) opens the camp tabs; still no auto-save */if(t<0){const k=campIdx(p.x,p.y);if(k>=0&&!ui)campScreen(k);}return;}
  if(S.panelOpen()||(S.storyOpen&&S.storyOpen()))return; // first entry into a room: the room itself decides (see onRoomOpen)
@@ -706,7 +706,7 @@ function seamTav(x,y){return S.seamTavernAt?S.seamTavernAt(x,y):-1;}
 function tavIdx(x,y){const k=seamTav(x,y);return k>=0?k:M.taverns.findIndex(c=>c[0]===x&&c[1]===y);}
 // t2528u-t2539u: bumping or tapping a seam archway = arriving at that tavern (heal, companion, free save), then the tavern screen
 let archPending=false;
-S.onArchBump=t=>{if(!live||ui||hubBlocked()||archPending)return false;s5init();let joined="";{const p=S.state();live.lastTav={t,x:p.x,y:p.y,f:p.f};}/* t2759u rope */h6("reachedTavern",t);
+S.onArchBump=t=>{if(!live||ui||hubBlocked()||archPending)return false;s5init();let joined="";{const p=S.state();live.lastTav={t,x:p.x,y:p.y,f:p.f};}/* t2759u rope */clearMealBuffs();/* t2778u */h6("reachedTavern",t);
  const def=R.companionFor(t,live.party,h6("plan"));if(def){const c=R.makeCompanion(def,R.partyLevel(live.party));live.party.push(c);joined=c.name+" joined the party! ";h6("joined",c,t);}
  const ok=doSave(false),said=joined+(joined&&pointsReminder()?pointsReminder()+" ":"")+(ok?"Game saved at Tavern "+(t+1)+".":"Could not save at Tavern "+(t+1)+".");if(joined)remind(said);else toast(said);updBtn();
  let scene=!!(S.storyOpen&&S.storyOpen());
@@ -715,16 +715,29 @@ S.onArchBump=t=>{if(!live||ui||hubBlocked()||archPending)return false;s5init();l
   if(!ui&&!scene)tavernScreen(t);};open();return true;};
 function campIdx(x,y){return M.camps.findIndex(c=>c[0]===x&&c[1]===y);}
 function hasTent(){return haveN("tent")>0;}
-function tickBuffs(){live.party.forEach(c=>{if(c.buff){c.buff.f--;if(c.buff.f<=0)delete c.buff;}if(c.poison){c.poison.f--;if(c.poison.f<=0)delete c.poison;}});}
+/* t2778u: a meal buff (buff.meal) never counts down by fights; it lasts until the next cooked dish or a tavern */
+function tickBuffs(){live.party.forEach(c=>{if(c.buff&&!c.buff.meal){c.buff.f--;if(c.buff.f<=0)delete c.buff;}if(c.poison){c.poison.f--;if(c.poison.f<=0)delete c.poison;}});}
 // t2345u: failed-craft food does its effect only when eaten. Never knocks anyone out.
 function eatBad(c,id){const it=R.ITEMS[id],mh=R.maxHp(c,hpMul()),mm=R.maxMp(c);
  if(it.stink){live.stink=(live.stink||0)+E.FAIL_STINK_STEPS;return;}
  if(it.bad==="hp"){if(c.hp>0)c.hp=Math.max(1,c.hp-Math.round(mh*E.BAD_HP/100));return;}
  if(it.bad==="mp"){c.mp=Math.max(0,c.mp-Math.round(mm*E.BAD_MP/100));return;}
  if(it.bad==="sta")c.buff={str:0,sta:-E.BAD_STA,f:E.BAD_STA_FIGHTS,n:it.n};}
-function eatDish(c,id){const it=R.ITEMS[id];if(it.slot==="craft"){eatBad(c,id);return;}h6("meal",it,it.slot==="dish"?E.dish(it.dish).fx:null);if(it.slot==="use"){const mh=R.maxHp(c,hpMul());c.hp=Math.min(mh,c.hp+Math.round(mh*(it.heal||0)));return;}const d=E.dish(it.dish),fx=d.fx,mh=R.maxHp(c,hpMul()),mm=R.maxMp(c);
- if(fx.hp)c.hp=Math.min(mh,c.hp+Math.round(mh*fx.hp/100));if(fx.mp)c.mp=Math.min(mm,c.mp+Math.round(mm*fx.mp/100));if(fx.str||fx.sta)c.buff={str:fx.str||0,sta:fx.sta||0,f:fx.f||1,n:d.n};}
-function eatFrom(c,k){const id=c.bag[k];c.bag.splice(k,1);gone(id);eatDish(c,id);toast(c.name+" ate "+R.ITEMS[id].n);}
+function eatDish(c,id){const it=R.ITEMS[id];if(it.slot==="craft"){eatBad(c,id);return;}if(it.slot==="dish"){partyMeal(id);return;}h6("meal",it,null);const mh=R.maxHp(c,hpMul());c.hp=Math.min(mh,c.hp+Math.round(mh*(it.heal||0)));}
+/* t2778u/t2779u/t2780u: ONE cooked dish feeds the WHOLE party (every current member). hp/mp refill for everyone awake (a meal never wakes a
+   knocked-out member); the str/sta buff is stored on each member who ate, with no fight countdown, until the next cooked dish (which replaces
+   it for everyone, or clears it when the new dish has no str/sta) or a tavern arrival (clearMealBuffs). A member who joins later has no buff
+   until the next meal. Other buffs (failed-food stamina, crafted potions) keep their fight countdown and are only replaced by a buff dish. */
+function mealBuffOf(d){const fx=d.fx;return fx.str||fx.sta?{str:fx.str||0,sta:fx.sta||0,n:d.n,meal:"d_"+d.id}:null;}
+function partyMeal(id){const it=R.ITEMS[id],d=E.dish(it.dish),fx=d.fx,b=mealBuffOf(d);h6("meal",it,fx);
+ live.party.forEach(c=>{const mh=R.maxHp(c,hpMul()),mm=R.maxMp(c);if(c.hp>0&&fx.hp)c.hp=Math.min(mh,c.hp+Math.round(mh*fx.hp/100));if(fx.mp)c.mp=Math.min(mm,c.mp+Math.round(mm*fx.mp/100));
+  if(b)c.buff=Object.assign({},b);else if(c.buff&&c.buff.meal)delete c.buff;});
+ /* favored-meal counts per companion + the brag talk when earned (package-dialogue.js H.ateMeal); a meal counts when EATEN, not when cooked */
+ return !!h6("ateMeal",id,fx);}
+function clearMealBuffs(){if(live)live.party.forEach(c=>{if(c.buff&&c.buff.meal)delete c.buff;});}
+/* t2778u: old saves stored a dish buff as {str,sta,f,n} counting down by fights. Keep it as a meal buff (until the next meal or a tavern). */
+function migrateMealBuffs(L){if(!L||!Array.isArray(L.party))return 0;let n=0;L.party.forEach(c=>{const b=c&&c.buff;if(!b||b.meal||!(b.f>0))return;const EC=window.ECON/* runs at boot, before const E */,d=EC&&EC.DISHES&&EC.DISHES.find(x=>x.n===b.n);if(!d||!mealBuffOf(d))return;c.buff={str:b.str||0,sta:b.sta||0,n:b.n,meal:"d_"+d.id};n++;});return n;}
+function eatFrom(c,k){const id=c.bag[k];c.bag.splice(k,1);gone(id);eatDish(c,id);toast((R.ITEMS[id].slot==="dish"?"The party ate ":c.name+" ate ")+R.ITEMS[id].n);}
 // cooking: the ingredients are always used up. Only a right mix makes a dish and teaches the recipe.
 function cookTry(ings,where){if(!ings.length||!ings.every(x=>haveN("i_"+x)>=ings.filter(y=>y===x).length))return {err:"missing"};
  const d=E.cook(ings);if(d&&!live.party.some(c=>R.canCarry(c,"d_"+d.id)))return {err:"heavy"};ings.forEach(x=>takeOne("i_"+x));
@@ -861,7 +874,20 @@ function campScreen(k){s5init();if(!campVisit||campVisit.k!==k)campVisit={k,cook
  if(k===0&&live&&!live.campTut){live.campTut="shown";tutStep=1;}/* t2356u: first-camp lesson, once per save */
  const cb=tapBtn("Craft",()=>{craftReset();craftLast=null;craftPop(k);},"small s5craftb");cb.dataset.craftopen="1";w.appendChild(cb);
  w.appendChild(el("div","s4note",hasTent()?"Tents: "+haveN("tent")+". Each tent is good for 1 save at a camp.":"No tent: you can still cook, craft and rest here. You need a tent to save at camp."));
- sideTabs(w,[["Cook",null,()=>cookScreen("c"+k),"cook"],["Rest",null,()=>campRest(k),"rest"],["Save",null,()=>campSave(k),"save"],["Return",null,closeUI,"return"]]);if(k===0)tutDraw();}
+ sideTabs(w,[["Cook",null,()=>cookScreen("c"+k),"cook"],["Eat",null,()=>eatScreen(k),"eat"],["Rest",null,()=>campRest(k),"rest"],["Save",null,()=>campSave(k),"save"],["Return",null,closeUI,"return"]]);if(k===0)tutDraw();}
+// t2778u/t2779u/t2780u: camp Eat tab. A picker of COOKED dishes only (no rations, potions, crafted food or ingredients) from the party's bags,
+// labelled with whose bag when more than one bag has dishes. Picking one takes ONE dish out of that bag and feeds the whole party.
+function buffText(b){const o=[];if(b.str)o.push("+"+b.str+"% strength");if(b.sta)o.push("+"+b.sta+"% stamina");return o.join(", ");}
+function mealLine(c){const b=c.buff;return b&&b.meal?b.n+": "+buffText(b)+" until the next meal or a tavern":"No meal buff";}
+function cookedChoices(){const out=[];live.party.forEach((c,ci)=>E.stacks(c.bag).forEach(s=>{const it=R.ITEMS[s.id];if(it&&it.slot==="dish")out.push({ci,id:s.id,n:s.n});}));return out;}
+function eatScreen(k){s5init();const w=page("eat");w.classList.add("s5scene","s5camp");w.style.backgroundImage='url("'+campArt("eating")+'")';w.appendChild(head("Eat",()=>campScreen(k)));
+ w.appendChild(el("div","s4note","Pick a cooked dish. One dish feeds the whole party. Its buff lasts until the next meal or a tavern."));
+ const ls=el("div","s5meals");ls.id="s5meals";live.party.forEach((c,ci)=>{const r=el("div","s4sub s5meal",c.name+" · "+mealLine(c));r.dataset.mealbuff=String(ci);r.dataset.meal=c.buff&&c.buff.meal||"";ls.appendChild(r);});w.appendChild(ls);
+ const ch=cookedChoices(),bags=new Set(ch.map(x=>x.ci)).size;
+ if(!ch.length){const n=el("div","s4note","No cooked dishes in your bags. Cook one first.");n.dataset.nodish="1";w.appendChild(n);return;}
+ ch.forEach(x=>{const it=R.ITEMS[x.id],d=E.dish(it.dish),b=tapBtn(it.n+(x.n>1?" ×"+x.n:"")+(bags>1?" ("+live.party[x.ci].name+"'s bag)":"")+" · "+E.fxText(d.fx),()=>eatCooked(k,x.ci,x.id),"wide");b.dataset.eatdish=x.id;b.dataset.bag=String(x.ci);if(typeof withIc==="function")withIc(b,x.id);w.appendChild(b);});}
+function eatCooked(k,ci,id){const c=live.party[ci],it=R.ITEMS[id],j=c&&it&&it.slot==="dish"?c.bag.lastIndexOf(id):-1;if(j<0){toast("That dish is not in that bag.");eatScreen(k);return false;}
+ c.bag.splice(j,1);gone(id);partyMeal(id);eatScreen(k);toast("The party ate "+it.n+".");return true;}
 // t2446u/t2449u/t2450u: saving at a camp is a choice. Already pitched here (t2356u): free, straight to the slot picker. Otherwise it asks
 // "Use 1 tent to save?" first; without a tent it says how to get one. The tent is only used when a slot is actually written.
 function campPitched(){const p=S.state();return !!(save&&save.at&&save.at.x===p.x&&save.at.y===p.y);}
@@ -1085,7 +1111,7 @@ S.gearLock={total:GEAR?GEAR.LOCK_ROUNDS:2,rounds:rid=>live&&live.lockFail&&live.
  solvedRound:rid=>{if(live&&live.lockFail&&live.lockFail[rid]>0){live.lockFail[rid]--;if(live.lockFail[rid]<=0)delete live.lockFail[rid];}},
  can:rid=>!!GEAR&&!!live&&!specialWhyNot("g_lockpick",{room:rid}),use:rid=>useSpecial("g_lockpick",{room:rid})};
 // test and debug hooks (no network, no secrets)
-S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>{keepFinalLocks();return startFight([R.makeBoss(live.diff)],"boss");},live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,spotName,slotName,lossLoad,offerEndSave,endSaveDue,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
+S.rpg={syncMazeSlots,tapMazeSlot,assignMazeSlot,clearMazeSlot,clearMazeSlots,mazeSlotChoices,useMazeSlot,s5:{CAMP_ART,partySeats,occupancyArt,tavernBg,campArt,campMood,campBg,tavernLabels,leaveTavern,leaveShop,campRest,zoneOpen,shopCounts,buyScreen,shopList,sellScreen,tavernScreen,campScreen,cookScreen,eatScreen,eatCooked,cookedChoices,partyMeal,clearMealBuffs,migrateMealBuffs,mealLine,cookbook,tentScreen,cookTry,craftPop,craftTry,craftNeedText,craftIdsText,craftPut,craftClear,craftReset,craftFill,craftChoices,craftBoxes:()=>craftBox.slice(),tutStep:()=>tutStep,tutDraw,drawPix,eatFrom,buy,sell,buyRecipe,buildTent,giveDish,checkSpoil,eatDish,haveN,lvlPopup,updHere,tickBuffs,spareJunk},startBoss:()=>{keepFinalLocks();return startFight([R.makeBoss(live.diff)],"boss");},live:()=>live,save:()=>save,closeUI,savePicker,moveItems,moveItem,campSave,frameScenes,saveSlots,loadSlot,activeSlot:()=>activeSlot,spotName,slotName,lossLoad,offerEndSave,endSaveDue,doSave:()=>doSave(false),restore,startFight:(mons)=>startFight(mons,"test"),fightHere,fight:()=>F,ui:()=>ui,creation,partyScreen,statScreen,skillScreen,equipScreen,bagScreen,fightTimes:()=>ftimes.slice(),
  gear:GEAR_API,itemInfo:{quick:itemQuick,desc:itemDesc,compare:equipCompare,openCompare:cmpPanel,closeCompare:closeCmp},setLive:o=>{live=o;syncMazeSlots();},forceEnd:how=>{if(F){F.over=how;drawMenu();}},branch,closeBranch,charScreen,act:(cmd,arg,t)=>doAct(cmd,arg,t),turn:()=>turnI,
  figs:()=>{if(!fcv||!F)return null;const W=fcv.width,H=fcv.height,s=scl(W,H),d=fcv.width/fcv.clientWidth,hh=heroH(W,H);const bx=(l,r,t,b)=>({l:l/d,r:r/d,t:t/d,b:b/d});
   return{w:fcv.clientWidth,h:fcv.clientHeight,s:s/d,mons:F.m.map((m,i)=>{const q=monRect(i,W,H);return bx(q.x-q.w/2,q.x+q.w/2,q.y-q.h-Math.max(10,s*0.1)-Math.max(10,Math.round(s*0.17)),q.y);}),heroes:live.party.map((c,i)=>{const[x,y]=hpos(i,W,H),im=heroArt(c),w=im?hh*im.naturalWidth/im.naturalHeight:hh*0.8;return bx(x-w/2-hh*0.18,x+w/2,y-hh*1.25,y+2);}),bgv:F.bgv,sprites:F.m.map(monKey)};}};

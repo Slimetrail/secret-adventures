@@ -2,9 +2,12 @@
 (function(root){'use strict';
 function install(S,R,H,M){const api=S.rpg.s6,pools=root.PACKAGE_POOLS,oldCamp=H.camp,oldTavern=H.tavern,oldCraft=H.craft,oldJoined=H.joined;
 const code={Quirky:'Q',Scholar:'S',Angry:'A',Any:'H'},rand=()=>5+Math.floor(Math.random()*6);
+const FAV_N=3; // t2778u: 'several times' / 'third ... in a row'
 const state=()=>api.st(),live=()=>S.rpg.live(),present=r=>code[r.speaker]==='H'||api.who(code[r.speaker]);
 function gate(row,ev={}){const s=state(),l=live(),c=row.condition;if(!s||!l||!present(row))return false;
- if(row===pools.camp.find(r=>r.id==='7'))return false; // third favored-meal count is not observed yet
+ // t2778u: counted when a cooked dish is EATEN (H.ateMeal): the party's third stamina meal in a row
+ if(row===pools.camp.find(r=>r.id==='7'))return (s.staMealRun|0)===FAV_N;
+ const fm=/^(Quirky|Scholar|Angry)'s favored buff meal several times$/.exec(c);if(fm)return ((s.favMeal||{})[code[fm[1]]]|0)>=FAV_N; // this speaker only (t1924u)
  if(row===pools['wall-art'].find(r=>r.id==='1'))return ev.zone===1;
  if(c==='None')return true;if(c==='Beat-up')return l.party.some(p=>p.hp<=R.maxHp(p,R.DIFF[l.diff].hp)*.25);
  if(c==='After dad reveal')return !!s.revealed;if(c==='Rations only'||c==='Rations only or not a group meal')return s.lastMeal==='ration';if(c==='Good food cooked')return s.lastMeal==='cooked';
@@ -40,7 +43,18 @@ H.reachedTavern=t=>{const s=state();if(s)s.journalWear=Math.max(s.journalWear||1
 const owners=root.PACKAGE_STORY.owners;
 H.owner=(t,job)=>{const s=state();if(!s||t<0||t>3)return;const row=owners.find(r=>r.id==='TO'+(t+1)+'-'+job);if(row)api.play('keeper',[['K'+(t+1),row.mood,row.text]],{bg:S.rpg.s5.tavernBg(t)});};
 H.ownerVisit=t=>{const s=state();if(!s||t<0||t>3)return;s.ownerVisits=s.ownerVisits||{};const key=t+':'+live().steps;if(s.ownerVisitKey===key)return;s.ownerVisitKey=key;if(!s.ownerVisits[t]){H.owner(t,'GREET');H.owner(t,'GREET2');}else H.owner(t,'BACK');s.ownerVisits[t]=true;};
-api.packageDialogue={gate,pick,pool,rand};
+/* t2778u/t2780u: one cooked dish fed the whole party. Each companion PRESENT whose favored meal this is counts it (in a row: another dish resets
+   that companion's own count); companions not in the party are untouched. A companion favors a dish that raises their class's main stat
+   (str / sta; a mage's main stat is mana, so a mana dish). When this meal makes a count reach 3, that speaker's own favored-meal brag plays
+   right away (t1908u brag only, no other effect). One talk at a time: a brag first, else the third-stamina-meal line. */
+function favors(m,fx){const cl=R.CLASSES[m.cls],k=cl&&cl.main;return !!fx&&(k==='man'?fx.mp>0:fx[k]>0);}
+H.ateMeal=(id,fx)=>{const s=state();if(!s||!fx)return false;s.favMeal=s.favMeal&&typeof s.favMeal==='object'?s.favMeal:{};const earned=[];
+ for(const k of ['Q','S','A']){const m=api.who(k);if(!m)continue;if(favors(m,fx)){s.favMeal[k]=(s.favMeal[k]|0)+1;if(s.favMeal[k]===FAV_N)earned.push(k);}else s.favMeal[k]=0;}
+ s.staMealRun=fx.sta>0?(s.staMealRun|0)+1:0;s.lastMealId=id;
+ let row=null;for(const k of earned){const rows=pools.camp.filter(r=>r.layer==='A'&&code[r.speaker]===k&&/favored buff meal several times$/.test(r.condition)&&gate(r));row=rows.find(r=>!s.seen['pool-camp-'+r.id])||rows[0]||null;if(row)break;}
+ if(!row&&s.staMealRun===FAV_N){const r7=pools.camp.find(r=>r.id==='7');if(r7&&gate(r7))row=r7;}
+ return row?sayRow('camp',row,{bg:S.rpg.s5.campBg(row)}):false;};
+api.packageDialogue={gate,pick,pool,rand,favors};
 }
 root.PackageDialogue={install};if(typeof module!=='undefined')module.exports={install};if(root.SOTA&&root.SOTA.rpg&&root.SOTA.rpg.s6)install(root.SOTA,root.RPG,root.S6H,root.MAZE);
 })(typeof window!=='undefined'?window:globalThis);

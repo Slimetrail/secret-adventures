@@ -54,7 +54,7 @@ const CRIT_MUL=1.75;
 function critChance(c){return CLASSES[c.cls].main==="sta"?Math.min(0.30,0.03+0.01*c.stats.sta):0;}
 function maxHp(c,hpMul){return Math.round((24+4*conOf(c)+3*c.stats.str+7*c.lvl+gearSum(c,"hp"))*(hpMul||1));}
 function maxMp(c){return c.race==="dwarf"&&!CLASSES[c.cls].magic?6+2*c.stats.sta+c.lvl:8+2*c.stats.man+2*c.lvl;}
-function buffOf(c,k){const b=c.buff;return b&&b.f>0&&b[k]?b[k]/100:0;}
+function buffOf(c,k){const b=c.buff;return b&&(b.meal||b.f>0)&&b[k]?b[k]/100:0;}/* t2778u: a meal buff has no fight count */
 // t2345u: weapon poison from a failed camp craft adds weapon damage for a few fights (c.poison={f,b}); no poison = no change
 function poisonOf(c){const p=c.poison;return p&&p.f>0&&p.b>0?p.b:0;}
 function power(c){const m=CLASSES[c.cls].main,s0=c.stats,bs=buffOf(c,"sta"),s={str:s0.str,sta:s0.sta*(1+bs),man:s0.man};return (1+buffOf(c,"str")+poisonOf(c))*((m==="str"?2.2*s.str:m==="sta"?2.2*s.sta+0.5*s.str:0.8*s.str+0.6*s.sta)+c.lvl*1.5+gearSum(c,"atk")+4);}

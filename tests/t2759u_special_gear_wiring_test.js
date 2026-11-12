@@ -43,10 +43,10 @@ test('crystal ball fail in game.js: forgets the zone but keeps the cell you stan
 test('map.js draws the crystal path only while its end is not found, and fits it in view',()=>{
  const src=read('map.js');a.ok(src.includes('function crystal(){'));a.ok(/!isFound\(r\.to\)/.test(src));a.ok(src.includes('el.dataset.route=cr?cr.path.length:0;'));a.ok(src.includes('const cr=crystal();if(cr&&x1>=0)'));});
 test('VER 106 pins: gear.js v1 (before econ.js), econ v19, party v43, game v26, map v18, puzzle-ui v18; locked files and the wait text unchanged',()=>{
- const sw=read('sw.js'),html=read('index.html');a.match(sw,/^const VER="107",/);
- for(const p of ['gear.js?v=1','econ.js?v=19','party.js?v=43','game.js?v=26','map.js?v=18','puzzle-ui.js?v=19'])for(const s of [sw,html])a.equal(s.split(p).length-1,1,p);
+ const sw=read('sw.js'),html=read('index.html');a.match(sw,/^const VER="108",/);
+ for(const p of ['gear.js?v=1','econ.js?v=20','party.js?v=44','game.js?v=26','map.js?v=18','puzzle-ui.js?v=19'])for(const s of [sw,html])a.equal(s.split(p).length-1,1,p);
  for(const p of ['econ.js?v=18','party.js?v=42','game.js?v=25','map.js?v=17','puzzle-ui.js?v=17'])for(const s of [sw,html])a.ok(!s.includes(p),p);
- a.ok(html.indexOf('gear.js?v=1')<html.indexOf('econ.js?v=19'));
+ a.ok(html.indexOf('gear.js?v=1')<html.indexOf('econ.js?v=20'));
  a.ok(read('game.js').includes('d.textContent="Please wait for update to continue.";'));
  let base=null;try{base=cp.execSync('git rev-parse --verify -q 33306be^{commit}',{cwd:root}).toString().trim();}catch(e){}
  if(base)for(const f of ['story-data.js','art6/seam/tints.json','econ-held-crafts.js'])/* t2766u: story.js boss lock settings changed; checked in t2766u_puzzle_tiers_test.js */{const old=cp.execSync('git show 33306be:'+f,{cwd:root});a.ok(old.equals(fs.readFileSync(path.join(root,f))),f+' unchanged');}});

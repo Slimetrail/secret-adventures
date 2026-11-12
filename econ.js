@@ -23,7 +23,7 @@ const DISHES=[
  ["banquet","Crystal banquet",["starfruit","dragonmeat","moonleaf","honey"],{hp:100,mp:100,sta:100,str:20,f:3},4]].map(([id,n,ing,fx,tier])=>({id,n,ing,fx,tier}));
 const TIERN=["","Weak","Medium","Strong","Very strong"],RECIPE_PRICE=[0,20,45,80,140],SPOIL_STEPS=400;
 DISHES.forEach(d=>{I["d_"+d.id]={n:d.n,slot:"dish",w:0.8,v:4*d.tier,dish:d.id};});
-function fxText(fx){const o=[];if(fx.hp)o.push(fx.hp>=100?"full health":"+"+fx.hp+"% health");if(fx.mp)o.push(fx.mp>=100?"full mana":"+"+fx.mp+"% mana");if(fx.sta)o.push(fx.sta>=100?"full stamina":"+"+fx.sta+"% stamina");if(fx.str)o.push("+"+fx.str+"% strength");return o.join(", ")+(fx.f&&(fx.str||fx.sta)?" ("+fx.f+" fight"+(fx.f>1?"s":"")+")":"");}
+function fxText(fx){const o=[];if(fx.hp)o.push(fx.hp>=100?"full health":"+"+fx.hp+"% health");if(fx.mp)o.push(fx.mp>=100?"full mana":"+"+fx.mp+"% mana");if(fx.sta)o.push(fx.sta>=100?"full stamina":"+"+fx.sta+"% stamina");if(fx.str)o.push("+"+fx.str+"% strength");return o.join(", ")+(fx.str||fx.sta?" (until the next meal)":"");}/* t2778u: dish buffs last until the next meal or a tavern */
 const key=a=>a.slice().sort().join("+");const BYKEY={};DISHES.forEach(d=>BYKEY[key(d.ing)]=d);
 // cook: ingredient ids (without i_) -> dish or null. Same set in any order.
 function cook(ings){return BYKEY[key(ings)]||null;}

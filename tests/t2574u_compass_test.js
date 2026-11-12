@@ -4,7 +4,7 @@ const read=f=>fs.readFileSync(f,'utf8');
 const WAIT='Please wait for update to continue.';
 test('t2574u pins: VER 97, game.js?v=26, compass art in the shell, wait wording unchanged',()=>{
  const h=read('index.html'),s=read('sw.js'),g=read('game.js');
- a.match(s,/^const VER="107",/);
+ a.match(s,/^const VER="108",/);
  for(const p of ['game.js?v=26','art6/hud/compass-rose-48.png','art6/hud/compass-rose-144.png']){
   a.ok(s.includes('"'+p+'"')||s.includes(p), 'sw missing '+p);
  }
